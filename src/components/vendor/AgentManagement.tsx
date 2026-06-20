@@ -1,4 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +17,7 @@ import ProfessionalMessaging from '@/components/messaging/ProfessionalMessaging'
 import { OptimizedPasswordInput } from '@/components/ui/OptimizedPasswordInput';
 
 export default function AgentManagement() {
+  const { t } = useTranslation();
   const {
     agents,
     loading,
@@ -416,7 +418,7 @@ export default function AgentManagement() {
     return (
       <div className="flex flex-col items-center justify-center p-12 space-y-4">
         <div className="w-8 h-8 border-4 border-vendeur-primary border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-muted-foreground">Chargement de la gestion des agents...</p>
+        <p className="text-muted-foreground">{t('agentManagement.chargementDeLaGestionDes')}</p>
       </div>
     );
   }
@@ -426,7 +428,7 @@ export default function AgentManagement() {
       {/* Navigation par onglets */}
       <Tabs defaultValue="agents" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="agents">Gestion Agents</TabsTrigger>
+          <TabsTrigger value="agents">{t('agentManagement.gestionAgents')}</TabsTrigger>
           <TabsTrigger value="communication">Communication</TabsTrigger>
         </TabsList>
 
@@ -439,7 +441,7 @@ export default function AgentManagement() {
                   <Users className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold text-foreground">Gestion des Agents</h1>
+                  <h1 className="text-3xl font-bold text-foreground">{t('agentManagement.gestionDesAgents')}</h1>
                   <p className="text-muted-foreground text-lg">
                     Gérez votre équipe et leurs permissions • {stats.activeAgents} agent(s) actif(s)
                   </p>
@@ -487,7 +489,7 @@ export default function AgentManagement() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Téléphone *</Label>
+                      <Label htmlFor="phone">{t('agentManagement.telephone')}</Label>
                       <Input
                         id="phone"
                         required
@@ -513,14 +515,14 @@ export default function AgentManagement() {
                   {/* Champ mot de passe pour nouveaux agents */}
                   {!editingAgent && (
                     <div className="space-y-2">
-                      <Label htmlFor="password">Mot de passe (optionnel)</Label>
+                      <Label htmlFor="password">{t('agentManagement.motDePasseOptionnel')}</Label>
                       <OptimizedPasswordInput
                         key={passwordInputKey}
                         id="password"
                         name="password"
                         value=""
                         onChange={commitAgentPassword}
-                        placeholder="Min. 8 caractères pour auth par email"
+                        placeholder={t('agentManagement.min8CaracteresPourAuth')}
                         // ⚡️ Pas de propagation fréquente (et aucune setState côté parent)
                         commitDelayMs={300}
                         className={undefined}
@@ -549,7 +551,7 @@ export default function AgentManagement() {
                       }}
                     >
                       <SelectTrigger id="agent_type">
-                        <SelectValue placeholder="Sélectionnez le type d'agent" />
+                        <SelectValue placeholder={t('agentManagement.selectionnezLeTypeDAgent')} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="commercial">
@@ -561,31 +563,31 @@ export default function AgentManagement() {
                         <SelectItem value="logistique">
                           <div className="flex flex-col">
                             <span className="font-medium">Logistique</span>
-                            <span className="text-xs text-muted-foreground">Livraisons, Entrepôts, Inventaire</span>
+                            <span className="text-xs text-muted-foreground">{t('agentManagement.livraisonsEntrepotsInventaire')}</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="support">
                           <div className="flex flex-col">
                             <span className="font-medium">Support</span>
-                            <span className="text-xs text-muted-foreground">Communication, Clients, Commandes</span>
+                            <span className="text-xs text-muted-foreground">{t('agentManagement.communicationClientsCommandes')}</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="administratif">
                           <div className="flex flex-col">
                             <span className="font-medium">Administratif</span>
-                            <span className="text-xs text-muted-foreground">Finances, Paiements, Dépenses</span>
+                            <span className="text-xs text-muted-foreground">{t('agentManagement.financesPaiementsDepenses')}</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="manager">
                           <div className="flex flex-col">
                             <span className="font-medium">Manager</span>
-                            <span className="text-xs text-muted-foreground">Accès complet à toutes les fonctionnalités</span>
+                            <span className="text-xs text-muted-foreground">{t('agentManagement.accesCompletAToutesLes')}</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="technique">
                           <div className="flex flex-col">
                             <span className="font-medium">Technique</span>
-                            <span className="text-xs text-muted-foreground">Produits, Inventaire, Entrepôts</span>
+                            <span className="text-xs text-muted-foreground">{t('agentManagement.produitsInventaireEntrepots')}</span>
                           </div>
                         </SelectItem>
                       </SelectContent>
@@ -620,7 +622,7 @@ export default function AgentManagement() {
                           ))}
                       </div>
                       {Object.values(formData.permissions).filter(v => v).length === 0 && (
-                        <p className="text-xs text-muted-foreground italic">Aucune permission active</p>
+                        <p className="text-xs text-muted-foreground italic">{t('agentManagement.aucunePermissionActive')}</p>
                       )}
                     </div>
 
@@ -666,7 +668,7 @@ export default function AgentManagement() {
                               permissions: { ...formData.permissions, access_pos: checked as boolean }
                             })}
                           />
-                          <label htmlFor="access_pos" className="text-sm">Point de vente</label>
+                          <label htmlFor="access_pos" className="text-sm">{t('agentManagement.pointDeVente')}</label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox
@@ -677,7 +679,7 @@ export default function AgentManagement() {
                               permissions: { ...formData.permissions, manage_products: checked as boolean }
                             })}
                           />
-                          <label htmlFor="manage_products" className="text-sm">Produits</label>
+                          <label htmlFor="manage_products" className="text-sm">{t('agentManagement.produits')}</label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox
@@ -688,7 +690,7 @@ export default function AgentManagement() {
                               permissions: { ...formData.permissions, manage_orders: checked as boolean }
                             })}
                           />
-                          <label htmlFor="manage_orders" className="text-sm">Commandes</label>
+                          <label htmlFor="manage_orders" className="text-sm">{t('agentManagement.commandes')}</label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox
@@ -710,7 +712,7 @@ export default function AgentManagement() {
                               permissions: { ...formData.permissions, manage_warehouse: checked as boolean }
                             })}
                           />
-                          <label htmlFor="manage_warehouse" className="text-sm">Entrepôts</label>
+                          <label htmlFor="manage_warehouse" className="text-sm">{t('agentManagement.entrepots')}</label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox
@@ -801,7 +803,7 @@ export default function AgentManagement() {
                               permissions: { ...formData.permissions, manage_payments: checked as boolean }
                             })}
                           />
-                          <label htmlFor="manage_payments" className="text-sm">Paiements</label>
+                          <label htmlFor="manage_payments" className="text-sm">{t('agentManagement.paiements')}</label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox
@@ -812,7 +814,7 @@ export default function AgentManagement() {
                               permissions: { ...formData.permissions, manage_payment_links: checked as boolean }
                             })}
                           />
-                          <label htmlFor="manage_payment_links" className="text-sm">Liens de paiement</label>
+                          <label htmlFor="manage_payment_links" className="text-sm">{t('agentManagement.liensDePaiement')}</label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox
@@ -823,7 +825,7 @@ export default function AgentManagement() {
                               permissions: { ...formData.permissions, manage_expenses: checked as boolean }
                             })}
                           />
-                          <label htmlFor="manage_expenses" className="text-sm">Dépenses</label>
+                          <label htmlFor="manage_expenses" className="text-sm">{t('agentManagement.depenses')}</label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox
@@ -914,7 +916,7 @@ export default function AgentManagement() {
                               permissions: { ...formData.permissions, access_settings: checked as boolean }
                             })}
                           />
-                          <label htmlFor="access_settings" className="text-sm">Paramètres</label>
+                          <label htmlFor="access_settings" className="text-sm">{t('agentManagement.parametres')}</label>
                         </div>
                       </div>
                     </div>
@@ -993,7 +995,7 @@ export default function AgentManagement() {
                   <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-vendeur-accent/50 flex items-center justify-center">
                     <Users className="h-8 w-8 text-vendeur-primary opacity-50" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">Aucun agent dans l'équipe</h3>
+                  <h3 className="text-lg font-semibold mb-2">{t('agentManagement.aucunAgentDansLEquipe')}</h3>
                   <p className="text-muted-foreground mb-6">
                     Commencez par ajouter votre premier agent pour déléguer des responsabilités
                   </p>
@@ -1014,7 +1016,7 @@ export default function AgentManagement() {
                         <TableHead className="font-semibold">Type</TableHead>
                         <TableHead className="font-semibold">Contact</TableHead>
                         <TableHead className="font-semibold">Statut</TableHead>
-                        <TableHead className="font-semibold">Lien d'accès</TableHead>
+                        <TableHead className="font-semibold">{t('agentManagement.lienDAcces')}</TableHead>
                         <TableHead className="font-semibold text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1098,7 +1100,7 @@ export default function AgentManagement() {
                                 size="sm"
                                 variant="destructive"
                                 onClick={() => {
-                                  if (window.confirm('⚠️ Êtes-vous sûr de vouloir désactiver cet agent ?')) {
+                                  if (window.confirm(t('agentManagement.etesVousSurDeVouloir'))) {
                                     deleteAgent(agent.id);
                                   }
                                 }}

@@ -16,7 +16,9 @@ import { logger } from '../config/logger.js';
 import { supabaseAdmin } from '../config/supabase.js';
 
 export function formatPhoneIntl(raw: string): string {
-  let phone = String(raw || '').trim();
+  // E.164 : on retire espaces, tirets, points et parenthèses (les numéros sont souvent
+  // stockés « +224 612… » → Twilio rejette les espaces). Le « + » initial est conservé.
+  let phone = String(raw || '').replace(/[\s().-]/g, '').trim();
   if (!phone) return phone;
   if (phone.startsWith('6')) phone = `+224${phone}`;
   else if (phone.startsWith('00224')) phone = phone.replace('00224', '+224');

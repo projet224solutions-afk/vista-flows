@@ -3,6 +3,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, Clock3, ExternalLink, Eye, MessageCircle, PlayCircle, RefreshCw, Shield, ShoppingCart, Star, Store, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ShareButton } from "@/components/shared/ShareButton";
 import { LocalPrice } from "@/components/ui/LocalPrice";
+import ProductAffiliateBox from "@/components/marketplace/ProductAffiliateBox";
 import { useAuth } from "@/hooks/useAuth";
 import { addRecentProduct } from "@/lib/recentProductHistory";
 
@@ -65,6 +67,7 @@ interface DigitalProductWithVendor {
 }
 
 export default function DigitalProductDetail() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -120,7 +123,7 @@ export default function DigitalProductDetail() {
       setProduct(data as DigitalProductWithVendor);
     } catch (error) {
       console.error('Erreur chargement produit:', error);
-      toast.error('Impossible de charger le produit');
+      toast.error(t('digitalProductDetail.impossibleDeChargerLeProduit'));
     } finally {
       setLoading(false);
     }
@@ -162,7 +165,7 @@ export default function DigitalProductDetail() {
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      toast.error('Veuillez vous connecter pour acheter');
+      toast.error(t('digitalProductDetail.veuillezVousConnecterPourAcheter'));
       navigate('/auth');
       return;
     }
@@ -190,7 +193,7 @@ export default function DigitalProductDetail() {
 
       if (purchaseError && !purchaseError.message?.toLowerCase().includes('duplicate')) {
         console.error('Erreur attribution acces gratuit:', purchaseError);
-        toast.error('Impossible d\'accorder l\'acces gratuit pour le moment');
+        toast.error(t('digitalProductDetail.impossibleDAccorderLAcces'));
         return;
       }
 
@@ -200,7 +203,7 @@ export default function DigitalProductDetail() {
     }
 
     // Naviguer vers la page de paiement avec les infos du produit digital
-    toast.success('Redirection vers le paiement...');
+    toast.success(t('digitalProductDetail.redirectionVersLePaiement'));
     navigate('/payment', {
       state: {
         productId: product.id,
@@ -217,13 +220,13 @@ export default function DigitalProductDetail() {
     const recipientUserId = product?.vendors?.user_id || product?.merchant_id;
 
     if (!recipientUserId) {
-      toast.error('Informations du vendeur non disponibles');
+      toast.error(t('digitalProductDetail.informationsDuVendeurNonDisponibles'));
       return;
     }
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      toast.error('Veuillez vous connecter pour contacter le vendeur');
+      toast.error(t('digitalProductDetail.veuillezVousConnecterPourContacter'));
       navigate('/auth');
       return;
     }
@@ -239,11 +242,11 @@ export default function DigitalProductDetail() {
         });
 
       if (error) throw error;
-      toast.success('Message envoyé au vendeur');
+      toast.success(t('digitalProductDetail.messageEnvoyeAuVendeur'));
       navigate(`/messages?recipientId=${recipientUserId}`);
     } catch (error) {
       console.error('Erreur envoi message:', error);
-      toast.error('Erreur lors de l\'envoi du message');
+      toast.error(t('digitalProductDetail.erreurLorsDeLEnvoi'));
     }
   };
 
@@ -262,9 +265,9 @@ export default function DigitalProductDetail() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="p-8 text-center max-w-md">
-          <h2 className="text-xl font-bold mb-4">Produit introuvable</h2>
-          <p className="text-muted-foreground mb-6">Ce produit numérique n'existe pas ou a été supprimé.</p>
-          <Button onClick={() => navigate('/digital-products')}>Retour aux produits numériques</Button>
+          <h2 className="text-xl font-bold mb-4">{t('digitalProductDetail.produitIntrouvable')}</h2>
+          <p className="text-muted-foreground mb-6">{t('digitalProductDetail.ceProduitNumeriqueNExiste')}</p>
+          <Button onClick={() => navigate('/digital-products')}>{t('digitalProductDetail.retourAuxProduitsNumeriques')}</Button>
         </Card>
       </div>
     );
@@ -320,7 +323,7 @@ export default function DigitalProductDetail() {
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-xl font-bold text-foreground flex-1">Produit numérique</h1>
+          <h1 className="text-xl font-bold text-foreground flex-1">{t('digitalProductDetail.produitNumerique')}</h1>
           <ShareButton
             title={product.title}
             text={`Découvrez ${product.title} sur 224 Solutions`}
@@ -520,22 +523,22 @@ export default function DigitalProductDetail() {
                   <div className="flex items-center gap-3">
                     <Shield className="h-9 w-9 rounded-2xl bg-white p-2 text-primary shadow-sm" />
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">Paiement securise</p>
-                      <p className="text-xs text-slate-500">Transaction et acces proteges</p>
+                      <p className="text-sm font-semibold text-slate-900">{t('digitalProductDetail.paiementSecurise')}</p>
+                      <p className="text-xs text-slate-500">{t('digitalProductDetail.transactionEtAccesProteges')}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <Download className="h-9 w-9 rounded-2xl bg-white p-2 text-primary shadow-sm" />
                     <div>
                       <p className="text-sm font-semibold text-slate-900">Activation rapide</p>
-                      <p className="text-xs text-slate-500">Debloque juste apres paiement</p>
+                      <p className="text-xs text-slate-500">{t('digitalProductDetail.debloqueJusteApresPaiement')}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <Clock3 className="h-9 w-9 rounded-2xl bg-white p-2 text-primary shadow-sm" />
                     <div>
                       <p className="text-sm font-semibold text-slate-900">Videos longues</p>
-                      <p className="text-xs text-slate-500">Jusqu'a 1h par video de formation</p>
+                      <p className="text-xs text-slate-500">{t('digitalProductDetail.jusquA1hParVideo')}</p>
                     </div>
                   </div>
                 </div>
@@ -563,6 +566,12 @@ export default function DigitalProductDetail() {
                     <MessageCircle className="h-4 w-4" />
                   </Button>
                 </div>
+
+                {product.product_mode !== 'affiliate' && product.id && (
+                  <div className="mt-4">
+                    <ProductAffiliateBox productId={product.id} />
+                  </div>
+                )}
               </div>
             </Card>
 
@@ -578,7 +587,7 @@ export default function DigitalProductDetail() {
               <Card className="rounded-[28px] border-white/70 bg-white/90 p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] sm:p-6">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <h3 className="text-lg font-semibold text-foreground">Experience de formation</h3>
+                    <h3 className="text-lg font-semibold text-foreground">{t('digitalProductDetail.experienceDeFormation')}</h3>
                     <p className="mt-1 text-sm text-muted-foreground">
                       Concue pour vendre comme un programme premium avec transformation claire, acces mobile et progression guidee.
                     </p>
@@ -691,7 +700,7 @@ export default function DigitalProductDetail() {
                       <span className="font-medium group-hover:text-primary">
                         {vendor.business_name}
                       </span>
-                      <p className="text-xs text-muted-foreground">Cliquez pour voir la boutique</p>
+                      <p className="text-xs text-muted-foreground">{t('digitalProductDetail.cliquezPourVoirLaBoutique')}</p>
                     </div>
                   </Link>
                   <ExternalLink className="w-4 h-4 text-muted-foreground" />

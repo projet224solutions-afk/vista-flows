@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -78,6 +79,7 @@ export function ActiveDeliveryPanel({
   onUploadProof,
   onCancel
 }: ActiveDeliveryPanelProps) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [_showCancelDialog, setShowCancelDialog] = useState(false);
 
@@ -121,9 +123,9 @@ export function ActiveDeliveryPanel({
     setLoading(true);
     try {
       await onUpdateStatus(nextStatus);
-      toast.success('Statut mis à jour');
+      toast.success(t('activeDeliveryPanel.statutMisAJour'));
     } catch (_error) {
-      toast.error('Erreur lors de la mise à jour');
+      toast.error(t('activeDeliveryPanel.erreurLorsDeLaMise'));
     } finally {
       setLoading(false);
     }
@@ -143,9 +145,9 @@ export function ActiveDeliveryPanel({
     setLoading(true);
     try {
       await onUploadProof(file);
-      toast.success('Photo de preuve uploadée');
+      toast.success(t('activeDeliveryPanel.photoDePreuveUploadee'));
     } catch (_error) {
-      toast.error('Erreur lors de l\'upload');
+      toast.error(t('activeDeliveryPanel.erreurLorsDeLUpload'));
     } finally {
       setLoading(false);
     }

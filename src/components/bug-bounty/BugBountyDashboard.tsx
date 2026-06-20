@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -80,6 +81,7 @@ const statusColors: Record<BugReportStatus, string> = {
 // ============================================
 
 const BugBountyDashboard = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { user, profile } = useAuth();
 
@@ -164,7 +166,7 @@ const BugBountyDashboard = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["bug-reports"] });
       queryClient.invalidateQueries({ queryKey: ["bug-bounty-stats"] });
-      toast.success("Rapport mis à jour avec succès");
+      toast.success(t('bugBountyDashboard.rapportMisAJourAvec'));
 
       // Réinitialiser tous les states
       setSelectedReport(null);
@@ -174,7 +176,7 @@ const BugBountyDashboard = () => {
     },
     onError: (error: Error) => {
       console.error('❌ Erreur mise à jour rapport:', error);
-      toast.error("Erreur lors de la mise à jour", {
+      toast.error(t('bugBountyDashboard.erreurLorsDeLaMise'), {
         description: error.message
       });
     },
@@ -210,7 +212,7 @@ const BugBountyDashboard = () => {
       <Alert variant="destructive">
         <AlertTriangle className="h-4 w-4" />
         <AlertDescription>
-          <strong>Erreur d'accès aux données</strong>
+          <strong>{t('bugBountyDashboard.erreurDAccesAuxDonnees')}</strong>
           <p className="text-sm mt-2">
             {reportsError.message}
           </p>
@@ -226,7 +228,7 @@ const BugBountyDashboard = () => {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <span className="ml-3">Chargement des rapports...</span>
+        <span className="ml-3">{t('bugBountyDashboard.chargementDesRapports')}</span>
       </div>
     );
   }
@@ -282,7 +284,7 @@ const BugBountyDashboard = () => {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Total Payé</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('bugBountyDashboard.totalPaye')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.totalPaid.toFixed(2)}€</div>
@@ -376,7 +378,7 @@ const BugBountyDashboard = () => {
                   <div className="space-y-6">
                     {/* Reporter Info */}
                     <div>
-                      <h3 className="font-semibold mb-2">Informations du reporter</h3>
+                      <h3 className="font-semibold mb-2">{t('bugBountyDashboard.informationsDuReporter')}</h3>
                       <div className="space-y-1 text-sm">
                         <p><strong>Nom:</strong> {report.reporter_name}</p>
                         <p><strong>Email:</strong> {report.reporter_email}</p>
@@ -393,7 +395,7 @@ const BugBountyDashboard = () => {
                     </div>
 
                     <div>
-                      <h3 className="font-semibold mb-2">Étapes de reproduction</h3>
+                      <h3 className="font-semibold mb-2">{t('bugBountyDashboard.etapesDeReproduction')}</h3>
                       <p className="text-sm whitespace-pre-wrap">{report.steps_to_reproduce}</p>
                     </div>
 
@@ -404,14 +406,14 @@ const BugBountyDashboard = () => {
 
                     {report.proof_of_concept && (
                       <div>
-                        <h3 className="font-semibold mb-2">Preuve de concept</h3>
+                        <h3 className="font-semibold mb-2">{t('bugBountyDashboard.preuveDeConcept')}</h3>
                         <p className="text-sm whitespace-pre-wrap">{report.proof_of_concept}</p>
                       </div>
                     )}
 
                     {report.suggested_fix && (
                       <div>
-                        <h3 className="font-semibold mb-2">Correction suggérée</h3>
+                        <h3 className="font-semibold mb-2">{t('bugBountyDashboard.correctionSuggeree')}</h3>
                         <p className="text-sm whitespace-pre-wrap">{report.suggested_fix}</p>
                       </div>
                     )}
@@ -429,17 +431,17 @@ const BugBountyDashboard = () => {
                           <SelectContent>
                             <SelectItem value="pending">En attente</SelectItem>
                             <SelectItem value="reviewing">En revue</SelectItem>
-                            <SelectItem value="accepted">Accepté</SelectItem>
-                            <SelectItem value="rejected">Rejeté</SelectItem>
+                            <SelectItem value="accepted">{t('bugBountyDashboard.accepte')}</SelectItem>
+                            <SelectItem value="rejected">{t('bugBountyDashboard.rejete')}</SelectItem>
                             <SelectItem value="duplicate">Duplicata</SelectItem>
-                            <SelectItem value="resolved">Résolu</SelectItem>
-                            <SelectItem value="rewarded">Récompensé</SelectItem>
+                            <SelectItem value="resolved">{t('bugBountyDashboard.resolu')}</SelectItem>
+                            <SelectItem value="rewarded">{t('bugBountyDashboard.recompense')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="reward">Montant de la récompense (€)</Label>
+                        <Label htmlFor="reward">{t('bugBountyDashboard.montantDeLaRecompense')}</Label>
                         <Input
                           id="reward"
                           type="number"

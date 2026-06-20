@@ -5,6 +5,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { getSafeBrowserGeo } from '@/lib/safeGeo';
+import { publishLiveEvent, vendorAnalyticsTopic, platformAnalyticsTopic } from '@/lib/realtime/liveEvents';
 
 interface GeoData {
   country: string;
@@ -143,6 +144,11 @@ export async function trackProductView(
       console.error('❌ Erreur tracking vue produit:', error);
     } else {
       console.log('✅ Vue produit enregistrée:', { productId, country: geoData.country, city: geoData.city });
+      // 📊 TEMPS RÉEL (Ably/broadcast) : diffuse l'événement pour les dashboards live,
+      // À CÔTÉ de la persistance Supabase ci-dessus. Best-effort → n'impacte pas l'écriture.
+      const evt = { type: 'product_view', productId, vendorId, country: geoData.country, city: geoData.city, at: new Date().toISOString() };
+      publishLiveEvent(vendorAnalyticsTopic(vendorId), 'product_view', evt);
+      publishLiveEvent(platformAnalyticsTopic(), 'product_view', evt);
     }
   } catch (error) {
     console.error('❌ Exception tracking vue produit:', error);
@@ -197,6 +203,10 @@ export async function trackShopVisit(
       }
     } else {
       console.log('✅ Visite boutique enregistrée:', { vendorId, country: geoData.country, city: geoData.city });
+      // 📊 TEMPS RÉEL (Ably/broadcast) pour dashboards live, à côté de la persistance Supabase.
+      const evt = { type: 'shop_visit', vendorId, country: geoData.country, city: geoData.city, at: new Date().toISOString() };
+      publishLiveEvent(vendorAnalyticsTopic(vendorId), 'shop_visit', evt);
+      publishLiveEvent(platformAnalyticsTopic(), 'shop_visit', evt);
     }
   } catch (error) {
     console.error('❌ Exception tracking visite boutique:', error);

@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { CheckCircle2, Loader2, XCircle } from 'lucide-react';
@@ -12,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 export default function PaymentSuccessRedirect() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState<'checking' | 'success' | 'failed'>('checking');
@@ -22,17 +24,17 @@ export default function PaymentSuccessRedirect() {
 
     if (redirectStatus === 'succeeded' || redirectStatus === 'requires_capture') {
       setStatus('success');
-      toast.success('Paiement confirmé ! Redirection vers vos achats...');
+      toast.success(t('paymentSuccessRedirect.paiementConfirmeRedirectionVersVos'));
       const timer = setTimeout(() => navigate('/my-purchases', { replace: true }), 2000);
       return () => clearTimeout(timer);
     } else if (redirectStatus === 'failed') {
       setStatus('failed');
-      toast.error('Le paiement a échoué.');
+      toast.error(t('paymentSuccessRedirect.lePaiementAEchoue'));
     } else {
       // No redirect_status or unknown - assume success if payment_intent exists
       if (paymentIntentId) {
         setStatus('success');
-        toast.success('Paiement traité ! Redirection vers vos achats...');
+        toast.success(t('paymentSuccessRedirect.paiementTraiteRedirectionVersVos'));
         const timer = setTimeout(() => navigate('/my-purchases', { replace: true }), 2000);
         return () => clearTimeout(timer);
       } else {
@@ -49,7 +51,7 @@ export default function PaymentSuccessRedirect() {
           {status === 'checking' && (
             <div className="text-center space-y-4">
               <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto" />
-              <p className="text-muted-foreground">Vérification du paiement...</p>
+              <p className="text-muted-foreground">{t('paymentSuccessRedirect.verificationDuPaiement')}</p>
             </div>
           )}
 
@@ -60,7 +62,7 @@ export default function PaymentSuccessRedirect() {
                   <CheckCircle2 className="w-12 h-12 text-[#ff4000]" />
                 </div>
               </div>
-              <h3 className="text-xl font-semibold text-[#ff4000]">Paiement confirmé !</h3>
+              <h3 className="text-xl font-semibold text-[#ff4000]">{t('paymentSuccessRedirect.paiementConfirme')}</h3>
               <p className="text-sm text-muted-foreground animate-pulse">
                 Redirection vers vos achats...
               </p>
@@ -74,7 +76,7 @@ export default function PaymentSuccessRedirect() {
                   <XCircle className="w-12 h-12 text-[#ff4000]" />
                 </div>
               </div>
-              <h3 className="text-xl font-semibold text-[#ff4000]">Paiement échoué</h3>
+              <h3 className="text-xl font-semibold text-[#ff4000]">{t('paymentSuccessRedirect.paiementEchoue')}</h3>
               <p className="text-sm text-muted-foreground">
                 Votre paiement n'a pas pu être traité. Veuillez réessayer.
               </p>

@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { backendFetch } from '@/services/backendApi';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,7 @@ interface DuplicateInfo {
 }
 
 export function IdAuditManager() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [fixing, setFixing] = useState(false);
   const [discrepancies, setDiscrepancies] = useState<IdDiscrepancy[]>([]);
@@ -80,7 +82,7 @@ export function IdAuditManager() {
       setStats({ synced: 0, ...res.data.stats });
     } catch (err) {
       console.error('Erreur audit:', err);
-      toast.error('Erreur lors de l\'audit');
+      toast.error(t('idAuditManager.erreurLorsDeLAudit'));
     } finally {
       setLoading(false);
       setLastAudit(new Date().toLocaleString('fr-FR'));
@@ -107,7 +109,7 @@ export function IdAuditManager() {
       await runAudit();
     } catch (err) {
       console.error('Erreur correction:', err);
-      toast.error('Erreur lors de la correction');
+      toast.error(t('idAuditManager.erreurLorsDeLaCorrection'));
     } finally {
       setFixing(false);
     }
@@ -115,7 +117,7 @@ export function IdAuditManager() {
 
   const fixSelectedIds = async () => {
     if (selectedIds.size === 0) {
-      toast.warning('Sélectionnez au moins un utilisateur');
+      toast.warning(t('idAuditManager.selectionnezAuMoinsUnUtilisateur'));
       return;
     }
     await applyFix({ userIds: Array.from(selectedIds) });
@@ -147,11 +149,11 @@ export function IdAuditManager() {
   const getStatusBadge = (status: IdDiscrepancy['status']) => {
     switch (status) {
       case 'desync_user_ids':
-        return <Badge variant="destructive" className="text-xs">user_ids désync</Badge>;
+        return <Badge variant="destructive" className="text-xs">{t('idAuditManager.userIdsDesync')}</Badge>;
       case 'desync_vendor':
-        return <Badge className="bg-[#ff4000] text-white text-xs">vendor désync</Badge>;
+        return <Badge className="bg-[#ff4000] text-white text-xs">{t('idAuditManager.vendorDesync')}</Badge>;
       case 'desync_profile_custom_id':
-        return <Badge className="bg-orange-500 text-white text-xs">profil custom_id désync</Badge>;
+        return <Badge className="bg-orange-500 text-white text-xs">{t('idAuditManager.profilCustomIdDesync')}</Badge>;
       case 'desync_both':
         return <Badge variant="destructive" className="text-xs animate-pulse">CRITIQUE</Badge>;
       case 'missing_user_id':
@@ -177,7 +179,7 @@ export function IdAuditManager() {
               <Shield className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <CardTitle className="text-lg">Audit des IDs Système</CardTitle>
+              <CardTitle className="text-lg">{t('idAuditManager.auditDesIdsSysteme')}</CardTitle>
               <CardDescription>
                 Vérification et correction des désynchronisations d'identifiants
               </CardDescription>
@@ -228,7 +230,7 @@ export function IdAuditManager() {
         {duplicates.length > 0 && (
           <Alert variant="destructive" className="animate-pulse">
             <XCircle className="h-4 w-4" />
-            <AlertTitle>🚨 Doublons détectés dans profiles.public_id!</AlertTitle>
+            <AlertTitle>{t('idAuditManager.doublonsDetectesDansProfilesPublic')}</AlertTitle>
             <AlertDescription>
               {duplicates.map(d => (
                 <div key={d.id} className="mt-1">
@@ -249,7 +251,7 @@ export function IdAuditManager() {
         {discrepancies.length > 0 && (
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Désynchronisations détectées</AlertTitle>
+            <AlertTitle>{t('idAuditManager.desynchronisationsDetectees')}</AlertTitle>
             <AlertDescription>
               {discrepancies.length} utilisateur(s) avec des IDs incohérents.
               La source de vérité est <code className="bg-muted px-1 rounded">profiles.public_id</code>.
@@ -260,7 +262,7 @@ export function IdAuditManager() {
         {discrepancies.length === 0 && !loading && (
           <Alert className="border-[#ff4000]/50 bg-[#ff4000]/10">
             <CheckCircle2 className="h-4 w-4 text-[#ff4000]" />
-            <AlertTitle className="text-[#ff4000]">Système synchronisé</AlertTitle>
+            <AlertTitle className="text-[#ff4000]">{t('idAuditManager.systemeSynchronise')}</AlertTitle>
             <AlertDescription className="text-[#ff4000]/80">
               Tous les IDs sont correctement synchronisés entre les tables.
             </AlertDescription>
@@ -360,7 +362,7 @@ export function IdAuditManager() {
                           )}
                         </div>
                       ) : (
-                        <Badge variant="outline" className="text-xs">Aucun</Badge>
+                        <Badge variant="outline" className="text-xs">{t('idAuditManager.aucun')}</Badge>
                       )}
                     </TableCell>
                     <TableCell>
@@ -387,15 +389,15 @@ export function IdAuditManager() {
         <div className="flex flex-wrap gap-4 text-xs text-muted-foreground pt-2 border-t">
           <div className="flex items-center gap-1">
             <Database className="w-3 h-3" />
-            <span>Source de vérité: <code className="bg-muted px-1 rounded">profiles.public_id</code></span>
+            <span>{t('idAuditManager.sourceDeVerite')} <code className="bg-muted px-1 rounded">profiles.public_id</code></span>
           </div>
           <div className="flex items-center gap-1">
             <CheckCircle2 className="w-3 h-3 text-[#ff4000]" />
-            <span>Synchronisé</span>
+            <span>{t('idAuditManager.synchronise')}</span>
           </div>
           <div className="flex items-center gap-1">
             <XCircle className="w-3 h-3 text-[#ff4000]" />
-            <span>Désynchronisé</span>
+            <span>{t('idAuditManager.desynchronise')}</span>
           </div>
         </div>
       </CardContent>

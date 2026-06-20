@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import {
   Wallet, TrendingUp, Users, Copy,
@@ -45,6 +46,7 @@ interface AffiliateDashboardProps {
 }
 
 export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [affiliate, setAffiliate] = useState<AffiliateData | null>(null);
   const [commissions, setCommissions] = useState<Commission[]>([]);
@@ -91,7 +93,7 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
     if (!affiliate) return;
     const link = `${window.location.origin}/travel?ref=${affiliate.affiliate_code}`;
     navigator.clipboard.writeText(link);
-    toast.success('Lien copié!');
+    toast.success(t('affiliateDashboard.lienCopie'));
   };
 
   const fc = useFormatCurrency();
@@ -100,7 +102,7 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'approved':
-        return <Badge className="bg-[#ff4000]">Approuvé</Badge>;
+        return <Badge className="bg-[#ff4000]">{t('affiliateDashboard.approuve')}</Badge>;
       case 'pending':
         return <Badge variant="secondary">En attente</Badge>;
       case 'suspended':
@@ -129,7 +131,7 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="font-bold text-foreground">Dashboard Affilié</h2>
+              <h2 className="font-bold text-foreground">{t('affiliateDashboard.dashboardAffilie')}</h2>
               <p className="text-sm text-muted-foreground">
                 Code: <span className="font-mono font-bold">{affiliate.affiliate_code}</span>
               </p>
@@ -163,7 +165,7 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
                 <Wallet className="w-5 h-5 text-[#ff4000]" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Total gagné</p>
+                <p className="text-xs text-muted-foreground">{t('affiliateDashboard.totalGagne')}</p>
                 <p className="font-bold text-foreground">
                   {formatPrice(affiliate.total_earnings)}
                 </p>
@@ -195,7 +197,7 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
                 <Users className="w-5 h-5 text-blue-500" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Référrals</p>
+                <p className="text-xs text-muted-foreground">{t('affiliateDashboard.referrals')}</p>
                 <p className="font-bold text-foreground">{affiliate.total_referrals}</p>
               </div>
             </div>
@@ -209,7 +211,7 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
                 <BarChart3 className="w-5 h-5 text-[#04439e]" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Réservations</p>
+                <p className="text-xs text-muted-foreground">{t('affiliateDashboard.reservations')}</p>
                 <p className="font-bold text-foreground">{affiliate.total_bookings}</p>
               </div>
             </div>
@@ -221,7 +223,7 @@ export function AffiliateDashboard({ onViewServices }: AffiliateDashboardProps) 
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-muted-foreground">Taux de commission</span>
+            <span className="text-sm text-muted-foreground">{t('affiliateDashboard.tauxDeCommission')}</span>
             <span className="font-bold text-primary">{affiliate.commission_rate}%</span>
           </div>
           <Progress value={affiliate.commission_rate * 10} className="h-2" />

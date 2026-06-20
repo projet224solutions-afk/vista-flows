@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Smartphone, Download, Check, Apple, Chrome, MoreVertical, Share, Plus, RefreshCw } from 'lucide-react';
@@ -12,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 
 export default function InstallMobileApp() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
   const [isIOS, setIsIOS] = useState(false);
@@ -51,22 +53,22 @@ export default function InstallMobileApp() {
 
   const handleInstallClick = async () => {
     if (isIOS && !isSafari) {
-      toast.error('Sur iPhone, l\'installation fonctionne uniquement dans Safari.');
+      toast.error(t('installMobileApp.surIphoneLInstallationFonctionne'));
       return;
     }
 
     if (!isSecureOrigin) {
-      toast.error('L\'installation nécessite HTTPS.');
+      toast.error(t('installMobileApp.lInstallationNecessiteHttps'));
       return;
     }
 
     if (isInstallable) {
       const success = await promptInstall();
       if (success) {
-        toast.success('✓ Application installée avec succès!');
+        toast.success(t('installMobileApp.applicationInstalleeAvecSucces'));
       }
     } else {
-      toast.info('Suivez les instructions ci-dessous pour installer l\'application');
+      toast.info(t('installMobileApp.suivezLesInstructionsCiDessous'));
     }
   };
 
@@ -101,8 +103,8 @@ export default function InstallMobileApp() {
                   <Check className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <p className="font-semibold text-[#ff4000]">Application déjà installée!</p>
-                  <p className="text-sm text-[#ff4000]">Vous pouvez la retrouver sur votre écran d'accueil</p>
+                  <p className="font-semibold text-[#ff4000]">{t('installMobileApp.applicationDejaInstallee')}</p>
+                  <p className="text-sm text-[#ff4000]">{t('installMobileApp.vousPouvezLaRetrouverSur')}</p>
                 </div>
               </div>
             </CardContent>
@@ -150,10 +152,10 @@ export default function InstallMobileApp() {
                         1
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900">Ouvrez le menu Chrome</p>
+                        <p className="font-medium text-gray-900">{t('installMobileApp.ouvrezLeMenuChrome')}</p>
                         <div className="flex items-center gap-2 mt-1 text-gray-600">
                           <MoreVertical className="w-4 h-4" />
-                          <span className="text-sm">Appuyez sur les 3 points en haut à droite</span>
+                          <span className="text-sm">{t('installMobileApp.appuyezSurLes3Points')}</span>
                         </div>
                       </div>
                     </div>
@@ -162,7 +164,7 @@ export default function InstallMobileApp() {
                         2
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900">Sélectionnez "Installer l'application"</p>
+                        <p className="font-medium text-gray-900">{t('installMobileApp.selectionnezInstallerLApplication')}</p>
                         <p className="text-sm text-gray-600 mt-1">
                           Ou "Ajouter à l'écran d'accueil"
                         </p>
@@ -205,7 +207,7 @@ export default function InstallMobileApp() {
                     <Apple className="w-5 h-5" />
                     Installation sur iPhone/iPad
                   </CardTitle>
-                  <CardDescription>Suivez ces étapes simples dans Safari</CardDescription>
+                  <CardDescription>{t('installMobileApp.suivezCesEtapesSimplesDans')}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {!isSafari && (
@@ -236,10 +238,10 @@ export default function InstallMobileApp() {
                         1
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900">Appuyez sur le bouton Partager</p>
+                        <p className="font-medium text-gray-900">{t('installMobileApp.appuyezSurLeBoutonPartager')}</p>
                         <div className="flex items-center gap-2 mt-1 text-gray-600">
                           <Share className="w-4 h-4" />
-                          <span className="text-sm">En bas de l'écran Safari</span>
+                          <span className="text-sm">{t('installMobileApp.enBasDeLEcran')}</span>
                         </div>
                       </div>
                     </div>
@@ -248,10 +250,10 @@ export default function InstallMobileApp() {
                         2
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900">Sélectionnez "Sur l'écran d'accueil"</p>
+                        <p className="font-medium text-gray-900">{t('installMobileApp.selectionnezSurLEcranD')}</p>
                         <div className="flex items-center gap-2 mt-1 text-gray-600">
                           <Plus className="w-4 h-4" />
-                          <span className="text-sm">Faites défiler pour trouver cette option</span>
+                          <span className="text-sm">{t('installMobileApp.faitesDefilerPourTrouverCette')}</span>
                         </div>
                       </div>
                     </div>
@@ -260,7 +262,7 @@ export default function InstallMobileApp() {
                         3
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900">Appuyez sur "Ajouter"</p>
+                        <p className="font-medium text-gray-900">{t('installMobileApp.appuyezSurAjouter')}</p>
                         <p className="text-sm text-gray-600 mt-1">
                           En haut à droite de l'écran
                         </p>
@@ -279,7 +281,7 @@ export default function InstallMobileApp() {
                     <Chrome className="w-5 h-5 text-blue-600" />
                     Installation sur ordinateur
                   </CardTitle>
-                  <CardDescription>Installez l'application sur votre bureau</CardDescription>
+                  <CardDescription>{t('installMobileApp.installezLApplicationSurVotre')}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
@@ -288,7 +290,7 @@ export default function InstallMobileApp() {
                         1
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900">Cherchez l'icône d'installation</p>
+                        <p className="font-medium text-gray-900">{t('installMobileApp.cherchezLIconeDInstallation')}</p>
                         <p className="text-sm text-gray-600 mt-1">
                           Dans la barre d'adresse de Chrome (icône +)
                         </p>
@@ -299,7 +301,7 @@ export default function InstallMobileApp() {
                         2
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900">Ou utilisez le menu Chrome</p>
+                        <p className="font-medium text-gray-900">{t('installMobileApp.ouUtilisezLeMenuChrome')}</p>
                         <p className="text-sm text-gray-600 mt-1">
                           Ôï« → "Installer 224Solutions..."
                         </p>
@@ -324,8 +326,8 @@ export default function InstallMobileApp() {
                   <Check className="w-5 h-5 text-[#ff4000]" />
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-900">Accès rapide</p>
-                  <p className="text-sm text-gray-600">Lancez l'app directement depuis votre écran d'accueil</p>
+                  <p className="font-semibold text-gray-900">{t('installMobileApp.accesRapide')}</p>
+                  <p className="text-sm text-gray-600">{t('installMobileApp.lancezLAppDirectementDepuis')}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -334,7 +336,7 @@ export default function InstallMobileApp() {
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900">Mode hors ligne</p>
-                  <p className="text-sm text-gray-600">Consultez vos courses et commandes même sans connexion</p>
+                  <p className="text-sm text-gray-600">{t('installMobileApp.consultezVosCoursesEtCommandes')}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -343,7 +345,7 @@ export default function InstallMobileApp() {
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900">Notifications</p>
-                  <p className="text-sm text-gray-600">Recevez les alertes en temps réel</p>
+                  <p className="text-sm text-gray-600">{t('installMobileApp.recevezLesAlertesEnTemps')}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -352,7 +354,7 @@ export default function InstallMobileApp() {
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900">0 Mo d'espace</p>
-                  <p className="text-sm text-gray-600">Léger, rapide, sans téléchargement lourd</p>
+                  <p className="text-sm text-gray-600">{t('installMobileApp.legerRapideSansTelechargementLourd')}</p>
                 </div>
               </div>
             </div>

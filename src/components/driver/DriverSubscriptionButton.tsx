@@ -1,4 +1,5 @@
 import { Calendar } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
 import { useDriverSubscription } from "@/hooks/useDriverSubscription";
 import { format } from "date-fns";
@@ -11,6 +12,7 @@ import {
 } from "@/components/ui/popover";
 
 export function DriverSubscriptionButton() {
+  const { t } = useTranslation();
   const { subscription, loading } = useDriverSubscription();
   const navigate = useNavigate();
 
@@ -32,7 +34,7 @@ export function DriverSubscriptionButton() {
         onClick={() => navigate('/driver-subscription')}
       >
         <Calendar className="w-3 h-3" />
-        <span className="hidden sm:inline">Aucun abonnement</span>
+        <span className="hidden sm:inline">{t('driverSubscriptionButton.aucunAbonnement')}</span>
       </Button>
     );
   }
@@ -81,7 +83,7 @@ export function DriverSubscriptionButton() {
 
           <div className="space-y-2 text-xs">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Début:</span>
+              <span className="text-muted-foreground">{t('driverSubscriptionButton.debut')}</span>
               <span className="font-medium">{formatDate(subscription.start_date)}</span>
             </div>
             <div className="flex justify-between">

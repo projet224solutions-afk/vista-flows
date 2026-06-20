@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -62,6 +63,7 @@ const RISK_COLORS = {
 };
 
 export const MLFraudDashboard: React.FC = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({
     totalAnalyses: 0,
@@ -158,7 +160,7 @@ export const MLFraudDashboard: React.FC = () => {
 
     } catch (error) {
       console.error('Error loading ML fraud dashboard:', error);
-      toast.error('Erreur lors du chargement des données');
+      toast.error(t('mLFraudDashboard.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -252,7 +254,7 @@ export const MLFraudDashboard: React.FC = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Transactions Bloquées</p>
+                <p className="text-sm text-muted-foreground">{t('mLFraudDashboard.transactionsBloquees')}</p>
                 <p className="text-3xl font-bold text-orange-500">{stats.blockedTransactions}</p>
               </div>
               <div className="p-3 bg-orange-500/10 rounded-full">
@@ -303,7 +305,7 @@ export const MLFraudDashboard: React.FC = () => {
               <Zap className="h-5 w-5" />
               Distribution des Niveaux de Risque
             </CardTitle>
-            <CardDescription>Répartition des analyses par niveau</CardDescription>
+            <CardDescription>{t('mLFraudDashboard.repartitionDesAnalysesParNiveau')}</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -336,7 +338,7 @@ export const MLFraudDashboard: React.FC = () => {
             <Clock className="h-5 w-5" />
             Analyses Récentes
           </CardTitle>
-          <CardDescription>10 dernières analyses ML effectuées</CardDescription>
+          <CardDescription>{t('mLFraudDashboard.t10DernieresAnalysesMlEffectuees')}</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -346,7 +348,7 @@ export const MLFraudDashboard: React.FC = () => {
           ) : recentAnalyses.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Aucune analyse ML enregistrée</p>
+              <p>{t('mLFraudDashboard.aucuneAnalyseMlEnregistree')}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -357,7 +359,7 @@ export const MLFraudDashboard: React.FC = () => {
                     <th className="text-left py-3 px-2">Score</th>
                     <th className="text-left py-3 px-2">Niveau</th>
                     <th className="text-left py-3 px-2">Confiance</th>
-                    <th className="text-left py-3 px-2">Modèle</th>
+                    <th className="text-left py-3 px-2">{t('mLFraudDashboard.modele')}</th>
                     <th className="text-left py-3 px-2">Flags</th>
                   </tr>
                 </thead>
@@ -426,7 +428,7 @@ export const MLFraudDashboard: React.FC = () => {
               <Brain className="h-8 w-8 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-lg">Modèle ML Actif</h3>
+              <h3 className="font-semibold text-lg">{t('mLFraudDashboard.modeleMlActif')}</h3>
               <p className="text-sm text-muted-foreground">
                 <span className="font-mono">lovable-gemini-2.5-flash-v1</span> •
                 Analyse comportementale prédictive avec extraction de features en temps réel

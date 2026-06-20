@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +28,7 @@ interface Props {
 }
 
 export default function MotoSecurityAlerts({ bureauId }: Props) {
+  const { t } = useTranslation();
   const [alerts, setAlerts] = useState<SecurityAlert[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -87,7 +89,7 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
       setAlerts(transformedAlerts);
     } catch (error: any) {
       console.error('❌ Erreur chargement alertes sécurité:', error);
-      toast.error('Erreur lors du chargement des données', {
+      toast.error(t('motoSecurityAlerts.erreurLorsDuChargementDes'), {
         description: error.message || 'Impossible de charger les alertes de sécurité'
       });
       setAlerts([]);
@@ -101,7 +103,7 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
 
     // CENTRALISÉ: Subscribe to real-time updates sur vehicles (stolen changes)
     const channel = supabase
-      .channel('stolen_vehicles_alerts')
+      .channel(`stolen_vehicles_alerts-${bureauId}`)
       .on(
         'postgres_changes',
         {
@@ -137,19 +139,17 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
   const handleResolve = async (alertId: string) => {
     try {
       // CENTRALISÉ: Utilise le RPC declare_vehicle_recovered
+      // Signature réelle du RPC : (p_recovered_by, p_recovery_location, p_recovery_notes, p_vehicle_id)
       const { data, error } = await supabase.rpc('declare_vehicle_recovered', {
-        p_vehicle_id: alertId,
-        p_bureau_id: bureauId,
-        p_recovered_by: null as any, // Sera rempli côté serveur si possible
-        p_recovery_notes: 'Résolu via interface alertes',
+        p_recovered_by: bureauId,
         p_recovery_location: null,
-        p_ip_address: null,
-        p_user_agent: navigator.userAgent
+        p_recovery_notes: 'Résolu via interface alertes',
+        p_vehicle_id: alertId,
       });
 
       if (error) throw error;
 
-      toast.success('Véhicule marqué comme récupéré avec succès');
+      toast.success(t('motoSecurityAlerts.vehiculeMarqueCommeRecupereAvec'));
       loadAlerts();
     } catch (error: any) {
       console.error('Erreur résolution alerte:', error);
@@ -196,7 +196,7 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
           {alerts.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <CheckCircle2 className="w-12 h-12 mx-auto mb-2 text-[#ff4000]" />
-              <p>Aucune alerte de sécurité active</p>
+              <p>{t('motoSecurityAlerts.aucuneAlerteDeSecuriteActive')}</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -204,7 +204,7 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
                 <Alert key={alert.id} variant="destructive" className="bg-orange-50 dark:bg-[#ff4000]">
                   <AlertTriangle className="h-4 w-4" />
                   <AlertTitle className="flex items-center justify-between">
-                    <span>MOTO VOLÉE DÉTECTÉE</span>
+                    <span>{t('motoSecurityAlerts.motoVoleeDetectee')}</span>
                     {getStatusBadge(alert.status)}
                   </AlertTitle>
                   <AlertDescription>
@@ -214,13 +214,13 @@ export default function MotoSecurityAlerts({ bureauId }: Props) {
                           <strong>Plaque:</strong> {alert.plate_number}
                         </div>
                         <div>
-                          <strong>Châssis:</strong> {alert.serial_number}
+                          <strong>{t('motoSecurityAlerts.chassis')}</strong> {alert.serial_number}
                         </div>
                         <div>
                           <strong>Marque:</strong> {alert.brand} {alert.model}
                         </div>
                         <div>
-                          <strong>Propriétaire:</strong> {alert.owner_name}
+                          <strong>{t('motoSecurityAlerts.proprietaire')}</strong> {alert.owner_name}
                         </div>
                       </div>
 

@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Money } from '@/components/Money';
 import { BarChart3, TrendingUp, Users, Package, DollarSign } from 'lucide-react';
 import type { AgentStats } from '@/hooks/useAgentStats';
@@ -14,6 +15,7 @@ interface ViewReportsSectionProps {
 }
 
 export function ViewReportsSection({ agentId, agentData, agentStats }: ViewReportsSectionProps) {
+  const { t } = useTranslation();
   const usersThisMonth = agentStats?.usersThisMonth ?? 0;
   const commissionsThisMonth = agentStats?.commissionsThisMonth ?? 0;
   const totalCommissions = agentData.total_commissions_earned ?? agentStats?.totalCommissions ?? 0;
@@ -37,11 +39,11 @@ export function ViewReportsSection({ agentId, agentData, agentStats }: ViewRepor
               <CardContent className="pt-6">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Utilisateurs Créés</span>
+                    <span className="text-sm text-muted-foreground">{t('viewReportsSection.utilisateursCrees')}</span>
                     <Users className="w-4 h-4 text-blue-500" />
                   </div>
                   <div className="text-2xl font-bold">{totalUsersCreated}</div>
-                  <p className="text-xs text-muted-foreground">Total depuis le début</p>
+                  <p className="text-xs text-muted-foreground">{t('viewReportsSection.totalDepuisLeDebut')}</p>
                 </div>
               </CardContent>
             </Card>
@@ -54,7 +56,7 @@ export function ViewReportsSection({ agentId, agentData, agentStats }: ViewRepor
                     <TrendingUp className="w-4 h-4 text-[#ff4000]" />
                   </div>
                   <div className="text-2xl font-bold">{agentData.commission_rate}%</div>
-                  <p className="text-xs text-muted-foreground">Taux appliqué</p>
+                  <p className="text-xs text-muted-foreground">{t('viewReportsSection.tauxApplique')}</p>
                 </div>
               </CardContent>
             </Card>
@@ -69,7 +71,7 @@ export function ViewReportsSection({ agentId, agentData, agentStats }: ViewRepor
                   <div className="text-2xl font-bold">
                     {totalCommissions.toLocaleString()}
                   </div>
-                  <p className="text-xs text-muted-foreground">GNF gagnés</p>
+                  <p className="text-xs text-muted-foreground">{t('viewReportsSection.gnfGagnes')}</p>
                 </div>
               </CardContent>
             </Card>
@@ -97,7 +99,7 @@ export function ViewReportsSection({ agentId, agentData, agentStats }: ViewRepor
               <div className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
-                    <span>Utilisateurs créés ce mois</span>
+                    <span>{t('viewReportsSection.utilisateursCreesCeMois')}</span>
                     <span className="font-semibold">{usersThisMonth}</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">

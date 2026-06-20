@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * COMPOSANT GESTION ALERTES SÉCURITÉ MOTOS
  * Interface pour gérer les alertes de motos volées
@@ -6,6 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -86,6 +86,7 @@ export default function MotoSecurityAlerts({
     _isPDG = false,
     className
 }: MotoSecurityAlertsProps) {
+    const { t } = useTranslation();
     const [alerts, setAlerts] = useState<MotoAlert[]>([]);
     const [stats, setStats] = useState<SecurityStats | null>(null);
     const [loading, setLoading] = useState(true);
@@ -112,11 +113,11 @@ export default function MotoSecurityAlerts({
             if (result.success) {
                 setAlerts(result.alerts || []);
             } else {
-                toast.error('Erreur lors du chargement des alertes');
+                toast.error(t('motoSecurityAlerts.erreurLorsDuChargementDes'));
             }
         } catch (error) {
             console.error('❌ Erreur chargement alertes:', error);
-            toast.error('Erreur de connexion');
+            toast.error(t('motoSecurityAlerts.erreurDeConnexion'));
         } finally {
             setLoading(false);
         }
@@ -156,15 +157,15 @@ export default function MotoSecurityAlerts({
             const result = await response.json();
 
             if (result.success) {
-                toast.success('✅ Alerte résolue avec succès');
+                toast.success(t('motoSecurityAlerts.alerteResolueAvecSucces'));
                 loadAlerts();
                 loadStats();
             } else {
-                toast.error('Erreur lors de la résolution');
+                toast.error(t('motoSecurityAlerts.erreurLorsDeLaResolution'));
             }
         } catch (error) {
             console.error('❌ Erreur résolution alerte:', error);
-            toast.error('Erreur de connexion');
+            toast.error(t('motoSecurityAlerts.erreurDeConnexion'));
         } finally {
             setResolving(null);
         }
@@ -230,7 +231,7 @@ export default function MotoSecurityAlerts({
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-[#ff4000]">Résolues</p>
+                                    <p className="text-sm font-medium text-[#ff4000]">{t('motoSecurityAlerts.resolues')}</p>
                                     <p className="text-2xl font-bold text-[#ff4000]">{stats.alertes_resolues}</p>
                                 </div>
                                 <CheckCircle className="w-8 h-8 text-[#ff4000]" />
@@ -294,7 +295,7 @@ export default function MotoSecurityAlerts({
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                                 <input
                                     type="text"
-                                    placeholder="Rechercher par numéro de série, ville..."
+                                    placeholder={t('motoSecurityAlerts.rechercherParNumeroDeSerie')}
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg w-full"
@@ -322,12 +323,12 @@ export default function MotoSecurityAlerts({
                     {loading ? (
                         <div className="flex items-center justify-center py-8">
                             <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-                            <span className="ml-2">Chargement des alertes...</span>
+                            <span className="ml-2">{t('motoSecurityAlerts.chargementDesAlertes')}</span>
                         </div>
                     ) : filteredAlerts.length === 0 ? (
                         <div className="text-center py-8">
                             <Shield className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                            <p className="text-gray-600">Aucune alerte trouvée</p>
+                            <p className="text-gray-600">{t('motoSecurityAlerts.aucuneAlerteTrouvee')}</p>
                         </div>
                     ) : (
                         <div className="space-y-4">

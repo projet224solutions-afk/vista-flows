@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +30,7 @@ interface Shipment {
 }
 
 export function ShipmentManager() {
+  const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const { vendorId, loading: vendorLoading } = useCurrentVendor();
   const [shipments, setShipments] = useState<Shipment[]>([]);
@@ -87,7 +89,7 @@ export function ShipmentManager() {
       setShipments(shipmentsData as any || []);
     } catch (error) {
       console.error('Error loading vendor shipments:', error);
-      toast.error('Erreur lors du chargement');
+      toast.error(t('shipmentManager.erreurLorsDuChargement'));
     } finally {
       setLoading(false);
     }
@@ -163,7 +165,7 @@ export function ShipmentManager() {
     return (
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">Nouvelle expédition</h2>
+          <h2 className="text-2xl font-bold">{t('shipmentManager.nouvelleExpedition')}</h2>
           <Button variant="outline" onClick={handleBackToList}>
             Retour à la liste
           </Button>
@@ -218,7 +220,7 @@ export function ShipmentManager() {
                 <Package className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total expéditions</p>
+                <p className="text-sm text-muted-foreground">{t('shipmentManager.totalExpeditions')}</p>
                 <p className="text-2xl font-bold">{shipments.length}</p>
               </div>
             </div>
@@ -248,7 +250,7 @@ export function ShipmentManager() {
                 <Package className="h-5 w-5 text-[#ff4000]" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Livrées</p>
+                <p className="text-sm text-muted-foreground">{t('shipmentManager.livrees')}</p>
                 <p className="text-2xl font-bold">
                   {shipments.filter(s => s.status === 'delivered').length}
                 </p>
@@ -285,7 +287,7 @@ export function ShipmentManager() {
             {shipments.length === 0 ? (
               <div className="text-center py-12">
                 <Package className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-30" />
-                <p className="text-muted-foreground mb-4">Aucune expédition créée</p>
+                <p className="text-muted-foreground mb-4">{t('shipmentManager.aucuneExpeditionCreee')}</p>
                 <Button
                   onClick={handleNewShipment}
                   className="bg-orange-600 hover:bg-orange-700 shadow-lg shadow-orange-600/40"

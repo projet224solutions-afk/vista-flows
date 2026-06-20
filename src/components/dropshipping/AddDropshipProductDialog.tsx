@@ -3,6 +3,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
@@ -37,6 +38,7 @@ export function AddDropshipProductDialog({
   suppliers,
   onAdd
 }: AddDropshipProductDialogProps) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     supplier_id: '',
@@ -54,7 +56,7 @@ export function AddDropshipProductDialog({
     e.preventDefault();
 
     if (!formData.supplier_id || !formData.product_name || !formData.supplier_price || !formData.selling_price) {
-      toast.error('Veuillez remplir tous les champs obligatoires');
+      toast.error(t('addDropshipProductDialog.veuillezRemplirTousLesChamps'));
       return;
     }
 
@@ -113,7 +115,7 @@ export function AddDropshipProductDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Ajouter un Produit Dropshipping</DialogTitle>
+          <DialogTitle>{t('addDropshipProductDialog.ajouterUnProduitDropshipping')}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -125,7 +127,7 @@ export function AddDropshipProductDialog({
               onValueChange={(value) => setFormData(prev => ({ ...prev, supplier_id: value }))}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Sélectionner un fournisseur" />
+                <SelectValue placeholder={t('addDropshipProductDialog.selectionnerUnFournisseur')} />
               </SelectTrigger>
               <SelectContent>
                 {suppliers.map((supplier) => (
@@ -139,12 +141,12 @@ export function AddDropshipProductDialog({
 
           {/* Infos produit */}
           <div className="space-y-2">
-            <Label htmlFor="product_name">Nom du produit *</Label>
+            <Label htmlFor="product_name">{t('addDropshipProductDialog.nomDuProduit')}</Label>
             <Input
               id="product_name"
               value={formData.product_name}
               onChange={(e) => setFormData(prev => ({ ...prev, product_name: e.target.value }))}
-              placeholder="Ex: Écouteurs Bluetooth Sans Fil"
+              placeholder={t('addDropshipProductDialog.exEcouteursBluetoothSansFil')}
             />
           </div>
 
@@ -154,13 +156,13 @@ export function AddDropshipProductDialog({
               id="description"
               value={formData.product_description}
               onChange={(e) => setFormData(prev => ({ ...prev, product_description: e.target.value }))}
-              placeholder="Description du produit..."
+              placeholder={t('addDropshipProductDialog.descriptionDuProduit')}
               rows={3}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="supplier_url">URL du produit chez le fournisseur</Label>
+            <Label htmlFor="supplier_url">{t('addDropshipProductDialog.urlDuProduitChezLe')}</Label>
             <Input
               id="supplier_url"
               type="url"
@@ -185,7 +187,7 @@ export function AddDropshipProductDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="selling_price">Prix de vente (GNF) *</Label>
+              <Label htmlFor="selling_price">{t('addDropshipProductDialog.prixDeVenteGnf')}</Label>
               <Input
                 id="selling_price"
                 type="number"
@@ -205,7 +207,7 @@ export function AddDropshipProductDialog({
                 : 'bg-orange-50 border-orange-200 dark:bg-orange-950'
             } border`}>
               <p className="text-sm">
-                <strong>Marge estimée:</strong>{' '}
+                <strong>{t('addDropshipProductDialog.margeEstimee')}</strong>{' '}
                 <span className={parseFloat(marginValue) > 20 ? 'text-[#ff4000]' : 'text-orange-600'}>
                   {marginValue}%
                 </span>
@@ -215,19 +217,19 @@ export function AddDropshipProductDialog({
 
           {/* Catégorie */}
           <div className="space-y-2">
-            <Label htmlFor="category">Catégorie</Label>
+            <Label htmlFor="category">{t('addDropshipProductDialog.categorie')}</Label>
             <Input
               id="category"
               value={formData.category}
               onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-              placeholder="Ex: Électronique, Mode, Beauté..."
+              placeholder={t('addDropshipProductDialog.exElectroniqueModeBeaute')}
             />
           </div>
 
           {/* Délais de livraison */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="delivery_min">Livraison min (jours)</Label>
+              <Label htmlFor="delivery_min">{t('addDropshipProductDialog.livraisonMinJours')}</Label>
               <Input
                 id="delivery_min"
                 type="number"
@@ -237,7 +239,7 @@ export function AddDropshipProductDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="delivery_max">Livraison max (jours)</Label>
+              <Label htmlFor="delivery_max">{t('addDropshipProductDialog.livraisonMaxJours')}</Label>
               <Input
                 id="delivery_max"
                 type="number"

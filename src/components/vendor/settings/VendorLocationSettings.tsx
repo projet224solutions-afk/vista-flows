@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useTranslation } from '@/hooks/useTranslation';
 import { MapPin, Navigation, Save, Loader2, ChevronDown } from 'lucide-react';
 
 interface VendorLocationSettingsProps {
@@ -25,16 +26,16 @@ const GUINEA_CITIES = [
 ];
 
 const BUSINESS_TYPES = [
-  { value: 'physical', label: 'Boutique physique' },
-  { value: 'digital', label: 'En ligne uniquement' },
-  { value: 'hybrid', label: 'Physique + En ligne' },
+  { value: 'physical', labelKey: 'vendorLocation.bizPhysical' },
+  { value: 'digital', labelKey: 'vendorLocation.bizDigital' },
+  { value: 'hybrid', labelKey: 'vendorLocation.bizHybrid' },
 ];
 
 const SERVICE_TYPES = [
-  { value: 'retail', label: 'Vente au détail' },
-  { value: 'wholesale', label: 'Vente en gros' },
-  { value: 'mixed', label: 'Détail + Gros' },
-  { value: 'services', label: 'Services' },
+  { value: 'retail', labelKey: 'vendorLocation.svcRetail' },
+  { value: 'wholesale', labelKey: 'vendorLocation.svcWholesale' },
+  { value: 'mixed', labelKey: 'vendorLocation.svcMixed' },
+  { value: 'services', labelKey: 'vendorLocation.svcServices' },
 ];
 
 // Composant Select natif stylisé
@@ -72,6 +73,7 @@ function NativeSelect({
 }
 
 export default function VendorLocationSettings({ vendorId }: VendorLocationSettingsProps) {
+  const { t } = useTranslation();
   const location = useLocation();
   const [city, setCity] = useState('');
   const [neighborhood, setNeighborhood] = useState('');
@@ -84,15 +86,13 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
   const [initialLoading, setInitialLoading] = useState(true);
   const [gettingLocation, setGettingLocation] = useState(false);
 
-  const isPhysicalWorkspace = location.pathname.startsWith('/vendeur') && !location.pathname.startsWith('/vendeur-digital');
-  const isDigitalWorkspace = location.pathname.startsWith('/vendeur-digital');
-  const businessTypeOptions = BUSINESS_TYPES.map((option) => {
-    if (isPhysicalWorkspace && option.value === 'digital')
-      return { ...option, label: `${option.label} (non disponible)`, disabled: true };
-    if (isDigitalWorkspace && (option.value === 'physical' || option.value === 'hybrid'))
-      return { ...option, label: `${option.label} (non disponible)`, disabled: true };
-    return option;
-  });
+  const isDigitalVendorWorkspace = location.pathname.startsWith('/vendeur-digital');
+  const businessTypeOptions = BUSINESS_TYPES.map((option) =>
+    isDigitalVendorWorkspace && option.value === 'hybrid'
+      ? { value: option.value, label: `${t(option.labelKey)} (${t('vendorLocation.locked')})`, disabled: true }
+      : { value: option.value, label: t(option.labelKey) }
+  );
+  const serviceTypeOptions = SERVICE_TYPES.map((option) => ({ value: option.value, label: t(option.labelKey) }));
 
   const normalizedCity = city.trim().toLowerCase();
   const selectedCity = GUINEA_CITIES.find((c) => c.name.toLowerCase() === normalizedCity);
@@ -100,9 +100,14 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
 
   useEffect(() => {
     loadVendorLocation();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId]);
 
+  useEffect(() => {
+    if (isDigitalVendorWorkspace && businessType === 'hybrid') {
+      setBusinessType('digital');
+      toast.info(t('vendorLocation.hybridLockedInfo'));
+    }
+  }, [businessType, isDigitalVendorWorkspace]);
 
   const loadVendorLocation = async () => {
     try {
@@ -121,13 +126,12 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
         setAddress(data.address || '');
         setLatitude(data.latitude ? parseFloat(String(data.latitude)) : null);
         setLongitude(data.longitude ? parseFloat(String(data.longitude)) : null);
-        const loadedType = data.business_type || 'physical';
-        setBusinessType(loadedType);
+        setBusinessType(data.business_type || 'physical');
         setServiceType(data.service_type || 'retail');
       }
     } catch (error) {
       console.error('Erreur chargement localisation:', error);
-      toast.error('Erreur lors du chargement des données');
+      toast.error(t('vendorLocation.loadError'));
     } finally {
       setInitialLoading(false);
     }
@@ -149,11 +153,11 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
       const formatted = data?.results?.[0]?.formatted_address;
       if (formatted) {
         setAddress(formatted);
-        toast.success('Adresse détectée automatiquement');
+        toast.success(t('vendorLocation.addressDetected'));
       }
     } catch (err) {
       console.error('Erreur reverse geocode:', err);
-      toast.error("Impossible de récupérer l'adresse automatiquement");
+      toast.error(t('vendorLocation.addressDetectError'));
     }
   };
 
@@ -163,17 +167,17 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
   // Fonction de récupération GPS avec retry et fallback
   const getCurrentLocation = async () => {
     if (!navigator.geolocation) {
-      toast.error("La géolocalisation n'est pas supportée par votre navigateur");
+      toast.error(t('vendorLocation.geoUnsupported'));
       return;
     }
 
     if (!window.isSecureContext) {
-      toast.error("La géolocalisation nécessite une connexion sécurisée (HTTPS)");
+      toast.error(t('vendorLocation.geoNeedsHttps'));
       return;
     }
 
     setGettingLocation(true);
-    setGpsProgress('Demande de permission...');
+    setGpsProgress(t('vendorLocation.gpsPermission'));
     setRetryCount(0);
 
     // Fonction pour tenter la géolocalisation
@@ -181,8 +185,8 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
       return new Promise((resolve, reject) => {
         setGpsProgress(
           highAccuracy
-            ? `Recherche GPS haute précision... (essai ${attempt}/3)`
-            : 'Utilisation position approximative...'
+            ? `${t('vendorLocation.gpsSearching')} (${attempt}/3)`
+            : t('vendorLocation.gpsApprox')
         );
 
         navigator.geolocation.getCurrentPosition(
@@ -204,14 +208,14 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
       try {
         setRetryCount(1);
         position = await attemptGeolocation(true, 20000, 1);
-      } catch (_e1) {
+      } catch (e1) {
         console.log('GPS essai 1 échoué, réessai...');
 
         // Essai 2: Haute précision, 15 secondes
         try {
           setRetryCount(2);
           position = await attemptGeolocation(true, 15000, 2);
-        } catch (_e2) {
+        } catch (e2) {
           console.log('GPS essai 2 échoué, tentative basse précision...');
 
           // Essai 3: Basse précision (fallback réseau/WiFi), 10 secondes
@@ -235,12 +239,12 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
         setGpsProgress('');
 
         if (accuracy > 100) {
-          toast.success(`Position récupérée (précision: ~${Math.round(accuracy)}m)`, {
-            description: 'Position approximative - vous pouvez affiner manuellement'
+          toast.success(`${t('vendorLocation.positionFound')} (~${Math.round(accuracy)}m)`, {
+            description: t('vendorLocation.positionApproxDesc')
           });
         } else {
-          toast.success('Position GPS précise récupérée !', {
-            description: `Précision: ~${Math.round(accuracy)}m`
+          toast.success(t('vendorLocation.positionPrecise'), {
+            description: `${t('vendorLocation.accuracy')} ~${Math.round(accuracy)}m`
           });
         }
 
@@ -253,20 +257,20 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
       setGpsProgress('');
 
       if (code === 1) {
-        toast.error("Permission refusée", {
-          description: "Autorisez la localisation dans les paramètres du navigateur puis rechargez la page"
+        toast.error(t('vendorLocation.permDenied'), {
+          description: t('vendorLocation.permDeniedDesc')
         });
       } else if (code === 2) {
-        toast.error("Position indisponible", {
-          description: "Activez le GPS/localisation de l'appareil et réessayez"
+        toast.error(t('vendorLocation.posUnavailable'), {
+          description: t('vendorLocation.posUnavailableDesc')
         });
       } else if (code === 3) {
-        toast.error("Délai dépassé après 3 tentatives", {
-          description: "Saisissez les coordonnées manuellement ou déplacez-vous vers un endroit avec meilleur signal"
+        toast.error(t('vendorLocation.timeout'), {
+          description: t('vendorLocation.timeoutDesc')
         });
       } else {
-        toast.error("Erreur de géolocalisation", {
-          description: "Vérifiez les permissions et réessayez"
+        toast.error(t('vendorLocation.geoError'), {
+          description: t('vendorLocation.geoErrorDesc')
         });
       }
     } finally {
@@ -280,13 +284,17 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
     e.preventDefault();
 
     if (!city) {
-      toast.error('Veuillez sélectionner une ville');
+      toast.error(t('vendorLocation.selectCity'));
       return;
     }
 
     setLoading(true);
 
     try {
+      const finalBusinessType = isDigitalVendorWorkspace && businessType === 'hybrid'
+        ? 'digital'
+        : businessType;
+
       const { error } = await supabase
         .from('vendors')
         .update({
@@ -295,17 +303,17 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
           address,
           latitude,
           longitude,
-          business_type: businessType,
+          business_type: finalBusinessType,
           service_type: serviceType
         })
         .eq('id', vendorId);
 
       if (error) throw error;
 
-      toast.success('Localisation mise à jour avec succès');
+      toast.success(t('vendorLocation.updateSuccess'));
     } catch (error) {
       console.error('Erreur mise à jour localisation:', error);
-      toast.error('Erreur lors de la mise à jour');
+      toast.error(t('vendorLocation.updateError'));
     } finally {
       setLoading(false);
     }
@@ -326,23 +334,23 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <MapPin className="w-5 h-5" />
-          Localisation & Type d'activité
+          {t('vendorLocation.title')}
         </CardTitle>
         <CardDescription>
-          Configurez votre adresse pour apparaître dans les recherches à proximité
+          {t('vendorLocation.subtitle')}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Ville */}
           <div className="space-y-2">
-            <Label htmlFor="city">Ville *</Label>
+            <Label htmlFor="city">{t('vendorLocation.cityLabel')}</Label>
             <Input
               id="city"
               list="guinea-cities"
               value={city}
               onChange={(e) => handleCityChange(e.target.value)}
-              placeholder="Tapez ou sélectionnez une ville"
+              placeholder={t('vendorLocation.cityPlaceholder')}
               autoComplete="off"
             />
             <datalist id="guinea-cities">
@@ -354,13 +362,13 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
 
           {/* Quartier */}
           <div className="space-y-2">
-            <Label htmlFor="neighborhood">Quartier</Label>
+            <Label htmlFor="neighborhood">{t('vendorLocation.neighborhood')}</Label>
             <Input
               id="neighborhood"
               list="guinea-neighborhoods"
               value={neighborhood}
               onChange={(e) => setNeighborhood(e.target.value)}
-              placeholder={city ? "Tapez ou sélectionnez un quartier" : "Choisissez d'abord une ville (ou tapez un quartier)"}
+              placeholder={city ? t('vendorLocation.neighborhoodPlaceholder') : t('vendorLocation.neighborhoodPlaceholderNoCity')}
               autoComplete="off"
             />
             <datalist id="guinea-neighborhoods">
@@ -370,25 +378,25 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
             </datalist>
             {city && neighborhoodOptions.length > 0 && (
               <p className="text-xs text-muted-foreground">
-                {neighborhoodOptions.length} quartier(s) disponible(s) pour {city}
+                {neighborhoodOptions.length} {t('vendorLocation.neighborhoodsAvailable')} {city}
               </p>
             )}
           </div>
 
           {/* Adresse complète */}
           <div className="space-y-2">
-            <Label htmlFor="address">Adresse complète (optionnel)</Label>
+            <Label htmlFor="address">{t('vendorLocation.addressLabel')}</Label>
             <Input
               id="address"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              placeholder="Ex: Avenue de la République, en face du marché"
+              placeholder={t('vendorLocation.addressPlaceholder')}
             />
           </div>
 
           {/* GPS */}
           <div className="space-y-2">
-            <Label>Coordonnées GPS</Label>
+            <Label>{t('vendorLocation.gpsCoords')}</Label>
             <Button
               type="button"
               variant="outline"
@@ -400,16 +408,15 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
                 <div className="flex flex-col items-center gap-1">
                   <div className="flex items-center gap-2">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>{gpsProgress || 'Récupération en cours...'}</span>
+                    <span>{gpsProgress || t('vendorLocation.fetching')}</span>
                   </div>
                   {retryCount > 0 && (
                     <div className="flex gap-1 mt-1">
                       {[1, 2, 3].map((i) => (
                         <div
                           key={i}
-                          className={`w-2 h-2 rounded-full transition-colors ${
-                            i <= retryCount ? 'bg-primary' : 'bg-muted'
-                          }`}
+                          className={`w-2 h-2 rounded-full transition-colors ${i <= retryCount ? 'bg-primary' : 'bg-muted'
+                            }`}
                         />
                       ))}
                     </div>
@@ -418,14 +425,14 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
               ) : (
                 <>
                   <Navigation className="w-4 h-4 mr-2" />
-                  Utiliser ma position actuelle
+                  {t('vendorLocation.useMyPosition')}
                 </>
               )}
             </Button>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="latitude">Latitude (optionnel)</Label>
+                <Label htmlFor="latitude">{t('vendorLocation.latitude')}</Label>
                 <Input
                   id="latitude"
                   type="number"
@@ -440,7 +447,7 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="longitude">Longitude (optionnel)</Label>
+                <Label htmlFor="longitude">{t('vendorLocation.longitude')}</Label>
                 <Input
                   id="longitude"
                   type="number"
@@ -458,7 +465,7 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
 
             {latitude && longitude && (
               <div className="p-3 bg-muted rounded-md">
-                <p className="text-sm text-foreground font-medium">📍 Position enregistrée</p>
+                <p className="text-sm text-foreground font-medium">📍 {t('vendorLocation.positionSaved')}</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Lat: {latitude.toFixed(6)}, Lng: {longitude.toFixed(6)}
                 </p>
@@ -466,29 +473,34 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
             )}
 
             <p className="text-xs text-muted-foreground">
-              Si la position ne se récupère pas, autorisez la localisation dans le navigateur (ou saisissez la latitude/longitude).
+              {t('vendorLocation.gpsHint')}
             </p>
           </div>
 
           {/* Type d'activité */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="businessType">Type de commerce</Label>
+              <Label htmlFor="businessType">{t('vendorLocation.businessTypeLabel')}</Label>
               <NativeSelect
                 value={businessType}
                 onChange={setBusinessType}
                 options={businessTypeOptions}
-                placeholder="Sélectionnez un type"
+                placeholder={t('vendorLocation.selectType')}
               />
+              {isDigitalVendorWorkspace && (
+                <p className="text-xs text-muted-foreground">
+                  {t('vendorLocation.hybridLockedHint')}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="serviceType">Type de vente</Label>
+              <Label htmlFor="serviceType">{t('vendorLocation.serviceTypeLabel')}</Label>
               <NativeSelect
                 value={serviceType}
                 onChange={setServiceType}
-                options={SERVICE_TYPES}
-                placeholder="Sélectionnez un type"
+                options={serviceTypeOptions}
+                placeholder={t('vendorLocation.selectType')}
               />
             </div>
           </div>
@@ -498,12 +510,12 @@ export default function VendorLocationSettings({ vendorId }: VendorLocationSetti
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Enregistrement...
+                {t('vendorLocation.saving')}
               </>
             ) : (
               <>
                 <Save className="w-4 h-4 mr-2" />
-                Enregistrer la localisation
+                {t('vendorLocation.saveLocation')}
               </>
             )}
           </Button>

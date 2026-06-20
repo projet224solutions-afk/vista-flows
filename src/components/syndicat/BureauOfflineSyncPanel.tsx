@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +32,7 @@ interface Props {
 }
 
 export default function BureauOfflineSyncPanel({ bureauId }: Props) {
+    const { t } = useTranslation();
     const {
         isOnline,
         isSyncing,
@@ -129,11 +131,11 @@ export default function BureauOfflineSyncPanel({ bureauId }: Props) {
                             </div>
                             <div className="text-center p-3 bg-white rounded-lg shadow-sm">
                                 <div className="text-2xl font-bold text-[#ff4000]">{syncStats.synced}</div>
-                                <div className="text-sm text-gray-600">Synchronisés</div>
+                                <div className="text-sm text-gray-600">{t('bureauOfflineSyncPanel.synchronises')}</div>
                             </div>
                             <div className="text-center p-3 bg-white rounded-lg shadow-sm">
                                 <div className="text-2xl font-bold text-[#ff4000]">{syncStats.failed}</div>
-                                <div className="text-sm text-gray-600">Échoués</div>
+                                <div className="text-sm text-gray-600">{t('bureauOfflineSyncPanel.echoues')}</div>
                             </div>
                         </div>
 
@@ -156,7 +158,7 @@ export default function BureauOfflineSyncPanel({ bureauId }: Props) {
                             <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
                                 <div className="flex items-center gap-2 text-[#ff4000]">
                                     <CheckCircle className="w-4 h-4" />
-                                    <span className="font-medium">Dernière synchronisation</span>
+                                    <span className="font-medium">{t('bureauOfflineSyncPanel.derniereSynchronisation')}</span>
                                 </div>
                                 <div className="text-sm text-[#ff4000] mt-1">
                                     {lastSyncTime.toLocaleString('fr-FR')}
@@ -190,7 +192,7 @@ export default function BureauOfflineSyncPanel({ bureauId }: Props) {
                     </TabsContent>
 
                     <TabsContent value="history" className="space-y-4">
-                        <h3 className="font-semibold text-gray-800">Activité récente</h3>
+                        <h3 className="font-semibold text-gray-800">{t('bureauOfflineSyncPanel.activiteRecente')}</h3>
                         {syncHistory && Object.keys(syncHistory.by_type).length > 0 ? (
                             <div className="space-y-2">
                                 {Object.entries(syncHistory.by_type).map(([type, stats]: [string, any]) => (
@@ -259,10 +261,10 @@ export default function BureauOfflineSyncPanel({ bureauId }: Props) {
                         <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                             <h4 className="font-medium text-blue-900 mb-2">💡 Fonctionnement hors ligne</h4>
                             <ul className="text-sm text-blue-800 space-y-1">
-                                <li>✓ Enregistrement de motos</li>
-                                <li>✓ Mise à jour des membres</li>
-                                <li>✓ Alertes de sécurité</li>
-                                <li>✓ Consultation de l'historique local</li>
+                                <li>{t('bureauOfflineSyncPanel.enregistrementDeMotos')}</li>
+                                <li>{t('bureauOfflineSyncPanel.miseAJourDesMembres')}</li>
+                                <li>{t('bureauOfflineSyncPanel.alertesDeSecurite')}</li>
+                                <li>{t('bureauOfflineSyncPanel.consultationDeLHistoriqueLocal')}</li>
                             </ul>
                         </div>
                     </TabsContent>

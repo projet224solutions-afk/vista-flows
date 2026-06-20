@@ -155,6 +155,7 @@ function useRecentOrders(userId: string | undefined) {
 // ============================================================================
 
 function OfflineState() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-6">
       <Card className="max-w-md w-full">
@@ -173,7 +174,7 @@ function OfflineState() {
           <Button
             onClick={() => window.location.reload()}
             className="w-full"
-            aria-label="Réessayer le chargement"
+            aria-label={t('vendeurDashboard.reessayerLeChargement')}
           >
             Réessayer
           </Button>
@@ -184,11 +185,12 @@ function OfflineState() {
 }
 
 function VendorMissingState({ onGoHome }: { onGoHome: () => void }) {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-6">
       <Card className="max-w-md w-full">
         <CardHeader>
-          <CardTitle>Accès vendeur indisponible</CardTitle>
+          <CardTitle>{t('vendeurDashboard.accesVendeurIndisponible')}</CardTitle>
           <CardDescription>
             Ce compte n'est pas rattaché à une boutique vendeur.
           </CardDescription>
@@ -232,7 +234,7 @@ function ErrorState({
               onClick={onReload}
               variant="outline"
               className="w-full"
-              aria-label="Recharger la page"
+              aria-label={t('vendeurDashboard.rechargerLaPage')}
             >
               {t('common.reloadPage')}
             </Button>
@@ -370,7 +372,7 @@ export default function VendeurDashboard() {
   if (loadingTimedOut) {
     return (
       <DataLoadTimeoutState
-        title="Impossible de charger les donn├®es vendeur"
+        title={t('vendeurDashboard.impossibleDeChargerLesDonn')}
         description="Le chargement a d├®pass├® le d├®lai attendu. V├®rifiez votre connexion puis r├®essayez."
         onRetry={handleRetryAfterTimeout}
         onReload={handleReload}
@@ -440,7 +442,7 @@ export default function VendeurDashboard() {
           <main
             className="flex-1 p-2 sm:p-3 md:p-6 overflow-x-auto overflow-y-auto pt-4 pb-28 lg:pb-12 w-full max-w-full"
             role="main"
-            aria-label="Contenu principal du dashboard vendeur"
+            aria-label={t('vendeurDashboard.contenuPrincipalDuDashboardVendeur')}
           >
             <VendorRoutes
               recentOrders={recentOrders}

@@ -55,22 +55,15 @@ export const AutoTranslatedMessageBubble: React.FC<AutoTranslatedMessageBubblePr
         return;
       }
 
-      // Détecter la langue du message
-      const detectedLang = translationService.detectLanguage(message.content);
-
-      // Si même langue, pas besoin de traduire
-      if (detectedLang === userLanguage) {
-        setDisplayContent(message.content);
-        setIsTranslated(false);
-        return;
-      }
-
-      // Lancer la traduction
+      // On NE court-circuite PAS avec l'heuristique client (peu fiable sur les
+      // messages courts/sans accents). On laisse le backend détecter et décider :
+      // il renvoie wasTranslated=false (sans appeler OpenAI) si c'est déjà la
+      // bonne langue. Résultat mis en cache + persisté → pas de re-appel.
       setIsTranslating(true);
       try {
         const result = await translationService.translateMessage({
           content: message.content,
-          sourceLanguage: detectedLang,
+          sourceLanguage: undefined,
           targetLanguage: userLanguage,
           messageId: message.id,
           context: 'general'

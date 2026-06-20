@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -64,6 +65,7 @@ const priorityColors: Record<TicketPriority, string> = {
 };
 
 export function SupportTicketsUniversal() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -203,7 +205,7 @@ export function SupportTicketsUniversal() {
           <Headphones className="w-5 h-5 text-primary" />
           <div>
             <h2 className="text-lg font-semibold">Support Technique</h2>
-            <p className="text-sm text-muted-foreground">Contactez notre équipe d'assistance</p>
+            <p className="text-sm text-muted-foreground">{t('supportTicketsUniversal.contactezNotreEquipeDAssistance')}</p>
           </div>
         </div>
         <Button size="sm" onClick={() => { setShowForm(true); setSelectedTicket(null); }}>
@@ -220,11 +222,11 @@ export function SupportTicketsUniversal() {
               <SelectValue placeholder="Filtrer par statut" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous les tickets</SelectItem>
+              <SelectItem value="all">{t('supportTicketsUniversal.tousLesTickets')}</SelectItem>
               <SelectItem value="open">Ouverts</SelectItem>
               <SelectItem value="in_progress">En cours</SelectItem>
-              <SelectItem value="resolved">Résolus</SelectItem>
-              <SelectItem value="closed">Fermés</SelectItem>
+              <SelectItem value="resolved">{t('supportTicketsUniversal.resolus')}</SelectItem>
+              <SelectItem value="closed">{t('supportTicketsUniversal.fermes')}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -233,7 +235,7 @@ export function SupportTicketsUniversal() {
               {tickets?.length === 0 && (
                 <div className="text-center py-10 text-muted-foreground">
                   <TicketIcon className="w-10 h-10 mx-auto mb-2 opacity-40" />
-                  <p className="text-sm">Aucun ticket trouvé</p>
+                  <p className="text-sm">{t('supportTicketsUniversal.aucunTicketTrouve')}</p>
                 </div>
               )}
               {tickets?.map((ticket) => (
@@ -280,8 +282,8 @@ export function SupportTicketsUniversal() {
           {showForm ? (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Nouveau ticket de support</CardTitle>
-                <CardDescription>Décrivez votre problème — notre équipe vous répondra rapidement</CardDescription>
+                <CardTitle className="text-base">{t('supportTicketsUniversal.nouveauTicketDeSupport')}</CardTitle>
+                <CardDescription>{t('supportTicketsUniversal.decrivezVotreProblemeNotreEquipe')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-1.5">
@@ -289,7 +291,7 @@ export function SupportTicketsUniversal() {
                   <Input
                     value={form.subject}
                     onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                    placeholder="Résumé de votre demande"
+                    placeholder={t('supportTicketsUniversal.resumeDeVotreDemande')}
                   />
                 </div>
 
@@ -298,29 +300,29 @@ export function SupportTicketsUniversal() {
                   <Textarea
                     value={form.description}
                     onChange={(e) => setForm({ ...form, description: e.target.value })}
-                    placeholder="Décrivez votre problème en détail..."
+                    placeholder={t('supportTicketsUniversal.decrivezVotreProblemeEnDetail')}
                     rows={5}
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium">Catégorie</label>
+                    <label className="text-sm font-medium">{t('supportTicketsUniversal.categorie')}</label>
                     <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="general">Général</SelectItem>
+                        <SelectItem value="general">{t('supportTicketsUniversal.general')}</SelectItem>
                         <SelectItem value="technical">Technique</SelectItem>
                         <SelectItem value="billing">Facturation</SelectItem>
                         <SelectItem value="account">Compte</SelectItem>
-                        <SelectItem value="payment">Paiement</SelectItem>
-                        <SelectItem value="delivery">Livraison</SelectItem>
+                        <SelectItem value="payment">{t('supportTicketsUniversal.paiement')}</SelectItem>
+                        <SelectItem value="delivery">{t('supportTicketsUniversal.livraison')}</SelectItem>
                         <SelectItem value="other">Autre</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-sm font-medium">Priorité</label>
+                    <label className="text-sm font-medium">{t('supportTicketsUniversal.priorite')}</label>
                     <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v as TicketPriority })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -338,7 +340,7 @@ export function SupportTicketsUniversal() {
                     {createMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                     Envoyer la demande
                   </Button>
-                  <Button variant="outline" onClick={() => setShowForm(false)}>Annuler</Button>
+                  <Button variant="outline" onClick={() => setShowForm(false)}>{t('supportTicketsUniversal.annuler')}</Button>
                 </div>
               </CardContent>
             </Card>
@@ -413,7 +415,7 @@ export function SupportTicketsUniversal() {
                     <Input
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Votre message..."
+                      placeholder={t('supportTicketsUniversal.votreMessage')}
                       onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
                       className="flex-1"
                     />

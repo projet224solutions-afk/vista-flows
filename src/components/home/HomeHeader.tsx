@@ -15,6 +15,7 @@ import { useUserLocation } from '@/hooks/useUserLocation';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface HomeHeaderProps {
   cartCount?: number;
@@ -28,14 +29,15 @@ export function HomeHeader({
   className,
 }: HomeHeaderProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { location, loading, refresh } = useUserLocation();
   const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
 
   const handleInstall = async () => {
     const installed = await promptInstall();
     if (installed) {
-      toast.success('🎉 Application installée!', {
-        description: "Ouvrez 224Solutions depuis votre écran d'accueil"
+      toast.success(t('common.appInstalled'), {
+        description: t('common.appInstalledDesc')
       });
     }
   };

@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { toast } from 'sonner';
 import {
   Settings,
@@ -96,6 +97,7 @@ const countries = [
 ];
 
 const ClientSettings: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { uploadFile, isUploading: avatarUploading } = useStorageUpload();
@@ -163,7 +165,7 @@ const ClientSettings: React.FC = () => {
       });
     } catch (error: any) {
       console.error('Erreur chargement profil:', error);
-      toast.error('Erreur lors du chargement du profil');
+      toast.error(t('clientSettings.erreurLorsDuChargementDu'));
     } finally {
       setProfileLoading(false);
     }
@@ -185,7 +187,7 @@ const ClientSettings: React.FC = () => {
       setAddresses(data || []);
     } catch (error: any) {
       console.error('Erreur chargement adresses:', error);
-      toast.error('Erreur lors du chargement des adresses');
+      toast.error(t('clientSettings.erreurLorsDuChargementDes'));
       setAddresses([]);
     } finally {
       setAddressesLoading(false);
@@ -210,7 +212,7 @@ const ClientSettings: React.FC = () => {
 
       if (error) throw error;
 
-      toast.success('Profil mis à jour avec succès');
+      toast.success(t('clientSettings.profilMisAJourAvec'));
     } catch (error: any) {
       console.error('Erreur sauvegarde profil:', error);
       toast.error(error.message || 'Erreur lors de la sauvegarde');
@@ -247,7 +249,7 @@ const ClientSettings: React.FC = () => {
       if (updateError) throw updateError;
 
       setProfileData(prev => ({ ...prev, avatar_url: result.publicUrl! }));
-      toast.success('Photo de profil mise à jour');
+      toast.success(t('clientSettings.photoDeProfilMiseA'));
     } catch (error: any) {
       console.error('Erreur upload avatar:', error);
       toast.error(error.message || 'Erreur lors de l\'upload');
@@ -290,11 +292,11 @@ const ClientSettings: React.FC = () => {
 
     // Validation
     if (!addressForm.recipient_name.trim()) {
-      toast.error('Le nom du destinataire est requis');
+      toast.error(t('clientSettings.leNomDuDestinataireEst'));
       return;
     }
     if (!addressForm.phone.trim()) {
-      toast.error('Le numéro de téléphone est requis');
+      toast.error(t('clientSettings.leNumeroDeTelephoneEst'));
       return;
     }
     if (!addressForm.street.trim()) {
@@ -302,7 +304,7 @@ const ClientSettings: React.FC = () => {
       return;
     }
     if (!addressForm.city.trim()) {
-      toast.error('La ville est requise');
+      toast.error(t('clientSettings.laVilleEstRequise'));
       return;
     }
 
@@ -336,14 +338,14 @@ const ClientSettings: React.FC = () => {
           .eq('id', editingAddress.id);
 
         if (error) throw error;
-        toast.success('Adresse mise à jour');
+        toast.success(t('clientSettings.adresseMiseAJour'));
       } else {
         const { error } = await supabase
           .from('user_addresses')
           .insert({ ...addressData, created_at: new Date().toISOString() });
 
         if (error) throw error;
-        toast.success('Adresse ajoutée');
+        toast.success(t('clientSettings.adresseAjoutee'));
       }
 
       setAddressDialogOpen(false);
@@ -366,7 +368,7 @@ const ClientSettings: React.FC = () => {
 
       if (error) throw error;
 
-      toast.success('Adresse supprimée');
+      toast.success(t('clientSettings.adresseSupprimee'));
       loadAddresses();
     } catch (error: any) {
       console.error('Erreur suppression adresse:', error);
@@ -393,7 +395,7 @@ const ClientSettings: React.FC = () => {
 
       if (error) throw error;
 
-      toast.success('Adresse par défaut mise à jour');
+      toast.success(t('clientSettings.adresseParDefautMiseA'));
       loadAddresses();
     } catch (error: any) {
       console.error('Erreur mise à jour adresse par défaut:', error);
@@ -498,7 +500,7 @@ const ClientSettings: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <h3 className="font-medium">Photo de profil</h3>
+                  <h3 className="font-medium">{t('clientSettings.photoDeProfil')}</h3>
                   <p className="text-sm text-muted-foreground">
                     JPG, PNG ou GIF. Max 2 Mo.
                   </p>
@@ -508,12 +510,12 @@ const ClientSettings: React.FC = () => {
               {/* Formulaire */}
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="first_name">Prénom</Label>
+                  <Label htmlFor="first_name">{t('clientSettings.prenom')}</Label>
                   <Input
                     id="first_name"
                     value={profileData.first_name}
                     onChange={(e) => setProfileData(prev => ({ ...prev, first_name: e.target.value }))}
-                    placeholder="Votre prénom"
+                    placeholder={t('clientSettings.votrePrenom')}
                   />
                 </div>
 
@@ -523,7 +525,7 @@ const ClientSettings: React.FC = () => {
                     id="last_name"
                     value={profileData.last_name}
                     onChange={(e) => setProfileData(prev => ({ ...prev, last_name: e.target.value }))}
-                    placeholder="Votre nom"
+                    placeholder={t('clientSettings.votreNom')}
                   />
                 </div>
 
@@ -544,7 +546,7 @@ const ClientSettings: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Téléphone</Label>
+                  <Label htmlFor="phone">{t('clientSettings.telephone')}</Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
@@ -585,7 +587,7 @@ const ClientSettings: React.FC = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Adresses de livraison</CardTitle>
+                <CardTitle>{t('clientSettings.adressesDeLivraison')}</CardTitle>
                 <CardDescription>
                   Gérez vos adresses pour une livraison plus rapide
                 </CardDescription>
@@ -603,7 +605,7 @@ const ClientSettings: React.FC = () => {
               ) : addresses.length === 0 ? (
                 <div className="text-center py-8">
                   <MapPin className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="font-medium mb-2">Aucune adresse enregistrée</h3>
+                  <h3 className="font-medium mb-2">{t('clientSettings.aucuneAdresseEnregistree')}</h3>
                   <p className="text-sm text-muted-foreground mb-4">
                     Ajoutez une adresse pour faciliter vos livraisons
                   </p>
@@ -649,13 +651,13 @@ const ClientSettings: React.FC = () => {
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>Supprimer l'adresse ?</AlertDialogTitle>
+                                  <AlertDialogTitle>{t('clientSettings.supprimerLAdresse')}</AlertDialogTitle>
                                   <AlertDialogDescription>
                                     Cette action est irréversible. L'adresse sera définitivement supprimée.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                                  <AlertDialogCancel>{t('clientSettings.annuler')}</AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={() => handleDeleteAddress(address.id)}
                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -752,7 +754,7 @@ const ClientSettings: React.FC = () => {
             {/* Destinataire */}
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="recipient_name">Nom du destinataire *</Label>
+                <Label htmlFor="recipient_name">{t('clientSettings.nomDuDestinataire')}</Label>
                 <Input
                   id="recipient_name"
                   value={addressForm.recipient_name}
@@ -761,7 +763,7 @@ const ClientSettings: React.FC = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="addr_phone">Téléphone *</Label>
+                <Label htmlFor="addr_phone">{t('clientSettings.telephone2')}</Label>
                 <Input
                   id="addr_phone"
                   value={addressForm.phone}
@@ -778,7 +780,7 @@ const ClientSettings: React.FC = () => {
                 id="street"
                 value={addressForm.street}
                 onChange={(e) => setAddressForm(prev => ({ ...prev, street: e.target.value }))}
-                placeholder="Numéro et nom de rue"
+                placeholder={t('clientSettings.numeroEtNomDeRue')}
               />
             </div>
 
@@ -827,7 +829,7 @@ const ClientSettings: React.FC = () => {
             {/* Adresse par défaut */}
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="is_default">Adresse par défaut</Label>
+                <Label htmlFor="is_default">{t('clientSettings.adresseParDefaut')}</Label>
                 <p className="text-sm text-muted-foreground">
                   Utiliser cette adresse par défaut pour les livraisons
                 </p>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +14,7 @@ interface VendorShopImagesSettingsProps {
 }
 
 export default function VendorShopImagesSettings({ vendorId }: VendorShopImagesSettingsProps) {
+  const { t } = useTranslation();
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [businessName, setBusinessName] = useState('');
@@ -51,7 +53,7 @@ export default function VendorShopImagesSettings({ vendorId }: VendorShopImagesS
       }
     } catch (error) {
       console.error('Erreur chargement données:', error);
-      toast.error('Erreur lors du chargement des données');
+      toast.error(t('vendorShopImagesSettings.erreurLorsDuChargementDes'));
     }
   };
 
@@ -65,7 +67,7 @@ export default function VendorShopImagesSettings({ vendorId }: VendorShopImagesS
     // Vérifier le type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     if (!allowedTypes.includes(file.type)) {
-      toast.error('Format non supporté. Utilisez JPG, PNG, GIF ou WebP');
+      toast.error(t('vendorShopImagesSettings.formatNonSupporteUtilisezJpg'));
       return;
     }
 
@@ -170,10 +172,10 @@ export default function VendorShopImagesSettings({ vendorId }: VendorShopImagesS
       setLogoFile(null);
       setCoverFile(null);
 
-      toast.success('Images de la boutique mises à jour avec succès');
+      toast.success(t('vendorShopImagesSettings.imagesDeLaBoutiqueMises'));
     } catch (error) {
       console.error('Erreur mise à jour:', error);
-      toast.error('Erreur lors de la mise à jour');
+      toast.error(t('vendorShopImagesSettings.erreurLorsDeLaMise'));
     } finally {
       setLoading(false);
       setUploading(false);
@@ -219,7 +221,7 @@ export default function VendorShopImagesSettings({ vendorId }: VendorShopImagesS
                 <div className="w-full h-full flex items-center justify-center bg-muted">
                   <div className="text-center text-muted-foreground">
                     <Image className="w-8 h-8 mx-auto mb-2" />
-                    <p className="text-sm">Cliquez pour ajouter une bannière</p>
+                    <p className="text-sm">{t('vendorShopImagesSettings.cliquezPourAjouterUneBanniere')}</p>
                   </div>
                 </div>
               )}
@@ -228,7 +230,7 @@ export default function VendorShopImagesSettings({ vendorId }: VendorShopImagesS
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <div className="text-white text-center">
                   <Camera className="w-8 h-8 mx-auto mb-1" />
-                  <span className="text-sm">Changer la couverture</span>
+                  <span className="text-sm">{t('vendorShopImagesSettings.changerLaCouverture')}</span>
                 </div>
               </div>
 
@@ -292,7 +294,7 @@ export default function VendorShopImagesSettings({ vendorId }: VendorShopImagesS
           {/* Nom de la boutique (prévisualisation) */}
           <div className="pl-28 sm:pl-40 -mt-8">
             <p className="font-semibold text-lg">{businessName || 'Votre boutique'}</p>
-            <p className="text-sm text-muted-foreground">Aperçu de votre boutique</p>
+            <p className="text-sm text-muted-foreground">{t('vendorShopImagesSettings.apercuDeVotreBoutique')}</p>
           </div>
 
           {/* Inputs cachés */}
@@ -314,14 +316,14 @@ export default function VendorShopImagesSettings({ vendorId }: VendorShopImagesS
           {/* Instructions */}
           <div className="grid sm:grid-cols-2 gap-4 text-sm">
             <div className="p-3 bg-muted rounded-lg">
-              <Label className="font-medium">Photo de profil</Label>
+              <Label className="font-medium">{t('vendorShopImagesSettings.photoDeProfil')}</Label>
               <p className="text-muted-foreground mt-1">
                 Format: PNG, JPG, GIF, WebP • Max: 10 Mo<br />
                 Recommandé: 500x500px (carré)
               </p>
             </div>
             <div className="p-3 bg-muted rounded-lg">
-              <Label className="font-medium">Photo de couverture</Label>
+              <Label className="font-medium">{t('vendorShopImagesSettings.photoDeCouverture')}</Label>
               <p className="text-muted-foreground mt-1">
                 Format: PNG, JPG, GIF, WebP • Max: 10 Mo<br />
                 Recommandé: 1500x500px (3:1)

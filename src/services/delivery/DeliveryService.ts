@@ -5,6 +5,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
+import { acceptDeliveryBackend } from '@/services/deliveryBackendService';
 
 type Delivery = Database['public']['Tables']['deliveries']['Row'];
 
@@ -114,43 +115,14 @@ export class DeliveryService {
     try {
       console.log('[DeliveryService] Accepting delivery:', deliveryId);
 
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error('User not authenticated');
-
-      // Vérifier que la livraison est vraiment disponible avant de l'accepter
-      const { data: existingDelivery, error: checkError } = await supabase
-        .from('deliveries')
-        .select('id, status, driver_id')
-        .eq('id', deliveryId)
-        .single();
-
-      if (checkError) throw checkError;
-
-      if (existingDelivery.status !== 'pending' || existingDelivery.driver_id) {
-        throw new Error('Cette livraison n\'est plus disponible');
+      // Claim ATOMIQUE côté backend (anti double-affectation + autorisation par JWT).
+      // L'écriture directe en base a été retirée pour passer par le flux sécurisé unique.
+      const result = await acceptDeliveryBackend(deliveryId);
+      if (!result.success || !result.data) {
+        throw new Error(result.error || 'Cette livraison n\'est plus disponible');
       }
-
-      const { data, error } = await supabase
-        .from('deliveries')
-        .update({
-          driver_id: user.user.id,
-          status: 'assigned',
-          accepted_at: new Date().toISOString()
-        })
-        .eq('id', deliveryId)
-        .eq('status', 'pending')
-        .is('driver_id', null)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      console.log('✅ Delivery accepted successfully');
-
-      // Logger l'action
-      await this.logDeliveryAction(deliveryId, 'accepted', user.user.id);
-
-      return data as Delivery;
+      console.log('✅ Delivery accepted successfully (backend)');
+      return result.data as Delivery;
     } catch (error) {
       console.error('[DeliveryService] Error accepting delivery:', error);
       throw error;

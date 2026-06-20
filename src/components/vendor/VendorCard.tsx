@@ -6,18 +6,13 @@ import { cn } from "@/lib/utils";
 import { formatDistance } from "@/hooks/useGeoDistance";
 import { useVendorCertificationCached } from "@/hooks/useVendorCertificationCache";
 import { CertifiedIcon } from "@/components/vendor/CertifiedVendorBadge";
-
-function VendorCertBadgeSmall({ vendorId }: { vendorId: string }) {
-  const { isCertified } = useVendorCertificationCached(vendorId);
-  if (!isCertified) return null;
-  return <CertifiedIcon status="CERTIFIE" className="w-3.5 h-3.5 shrink-0" />;
-}
-
+import { useTranslation } from "@/hooks/useTranslation";
 
 
 interface VendorCardProps {
   vendor: {
     id: string;
+    user_id?: string | null;
     business_name: string;
     description?: string | null;
     address?: string | null;
@@ -37,6 +32,14 @@ interface VendorCardProps {
  * Carte vendeur optimisée avec React.memo pour éviter les re-renders inutiles
  */
 function VendorCardComponent({ vendor, index, onNavigate }: VendorCardProps) {
+  const { t } = useTranslation();
+  // ✅ Source de vérité unique pour la certification = table vendor_certifications.
+  // ⚠️ vendor_certifications.vendor_id = le USER_ID du vendeur (pas vendors.id) → on doit
+  // interroger le cache avec vendor.user_id (fallback id pour ne rien casser).
+  // Le champ vendor.is_verified n'est PLUS utilisé pour l'affichage (il était mis à true
+  // automatiquement à la création par agent, sans vérification réelle → badge trompeur).
+  const { isCertified } = useVendorCertificationCached(vendor.user_id || vendor.id);
+
   // Handler optimisé: décale la navigation avec requestAnimationFrame
   const handleClick = useCallback(() => {
     // Évite les calculs synchrones lourds dans le clic
@@ -75,7 +78,7 @@ function VendorCardComponent({ vendor, index, onNavigate }: VendorCardProps) {
         </div>
       ) : (
         <div className="absolute -top-2 -right-2 px-2.5 py-1 rounded-full bg-muted text-muted-foreground text-[10px] font-medium shadow-sm">
-          Pas de GPS
+          {t('vendorCard.noGps')}
         </div>
       )}
 
@@ -83,7 +86,7 @@ function VendorCardComponent({ vendor, index, onNavigate }: VendorCardProps) {
         {vendor.logo_url ? (
           <img
             src={vendor.logo_url}
-            alt={`Logo boutique ${vendor.business_name}`}
+            alt={`${t('vendorCard.logoAlt')} ${vendor.business_name}`}
             className="w-full h-full object-cover"
             loading="lazy"
           />
@@ -95,7 +98,7 @@ function VendorCardComponent({ vendor, index, onNavigate }: VendorCardProps) {
       <div className="flex-1 space-y-2">
         <h2 className="font-semibold text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors flex items-center gap-1">
           {vendor.business_name}
-          <VendorCertBadgeSmall vendorId={vendor.id} />
+          {isCertified && <CertifiedIcon status="CERTIFIE" className="w-3.5 h-3.5 shrink-0" />}
         </h2>
 
         {(vendor.city || vendor.neighborhood || vendor.address) && (
@@ -121,8 +124,8 @@ function VendorCardComponent({ vendor, index, onNavigate }: VendorCardProps) {
               <span className="text-xs font-semibold text-foreground">{vendor.rating.toFixed(1)}</span>
             </div>
           )}
-          {vendor.is_verified && (
-            <Badge variant="secondary" className="text-[10px]">Vérifié</Badge>
+          {isCertified && (
+            <Badge variant="secondary" className="text-[10px]">{t('vendorCard.verified')}</Badge>
           )}
         </div>
       </div>

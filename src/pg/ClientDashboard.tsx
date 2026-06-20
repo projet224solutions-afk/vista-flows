@@ -24,7 +24,8 @@ import { useAffiliateModule } from "@/hooks/useAffiliateModule";
 // Lazy loading des composants lourds
 const ProductCard = lazy(() => import("@/components/ProductCard"));
 const UserProfileCard = lazy(() => import("@/components/UserProfileCard"));
-const CopiloteChat = lazy(() => import("@/components/copilot/CopiloteChat"));
+// Copilot 224 unifié (mode intégré plein écran) — remplace l'ancien CopiloteChat.
+const Copilot224 = lazy(() => import("@/components/service-common/Copilot224"));
 const UniversalWalletTransactions = lazy(() => import("@/components/wallet/UniversalWalletTransactions"));
 const _WalletBalanceWidget = lazy(() => import("@/components/wallet/WalletBalanceWidget").then(m => ({ default: m.WalletBalanceWidget })));
 const UserIdDisplay = lazy(() => import("@/components/UserIdDisplay").then(m => ({ default: m.UserIdDisplay })));
@@ -141,7 +142,7 @@ export default function ClientDashboard() {
     loadAllData(user?.id);
     refreshStats();
     setShowPaymentModal(false);
-    toast.success('Commande enregistrée avec succès.', { duration: 2000 });
+    toast.success(t('clientDashboard.commandeEnregistreeAvecSucces'), { duration: 2000 });
   };
 
   const handleProductClick = (productId: string) => {
@@ -153,11 +154,11 @@ export default function ClientDashboard() {
   const handleContactVendor = async (product: any) => {
     const vendorUserId = product.vendor_user_id;
     if (!vendorUserId) {
-      toast.error('Informations du vendeur non disponibles');
+      toast.error(t('clientDashboard.informationsDuVendeurNonDisponibles'));
       return;
     }
     if (!user) {
-      toast.error('Veuillez vous connecter');
+      toast.error(t('clientDashboard.veuillezVousConnecter'));
       return;
     }
 
@@ -172,7 +173,7 @@ export default function ClientDashboard() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-3">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-sm text-muted-foreground">Chargement du dashboard...</p>
+          <p className="text-sm text-muted-foreground">{t('clientDashboard.chargementDuDashboard')}</p>
         </div>
       </div>
     }>
@@ -212,7 +213,7 @@ export default function ClientDashboard() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Rechercher..."
+                  placeholder={t('clientDashboard.rechercher')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 border-border focus-visible:ring-client-primary"
@@ -265,7 +266,7 @@ export default function ClientDashboard() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher des produits..."
+                placeholder={t('clientDashboard.rechercherDesProduits')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 text-sm"
@@ -336,7 +337,7 @@ export default function ClientDashboard() {
               <Card className="shadow-elegant">
                 <CardHeader>
                   <CardTitle className={responsive.isMobile ? 'text-base' : 'text-lg'}>Statistiques</CardTitle>
-                  <CardDescription className="text-xs md:text-sm">Votre activité</CardDescription>
+                  <CardDescription className="text-xs md:text-sm">{t('clientDashboard.votreActivite')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {statsLoading ? (
@@ -348,7 +349,7 @@ export default function ClientDashboard() {
                           <Package className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-client-primary`} />
                         </div>
                         <p className={`${responsive.isMobile ? 'text-lg' : 'text-xl'} font-bold text-foreground`}>{clientStats?.total_orders || 0}</p>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground">Commandes</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">{t('clientDashboard.commandes')}</p>
                       </button>
 
                       <button onClick={() => setStatDetailType('active')} className="flex flex-col items-center justify-center p-2 sm:p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg text-center cursor-pointer hover:ring-2 hover:ring-orange-400/40 transition-all active:scale-95">
@@ -372,7 +373,7 @@ export default function ClientDashboard() {
                           <CreditCard className={`${responsive.isMobile ? 'w-4 h-4' : 'w-5 h-5'} text-[#ff4000]`} />
                         </div>
                         <p className={`${responsive.isMobile ? 'text-sm' : 'text-base'} font-bold text-foreground truncate max-w-full`}>{formatPrice(clientStats?.total_spent || 0)}</p>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground">Total dépensé</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">{t('clientDashboard.totalDepense')}</p>
                       </button>
                     </div>
                   )}
@@ -405,8 +406,8 @@ export default function ClientDashboard() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>Produits populaires</CardTitle>
-                    <CardDescription>Découvrez nos meilleures ventes</CardDescription>
+                    <CardTitle>{t('clientDashboard.produitsPopulaires')}</CardTitle>
+                    <CardDescription>{t('clientDashboard.decouvrezNosMeilleuresVentes')}</CardDescription>
                   </div>
                   <Button variant="outline" size="sm" onClick={() => navigate('/marketplace')}>
                     Voir tout
@@ -461,8 +462,8 @@ export default function ClientDashboard() {
                 {cartItems.length === 0 ? (
                   <div className="text-center py-12">
                     <ShoppingCart className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">Votre panier est vide</h3>
-                    <p className="text-muted-foreground mb-6">Ajoutez des produits pour commencer vos achats</p>
+                    <h3 className="text-lg font-semibold mb-2">{t('clientDashboard.votrePanierEstVide')}</h3>
+                    <p className="text-muted-foreground mb-6">{t('clientDashboard.ajoutezDesProduitsPourCommencer')}</p>
                     <Button onClick={() => navigate('/marketplace')} className="bg-client-primary hover:bg-client-primary/90">
                       Parcourir les produits
                     </Button>
@@ -531,8 +532,8 @@ export default function ClientDashboard() {
           <TabsContent value="orders" className="space-y-6 animate-fade-in">
             <Card className="shadow-elegant">
               <CardHeader>
-                <CardTitle>Mes commandes</CardTitle>
-                <CardDescription>Suivez l'état de vos commandes et confirmez les livraisons</CardDescription>
+                <CardTitle>{t('clientDashboard.mesCommandes')}</CardTitle>
+                <CardDescription>{t('clientDashboard.suivezLEtatDeVos')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <ClientOrdersList />
@@ -543,11 +544,11 @@ export default function ClientDashboard() {
           <TabsContent value="recent" className="space-y-6 animate-fade-in">
             <Card className="shadow-elegant">
               <CardHeader>
-                <CardTitle>Derniers produits visites</CardTitle>
-                <CardDescription>Retrouvez rapidement les produits que vous avez consultes</CardDescription>
+                <CardTitle>{t('clientDashboard.derniersProduitsVisites')}</CardTitle>
+                <CardDescription>{t('clientDashboard.retrouvezRapidementLesProduitsQue')}</CardDescription>
               </CardHeader>
               <CardContent>
-                <Suspense fallback={<div className="text-sm text-muted-foreground">Chargement de l'historique...</div>}>
+                <Suspense fallback={<div className="text-sm text-muted-foreground">{t('clientDashboard.chargementDeLHistorique')}</div>}>
                   <RecentlyViewedProducts maxItems={12} />
                 </Suspense>
               </CardContent>
@@ -556,7 +557,7 @@ export default function ClientDashboard() {
 
           {/* Copilote */}
           <TabsContent value="copilot" className="animate-fade-in">
-            <CopiloteChat height="calc(100vh - 160px)" />
+            <Copilot224 variant="embedded" service="" title="Copilot 224" height="calc(100vh - 160px)" />
           </TabsContent>
 
           {isAffiliateEnabled && (

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,6 +32,7 @@ export function QuantityKeypadPopup({
   onConfirm,
   currency
 }: QuantityKeypadPopupProps) {
+  const { t } = useTranslation();
   const [quantity, setQuantity] = useState('');
 
   const handleInput = (input: string) => {
@@ -70,7 +72,7 @@ export function QuantityKeypadPopup({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xs p-0 overflow-hidden">
+      <DialogContent className="max-w-xs p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
         {/* Header stylisé */}
         <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4 border-b border-border/50">
           <div className="flex items-center justify-between">
@@ -79,8 +81,8 @@ export function QuantityKeypadPopup({
                 <Calculator className="h-5 w-5 text-primary-foreground" />
               </div>
               <div>
-                <h3 className="font-bold text-foreground">Quantité</h3>
-                <p className="text-xs text-muted-foreground">Saisir le nombre d'articles</p>
+                <h3 className="font-bold text-foreground">{t('quantityKeypadPopup.quantite')}</h3>
+                <p className="text-xs text-muted-foreground">{t('quantityKeypadPopup.saisirLeNombreDArticles')}</p>
               </div>
             </div>
             <div className="h-2.5 w-2.5 rounded-full bg-[#ff4000] animate-pulse shadow-lg shadow-[#ff4000]/50" />

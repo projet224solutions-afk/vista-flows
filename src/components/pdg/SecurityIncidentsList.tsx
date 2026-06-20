@@ -1,5 +1,6 @@
 // 🚨 Liste des incidents de sécurité
 import React, { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { AlertTriangle, CheckCircle, Shield, Clock } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +19,7 @@ interface Props {
 }
 
 const SecurityIncidentsList: React.FC<Props> = ({ incidents, onContain, onResolve, onCreate }) => {
+  const { t } = useTranslation();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newIncident, setNewIncident] = useState({
     type: 'brute_force',
@@ -65,8 +67,8 @@ const SecurityIncidentsList: React.FC<Props> = ({ incidents, onContain, onResolv
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-2xl font-bold">Incidents de Sécurité</h3>
-          <p className="text-muted-foreground">Gestion et réponse aux incidents</p>
+          <h3 className="text-2xl font-bold">{t('securityIncidentsList.incidentsDeSecurite')}</h3>
+          <p className="text-muted-foreground">{t('securityIncidentsList.gestionEtReponseAuxIncidents')}</p>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
@@ -77,8 +79,8 @@ const SecurityIncidentsList: React.FC<Props> = ({ incidents, onContain, onResolv
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Créer un Incident de Sécurité</DialogTitle>
-              <DialogDescription>Déclarer un nouvel incident de sécurité</DialogDescription>
+              <DialogTitle>{t('securityIncidentsList.creerUnIncidentDeSecurite')}</DialogTitle>
+              <DialogDescription>{t('securityIncidentsList.declarerUnNouvelIncidentDe')}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -90,21 +92,21 @@ const SecurityIncidentsList: React.FC<Props> = ({ incidents, onContain, onResolv
                   <SelectContent>
                     <SelectItem value="brute_force">Brute Force</SelectItem>
                     <SelectItem value="ddos">DDoS</SelectItem>
-                    <SelectItem value="data_exfil">Exfiltration de données</SelectItem>
-                    <SelectItem value="key_compromise">Clé compromise</SelectItem>
+                    <SelectItem value="data_exfil">{t('securityIncidentsList.exfiltrationDeDonnees')}</SelectItem>
+                    <SelectItem value="key_compromise">{t('securityIncidentsList.cleCompromise')}</SelectItem>
                     <SelectItem value="anomaly">Anomalie</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <label className="text-sm font-medium">Sévérité</label>
+                <label className="text-sm font-medium">{t('securityIncidentsList.severite')}</label>
                 <Select value={newIncident.severity} onValueChange={(v) => setNewIncident({ ...newIncident, severity: v })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="critical">Critique</SelectItem>
-                    <SelectItem value="high">Élevée</SelectItem>
+                    <SelectItem value="high">{t('securityIncidentsList.elevee')}</SelectItem>
                     <SelectItem value="medium">Moyenne</SelectItem>
                     <SelectItem value="low">Faible</SelectItem>
                   </SelectContent>
@@ -123,10 +125,10 @@ const SecurityIncidentsList: React.FC<Props> = ({ incidents, onContain, onResolv
                 <Input value={newIncident.sourceIp} onChange={(e) => setNewIncident({ ...newIncident, sourceIp: e.target.value })} placeholder="192.168.1.1" />
               </div>
               <div>
-                <label className="text-sm font-medium">Service Cible (optionnel)</label>
+                <label className="text-sm font-medium">{t('securityIncidentsList.serviceCibleOptionnel')}</label>
                 <Input value={newIncident.targetService} onChange={(e) => setNewIncident({ ...newIncident, targetService: e.target.value })} placeholder="authentication" />
               </div>
-              <Button onClick={handleCreate} className="w-full">Créer l'Incident</Button>
+              <Button onClick={handleCreate} className="w-full">{t('securityIncidentsList.creerLIncident')}</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -168,7 +170,7 @@ const SecurityIncidentsList: React.FC<Props> = ({ incidents, onContain, onResolv
                 )}
                 {(incident as any).target_service && (
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">Service:</span>
+                    <span className="font-medium">{t('securityIncidentsList.service')}</span>
                     <span className="text-muted-foreground">{String((incident as any).target_service)}</span>
                   </div>
                 )}
@@ -199,7 +201,7 @@ const SecurityIncidentsList: React.FC<Props> = ({ incidents, onContain, onResolv
         {incidents.length === 0 && (
           <Card>
             <CardContent className="py-8">
-              <p className="text-center text-muted-foreground">Aucun incident de sécurité</p>
+              <p className="text-center text-muted-foreground">{t('securityIncidentsList.aucunIncidentDeSecurite')}</p>
             </CardContent>
           </Card>
         )}

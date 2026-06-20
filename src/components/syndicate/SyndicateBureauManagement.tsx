@@ -1,10 +1,10 @@
-// @ts-nocheck
 /**
  * GESTION DES BUREAUX SYNDICAUX - Interface PDG
  * Module simplifié utilisant les vraies tables Supabase
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +36,7 @@ interface Bureau {
 }
 
 export default function SyndicateBureauManagement() {
+  const { t } = useTranslation();
   const [bureaus, setBureaus] = useState<Bureau[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -54,10 +55,10 @@ export default function SyndicateBureauManagement() {
       if (bureauxError) throw bureauxError;
       setBureaus((bureauxData as unknown as Bureau[]) || []);
 
-      toast.success('Données chargées');
+      toast.success(t('syndicateBureauManagement.donneesChargees'));
     } catch (error: unknown) {
       console.error('Erreur chargement:', error);
-      toast.error('Erreur de chargement: ' + error.message);
+      toast.error(t('syndicateBureauManagement.erreurDeChargement') + error.message);
     } finally {
       setLoading(false);
     }
@@ -72,7 +73,7 @@ export default function SyndicateBureauManagement() {
 
       if (error) throw error;
 
-      toast.success('Statut mis à jour');
+      toast.success(t('syndicateBureauManagement.statutMisAJour'));
       loadData();
     } catch (error: unknown) {
       toast.error('Erreur: ' + error.message);
@@ -169,7 +170,7 @@ export default function SyndicateBureauManagement() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Véhicules</p>
+                <p className="text-sm text-muted-foreground">{t('syndicateBureauManagement.vehicules')}</p>
                 <p className="text-2xl font-bold">{stats.totalVehicles}</p>
               </div>
               <Bike className="w-8 h-8 text-orange-500 opacity-20" />
@@ -202,7 +203,7 @@ export default function SyndicateBureauManagement() {
           {bureaus.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Building2 className="w-12 h-12 mx-auto mb-4 opacity-20" />
-              <p>Aucun bureau syndical enregistré</p>
+              <p>{t('syndicateBureauManagement.aucunBureauSyndicalEnregistre')}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -211,10 +212,10 @@ export default function SyndicateBureauManagement() {
                   <TableRow>
                     <TableHead>Code Bureau</TableHead>
                     <TableHead>Localisation</TableHead>
-                    <TableHead>Président</TableHead>
+                    <TableHead>{t('syndicateBureauManagement.president')}</TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead className="text-center">Membres</TableHead>
-                    <TableHead className="text-center">Véhicules</TableHead>
+                    <TableHead className="text-center">{t('syndicateBureauManagement.vehicules')}</TableHead>
                     <TableHead className="text-right">Cotisations</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead>Actions</TableHead>

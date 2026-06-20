@@ -24,6 +24,7 @@ import DeepLinkInitializer from "@/components/DeepLinkInitializer";
 
 const MerchantOnboarding = lazyWithRetry(() => import("@/components/onboarding/MerchantOnboarding"));
 const WebRTCCallProvider = lazyWithRetry(() => import("@/components/communication/WebRTCCallProvider"));
+const FcmAutoInit = lazyWithRetry(() => import("@/components/communication/FcmAutoInit"));
 
 // Lazy load TOUT - même la page d'accueil pour réduire TBT
 const Index = lazyWithRetry(() => import("./pg/Index"));
@@ -39,6 +40,7 @@ const AutoInstallPrompt = lazyWithRetry(() => import("@/components/pwa/AutoInsta
 
 // Lazy loading des pages - regroupées par priorité
 const Auth = lazyWithRetry(() => import("./pg/Auth"));
+const ContractSign = lazyWithRetry(() => import("./pg/ContractSign"));
 const Home = lazyWithRetry(() => import("./pg/Home"));
 const Marketplace = lazyWithRetry(() => import("./pg/Marketplace"));
 const ProductDetail = lazyWithRetry(() => import("./pg/ProductDetail"));
@@ -48,6 +50,20 @@ const ForYouPage = lazyWithRetry(() => import("./pg/ForYouPage"));
 const VendorShop = lazyWithRetry(() => import("./pg/VendorShop"));
 const Messages = lazyWithRetry(() => import("./pg/Messages"));
 const ServicesProximite = lazyWithRetry(() => import("./pg/ServicesProximite"));
+const ArtisanRequest = lazyWithRetry(() => import("./pg/ArtisanRequest"));
+const FarmTraceability = lazyWithRetry(() => import("./pg/FarmTraceability"));
+const FarmShop = lazyWithRetry(() => import("./pg/FarmShop"));
+const BeautyBooking = lazyWithRetry(() => import("./pg/BeautyBooking"));
+const GroupBuyPage = lazyWithRetry(() => import("./pg/GroupBuyPage"));
+const ConstructionClientView = lazyWithRetry(() => import("./pg/ConstructionClientView"));
+const CoursePage = lazyWithRetry(() => import("./pg/CoursePage"));
+const CertificateVerify = lazyWithRetry(() => import("./pg/CertificateVerify"));
+const PropertyPage = lazyWithRetry(() => import("./pg/PropertyPage"));
+const QuotePage = lazyWithRetry(() => import("./pg/QuotePage"));
+const MobilityJobPage = lazyWithRetry(() => import("./pg/MobilityJobPage"));
+const MyBeautyAppointments = lazyWithRetry(() => import("./pg/MyBeautyAppointments"));
+const BeautyDiscovery = lazyWithRetry(() => import("./pg/BeautyDiscovery"));
+const BeautySalon = lazyWithRetry(() => import("./pg/BeautySalon"));
 const Proximite = lazyWithRetry(() => import("./pg/Proximite"));
 const NearbyTaxiMoto = lazyWithRetry(() => import("./pg/NearbyTaxiMoto"));
 const NearbyLivraison = lazyWithRetry(() => import("./pg/NearbyLivraison"));
@@ -117,6 +133,7 @@ const DeliveryClient = lazyWithRetry(() => import("./pg/DeliveryClient"));
 const BugBounty = lazyWithRetry(() => import("./pg/BugBounty"));
 const Cart = lazyWithRetry(() => import("./pg/Cart"));
 const VendorAgentInterface = lazyWithRetry(() => import("./pg/VendorAgentInterface"));
+const RestaurantAgentDashboard = lazyWithRetry(() => import("./pg/RestaurantAgentDashboard"));
 const _VendorContracts = lazyWithRetry(() => import("./pg/VendorContracts"));
 const ClientContracts = lazyWithRetry(() => import("./pg/ClientContracts"));
 const ServiceDetail = lazyWithRetry(() => import("./pg/ServiceDetail"));
@@ -124,6 +141,7 @@ const ServiceRedirect = lazyWithRetry(() => import("./pg/ServiceRedirect"));
 const Dashboard = lazyWithRetry(() => import("./pg/Dashboard"));
 const SetPasswordAfterOAuth = lazyWithRetry(() => import("./pg/SetPasswordAfterOAuth"));
 const ResetPassword = lazyWithRetry(() => import("./pg/ResetPassword"));
+const AuthConfirm = lazyWithRetry(() => import("./pg/AuthConfirm"));
 const AgentCreation = lazyWithRetry(() => import("./pg/AgentCreation"));
 const WorkerSettings = lazyWithRetry(() => import("./pg/WorkerSettings"));
 const BadgeVerification = lazyWithRetry(() => import("./pg/BadgeVerification"));
@@ -135,6 +153,8 @@ const DigitalProductDetail = lazyWithRetry(() => import("./pg/DigitalProductDeta
 const ShortLinkRedirect = lazyWithRetry(() => import("./pg/ShortLinkRedirect"));
 const UserPublicProfile = lazyWithRetry(() => import("./pg/UserPublicProfile"));
 const RestaurantPublicMenu = lazyWithRetry(() => import("./pg/RestaurantPublicMenu"));
+const Restaurants = lazyWithRetry(() => import("./pg/Restaurants"));
+const Pharmacie = lazyWithRetry(() => import("./pg/Pharmacie"));
 // Ultra-simple loading component with built-in timeout to prevent infinite loading
 const PageLoader = memo(() => {
   const [timedOut, setTimedOut] = useState(false);
@@ -304,15 +324,13 @@ function App() {
                         <Suspense fallback={null}>
                           <MerchantOnboarding />
                         </Suspense>
-                        <Suspense fallback={null}>
-                          <WebRTCCallProvider>
-                            <></>
-                          </WebRTCCallProvider>
-                        </Suspense>
-
                         <ErrorBoundary>
                           <DeepLinkInitializer />
                           <Suspense fallback={<PageLoader />}>
+                            <WebRTCCallProvider>
+                            <Suspense fallback={null}>
+                              <FcmAutoInit />
+                            </Suspense>
                             <Routes>
                               {/* Route racine: redirige vers dashboard si connecté, sinon landing */}
                               <Route path="/" element={<RootRedirect />} />
@@ -322,6 +340,10 @@ function App() {
                               {/* Accueil application (avec footer + services) */}
                               <Route path="/home" element={<Home />} />
                               <Route path="/auth" element={<Auth />} />
+                              {/* Confirmation d'email (lien Supabase). Handler DÉDIÉ AuthConfirm :
+                                  gère PKCE (?code=), token_hash (?token_hash=&type=) ET implicit (#access_token),
+                                  puis redirige. Sans cette route → 404 « Page introuvable » après confirmation. */}
+                              <Route path="/auth/confirm" element={<AuthConfirm />} />
                               <Route path="/login" element={<Navigate to="/auth" replace />} />
                               {/* Login universel custom retiré : cassé/legacy → redirige vers Supabase Auth */}
                               <Route path="/universal-login" element={<Navigate to="/auth" replace />} />
@@ -368,9 +390,42 @@ function App() {
                               <Route path="/boutiques" element={<NearbyBoutiques />} />
 
                               <Route path="/services-proximite" element={<ServicesProximite />} />
+                              <Route path="/services/artisan/demande" element={<ProtectedRoute allowedRoles={['client', 'vendeur', 'livreur', 'taxi', 'driver', 'admin', 'syndicat', 'agent', 'transitaire', 'prestataire']}><ArtisanRequest /></ProtectedRoute>} />
                               <Route path="/services-proximite/:id" element={<ServiceDetail />} />
+                              {/* Accueil client : liste/découverte des restaurants (recherche + filtres) */}
+                              <Route path="/restaurants" element={<Restaurants />} />
+                              {/* Accueil client Pharmacie (public ; envoi d'ordonnance requiert connexion) */}
+                              <Route path="/pharmacie" element={<Pharmacie />} />
                               {/* Page publique menu restaurant pour commande client */}
                               <Route path="/restaurant/:serviceId/menu" element={<RestaurantPublicMenu />} />
+                              {/* Page publique de traçabilité produit agricole (scan QR, sans connexion) */}
+                              <Route path="/trace/:productId" element={<FarmTraceability />} />
+                              {/* Page publique de signature de contrat par lien (client sans compte) */}
+                              <Route path="/contrat/:token" element={<ContractSign />} />
+                              {/* Boutique producteur (acheteur) : catalogue + commande + suivi */}
+                              <Route path="/agriculture/:serviceId" element={<FarmShop />} />
+                              {/* Découverte beauté (client) : salons + badges + favoris */}
+                              <Route path="/beaute" element={<BeautyDiscovery />} />
+                              {/* Profil salon (client) : Services / Galerie / Avis */}
+                              <Route path="/beaute/:serviceId" element={<BeautySalon />} />
+                              {/* Réservation beauté (client) : service → créneau → paiement */}
+                              <Route path="/beaute/:serviceId/reserver" element={<BeautyBooking />} />
+                              {/* Page publique achat groupé (Pinduoduo) : rejoindre + suivi */}
+                              <Route path="/group-buy/:id" element={<GroupBuyPage />} />
+                              {/* Espace client chantier BTP : suivi + jalons escrow */}
+                              <Route path="/chantier/:projectId" element={<ConstructionClientView />} />
+                              {/* Page cours (client) : vitrine + inscription payante */}
+                              <Route path="/cours/:courseId" element={<CoursePage />} />
+                              {/* Vérification publique de certificat (QR) */}
+                              <Route path="/certificat/:code" element={<CertificateVerify />} />
+                              {/* Fiche bien immobilier (client) : location en ligne + caution escrow */}
+                              <Route path="/bien/:propertyId" element={<PropertyPage />} />
+                              {/* Devis public (client) : paiement direct ou séquestre */}
+                              <Route path="/devis/:quoteId" element={<QuotePage />} />
+                              {/* Course VTC / livraison (client) : paiement wallet */}
+                              <Route path="/course/:jobId" element={<MobilityJobPage />} />
+                              {/* Mes rendez-vous beauté (client) : annuler / avis / rebook */}
+                              <Route path="/mes-rdv-beaute" element={<MyBeautyAppointments />} />
                               {/* Alias legacy: /service/:id -> /services-proximite/:id */}
                               <Route path="/service/:id" element={<ServiceRedirect />} />
                               {/* Service Selection - Protected for logged-in users to create their professional service */}
@@ -620,6 +675,7 @@ function App() {
                               <Route path="/agent/activate/:token" element={<AgentActivation />} />
                               <Route path="/agent/:token" element={<AgentDashboardPublic />} />
                               <Route path="/vendor-agent/:token" element={<VendorAgentInterface />} />
+                              <Route path="/restaurant-agent" element={<ProtectedRoute allowedRoles={['restaurant_agent', 'admin']}><RestaurantAgentDashboard /></ProtectedRoute>} />
                               <Route path="/agent" element={<ProtectedRoute allowedRoles={['agent', 'admin']}><AgentDashboard /></ProtectedRoute>} />
                               <Route path="/agent-dashboard" element={<ProtectedRoute allowedRoles={['agent', 'admin']}><AgentDashboard /></ProtectedRoute>} />
                               <Route path="/bureau" element={<ProtectedRoute allowedRoles={['syndicat', 'admin']}><BureauDashboard /></ProtectedRoute>} />
@@ -663,6 +719,7 @@ function App() {
                               <CommunicationWidget position="bottom-right" showNotifications={true} />
                               <QuickFooter />
                             </Suspense>
+                            </WebRTCCallProvider>
                           </Suspense>
                         </ErrorBoundary>
                       </TooltipProvider>

@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ interface PasswordStrength {
 }
 
 const ClientPasswordChange: React.FC = () => {
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -97,17 +99,17 @@ const ClientPasswordChange: React.FC = () => {
 
     // Validation
     if (formData.newPassword.length < 8) {
-      toast.error('Le mot de passe doit contenir au moins 8 caractères');
+      toast.error(t('clientPasswordChange.leMotDePasseDoit'));
       return;
     }
 
     if (formData.newPassword !== formData.confirmPassword) {
-      toast.error('Les mots de passe ne correspondent pas');
+      toast.error(t('clientPasswordChange.lesMotsDePasseNe'));
       return;
     }
 
     if (passwordStrength.score < 3) {
-      toast.error('Le mot de passe est trop faible');
+      toast.error(t('clientPasswordChange.leMotDePasseEst'));
       return;
     }
 
@@ -125,7 +127,7 @@ const ClientPasswordChange: React.FC = () => {
 
       setSuccess(true);
       setFormData({ newPassword: '', confirmPassword: '' });
-      toast.success('Mot de passe modifié avec succès !');
+      toast.success(t('clientPasswordChange.motDePasseModifieAvec'));
 
       // Réinitialiser après 3 secondes
       setTimeout(() => {
@@ -137,9 +139,9 @@ const ClientPasswordChange: React.FC = () => {
 
       // Gestion des erreurs spécifiques
       if (error.message?.includes('same as the old')) {
-        toast.error('Le nouveau mot de passe doit être différent de l\'ancien');
+        toast.error(t('clientPasswordChange.leNouveauMotDePasse'));
       } else if (error.message?.includes('weak')) {
-        toast.error('Le mot de passe est trop faible');
+        toast.error(t('clientPasswordChange.leMotDePasseEst'));
       } else {
         toast.error(error.message || 'Erreur lors du changement de mot de passe');
       }
@@ -192,7 +194,7 @@ const ClientPasswordChange: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Nouveau mot de passe */}
           <div className="space-y-2">
-            <Label htmlFor="newPassword">Nouveau mot de passe</Label>
+            <Label htmlFor="newPassword">{t('clientPasswordChange.nouveauMotDePasse')}</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
@@ -233,7 +235,7 @@ const ClientPasswordChange: React.FC = () => {
 
           {/* Confirmer le mot de passe */}
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+            <Label htmlFor="confirmPassword">{t('clientPasswordChange.confirmerLeMotDePasse')}</Label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input

@@ -148,7 +148,7 @@ export function FeatureGuard({
 
         {/* Dialog d'information */}
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <div className="p-2 rounded-full bg-gradient-to-br from-[#ff4000] to-orange-500">

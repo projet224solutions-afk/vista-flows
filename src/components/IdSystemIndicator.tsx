@@ -4,6 +4,7 @@
  */
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Badge } from '@/components/ui/badge';
 import { Hash, CheckCircle, TrendingUp } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -12,6 +13,7 @@ import { useStandardId } from '@/hooks/useStandardId';
 import { useEffect, useState } from 'react';
 
 export function IdSystemIndicator() {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const { validateStandardId, extractPrefix } = useStandardId();
   const [isStandardized, setIsStandardized] = useState(false);
@@ -49,7 +51,7 @@ export function IdSystemIndicator() {
               <Hash className="w-4 h-4 text-primary" />
             </div>
             <div>
-              <CardTitle className="text-sm">Système d'ID</CardTitle>
+              <CardTitle className="text-sm">{t('idSystemIndicator.systemeDId')}</CardTitle>
               <CardDescription className="text-xs">224SOLUTIONS</CardDescription>
             </div>
           </div>
@@ -61,7 +63,7 @@ export function IdSystemIndicator() {
       <CardContent className="space-y-3">
         {/* ID actuel */}
         <div>
-          <p className="text-xs text-muted-foreground mb-1">Votre identifiant</p>
+          <p className="text-xs text-muted-foreground mb-1">{t('idSystemIndicator.votreIdentifiant')}</p>
           {(profile as any)?.public_id ? (
             <StandardIdBadge
               standardId={(profile as any).public_id}
@@ -70,14 +72,14 @@ export function IdSystemIndicator() {
               showIcon={true}
             />
           ) : (
-            <Badge variant="outline">En cours de génération...</Badge>
+            <Badge variant="outline">{t('idSystemIndicator.enCoursDeGeneration')}</Badge>
           )}
         </div>
 
         {/* Type de compte */}
         {prefix && (
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Type de compte</span>
+            <span className="text-xs text-muted-foreground">{t('idSystemIndicator.typeDeCompte')}</span>
             <Badge variant="secondary" className="font-semibold">
               {roleNames[prefix] || prefix}
             </Badge>

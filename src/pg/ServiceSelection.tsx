@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from "@/hooks/useTranslation";
 import { ArrowLeft, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +10,7 @@ import { useProfessionalServices } from '@/hooks/useProfessionalServices';
 import type { ServiceType } from '@/hooks/useProfessionalServices';
 
 export default function ServiceSelection() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { serviceTypes, userServices, loading, createProfessionalService } = useProfessionalServices();
   const [selectedService, setSelectedService] = useState<ServiceType | null>(null);
@@ -72,7 +74,7 @@ export default function ServiceSelection() {
       <div className="min-h-screen bg-gradient-to-br from-background via-secondary/20 to-background flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-muted-foreground">Chargement des services...</p>
+          <p className="text-muted-foreground">{t('serviceSelection.chargementDesServices')}</p>
         </div>
       </div>
     );
@@ -113,7 +115,7 @@ export default function ServiceSelection() {
         <div className="max-w-2xl mx-auto mb-6">
           <Input
             type="search"
-            placeholder="Rechercher un service..."
+            placeholder={t('serviceSelection.rechercherUnService')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="h-11 text-sm sm:text-base"

@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ import { useDropshippingChina } from '@/hooks/useDropshippingChina';
 import type { ChinaPlatformType } from '@/types/dropshipping-china';
 
 export function ChinaSuppliersList() {
+  const { t } = useTranslation();
   const { chinaSuppliers, loading } = useDropshippingChina();
   const [search, setSearch] = useState('');
   const [platformFilter, setPlatformFilter] = useState<string>('all');
@@ -74,7 +76,7 @@ export function ChinaSuppliersList() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Rechercher un fournisseur..."
+                  placeholder={t('chinaSuppliersList.rechercherUnFournisseur')}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-9"
@@ -87,11 +89,11 @@ export function ChinaSuppliersList() {
                 <SelectValue placeholder="Plateforme" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Toutes les plateformes</SelectItem>
+                <SelectItem value="all">{t('chinaSuppliersList.toutesLesPlateformes')}</SelectItem>
                 <SelectItem value="ALIBABA">Alibaba</SelectItem>
                 <SelectItem value="ALIEXPRESS">AliExpress</SelectItem>
                 <SelectItem value="1688">1688</SelectItem>
-                <SelectItem value="PRIVATE">Privé</SelectItem>
+                <SelectItem value="PRIVATE">{t('chinaSuppliersList.prive')}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -101,7 +103,7 @@ export function ChinaSuppliersList() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="score">Score</SelectItem>
-                <SelectItem value="orders">Commandes</SelectItem>
+                <SelectItem value="orders">{t('chinaSuppliersList.commandes')}</SelectItem>
                 <SelectItem value="name">Nom</SelectItem>
               </SelectContent>
             </Select>
@@ -131,7 +133,7 @@ export function ChinaSuppliersList() {
               <p className="text-2xl font-bold">
                 {chinaSuppliers.filter(s => s.is_verified).length}
               </p>
-              <p className="text-xs text-muted-foreground">Vérifiés</p>
+              <p className="text-xs text-muted-foreground">{t('chinaSuppliersList.verifies')}</p>
             </div>
           </CardContent>
         </Card>
@@ -159,7 +161,7 @@ export function ChinaSuppliersList() {
               <p className="text-2xl font-bold">
                 {chinaSuppliers.reduce((sum, s) => sum + (s.total_orders || 0), 0)}
               </p>
-              <p className="text-xs text-muted-foreground">Commandes totales</p>
+              <p className="text-xs text-muted-foreground">{t('chinaSuppliersList.commandesTotales')}</p>
             </div>
           </CardContent>
         </Card>
@@ -214,7 +216,7 @@ export function ChinaSuppliersList() {
                       />
                     ))}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">Score qualité</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t('chinaSuppliersList.scoreQualite')}</p>
                 </div>
 
                 {/* Métriques */}
@@ -277,7 +279,7 @@ export function ChinaSuppliersList() {
           <Card>
             <CardContent className="py-12 text-center text-muted-foreground">
               <Globe className="h-12 w-12 mx-auto mb-4 opacity-30" />
-              <p>Aucun fournisseur trouvé</p>
+              <p>{t('chinaSuppliersList.aucunFournisseurTrouve')}</p>
             </CardContent>
           </Card>
         )}

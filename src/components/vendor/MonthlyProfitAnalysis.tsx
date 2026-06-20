@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useVendorCurrency } from '@/hooks/useVendorCurrency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -93,6 +94,7 @@ const COST_TYPE_LABELS: Record<string, { label: string; icon: React.ReactNode; c
 // formatCurrency is now imported from lib - used inside component with useFormatCurrency
 
 export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysisProps) {
+  const { t } = useTranslation();
   const { currency, convert, isReady: currencyReady } = useVendorCurrency();
   const formatCurrency = (amount: number) => currencyReady ? `${Math.round(convert(amount)).toLocaleString('fr-FR')} ${currency}` : '—';
   const { toast } = useToast();
@@ -104,6 +106,23 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
     label: '',
     amount: ''
   });
+
+  // Période d'analyse : ventes ET achats utilisent la MÊME fenêtre (cohérence des dates).
+  const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'year' | 'all'>('month');
+  const periodRange = useMemo(() => {
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - now.getDay()); startOfWeek.setHours(0, 0, 0, 0);
+    const startOfMonthD = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    let start: Date | null = startOfMonthD;
+    let label = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    if (period === 'day') { start = startOfDay; label = "Aujourd'hui"; }
+    else if (period === 'week') { start = startOfWeek; label = 'Cette semaine'; }
+    else if (period === 'year') { start = startOfYear; label = String(now.getFullYear()); }
+    else if (period === 'all') { start = null; label = 'Tout l\'historique'; }
+    return { startIso: start ? start.toISOString() : null, endIso: now.toISOString(), label };
+  }, [period]);
 
   // Récupérer les coûts fixes (utilise userId car vendor_fixed_costs référence auth.users)
   const { data: fixedCosts = [], isLoading: loadingCosts } = useQuery({
@@ -122,46 +141,51 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
     enabled: !!userId
   });
 
-  // Récupérer les ventes du mois (orders - utilise vendorId car orders référence vendors)
+  // Ventes du mois = orders (en ligne + POS électronique) + POS CASH (pos_sales) + liens de
+  // paiement payés. Toutes ces sources référencent vendors.id. Sans pos_sales + payment_links,
+  // le profit sous-comptait gravement les revenus (le cash est souvent la majorité).
   const { data: monthlySales = 0, isLoading: loadingSales } = useQuery({
-    queryKey: ['vendor-monthly-sales', vendorId],
+    queryKey: ['vendor-period-sales', vendorId, period],
     queryFn: async () => {
-      const now = new Date();
-      const monthStart = startOfMonth(now).toISOString();
-      const monthEnd = endOfMonth(now).toISOString();
+      const { startIso, endIso } = periodRange;
+      const withWindow = (q: any, dateCol: string) =>
+        startIso ? q.gte(dateCol, startIso).lte(dateCol, endIso) : q;
 
-      const { data, error } = await supabase
-        .from('orders')
-        .select('total_amount')
-        .eq('vendor_id', vendorId)
-        .in('status', ['completed', 'delivered'])
-        .gte('created_at', monthStart)
-        .lte('created_at', monthEnd);
+      const [ordersRes, posRes, linksRes] = await Promise.all([
+        withWindow(supabase.from('orders').select('total_amount')
+          .eq('vendor_id', vendorId).in('status', ['completed', 'delivered']), 'created_at'),
+        withWindow(supabase.from('pos_sales').select('total_amount')
+          .eq('vendor_id', vendorId).neq('status', 'refunded'), 'sold_at'),
+        withWindow(supabase.from('payment_links').select('net_amount, montant')
+          .eq('vendeur_id', vendorId).eq('status', 'success'), 'paid_at'),
+      ]);
+      if (ordersRes.error) throw ordersRes.error;
 
-      if (error) throw error;
-      return (data || []).reduce((sum, order) => sum + Number(order.total_amount || 0), 0);
+      const ordersSum = (ordersRes.data || []).reduce((s: number, o: any) => s + Number(o.total_amount || 0), 0);
+      const posSum = (posRes.data || []).reduce((s: number, o: any) => s + Number(o.total_amount || 0), 0);
+      const linksSum = (linksRes.data || []).reduce((s: number, l: any) => s + Number(l.net_amount ?? l.montant ?? 0), 0);
+      return ordersSum + posSum + linksSum;
     },
     enabled: !!vendorId
   });
 
   // Récupérer les achats du mois (stock_purchases - utilise vendorId)
   const { data: monthlyPurchases = 0, isLoading: loadingPurchases } = useQuery({
-    queryKey: ['vendor-monthly-purchases', vendorId],
+    queryKey: ['vendor-period-purchases', vendorId, period],
     queryFn: async () => {
-      const now = new Date();
-      const monthStart = startOfMonth(now).toISOString();
-      const monthEnd = endOfMonth(now).toISOString();
-
-      const { data, error } = await supabase
+      const { startIso, endIso } = periodRange;
+      // Même fenêtre que les ventes ; achat compté à sa VALIDATION (validated_at) — date à
+      // laquelle le stock + la dépense sont enregistrés (cohérent avec les ventes).
+      let q = supabase
         .from('stock_purchases')
         .select('total_purchase_amount')
         .eq('vendor_id', vendorId)
-        .in('status', ['validated', 'completed'])
-        .gte('created_at', monthStart)
-        .lte('created_at', monthEnd);
+        .eq('status', 'validated');
+      if (startIso) q = q.gte('validated_at', startIso).lte('validated_at', endIso);
 
+      const { data, error } = await q;
       if (error) throw error;
-      return (data || []).reduce((sum, p) => sum + Number(p.total_purchase_amount || 0), 0);
+      return (data || []).reduce((sum: number, p: any) => sum + Number(p.total_purchase_amount || 0), 0);
     },
     enabled: !!vendorId
   });
@@ -276,9 +300,17 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
   };
 
   // Calculs
-  const totalFixedCosts = useMemo(() => {
+  // Total des coûts fixes MENSUELS configurés (loyer, abonnement…).
+  const monthlyFixedCosts = useMemo(() => {
     return fixedCosts.reduce((sum, cost) => sum + Number(cost.amount || 0), 0);
   }, [fixedCosts]);
+
+  // Coûts fixes PRORATISÉS à la période sélectionnée (sinon on soustrairait un mois entier
+  // de loyer d'une seule journée de ventes → profit faux).
+  const totalFixedCosts = useMemo(() => {
+    const factor: Record<typeof period, number> = { day: 1 / 30, week: 7 / 30, month: 1, year: 12, all: 1 };
+    return monthlyFixedCosts * (factor[period] ?? 1);
+  }, [monthlyFixedCosts, period]);
 
   const grossProfit = useMemo(() => {
     return monthlySales - monthlyPurchases;
@@ -317,15 +349,22 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
     );
   }
 
-  const currentMonth = format(new Date(), 'MMMM yyyy', { locale: fr });
-
   return (
     <div className="space-y-6">
       {/* En-tête */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3 className="text-lg font-semibold">Analyse de Profit Mensuel</h3>
-          <p className="text-sm text-muted-foreground">{currentMonth}</p>
+          <h3 className="text-lg font-semibold">Analyse de Profit</h3>
+          <p className="text-sm text-muted-foreground capitalize">{periodRange.label}</p>
+          {/* Sélecteur de période : pilote ventes ET achats (mêmes dates). */}
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {([['day', 'Jour'], ['week', 'Semaine'], ['month', 'Mois'], ['year', 'Année'], ['all', 'Tout']] as const).map(([val, lbl]) => (
+              <Button key={val} size="sm" variant={period === val ? 'default' : 'outline'}
+                className="h-7 px-2.5 text-xs" onClick={() => setPeriod(val)}>
+                {lbl}
+              </Button>
+            ))}
+          </div>
         </div>
         <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
           setIsAddDialogOpen(open);
@@ -348,7 +387,7 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
             </DialogHeader>
             <div className="space-y-4 pt-4">
               <div>
-                <Label>Type de coût</Label>
+                <Label>{t('monthlyProfitAnalysis.typeDeCout')}</Label>
                 <Select
                   value={formData.cost_type}
                   onValueChange={(value: FixedCost['cost_type']) =>
@@ -371,15 +410,15 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
                 </Select>
               </div>
               <div>
-                <Label>Libellé</Label>
+                <Label>{t('monthlyProfitAnalysis.libelle')}</Label>
                 <Input
-                  placeholder="Ex: Loyer boutique"
+                  placeholder={t('monthlyProfitAnalysis.exLoyerBoutique')}
                   value={formData.label}
                   onChange={(e) => setFormData(prev => ({ ...prev, label: e.target.value }))}
                 />
               </div>
               <div>
-                <Label>Montant mensuel (GNF)</Label>
+                <Label>{t('monthlyProfitAnalysis.montantMensuelGnf')}</Label>
                 <Input
                   type="number"
                   placeholder="0"
@@ -409,7 +448,7 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] sm:text-sm text-muted-foreground truncate">Ventes du mois</p>
+                <p className="text-[11px] sm:text-sm text-muted-foreground truncate">{t('monthlyProfitAnalysis.ventesDuMois')}</p>
                 <p className="text-sm sm:text-xl font-bold text-[#ff4000] truncate">{formatCurrency(monthlySales)}</p>
               </div>
               <div className="p-1.5 sm:p-2 bg-orange-100 rounded-full shrink-0 ml-1">
@@ -424,7 +463,7 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] sm:text-sm text-muted-foreground truncate">Achats du mois</p>
+                <p className="text-[11px] sm:text-sm text-muted-foreground truncate">{t('monthlyProfitAnalysis.achatsDuMois')}</p>
                 <p className="text-sm sm:text-xl font-bold text-[#ff4000] truncate">{formatCurrency(monthlyPurchases)}</p>
               </div>
               <div className="p-1.5 sm:p-2 bg-orange-100 rounded-full shrink-0 ml-1">
@@ -439,7 +478,7 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
           <CardContent className="p-3 sm:p-4">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] sm:text-sm text-muted-foreground truncate">Coûts fixes</p>
+                <p className="text-[11px] sm:text-sm text-muted-foreground truncate">{t('monthlyProfitAnalysis.coutsFixes')}</p>
                 <p className="text-sm sm:text-xl font-bold text-orange-600 truncate">{formatCurrency(totalFixedCosts)}</p>
               </div>
               <div className="p-1.5 sm:p-2 bg-orange-100 rounded-full shrink-0 ml-1">
@@ -490,7 +529,7 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
             </div>
             <Separator />
             <div className="flex justify-between items-center py-2">
-              <span className="text-muted-foreground">Coût des achats (stock)</span>
+              <span className="text-muted-foreground">{t('monthlyProfitAnalysis.coutDesAchatsStock')}</span>
               <span className="font-medium text-[#ff4000]">- {formatCurrency(monthlyPurchases)}</span>
             </div>
             <Separator />
@@ -502,7 +541,7 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
             </div>
             <Separator />
             <div className="flex justify-between items-center py-2">
-              <span className="text-muted-foreground">Total coûts fixes</span>
+              <span className="text-muted-foreground">{t('monthlyProfitAnalysis.totalCoutsFixes')}</span>
               <span className="font-medium text-[#ff4000]">- {formatCurrency(totalFixedCosts)}</span>
             </div>
             <Separator />
@@ -523,14 +562,14 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
         {/* Liste des coûts fixes */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Coûts fixes mensuels</CardTitle>
+            <CardTitle className="text-base">{t('monthlyProfitAnalysis.coutsFixesMensuels')}</CardTitle>
           </CardHeader>
           <CardContent>
             {fixedCosts.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Home className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>Aucun coût fixe configuré</p>
-                <p className="text-sm">Ajoutez votre loyer, abonnement, etc.</p>
+                <p>{t('monthlyProfitAnalysis.aucunCoutFixeConfigure')}</p>
+                <p className="text-sm">{t('monthlyProfitAnalysis.ajoutezVotreLoyerAbonnementEtc')}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -586,7 +625,7 @@ export function MonthlyProfitAnalysis({ vendorId, userId }: MonthlyProfitAnalysi
         {/* Graphique répartition */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Répartition des coûts fixes</CardTitle>
+            <CardTitle className="text-base">{t('monthlyProfitAnalysis.repartitionDesCoutsFixes')}</CardTitle>
           </CardHeader>
           <CardContent>
             {pieData.length === 0 ? (

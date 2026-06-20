@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,7 @@ const statusLabels = {
 };
 
 export default function MarketingManagement() {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const { user } = useAuth();
   const { vendorId, loading: vendorLoading } = useCurrentVendor();
@@ -244,7 +246,7 @@ export default function MarketingManagement() {
   const clickRate = totalSent > 0 ? ((totalClicked / totalSent) * 100).toFixed(1) : '0';
 
   if (promoLoading || campaignsLoading) {
-    return <div className="p-4">Chargement des données marketing...</div>;
+    return <div className="p-4">{t('marketingManagement.chargementDesDonneesMarketing')}</div>;
   }
 
   return (
@@ -270,7 +272,7 @@ export default function MarketingManagement() {
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
             <div className="min-w-0">
               <h2 className="text-lg sm:text-2xl font-bold">Marketing & Promotions</h2>
-              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">Gérez vos campagnes et codes promo</p>
+              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{t('marketingManagement.gerezVosCampagnesEtCodes')}</p>
             </div>
             <div className="flex gap-2">
           <Dialog open={isPromoDialogOpen} onOpenChange={setIsPromoDialogOpen}>
@@ -282,7 +284,7 @@ export default function MarketingManagement() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Créer un code promotionnel</DialogTitle>
+                <DialogTitle>{t('marketingManagement.creerUnCodePromotionnel')}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleCreatePromo} className="space-y-4">
                 <div>
@@ -306,12 +308,12 @@ export default function MarketingManagement() {
                     id="description"
                     value={promoForm.description}
                     onChange={(e) => setPromoForm(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Promotion de fin d'année"
+                    placeholder={t('marketingManagement.promotionDeFinDAnnee')}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="discount_type">Type de remise</Label>
+                    <Label htmlFor="discount_type">{t('marketingManagement.typeDeRemise')}</Label>
                     <Select
                       value={promoForm.discount_type}
                       onValueChange={(value: 'percentage' | 'fixed_amount') =>
@@ -323,7 +325,7 @@ export default function MarketingManagement() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="percentage">Pourcentage</SelectItem>
-                        <SelectItem value="fixed_amount">Montant fixe</SelectItem>
+                        <SelectItem value="fixed_amount">{t('marketingManagement.montantFixe')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -342,7 +344,7 @@ export default function MarketingManagement() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="minimum_order">Commande minimum (GNF)</Label>
+                    <Label htmlFor="minimum_order">{t('marketingManagement.commandeMinimumGnf')}</Label>
                     <Input
                       id="minimum_order"
                       type="number"
@@ -370,7 +372,7 @@ export default function MarketingManagement() {
                   />
                 </div>
                 <div className="flex gap-2">
-                  <Button type="submit" className="flex-1">Créer le code promo</Button>
+                  <Button type="submit" className="flex-1">{t('marketingManagement.creerLeCodePromo')}</Button>
                   <Button type="button" variant="outline" onClick={() => setIsPromoDialogOpen(false)}>
                     Annuler
                   </Button>
@@ -388,11 +390,11 @@ export default function MarketingManagement() {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Créer une campagne marketing</DialogTitle>
+                <DialogTitle>{t('marketingManagement.creerUneCampagneMarketing')}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleCreateCampaign} className="space-y-4">
                 <div>
-                  <Label htmlFor="name">Nom de la campagne *</Label>
+                  <Label htmlFor="name">{t('marketingManagement.nomDeLaCampagne')}</Label>
                   <Input
                     id="name"
                     value={campaignForm.name}
@@ -402,7 +404,7 @@ export default function MarketingManagement() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="type">Type de campagne</Label>
+                  <Label htmlFor="type">{t('marketingManagement.typeDeCampagne')}</Label>
                   <Select
                     value={campaignForm.type}
                     onValueChange={(value: Campaign['type']) =>
@@ -416,7 +418,7 @@ export default function MarketingManagement() {
                       <SelectItem value="email">Email</SelectItem>
                       <SelectItem value="sms">SMS</SelectItem>
                       <SelectItem value="notification">Notification</SelectItem>
-                      <SelectItem value="social">Réseaux sociaux</SelectItem>
+                      <SelectItem value="social">{t('marketingManagement.reseauxSociaux')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -430,12 +432,12 @@ export default function MarketingManagement() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="content">Contenu du message</Label>
+                  <Label htmlFor="content">{t('marketingManagement.contenuDuMessage')}</Label>
                   <Textarea
                     id="content"
                     value={campaignForm.content}
                     onChange={(e) => setCampaignForm(prev => ({ ...prev, content: e.target.value }))}
-                    placeholder="Votre message promotionnel..."
+                    placeholder={t('marketingManagement.votreMessagePromotionnel')}
                     rows={4}
                   />
                 </div>
@@ -458,7 +460,7 @@ export default function MarketingManagement() {
             <div className="flex items-center gap-2">
               <Mail className="w-5 h-5 text-blue-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Messages envoyés</p>
+                <p className="text-sm text-muted-foreground">{t('marketingManagement.messagesEnvoyes')}</p>
                 <p className="text-2xl font-bold">{totalSent}</p>
               </div>
             </div>
@@ -480,7 +482,7 @@ export default function MarketingManagement() {
             <div className="flex items-center gap-2">
               <MousePointer className="w-5 h-5 text-[#04439e]" />
               <div>
-                <p className="text-sm text-muted-foreground">Taux de clic</p>
+                <p className="text-sm text-muted-foreground">{t('marketingManagement.tauxDeClic')}</p>
                 <p className="text-2xl font-bold">{clickRate}%</p>
               </div>
             </div>
@@ -537,11 +539,11 @@ export default function MarketingManagement() {
                       </p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Commande min.</p>
+                      <p className="text-muted-foreground">{t('marketingManagement.commandeMin')}</p>
                       <p className="font-medium">{fc(promo.minimum_order_amount)}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Expire le</p>
+                      <p className="text-muted-foreground">{t('marketingManagement.expireLe')}</p>
                       <p className="font-medium">
                         {promo.valid_until
                           ? new Date(promo.valid_until).toLocaleDateString('fr-FR')
@@ -566,7 +568,7 @@ export default function MarketingManagement() {
           {promoCodes.length === 0 && (
             <div className="text-center py-8">
               <Tag className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Aucun code promotionnel</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('marketingManagement.aucunCodePromotionnel')}</h3>
               <p className="text-muted-foreground">
                 Créez votre premier code promotionnel pour attirer plus de clients.
               </p>
@@ -597,9 +599,9 @@ export default function MarketingManagement() {
                       {campaignTypeLabels[campaign.type]}
                     </Badge>
                   </div>
-                  <div className="grid grid-cols-3 gap-4 text-sm mt-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm mt-2">
                     <div>
-                      <p className="text-muted-foreground">Envoyés</p>
+                      <p className="text-muted-foreground">{t('marketingManagement.envoyes')}</p>
                       <p className="font-medium">{campaign.sent_count}</p>
                     </div>
                     <div>
@@ -634,7 +636,7 @@ export default function MarketingManagement() {
           {campaigns.length === 0 && (
             <div className="text-center py-8">
               <Megaphone className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Aucune campagne</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('marketingManagement.aucuneCampagne')}</h3>
               <p className="text-muted-foreground">
                 Créez votre première campagne marketing pour promouvoir vos produits.
               </p>

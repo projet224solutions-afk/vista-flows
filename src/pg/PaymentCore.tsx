@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { PaymentCoreForm } from '@/components/payment/PaymentCoreForm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,6 +37,7 @@ const paymentTypeLabels: Record<PaymentType, string> = {
 };
 
 export default function PaymentCorePage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const _navigate = useNavigate();
 
@@ -124,7 +126,7 @@ export default function PaymentCorePage() {
             <Shield className="h-5 w-5 text-primary" />
             <span className="text-sm font-medium text-primary">Payment Core 224Solutions</span>
           </div>
-          <h1 className="text-3xl font-bold mb-2">Système de Paiement Unifié</h1>
+          <h1 className="text-3xl font-bold mb-2">{t('paymentCore.systemeDePaiementUnifie')}</h1>
           <p className="text-muted-foreground">
             Initiez un paiement sécurisé via Orange Money, MTN MoMo ou Carte
           </p>
@@ -132,7 +134,7 @@ export default function PaymentCorePage() {
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="text-lg">Types de paiements supportés</CardTitle>
+            <CardTitle className="text-lg">{t('paymentCore.typesDePaiementsSupportes')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -158,12 +160,12 @@ export default function PaymentCorePage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Configurer le paiement</CardTitle>
+            <CardTitle className="text-lg">{t('paymentCore.configurerLePaiement')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Montant (GNF)</Label>
+                <Label>{t('paymentCore.montantGnf')}</Label>
                 <Input
                   type="number"
                   value={amount}
@@ -173,7 +175,7 @@ export default function PaymentCorePage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Type de paiement</Label>
+                <Label>{t('paymentCore.typeDePaiement')}</Label>
                 <Select value={type} onValueChange={(v) => setType(v as PaymentType)}>
                   <SelectTrigger>
                     <SelectValue />
@@ -188,20 +190,20 @@ export default function PaymentCorePage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Référence unique</Label>
+              <Label>{t('paymentCore.referenceUnique')}</Label>
               <Input
                 value={referenceId}
                 onChange={(e) => setReferenceId(e.target.value)}
-                placeholder="ID commande, abonnement, etc."
+                placeholder={t('paymentCore.idCommandeAbonnementEtc')}
               />
             </div>
 
             <div className="space-y-2">
-              <Label>ID Vendeur (optionnel)</Label>
+              <Label>{t('paymentCore.idVendeurOptionnel')}</Label>
               <Input
                 value={vendorId}
                 onChange={(e) => setVendorId(e.target.value)}
-                placeholder="UUID du vendeur"
+                placeholder={t('paymentCore.uuidDuVendeur')}
               />
             </div>
 
@@ -210,7 +212,7 @@ export default function PaymentCorePage() {
               <Input
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Description du paiement"
+                placeholder={t('paymentCore.descriptionDuPaiement')}
               />
             </div>
 
@@ -228,7 +230,7 @@ export default function PaymentCorePage() {
 
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle className="text-lg">Intégration API</CardTitle>
+            <CardTitle className="text-lg">{t('paymentCore.integrationApi')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-3">

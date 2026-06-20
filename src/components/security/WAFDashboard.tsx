@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ interface WAFStats {
 }
 
 export function WAFDashboard() {
+  const { t } = useTranslation();
   const [rules, setRules] = useState<WAFRule[]>([]);
   const [stats, setStats] = useState<WAFStats>({
     totalRequests: 0,
@@ -109,7 +111,7 @@ export function WAFDashboard() {
 
     } catch (error) {
       console.error('Erreur WAF:', error);
-      toast.error('Erreur lors du chargement des données WAF');
+      toast.error(t('wAFDashboard.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -138,7 +140,7 @@ export function WAFDashboard() {
       .eq('id', ruleId);
 
     if (error) {
-      toast.error('Erreur lors de la mise à jour');
+      toast.error(t('wAFDashboard.erreurLorsDeLaMise'));
       return;
     }
 
@@ -192,7 +194,7 @@ export function WAFDashboard() {
         <div className="p-4 bg-orange-50 dark:bg-[#ff4000] rounded-lg border border-orange-200 dark:border-[#ff4000]">
           <div className="flex items-center gap-2 mb-2">
             <Shield className="w-5 h-5 text-[#ff4000]" />
-            <span className="font-semibold">WAF actif et protégé</span>
+            <span className="font-semibold">{t('wAFDashboard.wafActifEtProtege')}</span>
           </div>
           <p className="text-sm text-muted-foreground">
             {stats.activeRules} règles actives • Mise à jour automatique activée • Protection temps réel
@@ -204,29 +206,29 @@ export function WAFDashboard() {
           <div className="p-4 bg-muted rounded-lg">
             <Activity className="w-8 h-8 text-blue-500 mb-2" />
             <div className="text-2xl font-bold">{stats.totalRequests.toLocaleString()}</div>
-            <div className="text-xs text-muted-foreground">Requêtes analysées</div>
+            <div className="text-xs text-muted-foreground">{t('wAFDashboard.requetesAnalysees')}</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
             <Ban className="w-8 h-8 text-[#ff4000] mb-2" />
             <div className="text-2xl font-bold">{stats.blockedRequests.toLocaleString()}</div>
-            <div className="text-xs text-muted-foreground">Requêtes bloquées</div>
+            <div className="text-xs text-muted-foreground">{t('wAFDashboard.requetesBloquees')}</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
             <TrendingUp className="w-8 h-8 text-[#ff4000] mb-2" />
             <div className="text-2xl font-bold">{stats.legitTraffic}%</div>
-            <div className="text-xs text-muted-foreground">Trafic légitime</div>
+            <div className="text-xs text-muted-foreground">{t('wAFDashboard.traficLegitime')}</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
             <Shield className="w-8 h-8 text-[#04439e] mb-2" />
             <div className="text-2xl font-bold">{stats.activeRules}</div>
-            <div className="text-xs text-muted-foreground">Règles actives</div>
+            <div className="text-xs text-muted-foreground">{t('wAFDashboard.reglesActives')}</div>
           </div>
         </ResponsiveGrid>
 
         {/* Règles WAF */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <h4 className="font-semibold text-sm">Règles de protection actives</h4>
+            <h4 className="font-semibold text-sm">{t('wAFDashboard.reglesDeProtectionActives')}</h4>
             <Button variant="outline" size="sm">
               <Plus className="w-4 h-4 mr-1" />
               Ajouter règle
@@ -236,7 +238,7 @@ export function WAFDashboard() {
           {rules.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Shield className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>Aucune règle WAF configurée</p>
+              <p>{t('wAFDashboard.aucuneRegleWafConfiguree')}</p>
             </div>
           ) : (
             rules.map((rule) => (
@@ -261,7 +263,7 @@ export function WAFDashboard() {
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
-                    <span>Efficacité</span>
+                    <span>{t('wAFDashboard.efficacite')}</span>
                     <span className="font-medium">
                       {stats.blockedRequests > 0
                         ? ((rule.blocked_requests / stats.blockedRequests) * 100).toFixed(1)

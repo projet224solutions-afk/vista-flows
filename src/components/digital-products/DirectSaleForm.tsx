@@ -4,6 +4,7 @@
  */
 
 import {} from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Package,
   FileText,
@@ -17,7 +18,8 @@ import {
   Download,
   Mail,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  Share2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -45,6 +47,9 @@ export interface DirectSaleFormData {
   requireEmail: boolean;
   instantDelivery: boolean;
   accessDuration: 'lifetime' | '1_year' | '6_months' | '3_months' | '1_month';
+  // Affiliation (programme interne type Amazon Associates)
+  affiliateEnabled: boolean;
+  affiliateCommissionRate: string;
 }
 
 interface DirectSaleFormProps {
@@ -82,6 +87,7 @@ const accessDurations = [
 ];
 
 export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   return (
     <div className="space-y-4 sm:space-y-5">
@@ -197,7 +203,7 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
 
               {data.pricingType === 'subscription' && (
                 <div className="rounded-2xl border border-[#d9e6fb] bg-[#f8fbff] p-3 sm:p-4">
-                  <Label className="text-xs">Fréquence de facturation</Label>
+                  <Label className="text-xs">{t('directSaleForm.frequenceDeFacturation')}</Label>
                   <div className="mt-1.5 grid grid-cols-1 gap-2 sm:grid-cols-3">
                     {(['monthly', 'yearly', 'lifetime'] as const).map((interval) => (
                       <div
@@ -293,8 +299,8 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
             <div className="flex items-center gap-2">
               <Download className="w-4 h-4 text-primary" />
               <div>
-                <p className="text-sm font-medium">Livraison instantanée</p>
-                <p className="text-xs text-muted-foreground">Accès immédiat après paiement</p>
+                <p className="text-sm font-medium">{t('directSaleForm.livraisonInstantanee')}</p>
+                <p className="text-xs text-muted-foreground">{t('directSaleForm.accesImmediatApresPaiement')}</p>
               </div>
             </div>
             <Switch
@@ -304,13 +310,13 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
           </div>
 
           <div>
-            <Label className="text-xs">Durée d'accès au contenu</Label>
+            <Label className="text-xs">{t('directSaleForm.dureeDAccesAuContenu')}</Label>
             <Select
               value={data.accessDuration}
               onValueChange={(v) => onChange({ accessDuration: v as DirectSaleFormData['accessDuration'] })}
             >
               <SelectTrigger className="mt-1.5">
-                <SelectValue placeholder="Choisir la durée" />
+                <SelectValue placeholder={t('directSaleForm.choisirLaDuree')} />
               </SelectTrigger>
               <SelectContent>
                 {accessDurations.map((duration) => (
@@ -327,7 +333,7 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
               <Mail className="w-4 h-4 text-primary" />
               <div>
                 <p className="text-sm font-medium">Email requis</p>
-                <p className="text-xs text-muted-foreground">Collecter l'email pour la livraison</p>
+                <p className="text-xs text-muted-foreground">{t('directSaleForm.collecterLEmailPourLa')}</p>
               </div>
             </div>
             <Switch
@@ -351,8 +357,8 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
             <div className="flex items-center gap-2">
               <RefreshCw className="w-4 h-4 text-primary" />
               <div>
-                <p className="text-sm font-medium">Autoriser les remboursements</p>
-                <p className="text-xs text-muted-foreground">Satisfait ou remboursé</p>
+                <p className="text-sm font-medium">{t('directSaleForm.autoriserLesRemboursements')}</p>
+                <p className="text-xs text-muted-foreground">{t('directSaleForm.satisfaitOuRembourse')}</p>
               </div>
             </div>
             <Switch
@@ -363,13 +369,13 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
 
           {data.allowRefunds && (
             <div>
-              <Label className="text-xs">Période de garantie</Label>
+              <Label className="text-xs">{t('directSaleForm.periodeDeGarantie')}</Label>
               <Select
                 value={data.refundPeriod}
                 onValueChange={(v) => onChange({ refundPeriod: v })}
               >
                 <SelectTrigger className="mt-1.5">
-                  <SelectValue placeholder="Choisir la période" />
+                  <SelectValue placeholder={t('directSaleForm.choisirLaPeriode')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="7">7 jours</SelectItem>
@@ -396,8 +402,8 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-primary" />
               <div>
-                <p className="text-sm font-medium">Quantité limitée</p>
-                <p className="text-xs text-muted-foreground">Créer de l'urgence</p>
+                <p className="text-sm font-medium">{t('directSaleForm.quantiteLimitee')}</p>
+                <p className="text-xs text-muted-foreground">{t('directSaleForm.creerDeLUrgence')}</p>
               </div>
             </div>
             <Switch
@@ -424,11 +430,68 @@ export function DirectSaleForm({ data, onChange }: DirectSaleFormProps) {
         </CardContent>
       </Card>
 
+      {/* Affiliation (programme interne) */}
+      <Card className="rounded-[24px] border-[#dde7fb] bg-white shadow-[0_18px_40px_rgba(4,67,158,0.06)]">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Share2 className="w-4 h-4 text-primary" />
+            Affiliation (optionnel)
+          </CardTitle>
+          <CardDescription className="text-xs">
+            Réservé aux produits numériques : laissez d'autres utilisateurs promouvoir ce produit
+            contre une commission, versée automatiquement après la fenêtre de protection acheteur.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between gap-3 p-3 bg-muted/50 rounded-xl">
+            <div className="flex items-center gap-2">
+              <Share2 className="w-4 h-4 text-primary" />
+              <div>
+                <p className="text-sm font-medium">Activer l'affiliation</p>
+                <p className="text-xs text-muted-foreground">Tout utilisateur peut générer un lien et toucher une commission</p>
+              </div>
+            </div>
+            <Switch
+              checked={data.affiliateEnabled}
+              onCheckedChange={(v) => onChange({ affiliateEnabled: v })}
+            />
+          </div>
+
+          {data.affiliateEnabled && (
+            <div>
+              <Label htmlFor="affiliateCommissionRate" className="text-xs">
+                Taux de commission affilié (%)
+              </Label>
+              <Input
+                id="affiliateCommissionRate"
+                type="number"
+                min="0"
+                max="90"
+                step="0.5"
+                value={data.affiliateCommissionRate}
+                onChange={(e) => onChange({ affiliateCommissionRate: e.target.value })}
+                placeholder="Ex: 20"
+                className="mt-1.5 max-w-[200px]"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Pourcentage du montant de la vente reversé à l'affilié (max 90%), débité de votre
+                portefeuille à la confirmation.
+              </p>
+              {data.affiliateCommissionRate && data.price && (
+                <p className="mt-1 text-xs text-primary">
+                  Soit {fc(parseFloat(data.price) * (parseFloat(data.affiliateCommissionRate || '0') / 100))} par vente
+                </p>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Info */}
       <Alert className="border-[#dbe6fb] bg-[#f7fbff]">
         <Shield className="w-4 h-4 text-[#04439e]" />
         <AlertDescription className="text-xs text-muted-foreground">
-          <strong className="text-foreground">Protection vendeur :</strong> Tous les paiements sont sécurisés.
+          <strong className="text-foreground">{t('directSaleForm.protectionVendeur')}</strong> Tous les paiements sont sécurisés.
           Vous recevez vos fonds après validation de la livraison.
         </AlertDescription>
       </Alert>

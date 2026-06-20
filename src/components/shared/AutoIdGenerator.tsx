@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RefreshCw, Copy, Check } from "lucide-react";
@@ -24,6 +25,7 @@ export function AutoIdGenerator({
   initialId,
   showCard = true
 }: AutoIdGeneratorProps) {
+  const { t } = useTranslation();
   const { id, loading, generateId, setId } = useAutoId(roleType, false);
   const [copied, setCopied] = React.useState(false);
 
@@ -50,10 +52,10 @@ export function AutoIdGenerator({
     try {
       await navigator.clipboard.writeText(id);
       setCopied(true);
-      toast.success('ID copié');
+      toast.success(t('autoIdGenerator.idCopie'));
       setTimeout(() => setCopied(false), 2000);
     } catch (_error) {
-      toast.error('Erreur lors de la copie');
+      toast.error(t('autoIdGenerator.erreurLorsDeLaCopie'));
     }
   };
 
@@ -100,7 +102,7 @@ export function AutoIdGenerator({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm">Génération d'ID automatique</CardTitle>
+        <CardTitle className="text-sm">{t('autoIdGenerator.generationDIdAutomatique')}</CardTitle>
       </CardHeader>
       <CardContent>
         {content}

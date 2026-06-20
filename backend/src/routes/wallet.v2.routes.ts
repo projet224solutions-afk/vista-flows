@@ -24,6 +24,7 @@ import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
 import { AFRICAN_BANK_SOURCE_URLS, isAfricanBankSourceUrl } from '../constants/africanBankSources.js';
 import { creditWallet, debitWallet, transferBetweenWallets } from '../services/wallet.service.js';
+import { createNotification } from '../services/notification.service.js';
 import { triggerAffiliateCommission } from '../services/commission.service.js';
 import { changeWalletPin, ensureWalletExistsForPin, getWalletPinPolicy, getWalletPinState, resetWalletPinWithPassword, setupWalletPin, verifyWalletPin } from '../services/walletPin.service.js';
 import { emitCoreFeatureEvent } from '../services/coreFeatureEvents.service.js';
@@ -278,6 +279,51 @@ async function getFxCommissionRate(): Promise<number> {
     // ignore — fallback défaut
   }
   return DEFAULT_FX_COMMISSION;
+}
+
+/**
+ * Bornes min/max par transfert (en GNF), pilotées par le PDG via `pdg_settings`
+ * (`min_transfer_amount` / `max_transfer_amount`, écrites par PDGTransferLimits sous {value}).
+ * Repli sur les défauts si non configurées. Relu à chaque appel → modif PDG immédiate.
+ * AVANT : ces bornes étaient codées en dur → l'interface PDG était cosmétique.
+ */
+const DEFAULT_MIN_TRANSFER_GNF = 100;
+const DEFAULT_MAX_TRANSFER_GNF = 50_000_000;
+const DEFAULT_MIN_INTL_TRANSFER_GNF = 500;
+const DEFAULT_MAX_INTL_TRANSFER_GNF = 50_000_000;
+
+/**
+ * Bornes effectives min/max (en GNF) selon national vs international, pilotées par le PDG via
+ * `pdg_settings` (PDGTransferLimits). National : min/max_transfer_amount. International :
+ * min/max_international_transfer_amount. Repli : défauts ; l'international retombe sur les défauts
+ * internationaux. Relu à chaque appel → modif PDG immédiate.
+ */
+async function getTransferBoundsGnf(isInternational: boolean): Promise<{ min: number; max: number }> {
+  try {
+    const { data } = await supabaseAdmin
+      .from('pdg_settings')
+      .select('setting_key, setting_value')
+      .in('setting_key', ['min_transfer_amount', 'max_transfer_amount', 'min_international_transfer_amount', 'max_international_transfer_amount']);
+    const read = (key: string, def: number): number => {
+      const row = (data || []).find((d: any) => d.setting_key === key);
+      const raw = (row?.setting_value as any)?.value ?? row?.setting_value;
+      const n = Number(raw);
+      return Number.isFinite(n) && n > 0 ? n : def;
+    };
+    let min: number; let max: number;
+    if (isInternational) {
+      min = read('min_international_transfer_amount', DEFAULT_MIN_INTL_TRANSFER_GNF);
+      max = read('max_international_transfer_amount', DEFAULT_MAX_INTL_TRANSFER_GNF);
+      return max > min ? { min, max } : { min: DEFAULT_MIN_INTL_TRANSFER_GNF, max: DEFAULT_MAX_INTL_TRANSFER_GNF };
+    }
+    min = read('min_transfer_amount', DEFAULT_MIN_TRANSFER_GNF);
+    max = read('max_transfer_amount', DEFAULT_MAX_TRANSFER_GNF);
+    return max > min ? { min, max } : { min: DEFAULT_MIN_TRANSFER_GNF, max: DEFAULT_MAX_TRANSFER_GNF };
+  } catch {
+    return isInternational
+      ? { min: DEFAULT_MIN_INTL_TRANSFER_GNF, max: DEFAULT_MAX_INTL_TRANSFER_GNF }
+      : { min: DEFAULT_MIN_TRANSFER_GNF, max: DEFAULT_MAX_TRANSFER_GNF };
+  }
 }
 
 function isAfricanBankRow(row: { source_url?: string | null; source?: string | null; source_type?: string | null }): boolean {
@@ -750,8 +796,8 @@ router.post('/transfer/preview', verifyJWT, async (req: AuthenticatedRequest, re
     }
 
     // LIMITE de transfert vérifiée sur l'ÉQUIVALENT GNF du montant envoyé (limite en GNF).
-    const MAX_TRANSFER_AMOUNT_GNF = 50_000_000;
-    const MIN_TRANSFER_AMOUNT_GNF = 100;
+    // Bornes pilotées par le PDG (pdg_settings) — national vs international.
+    const { min: MIN_TRANSFER_AMOUNT_GNF, max: MAX_TRANSFER_AMOUNT_GNF } = await getTransferBoundsGnf(isInternational);
     let amountInGnf = amount;
     if (senderCurrency !== 'GNF') {
       if (isInternational && receiverCurrency === 'GNF') {
@@ -1247,12 +1293,6 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
       return;
     }
 
-    // Limites exprimées en GNF (devise plateforme). La vérification réelle se fait
-    // plus bas sur l'ÉQUIVALENT GNF du montant envoyé (cf. amountInGnf), car un
-    // expéditeur peut envoyer en EUR/XOF/USD et il faut comparer au même étalon.
-    const MAX_TRANSFER_AMOUNT_GNF = 50_000_000;
-    const MIN_TRANSFER_AMOUNT_GNF = 100;
-
     if (!recipient_id || typeof recipient_id !== 'string' || !recipient_id.trim()) {
       res.status(400).json({ success: false, error: 'recipient_id requis' });
       return;
@@ -1361,8 +1401,8 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
       : 0;
 
     // ── LIMITE de transfert vérifiée sur l'ÉQUIVALENT GNF du montant envoyé ──
-    // (la limite est en GNF ; on convertit le montant — quelle que soit la devise
-    // de l'expéditeur — pour comparer au même étalon).
+    // Bornes pilotées par le PDG (pdg_settings) — national vs international.
+    const { min: MIN_TRANSFER_AMOUNT_GNF, max: MAX_TRANSFER_AMOUNT_GNF } = await getTransferBoundsGnf(isInternational);
     let amountInGnf = amount;
     if (senderCurrency !== 'GNF') {
       if (receiverCurrency === 'GNF') {
@@ -1428,6 +1468,26 @@ router.post('/transfer', verifyJWT, async (req: AuthenticatedRequest, res: Respo
     }
 
     logger.info(`[WalletV2] Transfer: sender=${senderId}, receiver=${resolvedRecipientId}, amount=${amount}, credited=${amountToCredit}, ${senderCurrency}->${receiverCurrency}`);
+
+    // 🔔 Notifications transfert (in-app + email/SMS via le funnel notifications). Best-effort.
+    const fmt = (n: number, cur: string) => `${Number(n).toLocaleString('fr-FR')} ${cur}`;
+    await Promise.allSettled([
+      createNotification({
+        userId: senderId,
+        title: 'Transfert envoyé',
+        message: `Vous avez envoyé ${fmt(amount, senderCurrency)}${feeAmount ? ` (frais : ${fmt(feeAmount, senderCurrency)})` : ''}.`,
+        type: 'transfer',
+        metadata: { transaction_id: result.transactionId, direction: 'sent', amount, currency: senderCurrency, fee: feeAmount, recipient_id: resolvedRecipientId },
+      }),
+      createNotification({
+        userId: resolvedRecipientId,
+        title: 'Transfert reçu',
+        message: `Vous avez reçu ${fmt(amountToCredit, receiverCurrency)} sur votre wallet.`,
+        type: 'transfer',
+        metadata: { transaction_id: result.transactionId, direction: 'received', amount: amountToCredit, currency: receiverCurrency, sender_id: senderId },
+      }),
+    ]);
+
     await emitCoreFeatureEvent({
       featureKey: 'wallet.transfer',
       coreEngine: 'payment',

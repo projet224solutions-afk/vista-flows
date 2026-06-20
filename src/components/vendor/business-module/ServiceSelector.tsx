@@ -4,6 +4,7 @@
  */
 
 import { Check, ChevronsUpDown, Plus, Store } from 'lucide-react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -35,6 +36,7 @@ export function ServiceSelector({
   onSelectService,
   onCreateNew
 }: ServiceSelectorProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
   const selectedService = services.find(s => s.id === selectedServiceId);
@@ -74,7 +76,7 @@ export function ServiceSelector({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full md:w-[350px] justify-between"
+          className="w-full md:w-full max-w-[350px] justify-between"
         >
           <div className="flex items-center gap-2 truncate">
             <Store className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -89,16 +91,16 @@ export function ServiceSelector({
                 </Badge>
               </>
             ) : (
-              <span className="text-muted-foreground">Sélectionner un service</span>
+              <span className="text-muted-foreground">{t('serviceSelector.selectionnerUnService')}</span>
             )}
           </div>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full md:w-[350px] p-0">
+      <PopoverContent className="w-full md:w-full max-w-[350px] p-0">
         <Command>
-          <CommandInput placeholder="Rechercher un service..." />
-          <CommandEmpty>Aucun service trouvé.</CommandEmpty>
+          <CommandInput placeholder={t('serviceSelector.rechercherUnService')} />
+          <CommandEmpty>{t('serviceSelector.aucunServiceTrouve')}</CommandEmpty>
           <CommandGroup>
             {services.map((service) => (
               <CommandItem

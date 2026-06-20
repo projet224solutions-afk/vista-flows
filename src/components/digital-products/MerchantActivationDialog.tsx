@@ -3,6 +3,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,7 @@ export function MerchantActivationDialog({
   onOpenChange,
   onSuccess
 }: MerchantActivationDialogProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
 
@@ -38,7 +40,7 @@ export function MerchantActivationDialog({
       // On passe l'email actuel pour éviter qu'il soit réutilisé
       const currentEmail = user.email || '';
 
-      toast.info('Vous allez être redirigé vers la page d\'inscription pour créer un compte marchand séparé');
+      toast.info(t('merchantActivationDialog.vousAllezEtreRedirigeVers'));
 
       // Attendre un peu pour que l'utilisateur lise le message
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -49,7 +51,7 @@ export function MerchantActivationDialog({
       onSuccess();
     } catch (error) {
       console.error('Erreur redirection marchand:', error);
-      toast.error('Erreur lors de la redirection');
+      toast.error(t('merchantActivationDialog.erreurLorsDeLaRedirection'));
     } finally {
       setLoading(false);
     }
@@ -57,14 +59,14 @@ export function MerchantActivationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Store className="w-5 h-5 text-primary" />
             Devenir Marchand
           </DialogTitle>
           <DialogDescription>
-            Pour vendre vos produits numériques sur le marketplace, vous devez créer un <strong>compte marchand séparé</strong> avec une adresse email différente de votre compte client actuel. Cela permet de bien séparer vos activités d'achat et de vente.
+            Pour vendre vos produits numériques sur le marketplace, vous devez créer un <strong>{t('merchantActivationDialog.compteMarchandSepare')}</strong> avec une adresse email différente de votre compte client actuel. Cela permet de bien séparer vos activités d'achat et de vente.
           </DialogDescription>
         </DialogHeader>
 
@@ -75,7 +77,7 @@ export function MerchantActivationDialog({
               Compte Marchand Séparé Requis
             </h4>
             <p className="text-xs text-[#ff4000] dark:text-orange-200">
-              ⚠️ Vous devez créer un nouveau compte avec une <strong>adresse email différente</strong> de celle de votre compte client actuel ({user?.email}).
+              ⚠️ Vous devez créer un nouveau compte avec une <strong>{t('merchantActivationDialog.adresseEmailDifferente')}</strong> de celle de votre compte client actuel ({user?.email}).
               Les deux comptes resteront indépendants.
             </p>
           </div>

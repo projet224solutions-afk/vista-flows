@@ -5,6 +5,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import { backendFetch } from './backendApi';
 import { SupportedLanguage, SUPPORTED_LANGUAGES } from './translationService';
 
 export interface AudioTranslationResult {
@@ -88,23 +89,19 @@ class AudioTranslationService {
     context?: string
   ): Promise<AudioTranslationResult> {
     try {
-      console.log('🎙️ Starting audio translation:', { audioUrl, targetLanguage });
+      console.log('🎙️ Starting audio translation (backend):', { audioUrl, targetLanguage });
 
-      const { data, error } = await supabase.functions.invoke('translate-audio', {
-        body: {
-          audioUrl,
-          targetLanguage,
-          sourceLanguage,
-          messageId,
-          context
-        }
+      // Pipeline 100% backend Node.js (Whisper STT → traduction → TTS).
+      const data: any = await backendFetch('/edge-functions/translate-audio', {
+        method: 'POST',
+        body: { audioUrl, targetLanguage, sourceLanguage, messageId, context }
       });
 
-      if (error) {
-        console.error('Audio translation error:', error);
+      if (!data?.success) {
+        console.error('Audio translation error:', data?.error);
         return {
           success: false,
-          error: error.message || 'Erreur de traduction audio'
+          error: data?.error || 'Erreur de traduction audio'
         };
       }
 

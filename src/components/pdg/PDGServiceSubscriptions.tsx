@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -83,6 +84,7 @@ interface ServiceTypeInfo {
 }
 
 export default function PDGServiceSubscriptions() {
+  const { t } = useTranslation();
   const [plans, setPlans] = useState<ServicePlan[]>([]);
   const [priceHistory, setPriceHistory] = useState<ServicePriceHistory[]>([]);
   const [stats, setStats] = useState<ServiceSubscriptionStats>({
@@ -311,7 +313,7 @@ export default function PDGServiceSubscriptions() {
   };
 
   const handleCancelSubscription = async (subscriptionId: string) => {
-    if (!confirm('Annuler cet abonnement ?')) return;
+    if (!confirm(t('pDGServiceSubscriptions.annulerCetAbonnement'))) return;
     const success = await ServiceSubscriptionService.cancelSubscription(subscriptionId);
     if (success) { toast({ title: 'Abonnement annulé' }); fetchData(); }
     else toast({ title: 'Erreur', variant: 'destructive' });
@@ -326,9 +328,9 @@ export default function PDGServiceSubscriptions() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active': return <Badge className="bg-[#ff4000] text-white"><CheckCircle className="w-3 h-3 mr-1" />Actif</Badge>;
-      case 'expired': return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Expiré</Badge>;
-      case 'cancelled': return <Badge variant="secondary"><XCircle className="w-3 h-3 mr-1" />Annulé</Badge>;
-      case 'past_due': return <Badge className="bg-orange-500 text-white"><AlertCircle className="w-3 h-3 mr-1" />Impayé</Badge>;
+      case 'expired': return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />{t('pDGServiceSubscriptions.expire')}</Badge>;
+      case 'cancelled': return <Badge variant="secondary"><XCircle className="w-3 h-3 mr-1" />{t('pDGServiceSubscriptions.annule')}</Badge>;
+      case 'past_due': return <Badge className="bg-orange-500 text-white"><AlertCircle className="w-3 h-3 mr-1" />{t('pDGServiceSubscriptions.impaye')}</Badge>;
       default: return <Badge variant="outline">{status}</Badge>;
     }
   };
@@ -365,8 +367,8 @@ export default function PDGServiceSubscriptions() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Abonnements Services de Proximité</h2>
-          <p className="text-muted-foreground text-sm">Gestion unifiée par catégorie de service</p>
+          <h2 className="text-2xl font-bold text-foreground">{t('pDGServiceSubscriptions.abonnementsServicesDeProximite')}</h2>
+          <p className="text-muted-foreground text-sm">{t('pDGServiceSubscriptions.gestionUnifieeParCategorieDe')}</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button onClick={() => setIsFreeDialogOpen(true)} size="sm" variant="outline">
@@ -499,7 +501,7 @@ export default function PDGServiceSubscriptions() {
       {/* Service-specific breakdown when "all" */}
       {activeServiceTab === 'all' && activeServiceTypes.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wider">Répartition par service</h3>
+          <h3 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wider">{t('pDGServiceSubscriptions.repartitionParService')}</h3>
           <ScrollArea className="w-full">
             <div className="flex gap-3 pb-3">
               {activeServiceTypes.map(st => {
@@ -520,14 +522,14 @@ export default function PDGServiceSubscriptions() {
                         <div className="p-2 rounded-lg bg-background/60">{getIcon(st.code)}</div>
                         <span className="text-sm font-semibold">{st.name}</span>
                       </div>
-                      <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-center">
                         <div>
                           <p className="text-lg font-bold text-[#ff4000]">{stStats.active}</p>
                           <p className="text-[10px] text-muted-foreground">Actifs</p>
                         </div>
                         <div>
                           <p className="text-lg font-bold text-destructive">{stStats.expired}</p>
-                          <p className="text-[10px] text-muted-foreground">Expirés</p>
+                          <p className="text-[10px] text-muted-foreground">{t('pDGServiceSubscriptions.expires')}</p>
                         </div>
                         <div>
                           <p className="text-lg font-bold">{stStats.total}</p>
@@ -613,13 +615,13 @@ export default function PDGServiceSubscriptions() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Service</TableHead>
+                      <TableHead>{t('pDGServiceSubscriptions.service')}</TableHead>
                       {activeServiceTab === 'all' && <TableHead>Type</TableHead>}
                       <TableHead>Plan</TableHead>
                       <TableHead>Statut</TableHead>
                       <TableHead>Cycle</TableHead>
                       <TableHead>Expiration</TableHead>
-                      <TableHead>Montant</TableHead>
+                      <TableHead>{t('pDGServiceSubscriptions.montant')}</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -629,7 +631,7 @@ export default function PDGServiceSubscriptions() {
                         <TableCell colSpan={activeServiceTab === 'all' ? 8 : 7} className="text-center text-muted-foreground py-12">
                           <div className="flex flex-col items-center gap-2">
                             <Store className="w-8 h-8 opacity-30" />
-                            <span>Aucun abonnement trouvé</span>
+                            <span>{t('pDGServiceSubscriptions.aucunAbonnementTrouve')}</span>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -722,7 +724,7 @@ export default function PDGServiceSubscriptions() {
                       <TableHead>Prix Mensuel</TableHead>
                       <TableHead>Prix Annuel</TableHead>
                       <TableHead>Limites</TableHead>
-                      <TableHead>Fonctionnalités</TableHead>
+                      <TableHead>{t('pDGServiceSubscriptions.fonctionnalites')}</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -732,8 +734,8 @@ export default function PDGServiceSubscriptions() {
                         <TableCell colSpan={6} className="text-center text-muted-foreground py-12">
                           <div className="flex flex-col items-center gap-2">
                             <CreditCard className="w-8 h-8 opacity-30" />
-                            <span>Aucun plan configuré pour ce service</span>
-                            <p className="text-xs">Créez des plans spécifiques ou vérifiez la configuration.</p>
+                            <span>{t('pDGServiceSubscriptions.aucunPlanConfigurePourCe')}</span>
+                            <p className="text-xs">{t('pDGServiceSubscriptions.creezDesPlansSpecifiquesOu')}</p>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -755,8 +757,8 @@ export default function PDGServiceSubscriptions() {
                             )}
                           </TableCell>
                           <TableCell className="text-xs space-y-0.5">
-                            <div>Réservations: <span className="font-medium">{plan.max_bookings_per_month || '∞'}</span></div>
-                            <div>Produits: <span className="font-medium">{plan.max_products || '∞'}</span></div>
+                            <div>{t('pDGServiceSubscriptions.reservations')} <span className="font-medium">{plan.max_bookings_per_month || '∞'}</span></div>
+                            <div>{t('pDGServiceSubscriptions.produits')} <span className="font-medium">{plan.max_products || '∞'}</span></div>
                             <div>Staff: <span className="font-medium">{plan.max_staff || '∞'}</span></div>
                           </TableCell>
                           <TableCell>
@@ -769,10 +771,10 @@ export default function PDGServiceSubscriptions() {
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-1">
-                              <Button variant="ghost" size="sm" onClick={() => handleOpenPriceDialog(plan)} title="Modifier le prix">
+                              <Button variant="ghost" size="sm" onClick={() => handleOpenPriceDialog(plan)} title={t('pDGServiceSubscriptions.modifierLePrix')}>
                                 <DollarSign className="w-4 h-4" />
                               </Button>
-                              <Button variant="ghost" size="sm" onClick={() => handleOpenEditLimits(plan)} title="Modifier limites & fonctionnalités">
+                              <Button variant="ghost" size="sm" onClick={() => handleOpenEditLimits(plan)} title={t('pDGServiceSubscriptions.modifierLimitesFonctionnalites')}>
                                 <Settings2 className="w-4 h-4" />
                               </Button>
                             </div>
@@ -797,7 +799,7 @@ export default function PDGServiceSubscriptions() {
                   ? `Historique des Prix — ${serviceTypes.find(s => s.id === activeServiceTab)?.name}`
                   : 'Historique des Changements de Prix'}
               </CardTitle>
-              <CardDescription>Traçabilité des modifications tarifaires</CardDescription>
+              <CardDescription>{t('pDGServiceSubscriptions.tracabiliteDesModificationsTarifaires')}</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -806,7 +808,7 @@ export default function PDGServiceSubscriptions() {
                     <TableHead>Date</TableHead>
                     <TableHead>Plan</TableHead>
                     <TableHead>Ancien Prix</TableHead>
-                    <TableHead>Nouveau Prix</TableHead>
+                    <TableHead>{t('pDGServiceSubscriptions.nouveauPrix')}</TableHead>
                     <TableHead>Variation</TableHead>
                     <TableHead>Raison</TableHead>
                   </TableRow>
@@ -825,8 +827,8 @@ export default function PDGServiceSubscriptions() {
                           <TableCell colSpan={6} className="text-center text-muted-foreground py-12">
                             <div className="flex flex-col items-center gap-2">
                               <History className="w-8 h-8 opacity-30" />
-                              <span>Aucun historique de prix</span>
-                              <p className="text-xs">Les changements de prix apparaîtront ici après modification d'un plan</p>
+                              <span>{t('pDGServiceSubscriptions.aucunHistoriqueDePrix')}</span>
+                              <p className="text-xs">{t('pDGServiceSubscriptions.lesChangementsDePrixApparaitront')}</p>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -867,14 +869,14 @@ export default function PDGServiceSubscriptions() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Modifier le Prix</DialogTitle>
+            <DialogTitle>{t('pDGServiceSubscriptions.modifierLePrix2')}</DialogTitle>
             <DialogDescription>
               {selectedPlan?.display_name} — Actuel: {selectedPlan && ServiceSubscriptionService.formatAmount(selectedPlan.monthly_price_gnf)}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Nouveau Prix (GNF)</Label>
+              <Label>{t('pDGServiceSubscriptions.nouveauPrixGnf')}</Label>
               <Input type="number" value={newPrice} onChange={e => setNewPrice(e.target.value)} />
             </div>
             <div>
@@ -883,7 +885,7 @@ export default function PDGServiceSubscriptions() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>{t('pDGServiceSubscriptions.annuler')}</Button>
             <Button onClick={handleChangePlanPrice} disabled={submitting}>
               {submitting ? 'Modification...' : 'Modifier'}
             </Button>
@@ -895,16 +897,16 @@ export default function PDGServiceSubscriptions() {
       <Dialog open={isFreeDialogOpen} onOpenChange={setIsFreeDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Offrir un Abonnement Gratuit</DialogTitle>
-            <DialogDescription>Attribuer un abonnement gratuit à un service de proximité</DialogDescription>
+            <DialogTitle>{t('pDGServiceSubscriptions.offrirUnAbonnementGratuit')}</DialogTitle>
+            <DialogDescription>{t('pDGServiceSubscriptions.attribuerUnAbonnementGratuitA')}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>ID du Service Professionnel</Label>
+              <Label>{t('pDGServiceSubscriptions.idDuServiceProfessionnel')}</Label>
               <Input
                 value={freeSubscriptionData.serviceId}
                 onChange={e => setFreeSubscriptionData(prev => ({ ...prev, serviceId: e.target.value }))}
-                placeholder="UUID du service"
+                placeholder={t('pDGServiceSubscriptions.uuidDuService')}
               />
             </div>
             <div>
@@ -914,14 +916,14 @@ export default function PDGServiceSubscriptions() {
                 value={freeSubscriptionData.planId}
                 onChange={e => setFreeSubscriptionData(prev => ({ ...prev, planId: e.target.value }))}
               >
-                <option value="">Sélectionner un plan</option>
+                <option value="">{t('pDGServiceSubscriptions.selectionnerUnPlan')}</option>
                 {filteredPlans.map(plan => (
                   <option key={plan.id} value={plan.id}>{plan.display_name} — {ServiceSubscriptionService.formatAmount(plan.monthly_price_gnf)}/mois</option>
                 ))}
               </select>
             </div>
             <div>
-              <Label>Durée (jours)</Label>
+              <Label>{t('pDGServiceSubscriptions.dureeJours')}</Label>
               <Input
                 type="number"
                 value={freeSubscriptionData.days}
@@ -931,7 +933,7 @@ export default function PDGServiceSubscriptions() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsFreeDialogOpen(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setIsFreeDialogOpen(false)}>{t('pDGServiceSubscriptions.annuler')}</Button>
             <Button onClick={handleOfferFreeSubscription} disabled={submitting}>
               {submitting ? 'Attribution...' : 'Offrir'}
             </Button>
@@ -941,9 +943,9 @@ export default function PDGServiceSubscriptions() {
 
       {/* Edit Limits & Features Dialog */}
       <Dialog open={isEditLimitsOpen} onOpenChange={setIsEditLimitsOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Modifier Limites & Fonctionnalités</DialogTitle>
+            <DialogTitle>{t('pDGServiceSubscriptions.modifierLimitesFonctionnalites2')}</DialogTitle>
             <DialogDescription>
               {selectedPlan?.display_name} — Ajustez les limites et les fonctionnalités incluses
             </DialogDescription>
@@ -952,7 +954,7 @@ export default function PDGServiceSubscriptions() {
             {/* Limites */}
             <div className="space-y-3">
               <h4 className="text-sm font-semibold text-foreground">Limites</h4>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <div className="space-y-1">
                   <Label className="text-xs">Réservations/mois</Label>
                   <Input
@@ -963,7 +965,7 @@ export default function PDGServiceSubscriptions() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">Produits max</Label>
+                  <Label className="text-xs">{t('pDGServiceSubscriptions.produitsMax')}</Label>
                   <Input
                     type="number"
                     value={editLimitsForm.max_products}
@@ -981,12 +983,12 @@ export default function PDGServiceSubscriptions() {
                   />
                 </div>
               </div>
-              <p className="text-[11px] text-muted-foreground">Laissez vide pour illimité (∞)</p>
+              <p className="text-[11px] text-muted-foreground">{t('pDGServiceSubscriptions.laissezVidePourIllimite')}</p>
             </div>
 
             {/* Fonctionnalités */}
             <div className="space-y-3">
-              <h4 className="text-sm font-semibold text-foreground">Fonctionnalités</h4>
+              <h4 className="text-sm font-semibold text-foreground">{t('pDGServiceSubscriptions.fonctionnalites')}</h4>
               <div className="space-y-2">
                 {[
                   { key: 'analytics_access', label: 'Analytics' },
@@ -1007,7 +1009,7 @@ export default function PDGServiceSubscriptions() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditLimitsOpen(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setIsEditLimitsOpen(false)}>{t('pDGServiceSubscriptions.annuler')}</Button>
             <Button onClick={handleSaveLimits} disabled={submitting}>
               {submitting ? 'Sauvegarde...' : 'Enregistrer'}
             </Button>

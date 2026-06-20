@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/hooks/useAuth";
 import { Escrow224Service, EscrowTransaction } from "@/services/escrow224Service";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -10,6 +11,7 @@ import { toast } from "sonner";
 import { Lock, Unlock, DollarSign, RefreshCw, AlertCircle } from "lucide-react";
 
 export function EscrowDashboard() {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const [transactions, setTransactions] = useState<EscrowTransaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,7 +42,7 @@ export function EscrowDashboard() {
       }
     } catch (error) {
       console.error("Error loading transactions:", error);
-      toast.error("Erreur lors du chargement des transactions");
+      toast.error(t('escrowDashboard.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -57,7 +59,7 @@ export function EscrowDashboard() {
       });
 
       if (result.success) {
-        toast.success("✅ Fonds libérés avec succès");
+        toast.success(t('escrowDashboard.fondsLiberesAvecSucces'));
         setActionType(null);
         setSelectedTransaction(null);
         setNotes("");
@@ -67,7 +69,7 @@ export function EscrowDashboard() {
       }
     } catch (error) {
       console.error("Error releasing escrow:", error);
-      toast.error("Erreur lors de la libération des fonds");
+      toast.error(t('escrowDashboard.erreurLorsDeLaLiberation'));
     } finally {
       setProcessing(false);
     }
@@ -84,7 +86,7 @@ export function EscrowDashboard() {
       });
 
       if (result.success) {
-        toast.success("✅ Remboursement effectué avec succès");
+        toast.success(t('escrowDashboard.remboursementEffectueAvecSucces'));
         setActionType(null);
         setSelectedTransaction(null);
         setReason("");
@@ -94,7 +96,7 @@ export function EscrowDashboard() {
       }
     } catch (error) {
       console.error("Error refunding escrow:", error);
-      toast.error("Erreur lors du remboursement");
+      toast.error(t('escrowDashboard.erreurLorsDuRemboursement'));
     } finally {
       setProcessing(false);
     }
@@ -165,7 +167,7 @@ export function EscrowDashboard() {
       ) : transactions.length === 0 ? (
         <Card>
           <CardContent className="p-6">
-            <p className="text-muted-foreground">Aucune transaction escrow pour le moment.</p>
+            <p className="text-muted-foreground">{t('escrowDashboard.aucuneTransactionEscrowPourLe')}</p>
           </CardContent>
         </Card>
       ) : (
@@ -243,7 +245,7 @@ export function EscrowDashboard() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Libérer les fonds</DialogTitle>
+            <DialogTitle>{t('escrowDashboard.libererLesFonds')}</DialogTitle>
             <DialogDescription>
               Confirmer la libération des fonds au vendeur ?
             </DialogDescription>
@@ -291,7 +293,7 @@ export function EscrowDashboard() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Rembourser le client</DialogTitle>
+            <DialogTitle>{t('escrowDashboard.rembourserLeClient')}</DialogTitle>
             <DialogDescription>
               Confirmer le remboursement au client ?
             </DialogDescription>
@@ -301,7 +303,7 @@ export function EscrowDashboard() {
               Montant: <strong>{selectedTransaction?.amount} {selectedTransaction?.currency}</strong>
             </p>
             <Textarea
-              placeholder="Raison du remboursement (requis)"
+              placeholder={t('escrowDashboard.raisonDuRemboursementRequis')}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               className="min-h-[100px]"

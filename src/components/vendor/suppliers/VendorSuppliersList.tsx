@@ -4,8 +4,10 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { readSectionCache, writeSectionCache, isBrowserOffline } from '@/lib/offline/sectionCache';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -53,6 +55,7 @@ interface Supplier {
 }
 
 export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -63,13 +66,23 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
   const { data: suppliers = [], isLoading } = useQuery({
     queryKey: ['vendor-suppliers', vendorId],
     queryFn: async () => {
+      // 📴 Hors ligne : derniers fournisseurs connus (cache).
+      if (isBrowserOffline()) {
+        return readSectionCache<Supplier>('vendor_suppliers', vendorId) ?? [];
+      }
+
       const { data, error } = await supabase
         .from('vendor_suppliers')
         .select('*')
         .eq('vendor_id', vendorId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        const cached = readSectionCache<Supplier>('vendor_suppliers', vendorId);
+        if (cached) return cached;
+        throw error;
+      }
+      writeSectionCache('vendor_suppliers', vendorId, (data || []) as Supplier[]);
       return data as Supplier[];
     },
     enabled: !!vendorId,
@@ -211,7 +224,7 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vendor-suppliers', vendorId] });
       queryClient.invalidateQueries({ queryKey: ['supplier-purchase-stats', vendorId] });
-      toast.success('Fournisseur supprimé');
+      toast.success(t('vendorSuppliersList.fournisseurSupprime'));
       setDeleteSupplier(null);
     },
     onError: (error: Error) => {
@@ -245,7 +258,7 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
   );
 
   if (isLoading) {
-    return <div className="text-center py-8">Chargement des fournisseurs...</div>;
+    return <div className="text-center py-8">{t('vendorSuppliersList.chargementDesFournisseurs')}</div>;
   }
 
   return (
@@ -255,7 +268,7 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 md:h-4 md:w-4 text-muted-foreground" />
           <Input
-            placeholder="Rechercher un fournisseur..."
+            placeholder={t('vendorSuppliersList.rechercherUnFournisseur')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 md:pl-9 text-base md:text-sm h-11 md:h-10"
@@ -263,7 +276,7 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
         </div>
         <Button onClick={handleOpenCreate} className="gap-2 h-11 md:h-10">
           <Plus className="h-5 w-5 md:h-4 md:w-4" />
-          <span className="text-base md:text-sm">Nouveau fournisseur</span>
+          <span className="text-base md:text-sm">{t('vendorSuppliersList.nouveauFournisseur')}</span>
         </Button>
       </div>
 
@@ -372,14 +385,14 @@ export function VendorSuppliersList({ vendorId }: VendorSuppliersListProps) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer le fournisseur ?</AlertDialogTitle>
+            <AlertDialogTitle>{t('vendorSuppliersList.supprimerLeFournisseur')}</AlertDialogTitle>
             <AlertDialogDescription>
               Cette action est irréversible. Le fournisseur "{deleteSupplier?.name}" sera
               définitivement supprimé.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel>{t('vendorSuppliersList.annuler')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteSupplier && deleteMutation.mutate(deleteSupplier.id)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

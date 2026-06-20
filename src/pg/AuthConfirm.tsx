@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, CheckCircle2, XCircle, Mail, RefreshCw } from 'lucide-react';
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/button';
 type Status = 'verifying' | 'success' | 'error';
 
 export default function AuthConfirm() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState<Status>('verifying');
@@ -122,7 +124,7 @@ export default function AuthConfirm() {
             <div className="w-16 h-16 mx-auto rounded-full bg-blue-50 flex items-center justify-center">
               <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
             </div>
-            <h1 className="text-xl font-semibold text-foreground">Vérification en cours…</h1>
+            <h1 className="text-xl font-semibold text-foreground">{t('authConfirm.verificationEnCours')}</h1>
             <p className="text-muted-foreground text-sm">
               Nous confirmons votre adresse email, veuillez patienter.
             </p>
@@ -135,7 +137,7 @@ export default function AuthConfirm() {
             <div className="w-16 h-16 mx-auto rounded-full bg-orange-50 flex items-center justify-center">
               <CheckCircle2 className="w-9 h-9 text-[#ff4000]" />
             </div>
-            <h1 className="text-xl font-semibold text-foreground">Email confirmé !</h1>
+            <h1 className="text-xl font-semibold text-foreground">{t('authConfirm.emailConfirme')}</h1>
             <p className="text-muted-foreground text-sm">
               Votre compte est activé. Vous allez être redirigé vers l'accueil…
             </p>
@@ -160,11 +162,11 @@ export default function AuthConfirm() {
             <div className="bg-muted/50 rounded-xl p-4 space-y-3 text-left">
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-muted-foreground" />
-                <p className="text-sm font-medium">Renvoyer l'email de confirmation</p>
+                <p className="text-sm font-medium">{t('authConfirm.renvoyerLEmailDeConfirmation')}</p>
               </div>
               <input
                 type="email"
-                placeholder="Votre adresse email"
+                placeholder={t('authConfirm.votreAdresseEmail')}
                 value={resendEmail}
                 onChange={e => setResendEmail(e.target.value)}
                 className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"

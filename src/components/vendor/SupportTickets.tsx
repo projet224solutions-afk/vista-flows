@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -75,6 +76,7 @@ const priorityLabels = {
 };
 
 export default function SupportTickets() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { vendorId, loading: vendorLoading } = useCurrentVendor();
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -122,7 +124,7 @@ export default function SupportTickets() {
       setTickets(data || []);
     } catch (error: any) {
       console.error('Erreur chargement tickets:', error);
-      toast.error('Erreur lors du chargement des tickets');
+      toast.error(t('supportTickets.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -130,7 +132,7 @@ export default function SupportTickets() {
 
   const createTicket = async () => {
     if (!newTicket.subject || !newTicket.description) {
-      toast.error('Veuillez remplir tous les champs requis');
+      toast.error(t('supportTickets.veuillezRemplirTousLesChamps'));
       return;
     }
 
@@ -148,7 +150,7 @@ export default function SupportTickets() {
 
       if (error) throw error;
 
-      toast.success('Ticket créé avec succès');
+      toast.success(t('supportTickets.ticketCreeAvecSucces'));
       setIsCreateDialogOpen(false);
       setNewTicket({
         subject: '',
@@ -159,7 +161,7 @@ export default function SupportTickets() {
       loadTickets();
     } catch (error: any) {
       console.error('Erreur création ticket:', error);
-      toast.error('Erreur lors de la création du ticket');
+      toast.error(t('supportTickets.erreurLorsDeLaCreation'));
     }
   };
 
@@ -175,7 +177,7 @@ export default function SupportTickets() {
       setMessages(data || []);
     } catch (error: any) {
       console.error('Erreur chargement messages:', error);
-      toast.error('Erreur lors du chargement des messages');
+      toast.error(t('supportTickets.erreurLorsDuChargementDes2'));
     }
   };
 
@@ -195,10 +197,10 @@ export default function SupportTickets() {
 
       setNewMessage('');
       loadMessages(selectedTicket.id);
-      toast.success('Message envoyé');
+      toast.success(t('supportTickets.messageEnvoye'));
     } catch (error: any) {
       console.error('Erreur envoi message:', error);
-      toast.error('Erreur lors de l\'envoi du message');
+      toast.error(t('supportTickets.erreurLorsDeL'));
     }
   };
 
@@ -221,7 +223,7 @@ export default function SupportTickets() {
         <CardContent className="flex items-center justify-center py-12">
           <div className="flex items-center gap-2">
             <Clock className="w-5 h-5 animate-spin" />
-            <span>Chargement des tickets...</span>
+            <span>{t('supportTickets.chargementDesTickets')}</span>
           </div>
         </CardContent>
       </Card>
@@ -245,9 +247,9 @@ export default function SupportTickets() {
                   Nouveau ticket
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Créer un nouveau ticket</DialogTitle>
+                  <DialogTitle>{t('supportTickets.creerUnNouveauTicket')}</DialogTitle>
                   <DialogDescription>
                     Décrivez votre problème ou votre demande
                   </DialogDescription>
@@ -259,11 +261,11 @@ export default function SupportTickets() {
                       id="subject"
                       value={newTicket.subject}
                       onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })}
-                      placeholder="Résumé du problème"
+                      placeholder={t('supportTickets.resumeDuProbleme')}
                     />
                   </div>
                   <div>
-                    <Label htmlFor="category">Catégorie</Label>
+                    <Label htmlFor="category">{t('supportTickets.categorie')}</Label>
                     <Select value={newTicket.category} onValueChange={(value) => setNewTicket({ ...newTicket, category: value })}>
                       <SelectTrigger>
                         <SelectValue />
@@ -276,7 +278,7 @@ export default function SupportTickets() {
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="priority">Priorité</Label>
+                    <Label htmlFor="priority">{t('supportTickets.priorite')}</Label>
                     <Select value={newTicket.priority} onValueChange={(value) => setNewTicket({ ...newTicket, priority: value })}>
                       <SelectTrigger>
                         <SelectValue />
@@ -294,7 +296,7 @@ export default function SupportTickets() {
                       id="description"
                       value={newTicket.description}
                       onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
-                      placeholder="Décrivez votre problème en détail"
+                      placeholder={t('supportTickets.decrivezVotreProblemeEnDetail')}
                       rows={6}
                     />
                   </div>
@@ -316,7 +318,7 @@ export default function SupportTickets() {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher par sujet ou numéro..."
+                placeholder={t('supportTickets.rechercherParSujetOuNumero')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -328,7 +330,7 @@ export default function SupportTickets() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous les statuts</SelectItem>
+                <SelectItem value="all">{t('supportTickets.tousLesStatuts')}</SelectItem>
                 {Object.entries(statusLabels).map(([value, label]) => (
                   <SelectItem key={value} value={value}>{label}</SelectItem>
                 ))}
@@ -343,7 +345,7 @@ export default function SupportTickets() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <MessageSquare className="w-12 h-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">Aucun ticket</h3>
+            <h3 className="text-lg font-medium mb-2">{t('supportTickets.aucunTicket')}</h3>
             <p className="text-muted-foreground text-center mb-4">
               {searchTerm || statusFilter !== 'all'
                 ? 'Aucun ticket ne correspond à vos critères'
@@ -412,7 +414,7 @@ export default function SupportTickets() {
             <div className="flex-1 overflow-y-auto space-y-4 p-4 border rounded-lg bg-muted/20 mb-4">
               {messages.length === 0 ? (
                 <div className="flex items-center justify-center h-full text-muted-foreground">
-                  <p>Aucun message pour le moment</p>
+                  <p>{t('supportTickets.aucunMessagePourLeMoment')}</p>
                 </div>
               ) : (
                 messages.map((message) => (
@@ -442,7 +444,7 @@ export default function SupportTickets() {
               <Textarea
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Votre message..."
+                placeholder={t('supportTickets.votreMessage')}
                 rows={3}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {

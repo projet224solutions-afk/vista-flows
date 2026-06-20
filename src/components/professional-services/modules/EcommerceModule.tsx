@@ -4,17 +4,19 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { EcommerceCampaigns } from '@/components/professional-services/modules/ecommerce/EcommerceCampaigns';
 import { formatCurrency } from '@/lib/formatters';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   ShoppingCart, Package, Users, TrendingUp,
   ArrowUpRight, ArrowDownRight, RefreshCw,
   Eye, Clock, CheckCircle, XCircle, DollarSign,
-  BarChart3, ShoppingBag, AlertTriangle
+  BarChart3, ShoppingBag, AlertTriangle, Zap
 } from 'lucide-react';
 import { useServiceEcommerceStats } from '@/hooks/useServiceEcommerceStats';
 import { formatDistanceToNow } from 'date-fns';
@@ -51,6 +53,7 @@ const statusLabels: Record<string, string> = {
 // formatCurrency importé depuis @/lib/formatters
 
 export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProps) {
+  const { t } = useTranslation();
   // Utiliser le hook avec serviceId pour charger les données spécifiques au service professionnel
   const { stats, recentOrders, topProducts, loading, error, refresh } = useServiceEcommerceStats(serviceId);
   const [activeTab, setActiveTab] = useState('overview');
@@ -100,7 +103,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
             <ShoppingCart className="w-7 h-7 text-primary" />
             {businessName || 'Module E-commerce'}
           </h2>
-          <p className="text-muted-foreground">Gérez vos ventes, produits et clients</p>
+          <p className="text-muted-foreground">{t('ecommerceModule.gerezVosVentesProduitsEt')}</p>
         </div>
         <Button onClick={refresh} variant="outline" size="sm">
           <RefreshCw className="w-4 h-4 mr-2" />
@@ -112,7 +115,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/vendeur/orders')}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Commandes</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('ecommerceModule.commandes')}</CardTitle>
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -130,7 +133,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
 
         <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/vendeur/products')}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Produits</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('ecommerceModule.produits')}</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -161,7 +164,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
                   <span className="text-[#ff4000]">+{stats?.clients.newThisMonth} ce mois</span>
                 </>
               ) : (
-                <span className="text-muted-foreground">Aucun nouveau ce mois</span>
+                <span className="text-muted-foreground">{t('ecommerceModule.aucunNouveauCeMois')}</span>
               )}
             </div>
           </CardContent>
@@ -185,7 +188,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
+        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
           <TabsTrigger value="overview">
             <BarChart3 className="w-4 h-4 mr-2" />
             Vue d'ensemble
@@ -197,6 +200,10 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
           <TabsTrigger value="products">
             <Package className="w-4 h-4 mr-2" />
             Top produits
+          </TabsTrigger>
+          <TabsTrigger value="campaigns">
+            <Zap className="w-4 h-4 mr-2" />
+            Campagnes
           </TabsTrigger>
         </TabsList>
 
@@ -213,7 +220,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
               <CardContent className="space-y-4">
                 {/* Total */}
                 <div className="flex justify-between items-center p-3 bg-primary/10 rounded-lg">
-                  <span className="text-sm font-medium">Total général</span>
+                  <span className="text-sm font-medium">{t('ecommerceModule.totalGeneral')}</span>
                   <span className="font-bold text-primary">{formatCurrency(stats?.sales.totalRevenue || 0)}</span>
                 </div>
 
@@ -306,7 +313,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <CheckCircle className="w-4 h-4 text-[#ff4000]" />
-                      <span className="text-sm">Livrées</span>
+                      <span className="text-sm">{t('ecommerceModule.livrees')}</span>
                     </div>
                     <div className="flex gap-2">
                       <Badge variant="outline" className="text-orange-600 border-orange-300 text-xs">
@@ -320,7 +327,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <XCircle className="w-4 h-4 text-[#ff4000]" />
-                      <span className="text-sm">Annulées</span>
+                      <span className="text-sm">{t('ecommerceModule.annulees')}</span>
                     </div>
                     <div className="flex gap-2">
                       <Badge variant="outline" className="text-orange-600 border-orange-300 text-xs">
@@ -340,7 +347,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
         <TabsContent value="orders" className="mt-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Commandes récentes</CardTitle>
+              <CardTitle className="text-lg">{t('ecommerceModule.commandesRecentes')}</CardTitle>
               <Button variant="outline" size="sm" onClick={() => navigate('/vendeur/orders')}>
                 <Eye className="w-4 h-4 mr-2" />
                 Voir tout
@@ -350,7 +357,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
               {recentOrders.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <ShoppingBag className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucune commande pour le moment</p>
+                  <p>{t('ecommerceModule.aucuneCommandePourLeMoment')}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -395,7 +402,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
         <TabsContent value="products" className="mt-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Produits les plus vendus</CardTitle>
+              <CardTitle className="text-lg">{t('ecommerceModule.produitsLesPlusVendus')}</CardTitle>
               <Button variant="outline" size="sm" onClick={() => navigate('/vendeur/products')}>
                 <Eye className="w-4 h-4 mr-2" />
                 Gérer les produits
@@ -405,7 +412,7 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
               {topProducts.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucune vente enregistrée</p>
+                  <p>{t('ecommerceModule.aucuneVenteEnregistree')}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -443,6 +450,10 @@ export function EcommerceModule({ serviceId, businessName }: EcommerceModuleProp
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="campaigns" className="mt-4">
+          <EcommerceCampaigns serviceId={serviceId} />
         </TabsContent>
       </Tabs>
     </div>

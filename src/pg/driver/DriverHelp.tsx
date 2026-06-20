@@ -4,6 +4,7 @@
  */
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +18,7 @@ import { HelpCircle, MessageCircle, Phone, Mail, BookOpen, Video } from 'lucide-
 import { DriverLayout } from '@/components/driver/DriverLayout';
 
 export default function DriverHelp() {
+  const { t } = useTranslation();
   const faqItems = [
     {
       question: "Comment accepter une livraison ?",
@@ -50,13 +52,13 @@ export default function DriverHelp() {
         {/* Header */}
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold">Centre d'aide</h1>
-          <p className="text-muted-foreground">Trouvez des réponses à vos questions</p>
+          <p className="text-muted-foreground">{t('driverHelp.trouvezDesReponsesAVos')}</p>
         </div>
 
         {/* Recherche */}
         <div className="relative max-w-2xl mx-auto">
           <Input
-            placeholder="Rechercher dans l'aide..."
+            placeholder={t('driverHelp.rechercherDansLAide')}
             className="pl-10"
           />
           <HelpCircle className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -68,7 +70,7 @@ export default function DriverHelp() {
             <CardHeader className="text-center">
               <MessageCircle className="h-8 w-8 mx-auto text-primary mb-2" />
               <CardTitle className="text-base">Chat en direct</CardTitle>
-              <CardDescription>Support instantané</CardDescription>
+              <CardDescription>{t('driverHelp.supportInstantane')}</CardDescription>
             </CardHeader>
             <CardContent>
               <Button variant="outline" className="w-full">
@@ -80,7 +82,7 @@ export default function DriverHelp() {
           <Card className="cursor-pointer hover:shadow-lg transition-shadow">
             <CardHeader className="text-center">
               <Phone className="h-8 w-8 mx-auto text-primary mb-2" />
-              <CardTitle className="text-base">Appeler le support</CardTitle>
+              <CardTitle className="text-base">{t('driverHelp.appelerLeSupport')}</CardTitle>
               <CardDescription>+224 XXX XX XX XX</CardDescription>
             </CardHeader>
             <CardContent>
@@ -111,7 +113,7 @@ export default function DriverHelp() {
               <BookOpen className="h-5 w-5" />
               Questions fréquentes
             </CardTitle>
-            <CardDescription>Réponses aux questions les plus courantes</CardDescription>
+            <CardDescription>{t('driverHelp.reponsesAuxQuestionsLesPlus')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Accordion type="single" collapsible className="w-full">
@@ -136,28 +138,28 @@ export default function DriverHelp() {
               <Video className="h-5 w-5" />
               Tutoriels vidéo
             </CardTitle>
-            <CardDescription>Apprenez à utiliser toutes les fonctionnalités</CardDescription>
+            <CardDescription>{t('driverHelp.apprenezAUtiliserToutesLes')}</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
             <div className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
               <Badge className="mb-2">3 min</Badge>
-              <h3 className="font-semibold mb-1">Démarrer avec 224Solutions</h3>
-              <p className="text-sm text-muted-foreground">Introduction complète à l'application</p>
+              <h3 className="font-semibold mb-1">{t('driverHelp.demarrerAvec224solutions')}</h3>
+              <p className="text-sm text-muted-foreground">{t('driverHelp.introductionCompleteALApplication')}</p>
             </div>
             <div className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
               <Badge className="mb-2">5 min</Badge>
-              <h3 className="font-semibold mb-1">Accepter et gérer des livraisons</h3>
-              <p className="text-sm text-muted-foreground">Workflow complet de livraison</p>
+              <h3 className="font-semibold mb-1">{t('driverHelp.accepterEtGererDesLivraisons')}</h3>
+              <p className="text-sm text-muted-foreground">{t('driverHelp.workflowCompletDeLivraison')}</p>
             </div>
             <div className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
               <Badge className="mb-2">2 min</Badge>
-              <h3 className="font-semibold mb-1">Utiliser le GPS et la navigation</h3>
-              <p className="text-sm text-muted-foreground">Optimiser vos trajets</p>
+              <h3 className="font-semibold mb-1">{t('driverHelp.utiliserLeGpsEtLa')}</h3>
+              <p className="text-sm text-muted-foreground">{t('driverHelp.optimiserVosTrajets')}</p>
             </div>
             <div className="p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
               <Badge className="mb-2">4 min</Badge>
-              <h3 className="font-semibold mb-1">Gérer vos gains</h3>
-              <p className="text-sm text-muted-foreground">Portefeuille et retraits</p>
+              <h3 className="font-semibold mb-1">{t('driverHelp.gererVosGains')}</h3>
+              <p className="text-sm text-muted-foreground">{t('driverHelp.portefeuilleEtRetraits')}</p>
             </div>
           </CardContent>
         </Card>
@@ -166,11 +168,11 @@ export default function DriverHelp() {
         <Card className="border-primary/20 bg-primary/5">
           <CardContent className="pt-6 text-center">
             <MessageCircle className="h-12 w-12 mx-auto text-primary mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Besoin d'aide supplémentaire ?</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('driverHelp.besoinDAideSupplementaire')}</h3>
             <p className="text-muted-foreground mb-4">
               Notre équipe de support est disponible 24/7 pour vous aider
             </p>
-            <Button>Contacter le support</Button>
+            <Button>{t('driverHelp.contacterLeSupport')}</Button>
           </CardContent>
         </Card>
       </div>

@@ -4,9 +4,11 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { EscrowDisputeThread } from '@/components/disputes/EscrowDisputeThread';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { backendFetch } from '@/services/backendApi';
@@ -66,6 +68,7 @@ interface EscrowDispute {
 }
 
 export default function PDGEscrowDisputes() {
+  const { t } = useTranslation();
   const [disputes, setDisputes] = useState<EscrowDispute[]>([]);
   const [loading, setLoading] = useState(true);
   const [resolveDialog, setResolveDialog] = useState<{
@@ -78,59 +81,16 @@ export default function PDGEscrowDisputes() {
   const loadDisputes = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('escrow_disputes')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      // Enrich with profiles and escrow data
-      const enriched = await Promise.all((data || []).map(async (d: any) => {
-        const [initiatorRes, escrowRes] = await Promise.all([
-          supabase.from('profiles').select('full_name, phone').eq('id', d.initiator_user_id).maybeSingle(),
-          supabase.from('escrow_transactions').select('amount, currency, payer_id, receiver_id, order_id, status').eq('id', d.escrow_id).maybeSingle(),
-        ]);
-
-        let buyer_profile, seller_profile;
-        if (escrowRes.data) {
-          const [bp, sp] = await Promise.all([
-            supabase.from('profiles').select('full_name, phone').eq('id', escrowRes.data.payer_id).maybeSingle(),
-            supabase.from('profiles').select('full_name, phone').eq('id', escrowRes.data.receiver_id).maybeSingle(),
-          ]);
-          buyer_profile = bp.data;
-          seller_profile = sp.data;
-        }
-
-        return {
-          ...d,
-          initiator_profile: initiatorRes.data,
-          escrow: escrowRes.data,
-          buyer_profile,
-          seller_profile,
-        };
-      }));
-
-      // Email non lisible côté client (RLS colonne) → récupéré via le backend (service_role, PDG).
-      try {
-        const ids = [...new Set(enriched.flatMap((e: any) => [e.initiator_user_id, e.escrow?.payer_id, e.escrow?.receiver_id]).filter(Boolean))];
-        if (ids.length) {
-          const res = await backendFetch<Record<string, { email: string | null }>>('/api/admin/user-emails', { method: 'POST', body: { user_ids: ids } });
-          if (res.success && res.data) {
-            const m = res.data;
-            for (const e of enriched as any[]) {
-              if (e.initiator_profile) e.initiator_profile.email = m[e.initiator_user_id]?.email || null;
-              if (e.buyer_profile) e.buyer_profile.email = m[e.escrow?.payer_id]?.email || null;
-              if (e.seller_profile) e.seller_profile.email = m[e.escrow?.receiver_id]?.email || null;
-            }
-          }
-        }
-      } catch { /* email non bloquant */ }
-
-      setDisputes(enriched);
+      // ⚠️ Chargement via le BACKEND NODE (service_role). La RLS de escrow_disputes
+      // ne montre au client QUE ses propres litiges (initiator = auth.uid()) : le PDG
+      // n'étant pas l'initiateur, il ne voyait RIEN. Le backend contourne ça et
+      // renvoie TOUS les litiges déjà enrichis (escrow + profils + emails) en 1 appel.
+      const res = await backendFetch<any[]>('/api/admin/disputes/list', { method: 'GET' });
+      if (!res.success) throw new Error(res.error || 'Erreur');
+      setDisputes(res.data || []);
     } catch (err) {
       console.error('Error loading disputes:', err);
-      toast.error('Erreur lors du chargement des litiges');
+      toast.error(t('pDGEscrowDisputes.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -144,18 +104,18 @@ export default function PDGEscrowDisputes() {
     if (!resolveDialog) return;
     setResolving(true);
     try {
-      const { data, error } = await supabase.functions.invoke('resolve-dispute', {
+      // Résolution via le backend Node.js (RPC atomique resolve_escrow_dispute).
+      const res = await backendFetch<{ resolution: string }>('/api/admin/disputes/resolve', {
+        method: 'POST',
         body: {
           dispute_id: resolveDialog.disputeId,
           resolution: resolveDialog.resolution,
           resolution_notes: resolutionNotes,
         },
       });
+      if (!res.success) throw new Error(res.error || 'Erreur');
 
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || 'Erreur');
-
-      toast.success('Litige résolu avec succès');
+      toast.success(t('pDGEscrowDisputes.litigeResoluAvecSucces'));
       setResolveDialog(null);
       setResolutionNotes('');
       await loadDisputes();
@@ -231,9 +191,12 @@ export default function PDGEscrowDisputes() {
                   </div>
 
                   <div className="bg-background/80 rounded-lg p-4">
-                    <p className="text-sm font-medium mb-1">Raison du litige :</p>
+                    <p className="text-sm font-medium mb-1">{t('pDGEscrowDisputes.raisonDuLitige')}</p>
                     <p className="text-sm text-muted-foreground">{dispute.reason}</p>
                   </div>
+
+                  {/* Fil tripartite : le PDG arbitre et peut écrire aux 2 parties */}
+                  <EscrowDisputeThread escrowDisputeId={dispute.id} currentParty="admin" />
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Initiator info */}
@@ -329,8 +292,8 @@ export default function PDGEscrowDisputes() {
           <Card>
             <CardContent className="py-12 text-center">
               <Shield className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-              <p className="text-lg font-semibold">Aucun litige</p>
-              <p className="text-muted-foreground text-sm">Tous les paiements escrow se déroulent normalement.</p>
+              <p className="text-lg font-semibold">{t('pDGEscrowDisputes.aucunLitige')}</p>
+              <p className="text-muted-foreground text-sm">{t('pDGEscrowDisputes.tousLesPaiementsEscrowSe')}</p>
             </CardContent>
           </Card>
         )}
@@ -342,7 +305,7 @@ export default function PDGEscrowDisputes() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               {resolveDialog?.resolution === 'release_to_seller'
-                ? <><CheckCircle className="w-5 h-5 text-[#ff4000]" />Libérer les fonds au vendeur</>
+                ? <><CheckCircle className="w-5 h-5 text-[#ff4000]" />{t('pDGEscrowDisputes.libererLesFondsAuVendeur')}</>
                 : <><XCircle className="w-5 h-5 text-blue-600" />Rembourser l'acheteur</>
               }
             </AlertDialogTitle>
@@ -354,13 +317,13 @@ export default function PDGEscrowDisputes() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Textarea
-            placeholder="Notes de résolution (optionnel)..."
+            placeholder={t('pDGEscrowDisputes.notesDeResolutionOptionnel')}
             value={resolutionNotes}
             onChange={(e) => setResolutionNotes(e.target.value)}
             className="min-h-[80px]"
           />
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={resolving}>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={resolving}>{t('pDGEscrowDisputes.annuler')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleResolve}
               disabled={resolving}

@@ -37,6 +37,7 @@ interface DomainDef {
 // Registre des domaines surveillés — pour en ajouter un : créer la RPC <x>_monitor_report() et l'ajouter ici.
 export const MONITOR_DOMAINS: DomainDef[] = [
   { key: 'escrow', module: 'escrow', label: 'Escrow & Conversion', rpc: 'escrow_monitor_report' },
+  { key: 'dispute', module: 'dispute', label: 'Litiges', rpc: 'dispute_monitor_report' },
   { key: 'subscription', module: 'subscription', label: 'Abonnements', rpc: 'subscription_monitor_report' },
   { key: 'transfer', module: 'transfer', label: 'Transferts', rpc: 'transfer_monitor_report' },
   { key: 'commission', module: 'commission', label: 'Commissions', rpc: 'commission_monitor_report' },
@@ -44,6 +45,7 @@ export const MONITOR_DOMAINS: DomainDef[] = [
   { key: 'wallet', module: 'wallet', label: 'Wallet (dépôts/retraits)', rpc: 'wallet_monitor_report' },
   { key: 'pos', module: 'pos', label: 'POS (caisse vendeur)', rpc: 'pos_monitor_report' },
   { key: 'aml', module: 'aml', label: 'Provenance & plafonds wallet', rpc: 'wallet_provenance_report' },
+  { key: 'money_integrity', module: 'money_integrity', label: 'Intégrité Argent (drift fonctions)', rpc: 'money_integrity_report' },
   { key: 'frontend_security', module: 'frontend_security', label: 'Sécurité Frontend', fn: scanFrontendSecurity },
 ];
 
@@ -57,6 +59,12 @@ const SUGGESTED_FIX: Record<string, string> = {
   stale_rates: 'Taux BCRG non rafraîchis > 24h. Relancer le scraping BCRG.',
   rapid_ops: 'Volume anormal d\'opérations escrow/remboursement en 5 min. Vérifier une attaque/abus.',
   escrow_amount_mismatch: 'Escrow > montant produit : la commission acheteur s\'est glissée dans l\'escrow (vendeur sur-payé). Vérifier que orders.routes met escrow.amount = subtotal.',
+  // litiges
+  disputes_open_overdue: 'Litige non résolu depuis > 7j. Le PDG doit arbitrer (Finance → Escrow → Litiges).',
+  disputes_refund_unfunded: 'GRAVE : litige résolu en remboursement mais escrow ≠ refunded. Vérifier resolve_escrow_dispute / refund_order_escrow.',
+  disputes_release_unreleased: 'GRAVE : litige résolu en libération mais escrow ≠ released. Vérifier resolve_escrow_dispute / release_escrow.',
+  disputes_double_open: 'Plusieurs litiges ouverts sur un même escrow. Vérifier l\'index unique uniq_open_escrow_dispute_per_escrow.',
+  disputes_no_message_1d: 'Litige ouvert > 1j sans message. Relancer les parties / vérifier la création du 1er message.',
   // abonnements
   sub_expired_active_vendor: 'Abonnements vendeur expirés encore actifs. Vérifier le cron subscriptions.expire-check.',
   sub_expired_active_driver: 'Abonnements chauffeur expirés encore actifs. Vérifier l\'expiration des driver_subscriptions.',
@@ -98,6 +106,11 @@ const SUGGESTED_FIX: Record<string, string> = {
   wallet_over_cap: 'Wallet dont le solde dépasse le plafond de détention de son rôle × palier KYC. Examiner la provenance : monter le KYC, relever le plafond (override) si légitime, ou geler/mettre en quarantaine.',
   quarantine_pending: 'Fonds en quarantaine (crédit au-dessus du plafond) en attente. Examiner la provenance puis libérer (KYC/override) ou rejeter depuis le panneau PDG « Provenance & plafonds ».',
   quarantine_stale: 'Quarantaine non traitée depuis > 7 jours. Décider (libérer ou rejeter) — l\'utilisateur attend ses fonds.',
+  // money_integrity (drift fonctions argent)
+  money_duplicate_overload: 'GRAVE : une fonction argent a >1 surcharge en base. La vieille version capte les appels (ex. create_order_core 13-args escrow=total, credit_user_wallet_safe 3-args sans conversion). Supprimer la surcharge obsolète (DROP FUNCTION signature ancienne).',
+  credit_fx_not_converting: 'GRAVE : credit_user_wallet_safe n\'a pas le garde FX_RATE_MISSING = ancienne version qui crédite sans convertir la devise (ex. 60000 GNF → 60000 EUR). Appliquer 20260617480000_fix_credit_wallet_fx_conversion.',
+  escrow_released_no_commission: 'Escrows libérés avec commission NULL/0 = commission vendeur non prélevée. Appliquer le correctif commission (20260617470000) + redéployer le backend ; régulariser les commandes passées si besoin.',
+  escrow_released_zero_credit: 'Libération escrow créditée à 0 = vendeur jamais payé (souvent : solde gonflé qui sature le plafond AML → quarantaine). Vérifier le solde du wallet vendeur (artefact ancien bug de non-conversion) ; corriger le solde, libérer la quarantaine, ou relever le plafond KYC du rôle.',
   // frontend_security
   frontend_secret_exposed: 'GRAVE : un secret dangereux est présent dans le bundle JS public. L\'extraire IMMÉDIATEMENT du frontend, le révoquer/régénérer côté fournisseur, et le déplacer vers le backend (jamais en VITE_).',
   frontend_service_role_key: 'CRITIQUE : la clé service_role Supabase (accès TOTAL à la base, bypass RLS) est dans le bundle public. La RÉGÉNÉRER sur-le-champ dans Supabase et la retirer du frontend — n\'utiliser que l\'anon key côté client.',
@@ -167,23 +180,41 @@ export async function syncDomainAlerts(
   return { generated_at: report.generated_at, checks, overall: computeOverall(checks) };
 }
 
-/** Lance tous les domaines + renvoie leurs rapports et les alertes associées. */
-export async function runPlatformMonitors(): Promise<{
+/**
+ * Lance les domaines + renvoie leurs rapports et les alertes associées.
+ * @param opts.skipFnDomains  ignore les domaines à scan RÉSEAU (ex. sécurité frontend) — utilisé par
+ *   l'endpoint HTTP pour répondre VITE (le scan réseau reste lancé par le cycle 24/7, ses alertes sont
+ *   relues depuis system_alerts). Évite le timeout serverless → plus de spinner infini côté PDG.
+ * @param opts.timeoutMs      garde-fou par domaine (un RPC lent ne bloque pas tout le panneau).
+ */
+export async function runPlatformMonitors(
+  opts: { skipFnDomains?: boolean; timeoutMs?: number } = {}
+): Promise<{
   domains: { key: string; label: string; report: MonitorReport }[];
   alerts: any[];
 }> {
-  const domains: { key: string; label: string; report: MonitorReport }[] = [];
-  for (const d of MONITOR_DOMAINS) {
-    try {
+  const { skipFnDomains = false, timeoutMs = 8000 } = opts;
+  const withTimeout = <T>(p: Promise<T>, label: string): Promise<T> =>
+    Promise.race([
+      p,
+      new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`timeout ${label} > ${timeoutMs}ms`)), timeoutMs)),
+    ]);
+
+  const targets = MONITOR_DOMAINS.filter((d) => !(skipFnDomains && d.fn));
+  // Domaines lancés EN PARALLÈLE : le panneau répond au plus lent borné par timeoutMs.
+  const settled = await Promise.allSettled(
+    targets.map(async (d) => {
       const report = d.fn
-        ? await syncDomainAlerts(d.module, await d.fn())
-        : await runDomainMonitor(d.rpc!, d.module);
-      domains.push({ key: d.key, label: d.label, report });
-    } catch (e: any) {
-      logger.warn(`[Monitor] domaine ${d.key} échoué: ${e?.message || e}`);
-      domains.push({ key: d.key, label: d.label, report: { generated_at: new Date().toISOString(), checks: [], overall: 'ok' } });
-    }
-  }
+        ? await syncDomainAlerts(d.module, await withTimeout(d.fn(), d.key))
+        : await withTimeout(runDomainMonitor(d.rpc!, d.module), d.key);
+      return { key: d.key, label: d.label, report };
+    })
+  );
+  const domains = settled.map((s, i) => {
+    if (s.status === 'fulfilled') return s.value;
+    logger.warn(`[Monitor] domaine ${targets[i].key} échoué: ${s.reason?.message || s.reason}`);
+    return { key: targets[i].key, label: targets[i].label, report: { generated_at: new Date().toISOString(), checks: [], overall: 'ok' as const } };
+  });
 
   const modules = MONITOR_DOMAINS.map((d) => d.module);
   const { data: alerts } = await supabaseAdmin

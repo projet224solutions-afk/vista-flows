@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card } from '@/components/ui/card';
 import { useVendorAnalytics } from '@/hooks/useVendorAnalytics';
 import { useMoneyFormat } from '@/components/Money';
@@ -7,6 +8,7 @@ import { TrendingUp, Target, Package } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export function VendorAnalyticsDashboard() {
+  const { t } = useTranslation();
   const { analytics, loading } = useVendorAnalytics();
   const { format, userCurrency } = useMoneyFormat();
   const { convert } = usePriceConverter();
@@ -91,7 +93,7 @@ export function VendorAnalyticsDashboard() {
               />
               <YAxis tick={{ fontSize: 12 }} tickFormatter={compactAxis} width={70} />
               <Tooltip
-                formatter={(value: number) => format(value, userCurrency)}
+                formatter={(value: number) => format(value, 'GNF')}
                 labelFormatter={(label) => new Date(label).toLocaleDateString('fr-FR')}
               />
               <Area
@@ -107,7 +109,7 @@ export function VendorAnalyticsDashboard() {
 
         {/* Top Produits */}
         <Card className="p-4 sm:p-6">
-          <h3 className="text-lg font-semibold mb-4">Top Produits</h3>
+          <h3 className="text-lg font-semibold mb-4">{t('vendorAnalyticsDashboard.topProduits')}</h3>
           <div className="space-y-3 max-h-[280px] overflow-y-auto">
             {analytics.topProducts.map((product, index) => (
               <div key={product.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">

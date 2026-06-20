@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ interface DropshippingModuleProps {
 }
 
 export function DropshippingModule({ serviceId, businessName }: DropshippingModuleProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [vendorId, setVendorId] = useState<string | undefined>();
   const [loadingVendor, setLoadingVendor] = useState(true);
@@ -85,7 +87,7 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <span className="ml-2 text-muted-foreground">Chargement du module...</span>
+        <span className="ml-2 text-muted-foreground">{t('dropshippingModule.chargementDuModule')}</span>
       </div>
     );
   }
@@ -98,7 +100,7 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
             <Package className="w-8 h-8 text-primary" />
             {businessName || 'Boutique Dropshipping'}
           </h2>
-          <p className="text-muted-foreground">Vente sans stock avec fournisseurs internationaux</p>
+          <p className="text-muted-foreground">{t('dropshippingModule.venteSansStockAvecFournisseurs')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="gap-1">
@@ -128,7 +130,7 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Produits Importés</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dropshippingModule.produitsImportes')}</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -141,12 +143,12 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Commandes en Attente</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dropshippingModule.commandesEnAttente')}</CardTitle>
             <ShoppingCart className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.pendingOrders || 0}</div>
-            <p className="text-xs text-muted-foreground">À traiter</p>
+            <p className="text-xs text-muted-foreground">{t('dropshippingModule.aTraiter')}</p>
           </CardContent>
         </Card>
 
@@ -179,7 +181,7 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="dashboard">Tableau de bord</TabsTrigger>
+          <TabsTrigger value="dashboard">{t('dropshippingModule.tableauDeBord')}</TabsTrigger>
           <TabsTrigger value="suppliers">Fournisseurs</TabsTrigger>
           <TabsTrigger value="import">Importer</TabsTrigger>
           <TabsTrigger value="china" className="flex items-center gap-1">
@@ -187,19 +189,19 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
             Chine
           </TabsTrigger>
           <TabsTrigger value="china-import">Import Chine</TabsTrigger>
-          <TabsTrigger value="china-costs">Coûts</TabsTrigger>
+          <TabsTrigger value="china-costs">{t('dropshippingModule.couts')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Commandes Récentes</CardTitle>
+              <CardTitle>{t('dropshippingModule.commandesRecentes')}</CardTitle>
             </CardHeader>
             <CardContent>
               {orders.length === 0 ? (
                 <div className="text-center py-12">
                   <ShoppingCart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">Aucune commande récente</p>
+                  <p className="text-muted-foreground">{t('dropshippingModule.aucuneCommandeRecente')}</p>
                   <p className="text-sm text-muted-foreground mt-2">
                     Les commandes de vos clients seront automatiquement transmises aux fournisseurs
                   </p>
@@ -240,7 +242,7 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
               {suppliers.length === 0 ? (
                 <div className="text-center py-8">
                   <Globe className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground">Aucun fournisseur configuré</p>
+                  <p className="text-muted-foreground">{t('dropshippingModule.aucunFournisseurConfigure')}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -288,12 +290,12 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
         <TabsContent value="import" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Importer des Produits</CardTitle>
+              <CardTitle>{t('dropshippingModule.importerDesProduits')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-center py-12">
                 <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="font-bold text-lg mb-2">Recherchez des produits à vendre</h3>
+                <h3 className="font-bold text-lg mb-2">{t('dropshippingModule.recherchezDesProduitsAVendre')}</h3>
                 <p className="text-muted-foreground mb-4">
                   Parcourez les catalogues de vos fournisseurs et importez les produits dans votre boutique
                 </p>
@@ -307,13 +309,13 @@ export function DropshippingModule({ serviceId, businessName }: DropshippingModu
 
           <Card className="bg-blue-50 border-blue-200">
             <CardContent className="pt-6">
-              <h3 className="font-bold mb-2">💡 Avantages du Dropshipping</h3>
+              <h3 className="font-bold mb-2">{t('dropshippingModule.avantagesDuDropshipping')}</h3>
               <ul className="space-y-1 text-sm text-muted-foreground">
-                <li>✅ Pas de gestion de stock</li>
+                <li>{t('dropshippingModule.pasDeGestionDeStock')}</li>
                 <li>✅ Pas d'investissement initial en inventaire</li>
-                <li>✅ Expédition automatique par le fournisseur</li>
-                <li>✅ Large choix de produits disponibles</li>
-                <li>✅ Mise à jour automatique des prix et stocks</li>
+                <li>{t('dropshippingModule.expeditionAutomatiqueParLeFournisseur')}</li>
+                <li>{t('dropshippingModule.largeChoixDeProduitsDisponibles')}</li>
+                <li>{t('dropshippingModule.miseAJourAutomatiqueDes')}</li>
               </ul>
             </CardContent>
           </Card>

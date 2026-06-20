@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -88,6 +89,7 @@ interface Promotion {
 }
 
 export default function AdvancedSalesManager() {
+  const { t } = useTranslation();
   const { vendorId } = useCurrentVendor();
   const { toast } = useToast();
   const { currency, convert, isReady: currencyReady } = useVendorCurrency();
@@ -417,23 +419,20 @@ export default function AdvancedSalesManager() {
     }
 
     try {
-      const newPaidAmount = selectedCreditForPayment.paid_amount + amount;
-      const newRemainingAmount = selectedCreditForPayment.total - newPaidAmount;
-      const newStatus = newRemainingAmount <= 0 ? 'paid' : newPaidAmount > 0 ? 'partial' : 'pending';
-
-      const { error } = await supabase
-        .from('vendor_credit_sales')
-        .update({
-          paid_amount: newPaidAmount,
-          remaining_amount: newRemainingAmount,
-          status: newStatus
-        })
-        .eq('id', selectedCreditForPayment.id);
+      // Encaissement ATOMIQUE côté serveur : verrou de la vente, insertion de l'historique
+      // (credit_sale_payments, qui n'était JAMAIS alimentée), recalcul paid/remaining depuis
+      // la somme des paiements (anti lost-update). Reste un registre CASH offline (sans wallet).
+      const { data, error } = await supabase.rpc('record_credit_sale_payment_atomic' as any, {
+        p_credit_sale_id: selectedCreditForPayment.id,
+        p_amount: amount,
+        p_method: 'cash',
+      });
 
       if (error) throw error;
+      const res = data as any;
 
       toast({
-        title: newStatus === 'paid' ? '✅ Crédit soldé !' : '✅ Paiement enregistré',
+        title: res?.status === 'paid' ? '✅ Crédit soldé !' : '✅ Paiement enregistré',
         description: `${fc(amount)} encaissés`
       });
       setIsCollectPaymentOpen(false);
@@ -504,7 +503,7 @@ export default function AdvancedSalesManager() {
         <div className="min-w-0">
           <h2 className="text-base sm:text-xl font-bold flex items-center gap-2">
             <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
-            <span className="truncate">Ventes Avancées</span>
+            <span className="truncate">{t('advancedSalesManager.ventesAvancees')}</span>
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
             Gérez vos ventes à crédit, retours et promotions
@@ -519,7 +518,7 @@ export default function AdvancedSalesManager() {
             <div className="flex items-center gap-1.5 sm:gap-2">
               <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600 flex-shrink-0" />
               <div className="min-w-0">
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Créances</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">{t('advancedSalesManager.creances')}</p>
                 <p className="text-sm sm:text-lg font-bold text-orange-600 truncate">{fc(totalCredit)}</p>
               </div>
             </div>
@@ -541,7 +540,7 @@ export default function AdvancedSalesManager() {
             <div className="flex items-center gap-1.5 sm:gap-2">
               <Package className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
               <div className="min-w-0">
-                <p className="text-[10px] sm:text-xs text-muted-foreground">Groupées</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">{t('advancedSalesManager.groupees')}</p>
                 <p className="text-sm sm:text-lg font-bold">{groupedSales.length}</p>
               </div>
             </div>
@@ -566,7 +565,7 @@ export default function AdvancedSalesManager() {
           <TabsList className="grid grid-cols-4 w-full min-w-[280px]">
             <TabsTrigger value="credit" className="text-[10px] sm:text-sm px-1 sm:px-3">
               <CreditCard className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
-              <span className="hidden sm:inline">Crédit</span>
+              <span className="hidden sm:inline">{t('advancedSalesManager.credit')}</span>
             </TabsTrigger>
             <TabsTrigger value="returns" className="text-[10px] sm:text-sm px-1 sm:px-3">
               <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
@@ -574,7 +573,7 @@ export default function AdvancedSalesManager() {
             </TabsTrigger>
             <TabsTrigger value="grouped" className="text-[10px] sm:text-sm px-1 sm:px-3">
               <Package className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
-              <span className="hidden sm:inline">Groupées</span>
+              <span className="hidden sm:inline">{t('advancedSalesManager.groupees')}</span>
             </TabsTrigger>
             <TabsTrigger value="promos" className="text-[10px] sm:text-sm px-1 sm:px-3">
               <Percent className="w-3 h-3 sm:w-4 sm:h-4 sm:mr-1" />
@@ -586,18 +585,18 @@ export default function AdvancedSalesManager() {
         {/* VENTES À CRÉDIT */}
         <TabsContent value="credit" className="mt-3 sm:mt-4">
           <div className="flex justify-between items-center mb-3 sm:mb-4">
-            <h3 className="font-semibold text-sm sm:text-base">Ventes à crédit</h3>
+            <h3 className="font-semibold text-sm sm:text-base">{t('advancedSalesManager.ventesACredit')}</h3>
             <Dialog open={isNewCreditOpen} onOpenChange={setIsNewCreditOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" className="h-8 text-xs sm:text-sm">
                   <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                  <span className="hidden sm:inline">Nouvelle</span>
+                  <span className="hidden sm:inline">{t('advancedSalesManager.nouvelle')}</span>
                   <span className="sm:hidden">+</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-3 sm:p-6">
                 <DialogHeader className="flex-shrink-0">
-                  <DialogTitle className="text-base sm:text-lg">Nouvelle vente à crédit</DialogTitle>
+                  <DialogTitle className="text-base sm:text-lg">{t('advancedSalesManager.nouvelleVenteACredit')}</DialogTitle>
                 </DialogHeader>
 
                 <ScrollArea className="flex-1 pr-4">
@@ -606,12 +605,12 @@ export default function AdvancedSalesManager() {
                       {/* COL 1 — Client & Détails */}
                       <div className="space-y-4 lg:col-span-1">
                         <div className="rounded-lg border bg-muted/30 p-3">
-                          <p className="text-xs text-muted-foreground mb-2">Informations client</p>
+                          <p className="text-xs text-muted-foreground mb-2">{t('advancedSalesManager.informationsClient')}</p>
                           <div className="space-y-3">
                             <div>
-                              <label className="text-sm font-medium">Nom du client *</label>
+                              <label className="text-sm font-medium">{t('advancedSalesManager.nomDuClient')}</label>
                               <Input
-                                placeholder="Nom du client"
+                                placeholder={t('advancedSalesManager.nomDuClient2')}
                                 value={newCredit.customer_name}
                                 onChange={(e) => setNewCredit({ ...newCredit, customer_name: e.target.value })}
                               />
@@ -628,10 +627,10 @@ export default function AdvancedSalesManager() {
                         </div>
 
                         <div className="rounded-lg border bg-muted/30 p-3">
-                          <p className="text-xs text-muted-foreground mb-2">Détails du crédit</p>
+                          <p className="text-xs text-muted-foreground mb-2">{t('advancedSalesManager.detailsDuCredit')}</p>
                           <div className="space-y-3">
                             <div>
-                              <label className="text-sm font-medium">Montant (GNF) *</label>
+                              <label className="text-sm font-medium">{t('advancedSalesManager.montantGnf')}</label>
                               <Input
                                 type="number"
                                 placeholder="0"
@@ -640,7 +639,7 @@ export default function AdvancedSalesManager() {
                               />
                             </div>
                             <div>
-                              <label className="text-sm font-medium">Date d'échéance *</label>
+                              <label className="text-sm font-medium">{t('advancedSalesManager.dateDEcheance')}</label>
                               <Input
                                 type="date"
                                 value={newCredit.due_date}
@@ -655,7 +654,7 @@ export default function AdvancedSalesManager() {
                       <div className="grid gap-4 md:grid-cols-2 lg:col-span-2">
                         {/* Catégories */}
                         <div className="rounded-lg border bg-muted/30 p-3">
-                          <p className="text-xs text-muted-foreground mb-2">Catégorie (optionnel)</p>
+                          <p className="text-xs text-muted-foreground mb-2">{t('advancedSalesManager.categorieOptionnel')}</p>
                           <ScrollArea className="h-56">
                             <div className="space-y-1">
                               {categories.map((cat) => (
@@ -684,7 +683,7 @@ export default function AdvancedSalesManager() {
                                 </div>
                               ))}
                               {categories.length === 0 && (
-                                <p className="text-sm text-muted-foreground text-center py-4">Aucune catégorie</p>
+                                <p className="text-sm text-muted-foreground text-center py-4">{t('advancedSalesManager.aucuneCategorie')}</p>
                               )}
                             </div>
                           </ScrollArea>
@@ -693,7 +692,7 @@ export default function AdvancedSalesManager() {
                         {/* Produits sélectionnés */}
                         <div className="rounded-lg border bg-muted/30 p-3">
                           <div className="flex items-center justify-between mb-2">
-                            <p className="text-xs text-muted-foreground">Produits sélectionnés *</p>
+                            <p className="text-xs text-muted-foreground">{t('advancedSalesManager.produitsSelectionnes')}</p>
                             {creditSelectedProducts.length > 0 && (
                               <Badge variant="secondary">{creditSelectedProducts.length} produit(s)</Badge>
                             )}
@@ -765,7 +764,7 @@ export default function AdvancedSalesManager() {
                           <div className="relative mb-2">
                             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
-                              placeholder="Rechercher un produit..."
+                              placeholder={t('advancedSalesManager.rechercherUnProduit')}
                               value={creditProductSearch}
                               onChange={(e) => setCreditProductSearch(e.target.value)}
                               className="pl-8"
@@ -835,7 +834,7 @@ export default function AdvancedSalesManager() {
                               const matchesCategory = !newCredit.selected_category || p.category_id === newCredit.selected_category;
                               return matchesSearch && matchesCategory;
                             }).length === 0 && (
-                              <p className="text-sm text-muted-foreground text-center py-4">Aucun produit trouvé</p>
+                              <p className="text-sm text-muted-foreground text-center py-4">{t('advancedSalesManager.aucunProduitTrouve')}</p>
                             )}
                           </ScrollArea>
                         </div>
@@ -845,8 +844,8 @@ export default function AdvancedSalesManager() {
                 </ScrollArea>
 
                 <div className="flex gap-2 justify-end pt-4 flex-shrink-0 border-t">
-                  <Button variant="outline" onClick={() => setIsNewCreditOpen(false)}>Annuler</Button>
-                  <Button onClick={createCreditSale}>Créer</Button>
+                  <Button variant="outline" onClick={() => setIsNewCreditOpen(false)}>{t('advancedSalesManager.annuler')}</Button>
+                  <Button onClick={createCreditSale}>{t('advancedSalesManager.creer')}</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -922,7 +921,7 @@ export default function AdvancedSalesManager() {
                     {/* Liste des produits vendus à crédit */}
                     {sale.items && sale.items.length > 0 && (
                       <div className="border-t pt-3">
-                        <p className="text-xs font-medium text-muted-foreground mb-2">Produits vendus:</p>
+                        <p className="text-xs font-medium text-muted-foreground mb-2">{t('advancedSalesManager.produitsVendus')}</p>
                         <div className="flex flex-wrap gap-2">
                           {sale.items.map((item, idx) => (
                             <div
@@ -959,7 +958,7 @@ export default function AdvancedSalesManager() {
               <Card>
                 <CardContent className="p-8 text-center">
                   <CreditCard className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-                  <p className="text-muted-foreground">Aucune vente à crédit</p>
+                  <p className="text-muted-foreground">{t('advancedSalesManager.aucuneVenteACredit')}</p>
                 </CardContent>
               </Card>
             )}
@@ -967,7 +966,7 @@ export default function AdvancedSalesManager() {
 
           {/* Dialog d'encaissement */}
           <Dialog open={isCollectPaymentOpen} onOpenChange={setIsCollectPaymentOpen}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <Banknote className="w-5 h-5 text-primary" />
@@ -981,22 +980,22 @@ export default function AdvancedSalesManager() {
                     <p className="font-semibold text-lg">{selectedCreditForPayment.customer_name}</p>
                     <div className="grid grid-cols-2 gap-2 mt-2 text-sm">
                       <div>
-                        <span className="text-muted-foreground">Total crédit:</span>
+                        <span className="text-muted-foreground">{t('advancedSalesManager.totalCredit')}</span>
                         <p className="font-medium">{fc(selectedCreditForPayment.total)}</p>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Déjà payé:</span>
+                        <span className="text-muted-foreground">{t('advancedSalesManager.dejaPaye')}</span>
                         <p className="font-medium text-[#ff4000]">{fc(selectedCreditForPayment.paid_amount)}</p>
                       </div>
                       <div className="col-span-2">
-                        <span className="text-muted-foreground">Reste à payer:</span>
+                        <span className="text-muted-foreground">{t('advancedSalesManager.resteAPayer')}</span>
                         <p className="font-bold text-orange-600 text-lg">{fc(selectedCreditForPayment.remaining_amount)}</p>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium">Montant à encaisser (GNF) *</label>
+                    <label className="text-sm font-medium">{t('advancedSalesManager.montantAEncaisserGnf')}</label>
                     <Input
                       type="number"
                       placeholder="0"
@@ -1067,13 +1066,13 @@ export default function AdvancedSalesManager() {
                       </div>
                     </div>
                     {/* Montants - grille responsive */}
-                    <div className="grid grid-cols-3 gap-1.5 sm:gap-2 mt-3 sm:mt-4 text-xs sm:text-sm">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-2 mt-3 sm:mt-4 text-xs sm:text-sm">
                       <div className="bg-background/50 rounded p-1.5 sm:p-2">
                         <span className="text-muted-foreground text-[10px] sm:text-xs">Total</span>
                         <p className="font-bold text-xs sm:text-sm">{fc(selectedCreditForDetails.total)}</p>
                       </div>
                       <div className="bg-background/50 rounded p-1.5 sm:p-2">
-                        <span className="text-muted-foreground text-[10px] sm:text-xs">Payé</span>
+                        <span className="text-muted-foreground text-[10px] sm:text-xs">{t('advancedSalesManager.paye')}</span>
                         <p className="font-medium text-[#ff4000] text-xs sm:text-sm">{fc(selectedCreditForDetails.paid_amount)}</p>
                       </div>
                       <div className="bg-background/50 rounded p-1.5 sm:p-2">
@@ -1132,7 +1131,7 @@ export default function AdvancedSalesManager() {
                         ) : (
                           <div className="text-center py-8">
                             <Package className="w-10 h-10 mx-auto mb-2 text-muted-foreground opacity-50" />
-                            <p className="text-muted-foreground font-medium">Aucun produit enregistré</p>
+                            <p className="text-muted-foreground font-medium">{t('advancedSalesManager.aucunProduitEnregistre')}</p>
                             <p className="text-xs text-muted-foreground mt-2 max-w-[250px] mx-auto">
                               Cette vente a été créée avant l'ajout de cette fonctionnalité.
                               Les nouvelles ventes à crédit afficheront les produits sélectionnés.
@@ -1162,13 +1161,13 @@ export default function AdvancedSalesManager() {
               <DialogTrigger asChild>
                 <Button size="sm" className="h-8 text-xs sm:text-sm">
                   <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                  <span className="hidden sm:inline">Nouveau retour</span>
+                  <span className="hidden sm:inline">{t('advancedSalesManager.nouveauRetour')}</span>
                   <span className="sm:hidden">+</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-3 sm:p-6">
                 <DialogHeader className="flex-shrink-0">
-                  <DialogTitle className="text-base sm:text-lg">Enregistrer un retour</DialogTitle>
+                  <DialogTitle className="text-base sm:text-lg">{t('advancedSalesManager.enregistrerUnRetour')}</DialogTitle>
                 </DialogHeader>
 
                 <ScrollArea className="flex-1 pr-4">
@@ -1180,7 +1179,7 @@ export default function AdvancedSalesManager() {
                           <p className="text-xs text-muted-foreground mb-2">Contexte</p>
                           <div className="space-y-3">
                             <div>
-                              <label className="text-sm font-medium">N° Commande (optionnel)</label>
+                              <label className="text-sm font-medium">{t('advancedSalesManager.nCommandeOptionnel')}</label>
                               <Input
                                 placeholder="ORD-XXXXX"
                                 value={newReturn.order_id}
@@ -1188,9 +1187,9 @@ export default function AdvancedSalesManager() {
                               />
                             </div>
                             <div>
-                              <label className="text-sm font-medium">Raison du retour *</label>
+                              <label className="text-sm font-medium">{t('advancedSalesManager.raisonDuRetour')}</label>
                               <Input
-                                placeholder="Produit défectueux, mauvaise taille..."
+                                placeholder={t('advancedSalesManager.produitDefectueuxMauvaiseTaille')}
                                 value={newReturn.return_reason}
                                 onChange={(e) => setNewReturn({ ...newReturn, return_reason: e.target.value })}
                               />
@@ -1203,7 +1202,7 @@ export default function AdvancedSalesManager() {
                           <div className="space-y-3">
                             <div className="grid gap-3 grid-cols-2">
                               <div>
-                                <label className="text-sm font-medium">Quantité *</label>
+                                <label className="text-sm font-medium">{t('advancedSalesManager.quantite')}</label>
                                 <Input
                                   type="number"
                                   placeholder="1"
@@ -1222,7 +1221,7 @@ export default function AdvancedSalesManager() {
                               </div>
                             </div>
                             <div>
-                              <label className="text-sm font-medium">Montant remboursement (GNF) *</label>
+                              <label className="text-sm font-medium">{t('advancedSalesManager.montantRemboursementGnf')}</label>
                               <Input
                                 type="number"
                                 placeholder="0"
@@ -1238,7 +1237,7 @@ export default function AdvancedSalesManager() {
                       <div className="grid gap-4 md:grid-cols-2 lg:col-span-2">
                         {/* Catégories */}
                         <div className="rounded-lg border bg-muted/30 p-3">
-                          <p className="text-xs text-muted-foreground mb-2">Catégorie (optionnel)</p>
+                          <p className="text-xs text-muted-foreground mb-2">{t('advancedSalesManager.categorieOptionnel')}</p>
                           <ScrollArea className="h-56">
                             <div className="space-y-1">
                               {categories.map((cat) => (
@@ -1269,7 +1268,7 @@ export default function AdvancedSalesManager() {
                                 </div>
                               ))}
                               {categories.length === 0 && (
-                                <p className="text-sm text-muted-foreground text-center py-4">Aucune catégorie</p>
+                                <p className="text-sm text-muted-foreground text-center py-4">{t('advancedSalesManager.aucuneCategorie')}</p>
                               )}
                             </div>
                           </ScrollArea>
@@ -1277,11 +1276,11 @@ export default function AdvancedSalesManager() {
 
                         {/* Produits */}
                         <div className="rounded-lg border bg-muted/30 p-3">
-                          <p className="text-xs text-muted-foreground mb-2">Produit concerné *</p>
+                          <p className="text-xs text-muted-foreground mb-2">{t('advancedSalesManager.produitConcerne')}</p>
                           <div className="relative mb-2">
                             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
-                              placeholder="Rechercher..."
+                              placeholder={t('advancedSalesManager.rechercher')}
                               value={returnProductSearch}
                               onChange={(e) => setReturnProductSearch(e.target.value)}
                               className="pl-8"
@@ -1341,7 +1340,7 @@ export default function AdvancedSalesManager() {
                                 const matchesCategory = !newReturn.selected_category || p.category_id === newReturn.selected_category;
                                 return matchesSearch && matchesCategory;
                               }).length === 0 && (
-                                <p className="text-sm text-muted-foreground text-center py-4">Aucun produit trouvé</p>
+                                <p className="text-sm text-muted-foreground text-center py-4">{t('advancedSalesManager.aucunProduitTrouve')}</p>
                               )}
                             </div>
                           </ScrollArea>
@@ -1352,8 +1351,8 @@ export default function AdvancedSalesManager() {
                 </ScrollArea>
 
                 <div className="flex gap-2 justify-end pt-4 flex-shrink-0 border-t">
-                  <Button variant="outline" onClick={() => setIsNewReturnOpen(false)}>Annuler</Button>
-                  <Button onClick={createReturn}>Enregistrer</Button>
+                  <Button variant="outline" onClick={() => setIsNewReturnOpen(false)}>{t('advancedSalesManager.annuler')}</Button>
+                  <Button onClick={createReturn}>{t('advancedSalesManager.enregistrer')}</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -1387,7 +1386,7 @@ export default function AdvancedSalesManager() {
               <Card>
                 <CardContent className="p-6 sm:p-8 text-center">
                   <RotateCcw className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 text-muted-foreground/50" />
-                  <p className="text-sm sm:text-base text-muted-foreground">Aucun retour enregistré</p>
+                  <p className="text-sm sm:text-base text-muted-foreground">{t('advancedSalesManager.aucunRetourEnregistre')}</p>
                 </CardContent>
               </Card>
             )}
@@ -1397,7 +1396,7 @@ export default function AdvancedSalesManager() {
         {/* VENTES GROUPÉES */}
         <TabsContent value="grouped" className="mt-3 sm:mt-4">
           <div className="flex justify-between items-center mb-3 sm:mb-4">
-            <h3 className="font-semibold text-sm sm:text-base">Ventes groupées</h3>
+            <h3 className="font-semibold text-sm sm:text-base">{t('advancedSalesManager.ventesGroupees')}</h3>
           </div>
 
           <div className="space-y-2 sm:space-y-3">
@@ -1430,8 +1429,8 @@ export default function AdvancedSalesManager() {
               <Card>
                 <CardContent className="p-6 sm:p-8 text-center">
                   <Package className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 text-muted-foreground/50" />
-                  <p className="text-sm sm:text-base text-muted-foreground">Aucune vente groupée</p>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Créées depuis le POS</p>
+                  <p className="text-sm sm:text-base text-muted-foreground">{t('advancedSalesManager.aucuneVenteGroupee')}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">{t('advancedSalesManager.creeesDepuisLePos')}</p>
                 </CardContent>
               </Card>
             )}
@@ -1446,13 +1445,13 @@ export default function AdvancedSalesManager() {
               <DialogTrigger asChild>
                 <Button size="sm" className="h-8 text-xs sm:text-sm">
                   <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                  <span className="hidden sm:inline">Nouvelle promo</span>
+                  <span className="hidden sm:inline">{t('advancedSalesManager.nouvellePromo')}</span>
                   <span className="sm:hidden">+</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-3 sm:p-6">
                 <DialogHeader className="flex-shrink-0">
-                  <DialogTitle className="text-base sm:text-lg">Créer une promotion</DialogTitle>
+                  <DialogTitle className="text-base sm:text-lg">{t('advancedSalesManager.creerUnePromotion')}</DialogTitle>
                 </DialogHeader>
                 <ScrollArea className="flex-1 pr-4">
                 <div className="pb-4">
@@ -1460,9 +1459,9 @@ export default function AdvancedSalesManager() {
                     {/* COL 1 — Infos promotion */}
                     <div className="space-y-4 lg:col-span-1">
                       <div>
-                        <label className="text-sm font-medium">Nom de la promo *</label>
+                        <label className="text-sm font-medium">{t('advancedSalesManager.nomDeLaPromo')}</label>
                         <Input
-                          placeholder="Ex: Soldes d'été"
+                          placeholder={t('advancedSalesManager.exSoldesDEte')}
                           value={newPromo.name}
                           onChange={(e) => setNewPromo({ ...newPromo, name: e.target.value })}
                         />
@@ -1470,14 +1469,14 @@ export default function AdvancedSalesManager() {
 
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>
-                          <label className="text-sm font-medium">Type de remise</label>
+                          <label className="text-sm font-medium">{t('advancedSalesManager.typeDeRemise')}</label>
                           <select
                             className="w-full px-3 py-2 border rounded-md bg-background"
                             value={newPromo.discount_type}
                             onChange={(e) => setNewPromo({ ...newPromo, discount_type: e.target.value })}
                           >
                             <option value="percentage">Pourcentage (%)</option>
-                            <option value="fixed">Montant fixe (GNF)</option>
+                            <option value="fixed">{t('advancedSalesManager.montantFixeGnf')}</option>
                           </select>
                         </div>
                         <div>
@@ -1495,7 +1494,7 @@ export default function AdvancedSalesManager() {
 
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>
-                          <label className="text-sm font-medium">Date début</label>
+                          <label className="text-sm font-medium">{t('advancedSalesManager.dateDebut')}</label>
                           <Input
                             type="date"
                             value={newPromo.start_date}
@@ -1595,7 +1594,7 @@ export default function AdvancedSalesManager() {
                         <div className="relative mb-2">
                           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                           <Input
-                            placeholder="Rechercher un produit..."
+                            placeholder={t('advancedSalesManager.rechercherUnProduit')}
                             value={productSearchTerm}
                             onChange={(e) => setProductSearchTerm(e.target.value)}
                             className="pl-8"
@@ -1689,8 +1688,8 @@ export default function AdvancedSalesManager() {
                 </div>
                 </ScrollArea>
                 <div className="flex gap-2 justify-end pt-4 flex-shrink-0 border-t">
-                  <Button variant="outline" onClick={() => setIsNewPromoOpen(false)}>Annuler</Button>
-                  <Button onClick={createPromo}>Créer</Button>
+                  <Button variant="outline" onClick={() => setIsNewPromoOpen(false)}>{t('advancedSalesManager.annuler')}</Button>
+                  <Button onClick={createPromo}>{t('advancedSalesManager.creer')}</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -1778,7 +1777,7 @@ export default function AdvancedSalesManager() {
                               </Badge>
                             )}
                             {linkedProducts.length === 0 && linkedCategories.length === 0 && (
-                              <Badge variant="secondary" className="text-[10px] h-4">Tous</Badge>
+                              <Badge variant="secondary" className="text-[10px] h-4">{t('advancedSalesManager.tous')}</Badge>
                             )}
                           </div>
                         </div>
@@ -1800,7 +1799,7 @@ export default function AdvancedSalesManager() {
               <Card>
                 <CardContent className="p-6 sm:p-8 text-center">
                   <Percent className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 text-muted-foreground/50" />
-                  <p className="text-sm sm:text-base text-muted-foreground">Aucune promotion</p>
+                  <p className="text-sm sm:text-base text-muted-foreground">{t('advancedSalesManager.aucunePromotion')}</p>
                 </CardContent>
               </Card>
             )}

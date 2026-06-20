@@ -4,10 +4,24 @@
  * v2 - Achat direct sans panier intermédiaire
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { backendFetch } from '@/services/backendApi';
+import { mapService } from '@/services/mapService';
+
+// Frais de livraison (modèle Uber/Meituan) — DOIT matcher le calcul serveur (restaurant.routes priceOrder) :
+// frais = forfait de base du resto + DELIVERY_PRICE_PER_KM × distance(resto→client). Affichage estimé ;
+// le backend reste autoritaire au paiement.
+const DELIVERY_PRICE_PER_KM = 2000; // GNF/km
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371, toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useAppPersistence, useFormPersistence } from '@/hooks/useAppPersistence';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
   ShoppingCart,
@@ -31,6 +45,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { RestaurantOrderTracker } from '@/components/professional-services/modules/restaurant/RestaurantOrderTracker';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -68,11 +83,25 @@ interface MenuItem {
   spicy_level: number;
   dietary_tags: string[] | null;
   allergens: string[] | null;
+  variants?: { groups?: OptionGroup[] } | null;
 }
+
+interface OptionGroup {
+  id: string;
+  name: string;
+  min?: number;          // sélections minimales (0 = facultatif)
+  max?: number;          // sélections maximales (1 = choix unique)
+  options: { id: string; name: string; price: number }[];
+}
+
+interface SelectedOption { group_id: string; group_name: string; option_id: string; name: string; price: number }
 
 interface CartItem extends MenuItem {
   quantity: number;
   special_instructions?: string;
+  menuItemId?: string;            // vrai id du plat (l'id du panier peut être composite si options)
+  selectedOptions?: SelectedOption[];
+  optionsPrice?: number;
 }
 
 interface RestaurantInfo {
@@ -85,15 +114,23 @@ interface RestaurantInfo {
   phone: string | null;
   rating: number | null;
   total_reviews: number | null;
+  latitude: number | null;
+  longitude: number | null;
+  metadata: any;
 }
 
 export default function RestaurantPublicMenu() {
+  const { t } = useTranslation();
   const { serviceId } = useParams<{ serviceId: string }>();
+  const [searchParams] = useSearchParams();
+  const qrTable = searchParams.get('table'); // MODE 3 (QR) : numéro de table pré-rempli depuis le QR scanné
   const navigate = useNavigate();
   const { user } = useAuth();
   const fc = useFormatCurrency();
 
   const [restaurant, setRestaurant] = useState<RestaurantInfo | null>(null);
+  const [clientCoords, setClientCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [locating, setLocating] = useState(false);
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,6 +143,9 @@ export default function RestaurantPublicMenu() {
   const [showQuickOrder, setShowQuickOrder] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [lastOrderNumber, setLastOrderNumber] = useState('');
+  const [lastOrderId, setLastOrderId] = useState<string | null>(null);
+  // Promotion active (réduction %) appliquée à la commande, si dans la plage horaire.
+  const [activePromo, setActivePromo] = useState<{ id: string; title: string; promo_type: string; value: number; start_time: string | null; end_time: string | null } | null>(null);
 
   // États persistés - Checkout form + Cart
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -119,7 +159,7 @@ export default function RestaurantPublicMenu() {
   });
 
   // Persistance du formulaire checkout
-  const { values: checkoutForm, setValues: setCheckoutForm, resetForm: _resetCheckoutForm } = useFormPersistence(
+  const { values: checkoutForm, setValues: setCheckoutForm, resetForm: _resetCheckoutForm, isRestored: checkoutRestored } = useFormPersistence(
     `restaurant_checkout_${serviceId}`,
     {
       customerName: '',
@@ -128,7 +168,7 @@ export default function RestaurantPublicMenu() {
       tableNumber: '',
       deliveryAddress: '',
       orderNotes: '',
-      paymentMethod: 'cash' as 'cash' | 'mobile' | 'card',
+      paymentMethod: 'wallet' as 'wallet' | 'cash' | 'orange_money' | 'mobile_money' | 'card',
     },
     { enabled: !!serviceId, maxAge: 30 * 60 * 1000 }
   );
@@ -149,7 +189,11 @@ export default function RestaurantPublicMenu() {
   const orderNotes = checkoutForm.orderNotes;
   const setOrderNotes = (v: string) => setCheckoutForm(prev => ({ ...prev, orderNotes: v }));
   const paymentMethod = checkoutForm.paymentMethod;
-  const setPaymentMethod = (v: 'cash' | 'mobile' | 'card') => setCheckoutForm(prev => ({ ...prev, paymentMethod: v }));
+  const setPaymentMethod = (v: 'wallet' | 'cash' | 'orange_money' | 'mobile_money' | 'card') => setCheckoutForm(prev => ({ ...prev, paymentMethod: v }));
+  // Clé d'idempotence par tentative de commande (régénérée après succès) → anti double-débit.
+  const idemRef = useRef<string>('');
+  // Numéro mobile money du payeur (Orange Money / Mobile Money) — saisi au paiement, PAS comme info client.
+  const [payerNumber, setPayerNumber] = useState('');
 
   // Load restaurant and menu data
   useEffect(() => {
@@ -162,7 +206,7 @@ export default function RestaurantPublicMenu() {
         // Load restaurant info
         const { data: restaurantData, error: restError } = await supabase
           .from('professional_services')
-          .select('id, business_name, description, logo_url, cover_image_url, address, phone, rating, total_reviews')
+          .select('id, business_name, description, logo_url, cover_image_url, address, phone, rating, total_reviews, latitude, longitude, metadata')
           .eq('id', serviceId)
           .single();
 
@@ -192,13 +236,47 @@ export default function RestaurantPublicMenu() {
 
       } catch (error) {
         console.error('Error loading restaurant:', error);
-        toast.error('Erreur lors du chargement du restaurant');
+        toast.error(t('restaurantPublicMenu.erreurLorsDuChargementDu'));
       } finally {
         setLoading(false);
       }
     };
 
     loadRestaurantData();
+  }, [serviceId]);
+
+  // ⚡ Menu TEMPS RÉEL : si le restaurant active/désactive un plat (ou change un prix),
+  // le client le voit en direct sans rechargement (abonnement Supabase Realtime).
+  useEffect(() => {
+    if (!serviceId) return;
+    const ch = supabase
+      .channel(`resto-menu-${serviceId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'restaurant_menu_items', filter: `professional_service_id=eq.${serviceId}` }, async () => {
+        const { data } = await supabase.from('restaurant_menu_items').select('*').eq('professional_service_id', serviceId).order('display_order', { ascending: true });
+        setMenuItems(data || []);
+      })
+      .subscribe();
+    return () => { void supabase.removeChannel(ch); };
+  }, [serviceId]);
+
+  // Promotions actives du restaurant (affichage + remise %). Filtre la plage horaire.
+  useEffect(() => {
+    if (!serviceId) return;
+    let alive = true;
+    (async () => {
+      const { data } = await supabase
+        .from('restaurant_promotions')
+        .select('id, title, promo_type, value, start_time, end_time, is_active')
+        .eq('professional_service_id', serviceId)
+        .eq('is_active', true);
+      if (!alive) return;
+      const nowHM = new Date().toTimeString().slice(0, 8);
+      const inWindow = (p: any) => (!p.start_time || nowHM >= p.start_time) && (!p.end_time || nowHM <= p.end_time);
+      // On privilégie une réduction % active dans la plage horaire.
+      const pct = (data || []).filter((p: any) => p.promo_type === 'percentage' && inWindow(p)).sort((a: any, b: any) => b.value - a.value)[0];
+      setActivePromo(pct || (data || []).find((p: any) => inWindow(p)) || null);
+    })();
+    return () => { alive = false; };
   }, [serviceId]);
 
   // Pre-fill user info if logged in
@@ -209,6 +287,33 @@ export default function RestaurantPublicMenu() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  // MODE 3 (QR CODE) : si l'URL contient ?table=N (QR scanné à la table), on FORCE le mode « Sur table »
+  // + le n° de table. ⚠️ On dépend de `checkoutRestored` : la restauration localStorage du formulaire
+  // (mode/table précédents) se fait dans un effet APRÈS le mount → on RÉ-AFFIRME après restauration pour
+  // que le QR gagne TOUJOURS (sinon un ancien « à emporter » persisté écraserait la Table scannée).
+  useEffect(() => {
+    if (!qrTable) return;
+    setOrderType('dine_in');
+    setTableNumber(qrTable);
+    // Le paiement digital par défaut est garanti par l'effet allowedPayments (dine_in = digital only).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qrTable, checkoutRestored]);
+
+  // Méthodes de paiement autorisées par mode :
+  //  - Sur table : digital uniquement (Orange Money / Mobile Money / Carte).
+  //  - Livraison chez moi : wallet + digital (PAS d'espèces).
+  //  - Je viens chercher : wallet + espèces + digital.
+  const allowedPayments = (mode: typeof orderType): (typeof paymentMethod)[] =>
+    mode === 'dine_in' ? ['orange_money', 'mobile_money', 'card']
+      : mode === 'delivery' ? ['wallet', 'orange_money', 'mobile_money', 'card']
+        : ['wallet', 'cash', 'orange_money', 'mobile_money', 'card'];
+
+  useEffect(() => {
+    const allowed = allowedPayments(orderType);
+    if (!allowed.includes(paymentMethod)) setPaymentMethod(orderType === 'dine_in' ? 'orange_money' : 'wallet');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderType]);
 
   // Filter items by category
   const filteredItems = useMemo(() => {
@@ -234,6 +339,50 @@ export default function RestaurantPublicMenu() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── OPTIONS / SUPPLÉMENTS : si le plat a des `variants.groups`, on ouvre un modal de choix
+  //    AVANT d'ajouter au panier ; sinon ajout direct. Prix RECALCULÉ côté serveur à la commande. ──
+  const [optionItem, setOptionItem] = useState<MenuItem | null>(null);
+  const [optionSel, setOptionSel] = useState<Record<string, string[]>>({});
+
+  const startAdd = useCallback((item: MenuItem) => {
+    if (Array.isArray(item.variants?.groups) && item.variants!.groups!.length > 0) {
+      setOptionSel({}); setOptionItem(item);
+    } else { addToCart(item); }
+  }, [addToCart]);
+
+  const toggleOption = (g: OptionGroup, optionId: string) => {
+    setOptionSel(prev => {
+      const cur = prev[g.id] || [];
+      const single = (g.max ?? 1) <= 1;
+      if (single) return { ...prev, [g.id]: cur.includes(optionId) ? [] : [optionId] };
+      if (cur.includes(optionId)) return { ...prev, [g.id]: cur.filter(x => x !== optionId) };
+      if ((g.max ?? 99) <= cur.length) return prev; // maximum atteint
+      return { ...prev, [g.id]: [...cur, optionId] };
+    });
+  };
+
+  const confirmAddOptions = () => {
+    if (!optionItem) return;
+    const groups = optionItem.variants?.groups || [];
+    for (const g of groups) {
+      if ((g.min ?? 0) > (optionSel[g.id] || []).length) { toast.error(`Choisissez au moins ${g.min} option(s) pour « ${g.name} »`); return; }
+    }
+    const chosen: SelectedOption[] = [];
+    for (const g of groups) for (const oid of (optionSel[g.id] || [])) {
+      const o = g.options.find(o => o.id === oid);
+      if (o) chosen.push({ group_id: g.id, group_name: g.name, option_id: o.id, name: o.name, price: Number(o.price) || 0 });
+    }
+    const optionsPrice = chosen.reduce((s, o) => s + o.price, 0);
+    const lineId = `${optionItem.id}::${chosen.map(o => o.option_id).sort().join(',')}`;
+    setCart(prev => {
+      const ex = prev.find(i => i.id === lineId);
+      if (ex) return prev.map(i => i.id === lineId ? { ...i, quantity: i.quantity + 1 } : i);
+      return [...prev, { ...optionItem, id: lineId, menuItemId: optionItem.id, price: optionItem.price + optionsPrice, optionsPrice, selectedOptions: chosen, quantity: 1 }];
+    });
+    toast.success(t('restaurantPublicMenu.ajouteAuPanier'));
+    setOptionItem(null); setOptionSel({});
+  };
+
   // Quick order - Achat direct
   const openQuickOrder = useCallback((item: MenuItem) => {
     setQuickOrderItem(item);
@@ -258,6 +407,41 @@ export default function RestaurantPublicMenu() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // RECOMMANDER (depuis l'historique) : ?reorder=<orderId> → recharge les MÊMES plats encore
+  // disponibles dans le panier, aux prix actuels (jamais les anciens). S'exécute une seule fois.
+  const reorderRef = useRef(false);
+  useEffect(() => {
+    const reorderId = searchParams.get('reorder');
+    if (!reorderId || reorderRef.current || menuItems.length === 0) return;
+    reorderRef.current = true;
+    void (async () => {
+      const { data } = await supabase.from('restaurant_orders').select('items').eq('id', reorderId).maybeSingle();
+      const past = Array.isArray((data as any)?.items) ? (data as any).items : [];
+      if (past.length === 0) return;
+      const byId = new Map(menuItems.map((m) => [m.id, m]));
+      const byName = new Map(menuItems.map((m) => [m.name?.toLowerCase(), m]));
+      const toAdd: { item: MenuItem; qty: number }[] = [];
+      let added = 0, skipped = 0;
+      for (const it of past) {
+        const m = byId.get(it.menu_item_id) || byName.get(String(it.name || '').toLowerCase());
+        const qty = Math.max(1, Number(it.quantity) || 1);
+        if (m && m.is_available) { toAdd.push({ item: m, qty }); added += qty; } else skipped++;
+      }
+      if (toAdd.length === 0) { toast.error('Ces plats ne sont plus disponibles.'); return; }
+      setCart((prev) => {
+        const next = [...prev];
+        for (const { item, qty } of toAdd) {
+          const idx = next.findIndex((i) => i.id === item.id);
+          if (idx >= 0) next[idx] = { ...next[idx], quantity: next[idx].quantity + qty };
+          else next.push({ ...item, quantity: qty });
+        }
+        return next;
+      });
+      toast.success(`Panier rechargé : ${added} article${added > 1 ? 's' : ''}${skipped ? ` (${skipped} indisponible${skipped > 1 ? 's' : ''} ignoré${skipped > 1 ? 's' : ''})` : ''}`);
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [menuItems, searchParams]);
+
   const getItemQuantity = useCallback((itemId: string) => {
     return cart.find(i => i.id === itemId)?.quantity || 0;
   }, [cart]);
@@ -273,111 +457,48 @@ export default function RestaurantPublicMenu() {
   );
 
   // Submit order (from cart or quick order)
-  // Fonction pour créditer le wallet du restaurant
-  const creditRestaurantWallet = async (restaurantServiceId: string, amount: number, orderNumber: string) => {
+  // ⚠️ SUPPRIMÉ : l'ancien creditRestaurantWallet faisait un `UPDATE wallets SET balance = …` BRUT
+  // (contournait AML/FX/audit et ne débitait jamais le client). Remplacé par le paiement ATOMIQUE
+  // Position du client (livraison) → frais calculés par DISTANCE (sinon forfait de base seul).
+  const detectClientPosition = async () => {
+    setLocating(true);
     try {
-      // Récupérer le user_id du restaurant (propriétaire du service professionnel)
-      const { data: serviceData, error: serviceError } = await supabase
-        .from('professional_services')
-        .select('user_id, business_name')
-        .eq('id', restaurantServiceId)
-        .single();
-
-      if (serviceError || !serviceData?.user_id) {
-        console.error('Erreur récupération user_id restaurant:', serviceError);
-        return false;
-      }
-
-      // Vérifier/créer le wallet du restaurant
-      // eslint-disable-next-line prefer-const
-      let { data: wallet, error: walletError } = await supabase
-        .from('wallets')
-        .select('id, balance')
-        .eq('user_id', serviceData.user_id)
-        .single();
-
-      if (walletError && walletError.code === 'PGRST116') {
-        // Créer le wallet s'il n'existe pas
-        const { data: newWallet, error: createError } = await supabase
-          .from('wallets')
-          .insert({
-            user_id: serviceData.user_id,
-            balance: 0,
-            currency: 'GNF'
-          })
-          .select()
-          .single();
-
-        if (createError) {
-          console.error('Erreur création wallet restaurant:', createError);
-          return false;
-        }
-        wallet = newWallet;
-      }
-
-      if (!wallet) {
-        console.error('Wallet restaurant introuvable');
-        return false;
-      }
-
-      // Créditer le wallet
-      const newBalance = (wallet.balance || 0) + amount;
-      const { error: updateError } = await supabase
-        .from('wallets')
-        .update({ balance: newBalance })
-        .eq('id', wallet.id);
-
-      if (updateError) {
-        console.error('Erreur crédit wallet restaurant:', updateError);
-        return false;
-      }
-
-      // Créer le log de transaction (bypass type check car les types générés sont incorrects)
-      try {
-        await (supabase.from('wallet_logs') as any).insert({
-          wallet_id: wallet.id,
-          user_id: serviceData.user_id,
-          action: 'credit',
-          amount: amount,
-          currency: 'GNF',
-          balance_before: wallet.balance || 0,
-          balance_after: newBalance,
-          status: 'completed',
-          payment_method: 'online',
-          metadata: {
-            source: 'restaurant_order',
-            order_number: orderNumber,
-            restaurant_name: serviceData.business_name
-          }
-        });
-      } catch (logError) {
-        console.warn('Erreur log transaction:', logError);
-      }
-
-      console.log(`✓ Wallet restaurant crédité: +${amount} GNF`);
-      return true;
-    } catch (err) {
-      console.error('Erreur creditRestaurantWallet:', err);
-      return false;
-    }
+      const p = await mapService.getCurrentPosition();
+      setClientCoords({ lat: p.latitude, lng: p.longitude });
+      toast.success(t('restaurantPublicMenu.positionDetecteeFraisDeLivraison'));
+    } catch {
+      toast.error(t('restaurantPublicMenu.positionIndisponibleFraisDeBase'));
+    } finally { setLocating(false); }
   };
 
+  // Promo « livraison offerte » active → le client ne paie pas les frais (le resto les absorbe).
+  const deliveryOffered = activePromo?.promo_type === 'free_delivery';
+  const deliveryBase = Math.max(0, Number((restaurant?.metadata as any)?.delivery_fee) || 0);
+  const deliveryDistanceKm = (restaurant?.latitude && restaurant?.longitude && clientCoords)
+    ? haversineKm(Number(restaurant.latitude), Number(restaurant.longitude), clientCoords.lat, clientCoords.lng) : 0;
+  // Frais estimés affichés (le backend reste autoritaire au paiement).
+  const deliveryFeeEstimate = orderType === 'delivery' && !deliveryOffered
+    ? Math.round(deliveryBase + DELIVERY_PRICE_PER_KM * deliveryDistanceKm) : 0;
+
+  // backend `/api/v2/restaurant/order` (débit client → crédit resto net → commission PDG).
   const handleSubmitOrder = async (isQuickOrder: boolean = false) => {
-    if (!customerName.trim()) {
-      toast.error('Veuillez entrer votre nom');
+    if (isSubmitting) return; // garde anti double-soumission (double clic / double appel)
+
+    // MODE SUR TABLE : aucun nom ni téléphone requis (juste le n° de table + instructions optionnelles).
+    if (orderType === 'dine_in') {
+      if (!tableNumber.trim()) { toast.error(t('restaurantPublicMenu.numeroDeTableManquantScannez')); return; }
+    } else if (orderType === 'delivery' && !deliveryAddress.trim()) {
+      toast.error(t('restaurantPublicMenu.veuillezEntrerLAdresseDe'));
       return;
     }
-    if (!customerPhone.trim()) {
-      toast.error('Veuillez entrer votre numéro de téléphone');
-      return;
+
+    // Contact requis pour les commandes réglées EN PERSONNE (le restaurant/livreur doit joindre le client).
+    const inPerson = ['orange_money', 'mobile_money', 'card', 'cash'].includes(paymentMethod);
+    if (orderType === 'delivery' && inPerson && (!customerName.trim() || !customerPhone.trim())) {
+      toast.error(t('restaurantPublicMenu.nomEtTelephoneRequisPour')); return;
     }
-    if (orderType === 'dine_in' && !tableNumber.trim()) {
-      toast.error('Veuillez entrer le numéro de table');
-      return;
-    }
-    if (orderType === 'delivery' && !deliveryAddress.trim()) {
-      toast.error('Veuillez entrer l\'adresse de livraison');
-      return;
+    if (orderType === 'takeaway' && inPerson && !customerName.trim()) {
+      toast.error(t('restaurantPublicMenu.votreNomEstRequisPour')); return;
     }
 
     // Determine items to order
@@ -386,80 +507,92 @@ export default function RestaurantPublicMenu() {
       : cart;
 
     if (itemsToOrder.length === 0) {
-      toast.error('Aucun article à commander');
+      toast.error(t('restaurantPublicMenu.aucunArticleACommander'));
       return;
     }
 
-    const total = itemsToOrder.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const grossTotal = itemsToOrder.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    // Application de la promotion active (réduction %).
+    const promoPct = activePromo?.promo_type === 'percentage' ? (Number(activePromo.value) || 0) : 0;
+    const promoDiscount = Math.round(grossTotal * promoPct / 100);
+    const total = grossTotal - promoDiscount;
 
     setIsSubmitting(true);
     try {
-      const orderItems = itemsToOrder.map(item => ({
-        menu_item_id: item.id,
-        name: item.name,
-        quantity: item.quantity,
-        unit_price: item.price,
-        total_price: item.price * item.quantity,
-        special_instructions: orderNotes || null,
-      }));
-
-      const orderNumber = `CMD-${Date.now().toString(36).toUpperCase()}`;
-
-      // Déterminer le statut de paiement
-      const isPaid = paymentMethod === 'card' || paymentMethod === 'mobile';
-
-      const { data: _order, error } = await supabase
-        .from('restaurant_orders')
-        .insert({
-          professional_service_id: serviceId,
-          order_number: orderNumber,
-          customer_name: customerName,
-          customer_phone: customerPhone,
-          order_type: orderType,
-          table_number: orderType === 'dine_in' ? tableNumber : null,
-          delivery_address: orderType === 'delivery' ? deliveryAddress : null,
-          items: orderItems,
-          subtotal: total,
-          tax: 0,
-          total: total,
-          notes: orderNotes || null,
-          status: 'pending',
-          payment_status: isPaid ? 'paid' : 'pending',
-          payment_method: paymentMethod,
-          source: 'online',
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Créditer le wallet du restaurant si paiement en ligne (card ou mobile)
-      if (isPaid && serviceId) {
-        const credited = await creditRestaurantWallet(serviceId, total, orderNumber);
-        if (credited) {
-          toast.success('💰 Paiement reçu par le restaurant');
-        }
+      // ── MODE SUR TABLE (QR) : réglé EN PERSONNE (espèces / Orange Money / Mobile Money / carte),
+      //    AUCUN compte requis, AUCUN wallet. La commande part au restaurant qui confirme, prépare
+      //    et sert à la table. Le client suit en direct (tracker) — pas besoin de nom/téléphone. ──
+      // ── PAIEMENT EN PERSONNE (Orange Money / Mobile Money / Carte réglés au comptoir ou à la table) —
+      //    TOUS LES MODES (sur table, livraison, à emporter). Aucun compte app requis, aucun wallet :
+      //    la commande part au restaurant, qui l'encaisse sur place puis la confirme et la prépare. ──
+      if (['orange_money', 'mobile_money', 'card', 'cash'].includes(paymentMethod)) {
+        const payItems = itemsToOrder.map(it => ({ menu_item_id: (it as any).menuItemId ?? it.id, quantity: it.quantity, options: (((it as any).selectedOptions || []) as SelectedOption[]).map(o => ({ group_id: o.group_id, option_id: o.option_id })) }));
+        const res = await backendFetch<any>('/api/v2/restaurant/order/pay-mobile', {
+          method: 'POST',
+          allowAnonymous: true, // commande EN PERSONNE : aucun compte requis (QR table / comptoir)
+          body: {
+            professional_service_id: serviceId, order_type: orderType,
+            table_number: orderType === 'dine_in' && tableNumber.trim() ? tableNumber.trim() : null,
+            delivery_address: orderType === 'delivery' ? deliveryAddress : null,
+            customer_name: orderType === 'dine_in' ? null : (customerName || null),
+            customer_phone: orderType === 'dine_in' ? null : (customerPhone || null),
+            customer_user_id: user?.id ?? null,
+            special_note: orderNotes || null, items: payItems,
+            payment_method: paymentMethod,
+          },
+        });
+        if (!res.success) { toast.error((res as any).error || 'Commande non envoyée'); return; }
+        const d: any = (res as any).data ?? res;
+        setLastOrderId(d.order_id ?? null);
+        setLastOrderNumber(String(d.order_id || '').replace(/-/g, '').slice(0, 4).toUpperCase());
+        toast.success(orderType === 'dine_in'
+          ? `Commande Table ${tableNumber} envoyée ! Réglez sur place une fois servi.`
+          : paymentMethod === 'cash'
+            ? 'Commande envoyée ! Réglez en espèces au retrait / à la livraison.'
+            : 'Commande envoyée ! Réglez au moment du retrait / de la livraison.');
+        if (isQuickOrder) { setOrderSuccess(true); } else { clearCart(); setShowCheckout(false); }
+        setOrderNotes(''); setPayerNumber('');
+        return;
       }
 
-      setLastOrderNumber(orderNumber);
-
-      if (isQuickOrder) {
-        setOrderSuccess(true);
-        toast.success(`Commande ${orderNumber} envoyée !`);
-      } else {
-        toast.success(`Commande ${orderNumber} envoyée avec succès !`);
-        clearCart();
-        setShowCheckout(false);
+      // ── PAIEMENT WALLET (livraison / à emporter) → BACKEND ATOMIQUE (débit client → crédit resto net →
+      //    commission PDG). Prix + promo RECALCULÉS côté serveur (jamais le client). Compte requis. ──
+      if (paymentMethod === 'wallet') {
+        if (!user) { toast.error(t('restaurantPublicMenu.connectezVousPourPayerAvec')); navigate('/auth'); return; }
+        if (!idemRef.current) idemRef.current = (globalThis.crypto?.randomUUID?.() || `resto-${Date.now()}-${Math.random()}`);
+        const payItems = itemsToOrder.map(it => ({ menu_item_id: (it as any).menuItemId ?? it.id, quantity: it.quantity, options: (((it as any).selectedOptions || []) as SelectedOption[]).map(o => ({ group_id: o.group_id, option_id: o.option_id })) }));
+        const res = await backendFetch<any>('/api/v2/restaurant/order', {
+          method: 'POST',
+          body: {
+            professional_service_id: serviceId,
+            order_type: orderType,
+            table_number: orderType === 'dine_in' && tableNumber.trim() ? tableNumber.trim() : null,
+            delivery_address: orderType === 'delivery' ? deliveryAddress : null,
+            // Position du client → frais de livraison calculés par distance côté serveur.
+            client_lat: orderType === 'delivery' ? (clientCoords?.lat ?? null) : null,
+            client_lng: orderType === 'delivery' ? (clientCoords?.lng ?? null) : null,
+            special_note: orderNotes || null,
+            items: payItems,
+            idempotency_key: idemRef.current,
+          },
+        });
+        if (!res.success) { toast.error((res as any).error || 'Paiement refusé'); return; }
+        const d: any = (res as any).data ?? res;
+        idemRef.current = ''; // succès → nouvelle clé pour la prochaine commande
+        setLastOrderId(d.order_id ?? null);
+        setLastOrderNumber(String(d.order_id || '').replace(/-/g, '').slice(0, 4).toUpperCase());
+        toast.success(`Commande payée • ${fc(d.charged ?? total)}`);
+        if (isQuickOrder) { setOrderSuccess(true); } else { clearCart(); setShowCheckout(false); }
+        setOrderNotes(''); setTableNumber(''); setDeliveryAddress('');
+        return;
       }
 
-      // Reset form
-      setOrderNotes('');
-      setTableNumber('');
-      setDeliveryAddress('');
-
+      // (Espèces + digital sont désormais TOUS gérés ci-dessus via /pay-mobile : prix validé serveur,
+      //  contact client stocké. Plus d'insert direct côté client.)
+      toast.error(t('restaurantPublicMenu.modeDePaiementNonPris'));
     } catch (error) {
       console.error('Error submitting order:', error);
-      toast.error('Erreur lors de l\'envoi de la commande');
+      toast.error(t('restaurantPublicMenu.erreurLorsDeLEnvoi'));
     } finally {
       setIsSubmitting(false);
     }
@@ -476,12 +609,44 @@ export default function RestaurantPublicMenu() {
     return categories.find(c => c.id === categoryId)?.name || 'Sans catégorie';
   };
 
+  // Sélecteur de paiement (mode-aware) — partagé par le panier et le modal rapide.
+  const PAYMENT_LABELS: Record<string, string> = {
+    wallet: 'Wallet (en ligne)', cash: 'Espèces (sur place)',
+    orange_money: 'Orange Money', mobile_money: 'Mobile Money', card: 'Carte bancaire',
+  };
+  const paymentIcon = (m: string) =>
+    m === 'wallet' ? <Wallet className="w-4 h-4 text-[#ff4000]" />
+      : m === 'cash' ? <Receipt className="w-4 h-4 text-muted-foreground" />
+        : m === 'orange_money' ? <Phone className="w-4 h-4 text-[#ff4000]" />
+          : m === 'mobile_money' ? <Phone className="w-4 h-4" />
+            : <CreditCard className="w-4 h-4 text-blue-600" />;
+  const renderPaymentSelector = () => (
+    <div className="space-y-2">
+      <Label>{t('restaurantPublicMenu.paiement')}</Label>
+      <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as typeof paymentMethod)}>
+        <div className="grid grid-cols-2 gap-2">
+          {allowedPayments(orderType).map((m) => (
+            <label key={m} className={cn('flex items-center gap-2 p-2.5 border rounded-lg cursor-pointer transition-colors', paymentMethod === m && 'border-[#ff4000] bg-[#ff4000]/5')}>
+              <RadioGroupItem value={m} className="sr-only" />
+              {paymentIcon(m)}
+              <span className="text-xs font-medium">{PAYMENT_LABELS[m]}</span>
+            </label>
+          ))}
+        </div>
+      </RadioGroup>
+      {['orange_money', 'mobile_money', 'card'].includes(paymentMethod) && (
+        <p className="text-xs text-muted-foreground">{t('restaurantPublicMenu.aucunCompteNecessaireReglezDirectement')}</p>
+      )}
+      {paymentMethod === 'wallet' && <p className="text-xs text-muted-foreground">{t('restaurantPublicMenu.debiteDeVotreWalletA')}</p>}
+    </div>
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Chargement du menu...</p>
+          <p className="text-muted-foreground">{t('restaurantPublicMenu.chargementDuMenu')}</p>
         </div>
       </div>
     );
@@ -492,8 +657,10 @@ export default function RestaurantPublicMenu() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <ChefHat className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-xl font-semibold mb-2">Restaurant non trouvé</h2>
-          <Button onClick={() => navigate(-1)}>Retour</Button>
+          <h2 className="text-xl font-semibold mb-2">{t('restaurantPublicMenu.restaurantNonTrouve')}</h2>
+          <p className="text-sm text-muted-foreground mb-4">{t('restaurantPublicMenu.ceRestaurantNExistePas')}</p>
+          {/* QR scanné dans un nouvel onglet = pas d'historique → on renvoie vers la liste des restaurants. */}
+          <Button onClick={() => navigate('/restaurants')}>{t('restaurantPublicMenu.voirLesRestaurants')}</Button>
         </div>
       </div>
     );
@@ -540,6 +707,12 @@ export default function RestaurantPublicMenu() {
               <h1 className="text-xl sm:text-2xl font-bold truncate">
                 {restaurant.business_name}
               </h1>
+              {activePromo && (
+                <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-[#ff4000] px-2.5 py-1 text-xs font-semibold text-white">
+                  🎉 {activePromo.title}
+                  {activePromo.promo_type === 'percentage' ? ` · -${activePromo.value}%` : activePromo.promo_type === 'free_delivery' ? ' · Livraison offerte' : ' · 2=1'}
+                </div>
+              )}
               <div className="flex flex-wrap items-center gap-2 text-sm text-white/90">
                 {restaurant.rating && (
                   <span className="flex items-center gap-1">
@@ -559,6 +732,13 @@ export default function RestaurantPublicMenu() {
           </div>
         </div>
       </div>
+
+      {/* MODE 3 — bannière table (QR scanné) */}
+      {qrTable && (
+        <div className="mx-4 mt-3 flex items-center gap-2 rounded-xl border border-[#ff4000]/30 bg-[#ff4000]/10 px-4 py-2.5 text-sm font-medium text-[#ff4000]">
+          🪑 Vous êtes à la <strong>Table {qrTable}</strong> — commandez, le serveur vous l'apporte.
+        </div>
+      )}
 
       {/* Categories tabs */}
       <div className="sticky top-0 z-20 bg-background border-b border-border">
@@ -600,7 +780,7 @@ export default function RestaurantPublicMenu() {
               <Card
                 key={item.id}
                 className="flex-shrink-0 w-40 overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => addToCart(item)}
+                onClick={() => startAdd(item)}
               >
                 <div className="relative h-24 bg-muted">
                   {(() => {
@@ -610,7 +790,7 @@ export default function RestaurantPublicMenu() {
                       : <div className="w-full h-full flex items-center justify-center"><ChefHat className="w-8 h-8 text-muted-foreground" /></div>;
                   })()}
                   {item.is_new && (
-                    <Badge className="absolute top-1 left-1 text-[10px] px-1.5 py-0">Nouveau</Badge>
+                    <Badge className="absolute top-1 left-1 text-[10px] px-1.5 py-0">{t('restaurantPublicMenu.nouveau')}</Badge>
                   )}
                   {item.video_url && (
                     <span className="absolute bottom-1 right-1 bg-black/60 text-white rounded p-0.5">
@@ -637,7 +817,7 @@ export default function RestaurantPublicMenu() {
         {filteredItems.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <ChefHat className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>Aucun plat disponible dans cette catégorie</p>
+            <p>{t('restaurantPublicMenu.aucunPlatDisponibleDansCette')}</p>
           </div>
         ) : (
           <div className="grid gap-3">
@@ -666,7 +846,7 @@ export default function RestaurantPublicMenu() {
                               </div>
                             )}
                             {item.is_new && item.is_available && (
-                              <Badge className="absolute top-1 left-1 text-[10px] px-1.5 py-0">Nouveau</Badge>
+                              <Badge className="absolute top-1 left-1 text-[10px] px-1.5 py-0">{t('restaurantPublicMenu.nouveau')}</Badge>
                             )}
                             {allImages.length > 1 && (
                               <span className="absolute bottom-1 right-1 bg-black/60 text-white text-[9px] px-1 rounded">
@@ -752,7 +932,7 @@ export default function RestaurantPublicMenu() {
                                   size="icon"
                                   variant="ghost"
                                   className="w-6 h-6 rounded-full"
-                                  onClick={(e) => { e.stopPropagation(); addToCart(item); }}
+                                  onClick={(e) => { e.stopPropagation(); startAdd(item); }}
                                 >
                                   <Plus className="w-3 h-3" />
                                 </Button>
@@ -795,12 +975,12 @@ export default function RestaurantPublicMenu() {
                     {cartCount}
                   </Badge>
                 </div>
-                <span className="flex-1">Voir le panier</span>
+                <span className="flex-1">{t('restaurantPublicMenu.voirLePanier')}</span>
                 <span className="font-bold">{fc(cartTotal)}</span>
               </Button>
             </SheetTrigger>
 
-            <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl">
+            <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl max-h-[90vh] overflow-y-auto">
               <SheetHeader className="pb-4 border-b">
                 <SheetTitle className="flex items-center gap-2">
                   <ShoppingCart className="w-5 h-5" />
@@ -842,7 +1022,7 @@ export default function RestaurantPublicMenu() {
                           size="icon"
                           variant="outline"
                           className="w-7 h-7 rounded-full"
-                          onClick={() => addToCart(item)}
+                          onClick={() => startAdd(item)}
                         >
                           <Plus className="w-3 h-3" />
                         </Button>
@@ -853,100 +1033,104 @@ export default function RestaurantPublicMenu() {
 
                 {/* Order type */}
                 <div className="space-y-3">
-                  <Label>Type de commande</Label>
+                  <Label>{t('restaurantPublicMenu.typeDeCommande')}</Label>
                   <RadioGroup value={orderType} onValueChange={(v) => setOrderType(v as typeof orderType)}>
                     <div className="grid grid-cols-3 gap-2">
                       <label className={cn(
-                        'flex flex-col items-center gap-1 p-3 border rounded-xl cursor-pointer transition-colors',
-                        orderType === 'takeaway' && 'border-primary bg-primary/5'
-                      )}>
-                        <RadioGroupItem value="takeaway" className="sr-only" />
-                        <span className="text-lg">🥡</span>
-                        <span className="text-xs font-medium">À emporter</span>
-                      </label>
-                      <label className={cn(
-                        'flex flex-col items-center gap-1 p-3 border rounded-xl cursor-pointer transition-colors',
-                        orderType === 'dine_in' && 'border-primary bg-primary/5'
-                      )}>
-                        <RadioGroupItem value="dine_in" className="sr-only" />
-                        <span className="text-lg">🍽️</span>
-                        <span className="text-xs font-medium">Sur place</span>
-                      </label>
-                      <label className={cn(
-                        'flex flex-col items-center gap-1 p-3 border rounded-xl cursor-pointer transition-colors',
-                        orderType === 'delivery' && 'border-primary bg-primary/5'
+                        'flex flex-col items-center gap-1.5 p-3 border-2 rounded-xl cursor-pointer transition-colors text-center',
+                        orderType === 'delivery' ? 'border-[#ff4000] bg-[#ff4000]/5' : 'border-border'
                       )}>
                         <RadioGroupItem value="delivery" className="sr-only" />
-                        <span className="text-lg">🛒</span>
-                        <span className="text-xs font-medium">Livraison</span>
+                        <span className="text-2xl">🛵</span>
+                        <span className="text-xs font-semibold leading-tight">{t('restaurantPublicMenu.livraisonChezMoi')}</span>
+                      </label>
+                      <label className={cn(
+                        'flex flex-col items-center gap-1.5 p-3 border-2 rounded-xl cursor-pointer transition-colors text-center',
+                        orderType === 'takeaway' ? 'border-[#ff4000] bg-[#ff4000]/5' : 'border-border'
+                      )}>
+                        <RadioGroupItem value="takeaway" className="sr-only" />
+                        <span className="text-2xl">🏃</span>
+                        <span className="text-xs font-semibold leading-tight">Je viens chercher</span>
+                      </label>
+                      <label className={cn(
+                        'flex flex-col items-center gap-1.5 p-3 border-2 rounded-xl cursor-pointer transition-colors text-center',
+                        orderType === 'dine_in' ? 'border-[#ff4000] bg-[#ff4000]/5' : 'border-border'
+                      )}>
+                        <RadioGroupItem value="dine_in" className="sr-only" />
+                        <span className="text-2xl">🪑</span>
+                        <span className="text-xs font-semibold leading-tight">{t('restaurantPublicMenu.jeSuisATable')}</span>
                       </label>
                     </div>
                   </RadioGroup>
                 </div>
 
-                {/* Customer info */}
+                {/* Champs conditionnels selon le mode (exactement comme le prompt) */}
+                {orderType === 'takeaway' && (
+                  <div className="rounded-xl border bg-muted/40 p-3 text-sm">
+                    <p className="font-medium flex items-center gap-1"><MapPin className="w-4 h-4 text-[#ff4000]" /> {t('restaurantPublicMenu.recuperationAuRestaurant')}</p>
+                    {restaurant?.address && <p className="text-muted-foreground mt-1">{restaurant.address}</p>}
+                    <p className="text-muted-foreground mt-1">⏱️ Prête dans ~{Math.max(...cart.map(c => c.preparation_time || 15), 15)} min — une notification vous préviendra.</p>
+                  </div>
+                )}
+
+                {/* Infos — SUR TABLE : juste les instructions (pas de nom/téléphone). LIVRAISON/À EMPORTER : coordonnées. */}
                 <div className="space-y-3">
-                  <div>
-                    <Label htmlFor="name">Votre nom *</Label>
-                    <Input
-                      id="name"
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      placeholder="Entrez votre nom"
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="phone">Téléphone *</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value)}
-                      placeholder="Ex: 620 00 00 00"
-                      className="mt-1"
-                    />
-                  </div>
+                  {orderType !== 'dine_in' && (() => {
+                    const inPerson = ['orange_money', 'mobile_money', 'card', 'cash'].includes(paymentMethod);
+                    const nameReq = inPerson; // requis pour livraison ET à emporter réglés en personne
+                    const phoneReq = inPerson && orderType === 'delivery';
+                    return (
+                      <>
+                        <div>
+                          <Label htmlFor="name">Votre nom {nameReq ? <span className="text-[#ff4000]">*</span> : <span className="text-muted-foreground">(optionnel)</span>}</Label>
+                          <Input id="name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder={t('restaurantPublicMenu.entrezVotreNom')} className="mt-1" />
+                        </div>
+                        <div>
+                          <Label htmlFor="phone">Téléphone {phoneReq ? <span className="text-[#ff4000]">*</span> : <span className="text-muted-foreground">(optionnel)</span>}</Label>
+                          <Input id="phone" type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="Ex: 620 00 00 00" className="mt-1" />
+                        </div>
+                      </>
+                    );
+                  })()}
 
                   {orderType === 'dine_in' && (
-                    <div>
-                      <Label htmlFor="table">Numéro de table *</Label>
-                      <Input
-                        id="table"
-                        value={tableNumber}
-                        onChange={(e) => setTableNumber(e.target.value)}
-                        placeholder="Ex: 5"
-                        className="mt-1"
-                      />
-                    </div>
+                    qrTable ? (
+                      <div className="rounded-lg border border-[#ff4000]/30 bg-[#ff4000]/5 px-3 py-2 text-sm font-semibold text-[#ff4000]">🪑 Table {tableNumber}</div>
+                    ) : (
+                      <div>
+                        <Label htmlFor="table">{t('restaurantPublicMenu.numeroDeTable')}</Label>
+                        <Input id="table" value={tableNumber} onChange={(e) => setTableNumber(e.target.value)} placeholder="Ex: 5" className="mt-1" />
+                      </div>
+                    )
                   )}
 
                   {orderType === 'delivery' && (
                     <div>
-                      <Label htmlFor="address">Adresse de livraison *</Label>
-                      <Textarea
-                        id="address"
-                        value={deliveryAddress}
-                        onChange={(e) => setDeliveryAddress(e.target.value)}
-                        placeholder="Entrez votre adresse complète"
-                        className="mt-1"
-                        rows={2}
-                      />
+                      <Label htmlFor="address">{t('restaurantPublicMenu.adresseDeLivraison')}</Label>
+                      <Textarea id="address" value={deliveryAddress} onChange={(e) => setDeliveryAddress(e.target.value)} placeholder={t('restaurantPublicMenu.entrezVotreAdresseComplete')} className="mt-1" rows={2} />
+                      {/* Position GPS → frais calculés par distance ; affichage des frais de livraison. */}
+                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                        <Button type="button" variant="outline" size="sm" onClick={detectClientPosition} disabled={locating} className="gap-1.5">
+                          <MapPin className="w-3.5 h-3.5" />
+                          {locating ? 'Localisation…' : clientCoords ? 'Position OK' : 'Utiliser ma position'}
+                        </Button>
+                        <span className="text-sm font-medium">
+                          {deliveryOffered
+                            ? <span className="text-[#ff4000]">{t('restaurantPublicMenu.livraisonOfferte')}</span>
+                            : <>Frais : {fc(deliveryFeeEstimate)}{!clientCoords && <span className="text-xs text-muted-foreground font-normal"> {t('restaurantPublicMenu.deBase')}</span>}</>}
+                        </span>
+                      </div>
                     </div>
                   )}
 
                   <div>
-                    <Label htmlFor="notes">Notes (optionnel)</Label>
-                    <Textarea
-                      id="notes"
-                      value={orderNotes}
-                      onChange={(e) => setOrderNotes(e.target.value)}
-                      placeholder="Instructions spéciales..."
-                      className="mt-1"
-                      rows={2}
-                    />
+                    <Label htmlFor="notes">Instructions (optionnel)</Label>
+                    <Textarea id="notes" value={orderNotes} onChange={(e) => setOrderNotes(e.target.value)} placeholder={t('restaurantPublicMenu.exSansOignonBienCuit')} className="mt-1" rows={2} />
                   </div>
                 </div>
+
+                {/* Paiement (mode-aware) : sur table = digital ; livraison = wallet + digital ; emporter = wallet + espèces + digital */}
+                {renderPaymentSelector()}
 
                 {/* Total */}
                 <div className="pt-4 border-t space-y-2">
@@ -954,10 +1138,23 @@ export default function RestaurantPublicMenu() {
                     <span className="text-muted-foreground">Sous-total</span>
                     <span>{fc(cartTotal)}</span>
                   </div>
+                  {activePromo?.promo_type === 'percentage' && (
+                    <div className="flex justify-between text-sm text-[#ff4000]">
+                      <span>Promo {activePromo.title} (−{activePromo.value}%)</span>
+                      <span>−{fc(Math.round(cartTotal * (Number(activePromo.value) || 0) / 100))}</span>
+                    </div>
+                  )}
+                  {orderType === 'delivery' && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">{t('restaurantPublicMenu.fraisDeLivraison')}</span>
+                      <span>{deliveryOffered ? <span className="text-[#ff4000]">Offerte</span> : fc(deliveryFeeEstimate)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between font-bold text-lg">
                     <span>Total</span>
-                    <span className="text-primary">{fc(cartTotal)}</span>
+                    <span className="text-primary">{fc(cartTotal - (activePromo?.promo_type === 'percentage' ? Math.round(cartTotal * (Number(activePromo.value) || 0) / 100) : 0) + deliveryFeeEstimate)}</span>
                   </div>
+                  {paymentMethod === 'wallet' && <p className="text-xs text-muted-foreground">{t('restaurantPublicMenu.debiteDeVotreWalletA2')}</p>}
                 </div>
               </div>
 
@@ -982,6 +1179,53 @@ export default function RestaurantPublicMenu() {
         </div>
       )}
 
+      {/* Modal OPTIONS / SUPPLÉMENTS : choix avant ajout au panier (plats avec variants). */}
+      <Dialog open={!!optionItem} onOpenChange={(o) => { if (!o) { setOptionItem(null); setOptionSel({}); } }}>
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{optionItem?.name}</DialogTitle>
+          </DialogHeader>
+          {optionItem && (
+            <div className="space-y-4">
+              {(optionItem.variants?.groups || []).map((g) => {
+                const single = (g.max ?? 1) <= 1;
+                const cur = optionSel[g.id] || [];
+                return (
+                  <div key={g.id} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="font-semibold">{g.name}</Label>
+                      <span className="text-xs text-muted-foreground">
+                        {(g.min ?? 0) > 0 ? 'Obligatoire' : 'Facultatif'}{!single && g.max ? ` · max ${g.max}` : ''}
+                      </span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {g.options.map((o) => {
+                        const checked = cur.includes(o.id);
+                        return (
+                          <label key={o.id} className={cn('flex items-center justify-between rounded-lg border p-2.5 cursor-pointer transition-colors', checked && 'border-[#ff4000] bg-[#ff4000]/5')}>
+                            <span className="flex items-center gap-2 text-sm">
+                              <input type={single ? 'radio' : 'checkbox'} checked={checked} onChange={() => toggleOption(g, o.id)} className="accent-[#ff4000]" />
+                              {o.name}
+                            </span>
+                            {o.price > 0 && <span className="text-sm font-medium text-muted-foreground">+{fc(o.price)}</span>}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+              <Button className="w-full bg-[#ff4000] hover:bg-[#e03900]" onClick={confirmAddOptions}>
+                Ajouter au panier · {fc(
+                  optionItem.price +
+                  (optionItem.variants?.groups || []).reduce((s, g) => s + (optionSel[g.id] || []).reduce((ss, oid) => ss + (g.options.find(o => o.id === oid)?.price || 0), 0), 0)
+                )}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Quick Order Modal - Achat direct */}
       <Dialog open={showQuickOrder} onOpenChange={setShowQuickOrder}>
         <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
@@ -999,7 +1243,7 @@ export default function RestaurantPublicMenu() {
                 <Check className="w-8 h-8 text-[#ff4000]" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-[#ff4000]">Commande envoyée !</h3>
+                <h3 className="text-xl font-bold text-[#ff4000]">{t('restaurantPublicMenu.commandeEnvoyee')}</h3>
                 <p className="text-muted-foreground mt-1">Référence: {lastOrderNumber}</p>
               </div>
               <Card className="bg-muted/50">
@@ -1009,7 +1253,7 @@ export default function RestaurantPublicMenu() {
                     <span className="font-medium">{quickOrderItem?.name}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Quantité</span>
+                    <span className="text-muted-foreground">{t('restaurantPublicMenu.quantite')}</span>
                     <span className="font-medium">{quickOrderQuantity}</span>
                   </div>
                   <div className="flex justify-between font-bold">
@@ -1018,9 +1262,12 @@ export default function RestaurantPublicMenu() {
                   </div>
                 </CardContent>
               </Card>
-              <p className="text-sm text-muted-foreground">
-                Le restaurant va préparer votre commande. Vous serez notifié quand elle sera prête.
-              </p>
+              {lastOrderId && (
+                <Card><CardContent className="p-4 text-left">
+                  <p className="mb-3 text-sm font-medium">{t('restaurantPublicMenu.suiviDeVotreCommande')}</p>
+                  <RestaurantOrderTracker orderId={lastOrderId} />
+                </CardContent></Card>
+              )}
               <Button className="w-full" onClick={() => setShowQuickOrder(false)}>
                 Fermer
               </Button>
@@ -1079,7 +1326,7 @@ export default function RestaurantPublicMenu() {
 
                     {/* Quantity selector */}
                     <div className="flex items-center justify-between mt-4 pt-3 border-t">
-                      <span className="font-medium">Quantité</span>
+                      <span className="font-medium">{t('restaurantPublicMenu.quantite')}</span>
                       <div className="flex items-center gap-3">
                         <Button
                           size="icon"
@@ -1106,120 +1353,71 @@ export default function RestaurantPublicMenu() {
 
               {/* Order type */}
               <div className="space-y-2">
-                <Label>Type de commande</Label>
+                <Label>{t('restaurantPublicMenu.typeDeCommande')}</Label>
                 <RadioGroup value={orderType} onValueChange={(v) => setOrderType(v as typeof orderType)}>
                   <div className="grid grid-cols-3 gap-2">
                     <label className={cn(
-                      'flex flex-col items-center gap-1 p-2 border rounded-lg cursor-pointer transition-colors',
-                      orderType === 'takeaway' && 'border-primary bg-primary/5'
-                    )}>
-                      <RadioGroupItem value="takeaway" className="sr-only" />
-                      <span className="text-lg">🥡</span>
-                      <span className="text-xs">À emporter</span>
-                    </label>
-                    <label className={cn(
-                      'flex flex-col items-center gap-1 p-2 border rounded-lg cursor-pointer transition-colors',
-                      orderType === 'dine_in' && 'border-primary bg-primary/5'
-                    )}>
-                      <RadioGroupItem value="dine_in" className="sr-only" />
-                      <span className="text-lg">🍽️</span>
-                      <span className="text-xs">Sur place</span>
-                    </label>
-                    <label className={cn(
-                      'flex flex-col items-center gap-1 p-2 border rounded-lg cursor-pointer transition-colors',
-                      orderType === 'delivery' && 'border-primary bg-primary/5'
+                      'flex flex-col items-center gap-1.5 p-2.5 border-2 rounded-lg cursor-pointer transition-colors text-center',
+                      orderType === 'delivery' ? 'border-[#ff4000] bg-[#ff4000]/5' : 'border-border'
                     )}>
                       <RadioGroupItem value="delivery" className="sr-only" />
-                      <span className="text-lg">🛒</span>
-                      <span className="text-xs">Livraison</span>
+                      <span className="text-2xl">🛵</span>
+                      <span className="text-[11px] font-semibold leading-tight">{t('restaurantPublicMenu.livraisonChezMoi')}</span>
+                    </label>
+                    <label className={cn(
+                      'flex flex-col items-center gap-1.5 p-2.5 border-2 rounded-lg cursor-pointer transition-colors text-center',
+                      orderType === 'takeaway' ? 'border-[#ff4000] bg-[#ff4000]/5' : 'border-border'
+                    )}>
+                      <RadioGroupItem value="takeaway" className="sr-only" />
+                      <span className="text-2xl">🏃</span>
+                      <span className="text-[11px] font-semibold leading-tight">Je viens chercher</span>
+                    </label>
+                    <label className={cn(
+                      'flex flex-col items-center gap-1.5 p-2.5 border-2 rounded-lg cursor-pointer transition-colors text-center',
+                      orderType === 'dine_in' ? 'border-[#ff4000] bg-[#ff4000]/5' : 'border-border'
+                    )}>
+                      <RadioGroupItem value="dine_in" className="sr-only" />
+                      <span className="text-2xl">🪑</span>
+                      <span className="text-[11px] font-semibold leading-tight">{t('restaurantPublicMenu.jeSuisATable')}</span>
                     </label>
                   </div>
                 </RadioGroup>
               </div>
 
-              {/* Customer info */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="quick-name">Nom *</Label>
-                  <Input
-                    id="quick-name"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="Votre nom"
-                    className="mt-1"
-                  />
+              {/* Infos — SUR TABLE : aucun nom/téléphone (juste table + instructions). Sinon : coordonnées. */}
+              {orderType !== 'dine_in' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="quick-name">Nom (optionnel)</Label>
+                    <Input id="quick-name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder={t('restaurantPublicMenu.votreNom2')} className="mt-1" />
+                  </div>
+                  <div>
+                    <Label htmlFor="quick-phone">{t('restaurantPublicMenu.telephoneOptionnel')}</Label>
+                    <Input id="quick-phone" type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="620 00 00 00" className="mt-1" />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="quick-phone">Téléphone *</Label>
-                  <Input
-                    id="quick-phone"
-                    type="tel"
-                    value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
-                    placeholder="620 00 00 00"
-                    className="mt-1"
-                  />
-                </div>
-              </div>
+              )}
 
               {orderType === 'dine_in' && (
-                <div>
-                  <Label htmlFor="quick-table">Numéro de table *</Label>
-                  <Input
-                    id="quick-table"
-                    value={tableNumber}
-                    onChange={(e) => setTableNumber(e.target.value)}
-                    placeholder="Ex: 5"
-                    className="mt-1"
-                  />
-                </div>
+                qrTable ? (
+                  <div className="rounded-lg border border-[#ff4000]/30 bg-[#ff4000]/5 px-3 py-2 text-sm font-semibold text-[#ff4000]">🪑 Table {tableNumber}</div>
+                ) : (
+                  <div>
+                    <Label htmlFor="quick-table">{t('restaurantPublicMenu.numeroDeTable')}</Label>
+                    <Input id="quick-table" value={tableNumber} onChange={(e) => setTableNumber(e.target.value)} placeholder="Ex: 5" className="mt-1" />
+                  </div>
+                )
               )}
 
               {orderType === 'delivery' && (
                 <div>
-                  <Label htmlFor="quick-address">Adresse de livraison *</Label>
-                  <Input
-                    id="quick-address"
-                    value={deliveryAddress}
-                    onChange={(e) => setDeliveryAddress(e.target.value)}
-                    placeholder="Votre adresse"
-                    className="mt-1"
-                  />
+                  <Label htmlFor="quick-address">{t('restaurantPublicMenu.adresseDeLivraison')}</Label>
+                  <Input id="quick-address" value={deliveryAddress} onChange={(e) => setDeliveryAddress(e.target.value)} placeholder={t('restaurantPublicMenu.votreAdresse')} className="mt-1" />
                 </div>
               )}
 
-              {/* Payment method */}
-              <div className="space-y-2">
-                <Label>Mode de paiement</Label>
-                <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as typeof paymentMethod)}>
-                  <div className="grid grid-cols-3 gap-2">
-                    <label className={cn(
-                      'flex flex-col items-center gap-1 p-2 border rounded-lg cursor-pointer transition-colors',
-                      paymentMethod === 'cash' && 'border-primary bg-primary/5'
-                    )}>
-                      <RadioGroupItem value="cash" className="sr-only" />
-                      <Wallet className="w-5 h-5 text-[#ff4000]" />
-                      <span className="text-xs">Espèces</span>
-                    </label>
-                    <label className={cn(
-                      'flex flex-col items-center gap-1 p-2 border rounded-lg cursor-pointer transition-colors',
-                      paymentMethod === 'mobile' && 'border-primary bg-primary/5'
-                    )}>
-                      <RadioGroupItem value="mobile" className="sr-only" />
-                      <Phone className="w-5 h-5 text-orange-500" />
-                      <span className="text-xs">Mobile</span>
-                    </label>
-                    <label className={cn(
-                      'flex flex-col items-center gap-1 p-2 border rounded-lg cursor-pointer transition-colors',
-                      paymentMethod === 'card' && 'border-primary bg-primary/5'
-                    )}>
-                      <RadioGroupItem value="card" className="sr-only" />
-                      <CreditCard className="w-5 h-5 text-blue-600" />
-                      <span className="text-xs">Carte</span>
-                    </label>
-                  </div>
-                </RadioGroup>
-              </div>
+              {/* Paiement (mode-aware) — partagé avec le panier */}
+              {renderPaymentSelector()}
 
               {/* Notes */}
               <div>
@@ -1228,7 +1426,7 @@ export default function RestaurantPublicMenu() {
                   id="quick-notes"
                   value={orderNotes}
                   onChange={(e) => setOrderNotes(e.target.value)}
-                  placeholder="Sans oignon, bien cuit..."
+                  placeholder={t('restaurantPublicMenu.sansOignonBienCuit')}
                   className="mt-1"
                   rows={2}
                 />

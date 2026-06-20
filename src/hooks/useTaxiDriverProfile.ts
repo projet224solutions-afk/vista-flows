@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { publishLivePosition, driverPositionTopic } from '@/lib/realtime/livePositions';
 
 interface TaxiDriverProfile {
   id: string;
@@ -141,6 +142,14 @@ export function useTaxiDriverProfile(userId: string | undefined): UseTaxiDriverP
           last_seen: new Date().toISOString()
         })
         .eq('id', driverId);
+
+      // 📡 DUAL-MODE scalabilité : diffuse AUSSI la position en broadcast (hors WAL,
+      // Ably/AWS par flag), à côté de l'écriture DB. Sinon le canal driverPositionTopic
+      // n'était jamais alimenté dans le vrai flux → suivi pré-prise en charge cassé si on
+      // désactive un jour postgres_changes. Best-effort, n'impacte pas l'écriture en base.
+      publishLivePosition(driverPositionTopic(driverId), {
+        lat, lng, at: new Date().toISOString(),
+      });
 
       console.log('✅ Position sauvegardée en DB');
     } catch (error) {

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,6 +17,7 @@ interface VendorKYCFormProps {
 }
 
 export function VendorKYCForm({ onSuccess, onCancel }: VendorKYCFormProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { uploadFile } = useStorageUpload();
   const [loading, setLoading] = useState(false);
@@ -32,7 +34,7 @@ export function VendorKYCForm({ onSuccess, onCancel }: VendorKYCFormProps) {
       const file = e.target.files?.[0];
       if (file) {
         if (file.size > 5 * 1024 * 1024) {
-          toast.error('Le fichier ne doit pas dépasser 5 Mo');
+          toast.error(t('vendorKYCForm.leFichierNeDoitPas'));
           return;
         }
         setDocumentFile(file);
@@ -41,13 +43,13 @@ export function VendorKYCForm({ onSuccess, onCancel }: VendorKYCFormProps) {
           setDocumentPreview(reader.result as string);
         };
         reader.onerror = () => {
-          toast.error('Erreur lors de la lecture du fichier');
+          toast.error(t('vendorKYCForm.erreurLorsDeLaLecture'));
         };
         reader.readAsDataURL(file);
       }
     } catch (error) {
       console.error('Erreur lors du changement de fichier:', error);
-      toast.error('Erreur lors du traitement du fichier');
+      toast.error(t('vendorKYCForm.erreurLorsDuTraitementDu'));
     }
   };
 
@@ -55,12 +57,12 @@ export function VendorKYCForm({ onSuccess, onCancel }: VendorKYCFormProps) {
     e.preventDefault();
 
     if (!user) {
-      toast.error('Vous devez être connecté');
+      toast.error(t('vendorKYCForm.vousDevezEtreConnecte'));
       return;
     }
 
     if (!phoneNumber || !documentType || !documentFile) {
-      toast.error('Veuillez remplir tous les champs');
+      toast.error(t('vendorKYCForm.veuillezRemplirTousLesChamps'));
       return;
     }
 
@@ -95,11 +97,11 @@ export function VendorKYCForm({ onSuccess, onCancel }: VendorKYCFormProps) {
         throw kycError;
       }
 
-      toast.success('Documents soumis pour vérification');
+      toast.success(t('vendorKYCForm.documentsSoumisPourVerification'));
       onSuccess?.();
     } catch (error) {
       console.error('Erreur soumission KYC:', error);
-      toast.error('Erreur lors de la soumission');
+      toast.error(t('vendorKYCForm.erreurLorsDeLaSoumission'));
     } finally {
       setLoading(false);
     }
@@ -109,7 +111,7 @@ export function VendorKYCForm({ onSuccess, onCancel }: VendorKYCFormProps) {
     <Card className="p-6">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <Label htmlFor="phone">Numéro de téléphone</Label>
+          <Label htmlFor="phone">{t('vendorKYCForm.numeroDeTelephone')}</Label>
           <Input
             id="phone"
             type="tel"
@@ -121,28 +123,28 @@ export function VendorKYCForm({ onSuccess, onCancel }: VendorKYCFormProps) {
         </div>
 
         <div>
-          <Label htmlFor="docType">Type de document</Label>
+          <Label htmlFor="docType">{t('vendorKYCForm.typeDeDocument')}</Label>
           <Select value={documentType} onValueChange={setDocumentType} required>
             <SelectTrigger id="docType">
-              <SelectValue placeholder="Sélectionner un document" />
+              <SelectValue placeholder={t('vendorKYCForm.selectionnerUnDocument')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="carte_identite">Carte d'identité nationale</SelectItem>
+              <SelectItem value="carte_identite">{t('vendorKYCForm.carteDIdentiteNationale')}</SelectItem>
               <SelectItem value="passeport">Passeport</SelectItem>
-              <SelectItem value="permis_conduire">Permis de conduire</SelectItem>
-              <SelectItem value="registre_commerce">Registre de commerce</SelectItem>
+              <SelectItem value="permis_conduire">{t('vendorKYCForm.permisDeConduire')}</SelectItem>
+              <SelectItem value="registre_commerce">{t('vendorKYCForm.registreDeCommerce')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div>
-          <Label htmlFor="document">Document d'identité (max 5 Mo)</Label>
+          <Label htmlFor="document">{t('vendorKYCForm.documentDIdentiteMax5')}</Label>
           <div className="mt-2">
             {documentPreview ? (
               <div className="relative">
                 <img
                   src={documentPreview}
-                  alt="Aperçu"
+                  alt={t('vendorKYCForm.apercu')}
                   className="max-h-48 rounded-lg border"
                 />
                 <Button
@@ -161,7 +163,7 @@ export function VendorKYCForm({ onSuccess, onCancel }: VendorKYCFormProps) {
             ) : (
               <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50">
                 <Upload className="h-8 w-8 mb-2 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Cliquez pour télécharger</span>
+                <span className="text-sm text-muted-foreground">{t('vendorKYCForm.cliquezPourTelecharger')}</span>
                 <input
                   id="document"
                   type="file"

@@ -44,6 +44,8 @@ const PUBLIC_ROUTE_PREFIXES = [
   '/ref',
   '/service',
   '/restaurant',
+  '/restaurants',
+  '/pharmacie',
   '/digital-product',
   '/vendor-agent',
   '/payment/success',
@@ -65,14 +67,12 @@ const PROTECTED_ROUTE_RULES: Array<{ prefix: string; roles: string[] }> = [
   { prefix: '/livreur/help', roles: ['livreur', 'admin'] },
   { prefix: '/livreur', roles: ['livreur', 'admin'] },
   { prefix: '/taxi-moto/driver', roles: ['taxi', 'driver', 'admin'] },
-  { prefix: '/taxi/car/driver', roles: ['taxi', 'driver', 'admin'] },
-  { prefix: '/taxi', roles: ['taxi', 'driver', 'admin'] },
   { prefix: '/driver-subscription', roles: ['taxi', 'driver', 'livreur', 'admin'] },
   { prefix: '/transitaire', roles: ['transitaire', 'admin'] },
-  { prefix: '/actionnaire', roles: ['actionnaire', 'admin', 'pdg', 'ceo'] },
   { prefix: '/syndicat', roles: ['syndicat', 'admin'] },
   { prefix: '/bureau/change-password', roles: ['syndicat', 'admin'] },
   { prefix: '/bureau', roles: ['syndicat', 'admin'] },
+  { prefix: '/restaurant-agent', roles: ['restaurant_agent', 'admin'] },
   { prefix: '/agent/change-password', roles: ['agent', 'admin'] },
   { prefix: '/agent-dashboard', roles: ['agent', 'admin'] },
   { prefix: '/agent', roles: ['agent', 'admin'] },
@@ -193,6 +193,16 @@ export async function resolvePostAuthRoute(opts: PostAuthRouteOptions): Promise<
       return vaAny?.access_token ? `/vendor-agent/${vaAny.access_token}` : '/home';
     }
 
+    // restaurant_agent → interface agent dédiée (filtrée par permissions). On vérifie qu'il est
+    // bien rattaché à un restaurant actif, sinon /home (l'interface gère aussi le cas vide).
+    if (normalizedRole === 'restaurant_agent') {
+      const { data: ra } = await withTimeout(
+        supabase.from('restaurant_agents').select('id').eq('user_id', userId).eq('is_active', true).limit(1).maybeSingle(),
+        2000, 'restaurant_agents_active', { data: null, error: null } as any,
+      );
+      return ra ? '/restaurant-agent' : '/home';
+    }
+
     // vendeur → use DB as source of truth; local intent is only a fallback
     if (normalizedRole === 'vendeur') {
       const { data: vendor } = await withTimeout(
@@ -264,8 +274,7 @@ export function resolvePostAuthRouteSync(role: string): string {
   if (r === 'pdg' || r === 'admin') return '/pdg';
   if (r === 'prestataire') return '/service-selection';
   if (r === 'vendor_agent') return '/home';
-  if (r === 'taxi' || r === 'driver') return '/taxi';
-  if (r === 'actionnaire') return '/actionnaire/dashboard';
+  if (r === 'restaurant_agent') return '/restaurant-agent';
   return getDashboardRoute(role);
 }
 

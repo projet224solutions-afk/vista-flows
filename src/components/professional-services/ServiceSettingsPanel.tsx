@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,6 +33,7 @@ const MAX_VIDEO_SIZE_MB = 50;
 const MAX_VIDEO_DURATION_S = 45;
 
 export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }: ServiceSettingsPanelProps) {
+  const { t } = useTranslation();
   const { subscription } = useUnifiedSubscription(false);
   const isElite = subscription?.plan_name?.toLowerCase() === 'elite';
   const { uploadFile } = useStorageUpload();
@@ -92,7 +94,7 @@ export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }:
       }
       setDetectedCoords({ lat: position.latitude, lng: position.longitude });
       setGpsSuccess(true);
-      toast.success('Position détectée avec succès !');
+      toast.success(t('serviceSettingsPanel.positionDetecteeAvecSucces'));
       await supabase
         .from('professional_services')
         .update({ latitude: position.latitude, longitude: position.longitude })
@@ -100,7 +102,7 @@ export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }:
       setTimeout(() => setGpsSuccess(false), 3000);
     } catch (err: any) {
       console.error('Erreur GPS:', err);
-      toast.error('Impossible de détecter votre position. Vérifiez vos paramètres de localisation.');
+      toast.error(t('serviceSettingsPanel.impossibleDeDetecterVotrePosition'));
     } finally {
       setGpsLoading(false);
     }
@@ -112,7 +114,7 @@ export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }:
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("L'image ne doit pas dépasser 5 MB");
+      toast.error(t('serviceSettingsPanel.lImageNeDoitPas'));
       return;
     }
     try {
@@ -120,7 +122,7 @@ export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }:
       const result = await uploadFile(file, { folder: 'products', subfolder: `services-portfolio/${service.id}` });
       if (!result.success || !result.publicUrl) throw new Error(result.error);
       setPortfolioImages(prev => [...prev, result.publicUrl!]);
-      toast.success('Photo ajoutée au portfolio !');
+      toast.success(t('serviceSettingsPanel.photoAjouteeAuPortfolio'));
     } catch (err: any) {
       toast.error("Erreur upload image");
     } finally {
@@ -134,7 +136,7 @@ export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }:
 
   const handleVideoUpload = async (file: File) => {
     if (!isElite) {
-      toast.error('Upload vidéo réservé au plan Elite');
+      toast.error(t('serviceSettingsPanel.uploadVideoReserveAuPlan'));
       return;
     }
     if (file.size > MAX_VIDEO_SIZE_MB * 1024 * 1024) {
@@ -151,9 +153,9 @@ export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }:
       const result = await uploadFile(file, { folder: 'videos', subfolder: `services-promo/${service.id}` });
       if (!result.success || !result.publicUrl) throw new Error(result.error);
       setPromoVideoUrl(result.publicUrl);
-      toast.success('Vidéo de présentation uploadée !');
+      toast.success(t('serviceSettingsPanel.videoDePresentationUploadee'));
     } catch (err: any) {
-      toast.error("Erreur upload vidéo");
+      toast.error(t('serviceSettingsPanel.erreurUploadVideo'));
     } finally {
       setUploadingVideo(false);
     }
@@ -161,7 +163,7 @@ export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }:
 
   const handleSave = async () => {
     if (!form.business_name.trim()) {
-      toast.error('Le nom du service est requis');
+      toast.error(t('serviceSettingsPanel.leNomDuServiceEst'));
       return;
     }
     setSaving(true);
@@ -181,12 +183,12 @@ export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }:
         .eq('id', service.id);
 
       if (error) throw error;
-      toast.success('Paramètres mis à jour');
+      toast.success(t('serviceSettingsPanel.parametresMisAJour'));
       onOpenChange(false);
       onUpdated?.();
     } catch (err: any) {
       console.error('Erreur mise à jour:', err);
-      toast.error('Erreur lors de la sauvegarde');
+      toast.error(t('serviceSettingsPanel.erreurLorsDeLaSauvegarde'));
     } finally {
       setSaving(false);
     }
@@ -194,20 +196,20 @@ export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }:
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-md overflow-y-auto">
+      <SheetContent className="w-full sm:max-w-md overflow-y-auto max-h-[90vh] overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>Paramètres du service</SheetTitle>
-          <SheetDescription>Modifiez les informations de votre service professionnel</SheetDescription>
+          <SheetTitle>{t('serviceSettingsPanel.parametresDuService')}</SheetTitle>
+          <SheetDescription>{t('serviceSettingsPanel.modifiezLesInformationsDeVotre')}</SheetDescription>
         </SheetHeader>
 
         <div className="space-y-4 mt-6">
           <div className="space-y-2">
-            <Label htmlFor="business_name">Nom du service *</Label>
+            <Label htmlFor="business_name">{t('serviceSettingsPanel.nomDuService')}</Label>
             <Input
               id="business_name"
               value={form.business_name}
               onChange={(e) => setForm(f => ({ ...f, business_name: e.target.value }))}
-              placeholder="Nom de votre entreprise"
+              placeholder={t('serviceSettingsPanel.nomDeVotreEntreprise')}
             />
           </div>
 
@@ -217,7 +219,7 @@ export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }:
               id="description"
               value={form.description}
               onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))}
-              placeholder="Décrivez votre service..."
+              placeholder={t('serviceSettingsPanel.decrivezVotreService')}
               rows={4}
             />
           </div>
@@ -250,9 +252,9 @@ export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }:
                 }`}
               >
                 {gpsLoading ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /><span className="hidden sm:inline">Détection...</span></>
+                  <><Loader2 className="w-4 h-4 animate-spin" /><span className="hidden sm:inline">{t('serviceSettingsPanel.detection')}</span></>
                 ) : gpsSuccess ? (
-                  <><CheckCircle2 className="w-4 h-4" />Localisé !</>
+                  <><CheckCircle2 className="w-4 h-4" />{t('serviceSettingsPanel.localise')}</>
                 ) : (
                   <><Navigation className="w-4 h-4" />Position</>
                 )}
@@ -265,13 +267,13 @@ export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }:
                 id="address"
                 value={form.address}
                 onChange={(e) => setForm(f => ({ ...f, address: e.target.value }))}
-                placeholder="Adresse du service"
+                placeholder={t('serviceSettingsPanel.adresseDuService')}
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">Téléphone</Label>
+            <Label htmlFor="phone">{t('serviceSettingsPanel.telephone')}</Label>
             <Input
               id="phone"
               value={form.phone}
@@ -311,7 +313,7 @@ export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }:
             </Label>
             <div className="border-2 border-dashed rounded-lg p-3 space-y-3">
               {portfolioImages.length > 0 && (
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {portfolioImages.map((url, idx) => (
                     <div key={idx} className="relative group">
                       <img src={url} alt={`Portfolio ${idx + 1}`} className="w-full h-20 object-cover rounded-md" />
@@ -328,7 +330,7 @@ export function ServiceSettingsPanel({ open, onOpenChange, service, onUpdated }:
               {portfolioImages.length === 0 && (
                 <div className="text-center py-2">
                   <ImageIcon className="w-8 h-8 text-muted-foreground mx-auto mb-1" />
-                  <p className="text-xs text-muted-foreground">Aucune photo dans le portfolio</p>
+                  <p className="text-xs text-muted-foreground">{t('serviceSettingsPanel.aucunePhotoDansLePortfolio')}</p>
                 </div>
               )}
               {portfolioImages.length < MAX_PORTFOLIO_IMAGES && (

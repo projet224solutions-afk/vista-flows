@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -100,6 +101,7 @@ interface LedgerEntry {
 }
 
 const BankingDashboard: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [alerts, setAlerts] = useState<FinancialAlert[]>([]);
@@ -155,7 +157,7 @@ const BankingDashboard: React.FC = () => {
 
     } catch (error: any) {
       console.error('Error loading dashboard:', error);
-      toast.error('Erreur de chargement du tableau de bord');
+      toast.error(t('bankingDashboard.erreurDeChargementDuTableau'));
     } finally {
       setLoading(false);
     }
@@ -171,7 +173,7 @@ const BankingDashboard: React.FC = () => {
 
   const activatePanicMode = async () => {
     if (!user?.id || !panicReason.trim()) {
-      toast.error('Veuillez fournir une raison');
+      toast.error(t('bankingDashboard.veuillezFournirUneRaison'));
       return;
     }
 
@@ -185,7 +187,7 @@ const BankingDashboard: React.FC = () => {
 
       const result = data as { success: boolean; message?: string; error?: string };
       if (result.success) {
-        toast.success('Mode Panic activé - Toutes les transactions sont gelées');
+        toast.success(t('bankingDashboard.modePanicActiveToutesLes'));
         setShowPanicDialog(false);
         setPanicReason('');
         loadDashboard();
@@ -209,7 +211,7 @@ const BankingDashboard: React.FC = () => {
 
       const result = data as { success: boolean; message?: string };
       if (result.success) {
-        toast.success('Mode Panic désactivé - Transactions autorisées');
+        toast.success(t('bankingDashboard.modePanicDesactiveTransactionsAutorisees'));
         loadDashboard();
       }
     } catch (error: any) {
@@ -261,10 +263,10 @@ const BankingDashboard: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'confirmed': return <Badge className="bg-[#ff4000]">Confirmé</Badge>;
+      case 'confirmed': return <Badge className="bg-[#ff4000]">{t('bankingDashboard.confirme')}</Badge>;
       case 'pending': return <Badge className="bg-[#ff4000]">En attente</Badge>;
       case 'quarantined': return <Badge className="bg-orange-500">Quarantaine</Badge>;
-      case 'rejected': return <Badge variant="destructive">Rejeté</Badge>;
+      case 'rejected': return <Badge variant="destructive">{t('bankingDashboard.rejete')}</Badge>;
       default: return <Badge>{status}</Badge>;
     }
   };
@@ -286,7 +288,7 @@ const BankingDashboard: React.FC = () => {
             <Shield className="h-6 w-6" />
             Système Bancaire Intelligent
           </h1>
-          <p className="text-muted-foreground">Supervision financière en temps réel</p>
+          <p className="text-muted-foreground">{t('bankingDashboard.supervisionFinanciereEnTempsReel')}</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -305,13 +307,13 @@ const BankingDashboard: React.FC = () => {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Désactiver le Mode Panic?</AlertDialogTitle>
+                  <AlertDialogTitle>{t('bankingDashboard.desactiverLeModePanic')}</AlertDialogTitle>
                   <AlertDialogDescription>
                     Les transactions financières seront à nouveau autorisées.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogCancel>{t('bankingDashboard.annuler')}</AlertDialogCancel>
                   <AlertDialogAction onClick={deactivatePanicMode}>
                     <Unlock className="h-4 w-4 mr-2" />
                     Désactiver
@@ -329,20 +331,20 @@ const BankingDashboard: React.FC = () => {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle className="text-[#ff4000]">Activer le Mode Panic?</AlertDialogTitle>
+                  <AlertDialogTitle className="text-[#ff4000]">{t('bankingDashboard.activerLeModePanic')}</AlertDialogTitle>
                   <AlertDialogDescription>
                     ATTENTION: Toutes les transactions financières seront immédiatement gelées.
                     Cette action est réservée aux situations d'urgence uniquement.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <Textarea
-                  placeholder="Raison de l'activation du mode panic..."
+                  placeholder={t('bankingDashboard.raisonDeLActivationDu')}
                   value={panicReason}
                   onChange={(e) => setPanicReason(e.target.value)}
                   className="my-4"
                 />
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogCancel>{t('bankingDashboard.annuler')}</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={activatePanicMode}
                     className="bg-[#ff4000] hover:bg-[#ff4000]"
@@ -364,8 +366,8 @@ const BankingDashboard: React.FC = () => {
             <div className="flex items-center gap-3">
               <AlertOctagon className="h-8 w-8 text-[#ff4000]" />
               <div>
-                <p className="font-bold text-[#ff4000]">SYSTÈME EN MODE PANIC</p>
-                <p className="text-sm text-[#ff4000]">Toutes les transactions financières sont actuellement gelées</p>
+                <p className="font-bold text-[#ff4000]">{t('bankingDashboard.systemeEnModePanic')}</p>
+                <p className="text-sm text-[#ff4000]">{t('bankingDashboard.toutesLesTransactionsFinancieresSont')}</p>
               </div>
             </div>
           </CardContent>
@@ -475,13 +477,13 @@ const BankingDashboard: React.FC = () => {
         <TabsContent value="alerts" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Alertes Financières</CardTitle>
-              <CardDescription>Notifications de sécurité et anomalies détectées</CardDescription>
+              <CardTitle>{t('bankingDashboard.alertesFinancieres')}</CardTitle>
+              <CardDescription>{t('bankingDashboard.notificationsDeSecuriteEtAnomalies')}</CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[400px]">
                 {alerts.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">Aucune alerte</p>
+                  <p className="text-center text-muted-foreground py-8">{t('bankingDashboard.aucuneAlerte')}</p>
                 ) : (
                   <div className="space-y-3">
                     {alerts.map((alert) => (
@@ -523,12 +525,12 @@ const BankingDashboard: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle>Transactions en Quarantaine</CardTitle>
-              <CardDescription>Transactions suspectes en attente de validation</CardDescription>
+              <CardDescription>{t('bankingDashboard.transactionsSuspectesEnAttenteDe')}</CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[400px]">
                 {quarantine.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">Aucune transaction en quarantaine</p>
+                  <p className="text-center text-muted-foreground py-8">{t('bankingDashboard.aucuneTransactionEnQuarantaine')}</p>
                 ) : (
                   <div className="space-y-4">
                     {quarantine.map((tx) => (
@@ -542,7 +544,7 @@ const BankingDashboard: React.FC = () => {
                             <p className="text-sm text-muted-foreground mt-1">{tx.quarantine_reason}</p>
                             <div className="grid grid-cols-2 gap-4 mt-2 text-sm">
                               <div>
-                                <span className="text-muted-foreground">Montant:</span>
+                                <span className="text-muted-foreground">{t('bankingDashboard.montant')}</span>
                                 <span className="ml-2 font-medium">{formatAmount(tx.amount)}</span>
                               </div>
                               <div>
@@ -588,12 +590,12 @@ const BankingDashboard: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle>Ledger Financier Immuable</CardTitle>
-              <CardDescription>Historique complet des transactions (source de vérité)</CardDescription>
+              <CardDescription>{t('bankingDashboard.historiqueCompletDesTransactionsSource')}</CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[400px]">
                 {ledger.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">Aucune entrée dans le ledger</p>
+                  <p className="text-center text-muted-foreground py-8">{t('bankingDashboard.aucuneEntreeDansLeLedger')}</p>
                 ) : (
                   <div className="space-y-2">
                     {ledger.map((entry) => (
@@ -624,13 +626,13 @@ const BankingDashboard: React.FC = () => {
                           <div className="mt-2 pt-2 border-t grid grid-cols-2 gap-4 text-xs">
                             {entry.balance_before_debit !== null && (
                               <div>
-                                <span className="text-muted-foreground">Débit:</span>
+                                <span className="text-muted-foreground">{t('bankingDashboard.debit')}</span>
                                 <span className="ml-1">{formatAmount(entry.balance_before_debit)} → {formatAmount(entry.balance_after_debit || 0)}</span>
                               </div>
                             )}
                             {entry.balance_before_credit !== null && (
                               <div>
-                                <span className="text-muted-foreground">Crédit:</span>
+                                <span className="text-muted-foreground">{t('bankingDashboard.credit')}</span>
                                 <span className="ml-1">{formatAmount(entry.balance_before_credit)} → {formatAmount(entry.balance_after_credit || 0)}</span>
                               </div>
                             )}

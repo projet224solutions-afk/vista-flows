@@ -16,7 +16,7 @@
  */
 
 import { Router } from 'express';
-import { verifyJWT } from '../middlewares/auth.middleware.js';
+import { verifyJWT, authenticateInternal } from '../middlewares/auth.middleware.js';
 import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
@@ -680,45 +680,46 @@ router.get('/:id/analytics', verifyJWT, async (req: CampaignRequest, res: Campai
 });
 
 /**
- * POST /api/campaigns/:id/send — Lancer l'envoi d'une campagne
- * Traitement par batch côté backend
+ * Claim atomique + envoi d'une campagne.
+ *
+ * Le UPDATE conditionnel `status IN (allowedStatuses) → 'sending'` fait office de
+ * VERROU multi-instance : une seule instance/worker peut effectuer la transition,
+ * donc une campagne (programmée ou manuelle) ne peut JAMAIS être envoyée deux fois,
+ * même si plusieurs workers la voient « due » en même temps.
+ *
+ * Retourne `null` si la campagne a déjà été prise / n'est plus dans un statut envoyable.
+ * Utilisé par la route `/:id/send` (envoi manuel) ET par le job `campaigns.dispatch-scheduled`.
  */
-router.post('/:id/send', verifyJWT, async (req: CampaignRequest, res: CampaignResponse) => {
+export async function dispatchCampaign(
+  campaignId: string,
+  vendorId: string,
+  allowedStatuses: string[] = ['draft', 'scheduled'],
+): Promise<{
+  campaign_id: string;
+  total_targeted: number;
+  total_eligible: number;
+  total_skipped: number;
+  total_deliveries: number;
+  status: string;
+} | null> {
+  // CLAIM ATOMIQUE : transition statut → 'sending' seulement si encore envoyable.
+  const { data: campaign, error: claimErr } = await supabaseAdmin
+    .from('vendor_campaigns')
+    .update({ status: 'sending', started_at: new Date().toISOString() })
+    .eq('id', campaignId)
+    .eq('vendor_id', vendorId)
+    .in('status', allowedStatuses)
+    .select()
+    .maybeSingle();
+
+  if (claimErr || !campaign) return null; // déjà prise par une autre instance / statut invalide
+
   try {
-    const userId = req.user!.id;
-    const vendorId = await getVendorId(userId);
-    if (!vendorId) { res.status(403).json({ success: false, error: 'Non vendeur' }); return; }
-
-    // Quota check
-    const quotaCheck = await checkQuota(vendorId);
-    if (!quotaCheck.allowed) {
-      res.status(429).json({ success: false, error: quotaCheck.reason });
-      return;
-    }
-
-    // Load campaign
-    const { data: campaign, error: campError } = await supabaseAdmin
-      .from('vendor_campaigns')
-      .select('*')
-      .eq('id', req.params.id)
-      .eq('vendor_id', vendorId)
-      .single();
-
-    if (campError || !campaign) { res.status(404).json({ success: false, error: 'Campagne non trouvée' }); return; }
-    if (!['draft', 'scheduled'].includes(campaign.status)) {
-      res.status(400).json({ success: false, error: `Statut invalide: ${campaign.status}` }); return;
-    }
-
-    // Mark as sending
-    await supabaseAdmin.from('vendor_campaigns')
-      .update({ status: 'sending', started_at: new Date().toISOString() })
-      .eq('id', campaign.id);
-
     // Resolve audience
     const audienceContacts = await loadAudienceContacts(vendorId);
 
     // Apply targeting filters
-    let targetedClients = filterAudience(audienceContacts || [], campaign.target_type, campaign.target_filters);
+    const targetedClients = filterAudience(audienceContacts || [], campaign.target_type, campaign.target_filters);
 
     const channels = campaign.selected_channels as string[];
     let totalEligible = 0;
@@ -726,7 +727,6 @@ router.post('/:id/send', verifyJWT, async (req: CampaignRequest, res: CampaignRe
     const recipientRecords: any[] = [];
     const deliveryRecords: any[] = [];
 
-    // Generate recipients and deliveries
     for (const client of targetedClients) {
       const eligibleChannels: string[] = [];
 
@@ -782,23 +782,18 @@ router.post('/:id/send', verifyJWT, async (req: CampaignRequest, res: CampaignRe
     }
 
     // Batch insert recipients
-    if (recipientRecords.length > 0) {
-      const BATCH_SIZE = 200;
-      for (let i = 0; i < recipientRecords.length; i += BATCH_SIZE) {
-        const batch = recipientRecords.slice(i, i + BATCH_SIZE);
-        const { error: rErr } = await supabaseAdmin.from('vendor_campaign_recipients').insert(batch);
-        if (rErr) logger.error('Recipient insert error:', rErr);
-      }
+    const BATCH_SIZE = 200;
+    for (let i = 0; i < recipientRecords.length; i += BATCH_SIZE) {
+      const batch = recipientRecords.slice(i, i + BATCH_SIZE);
+      const { error: rErr } = await supabaseAdmin.from('vendor_campaign_recipients').insert(batch);
+      if (rErr) logger.error('Recipient insert error:', rErr);
     }
 
     // Batch insert deliveries
-    if (deliveryRecords.length > 0) {
-      const BATCH_SIZE = 200;
-      for (let i = 0; i < deliveryRecords.length; i += BATCH_SIZE) {
-        const batch = deliveryRecords.slice(i, i + BATCH_SIZE);
-        const { error: dErr } = await supabaseAdmin.from('vendor_campaign_deliveries').insert(batch);
-        if (dErr) logger.error('Delivery insert error:', dErr);
-      }
+    for (let i = 0; i < deliveryRecords.length; i += BATCH_SIZE) {
+      const batch = deliveryRecords.slice(i, i + BATCH_SIZE);
+      const { error: dErr } = await supabaseAdmin.from('vendor_campaign_deliveries').insert(batch);
+      if (dErr) logger.error('Delivery insert error:', dErr);
     }
 
     // Update campaign stats
@@ -840,17 +835,88 @@ router.post('/:id/send', verifyJWT, async (req: CampaignRequest, res: CampaignRe
 
     logger.info(`📢 Campaign ${campaign.id} queued: ${totalEligible} eligible, ${deliveryRecords.length} deliveries`);
 
-    res.json({
-      success: true,
-      data: {
-        campaign_id: campaign.id,
-        total_targeted: targetedClients.length,
-        total_eligible: totalEligible,
-        total_skipped: totalSkipped,
-        total_deliveries: deliveryRecords.length,
-        status: 'sending',
-      },
-    });
+    return {
+      campaign_id: campaign.id,
+      total_targeted: targetedClients.length,
+      total_eligible: totalEligible,
+      total_skipped: totalSkipped,
+      total_deliveries: deliveryRecords.length,
+      status: 'sending',
+    };
+  } catch (err) {
+    // Échec après le claim → repasser en 'failed' pour ne pas rester bloquée en 'sending'.
+    await supabaseAdmin.from('vendor_campaigns').update({ status: 'failed' }).eq('id', campaign.id);
+    throw err;
+  }
+}
+
+/**
+ * Traite les campagnes PROGRAMMÉES arrivées à échéance (status='scheduled', scheduled_at <= now()).
+ * Appelée par le job récurrent `campaigns.dispatch-scheduled`. Idempotente (claim atomique par campagne).
+ */
+export async function dispatchDueScheduledCampaigns(limit = 50): Promise<{ due: number; dispatched: number }> {
+  const now = new Date().toISOString();
+  const { data: due, error } = await supabaseAdmin
+    .from('vendor_campaigns')
+    .select('id, vendor_id')
+    .eq('status', 'scheduled')
+    .lte('scheduled_at', now)
+    .order('scheduled_at', { ascending: true })
+    .limit(limit);
+
+  if (error || !due?.length) return { due: 0, dispatched: 0 };
+
+  let dispatched = 0;
+  for (const c of due) {
+    try {
+      // allowedStatuses = ['scheduled'] uniquement → le claim atomique garantit zéro double-envoi.
+      const result = await dispatchCampaign((c as any).id, (c as any).vendor_id, ['scheduled']);
+      if (result) dispatched++;
+    } catch (err: any) {
+      logger.warn(`[campaigns.dispatch-scheduled] ${(c as any).id} — ${err?.message}`);
+    }
+  }
+  return { due: due.length, dispatched };
+}
+
+/**
+ * POST /api/campaigns/:id/send — Lancer l'envoi d'une campagne
+ * Traitement par batch côté backend
+ */
+router.post('/:id/send', verifyJWT, async (req: CampaignRequest, res: CampaignResponse) => {
+  try {
+    const userId = req.user!.id;
+    const vendorId = await getVendorId(userId);
+    if (!vendorId) { res.status(403).json({ success: false, error: 'Non vendeur' }); return; }
+
+    // Quota check
+    const quotaCheck = await checkQuota(vendorId);
+    if (!quotaCheck.allowed) {
+      res.status(429).json({ success: false, error: quotaCheck.reason });
+      return;
+    }
+
+    // Load campaign
+    const { data: campaign, error: campError } = await supabaseAdmin
+      .from('vendor_campaigns')
+      .select('*')
+      .eq('id', req.params.id)
+      .eq('vendor_id', vendorId)
+      .single();
+
+    if (campError || !campaign) { res.status(404).json({ success: false, error: 'Campagne non trouvée' }); return; }
+    if (!['draft', 'scheduled'].includes(campaign.status)) {
+      res.status(400).json({ success: false, error: `Statut invalide: ${campaign.status}` }); return;
+    }
+
+    // Claim atomique + envoi (verrou multi-instance via le UPDATE conditionnel de statut).
+    const result = await dispatchCampaign(campaign.id, vendorId, ['draft', 'scheduled']);
+    if (!result) {
+      res.status(409).json({ success: false, error: 'Campagne déjà en cours d\'envoi ou statut invalide' });
+      return;
+    }
+
+    res.json({ success: true, data: result });
   } catch (err: any) {
     logger.error('POST /campaigns/:id/send error:', err);
     // Mark as failed on error
@@ -1231,5 +1297,23 @@ async function sendSMS(recipient: any, campaign: any): Promise<boolean> {
 
   return ok;
 }
+
+/**
+ * POST /api/campaigns/cron/dispatch-scheduled — Déclencheur des campagnes programmées.
+ *
+ * Sécurisé par `authenticateInternal` (header `x-internal-api-key` = INTERNAL_API_KEY).
+ * Destiné à être appelé par pg_cron (net.http_post) ou Vercel Cron : indispensable car
+ * sur Vercel serverless le scheduler in-process (`setInterval`) ne tourne pas.
+ * Idempotent + safe multi-appel : `dispatchDueScheduledCampaigns` claim chaque campagne atomiquement.
+ */
+router.post('/cron/dispatch-scheduled', authenticateInternal, async (_req: CampaignRequest, res: CampaignResponse) => {
+  try {
+    const { due, dispatched } = await dispatchDueScheduledCampaigns(100);
+    res.json({ success: true, data: { due, dispatched } });
+  } catch (err: any) {
+    logger.error('POST /campaigns/cron/dispatch-scheduled error:', err);
+    res.status(500).json({ success: false, error: 'Erreur interne' });
+  }
+});
 
 export default router;

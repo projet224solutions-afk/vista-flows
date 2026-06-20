@@ -4,6 +4,7 @@
  */
 
 import { Power, Loader2, Wifi, WifiOff, Zap, AlertTriangle } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from "@/lib/utils";
 
 interface GoOnlineButtonProps {
@@ -19,6 +20,7 @@ export function GoOnlineButton({
   hasSubscription,
   onToggle
 }: GoOnlineButtonProps) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center justify-center py-4 space-y-4">
       {/* Main Button Container - plus compact */}
@@ -94,12 +96,12 @@ export function GoOnlineButton({
         {isOnline ? (
           <>
             <Wifi className="w-3.5 h-3.5 animate-pulse" />
-            <span>Prêt à recevoir des courses</span>
+            <span>{t('goOnlineButton.pretARecevoirDesCourses')}</span>
           </>
         ) : (
           <>
             <WifiOff className="w-3.5 h-3.5" />
-            <span>Appuyez pour commencer</span>
+            <span>{t('goOnlineButton.appuyezPourCommencer')}</span>
           </>
         )}
       </div>

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * COMPOSANT DE PAIEMENT TAXI-MOTO ULTRA PROFESSIONNEL
  * Interface de paiement multi-options avec sécurité avancée
@@ -6,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { Button } from "@/components/ui/button";
@@ -61,6 +61,7 @@ export default function TaxiMotoPayment({
     onPaymentComplete,
     onPaymentCancel
 }: TaxiMotoPaymentProps) {
+    const { t } = useTranslation();
     const { _user, _profile } = useAuth();
     const fc = useFormatCurrency();
 
@@ -137,7 +138,7 @@ export default function TaxiMotoPayment({
      */
     const processPayment = async () => {
         if (!selectedMethod) {
-            toast.error('Veuillez sélectionner une méthode de paiement');
+            toast.error(t('taxiMotoPayment.veuillezSelectionnerUneMethodeDe'));
             return;
         }
 
@@ -146,13 +147,13 @@ export default function TaxiMotoPayment({
 
         // Validation des données selon la méthode
         if (method.type === 'mobile_money' && !mobileMoneyNumber) {
-            toast.error('Veuillez saisir votre numéro de téléphone');
+            toast.error(t('taxiMotoPayment.veuillezSaisirVotreNumeroDe'));
             return;
         }
 
         if (method.type === 'card') {
             if (!cardNumber || !cardExpiry || !cardCvv || !cardName) {
-                toast.error('Veuillez remplir tous les champs de la carte');
+                toast.error(t('taxiMotoPayment.veuillezRemplirTousLesChamps'));
                 return;
             }
         }
@@ -211,7 +212,7 @@ export default function TaxiMotoPayment({
      * Télécharge le reçu
      */
     const downloadReceipt = () => {
-        toast.success('Reçu téléchargé avec succès');
+        toast.success(t('taxiMotoPayment.recuTelechargeAvecSucces'));
         // En production: générer et télécharger le PDF du reçu
     };
 
@@ -267,7 +268,7 @@ export default function TaxiMotoPayment({
                 {/* Méthodes de paiement */}
                 <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
                     <CardHeader>
-                        <CardTitle>Choisissez votre méthode de paiement</CardTitle>
+                        <CardTitle>{t('taxiMotoPayment.choisissezVotreMethodeDePaiement')}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
                         {paymentMethods.map((method) => {
@@ -447,7 +448,7 @@ export default function TaxiMotoPayment({
                         {method.type === 'cash' && (
                             <div className="text-center py-4">
                                 <Banknote className="w-16 h-16 mx-auto mb-4 text-[#ff4000]" />
-                                <p className="text-lg font-semibold">Paiement en espèces</p>
+                                <p className="text-lg font-semibold">{t('taxiMotoPayment.paiementEnEspeces')}</p>
                                 <p className="text-sm text-gray-600">
                                     Vous paierez {fc(calculateTotal(selectedMethod) || 0)} au conducteur
                                 </p>
@@ -473,7 +474,7 @@ export default function TaxiMotoPayment({
                 <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
                     <CardContent className="p-4">
                         <div className="flex justify-between items-center">
-                            <span className="font-semibold">Total à payer</span>
+                            <span className="font-semibold">{t('taxiMotoPayment.totalAPayer')}</span>
                             <span className="text-xl font-bold text-[#ff4000]">
                                 {fc(calculateTotal(selectedMethod) || 0)}
                             </span>
@@ -509,13 +510,13 @@ export default function TaxiMotoPayment({
             <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
                 <CardContent className="p-8 text-center">
                     <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <h3 className="text-xl font-semibold mb-2">Traitement du paiement</h3>
+                    <h3 className="text-xl font-semibold mb-2">{t('taxiMotoPayment.traitementDuPaiement')}</h3>
                     <p className="text-gray-600 mb-4">
                         Veuillez patienter, nous traitons votre paiement...
                     </p>
                     <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
                         <Shield className="w-4 h-4" />
-                        <span>Transaction sécurisée</span>
+                        <span>{t('taxiMotoPayment.transactionSecurisee')}</span>
                     </div>
                 </CardContent>
             </Card>

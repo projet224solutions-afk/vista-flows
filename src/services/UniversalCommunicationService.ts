@@ -13,6 +13,7 @@
  */
 
 import { supabase } from '@/integrations/supabase/client';
+import { backendFetch } from '@/services/backendApi';
 import type {
   Message,
   Conversation,
@@ -27,6 +28,10 @@ import {
   sanitizePostgrestSearchTerm,
   stripPhoneToDigits,
 } from '@/lib/communication/userSearch';
+import {
+  resolveCommunicationFileUrl,
+  signMessagesFileUrls,
+} from '@/lib/communication/fileUrls';
 
 // Re-export des types pour compatibilité
 export type {
@@ -316,7 +321,9 @@ class UniversalCommunicationService {
       const messages = (data || []).reverse();
       console.log('[Communication] Messages chargés:', messages.length);
 
-      return messages as Message[];
+      // 🔐 Signer les pièces jointes (bucket privé)
+      const signed = await signMessagesFileUrls(messages as Message[]);
+      return signed as Message[];
     } catch (error) {
       console.error('[Communication] Erreur getMessages:', error);
       throw error;
@@ -481,10 +488,9 @@ class UniversalCommunicationService {
         throw new Error(`Échec upload: ${uploadError.message}`);
       }
 
-      // Obtenir l'URL publique
-      const { data: { publicUrl } } = supabase.storage
-        .from(STORAGE_BUCKET)
-        .getPublicUrl(filePath);
+      // 🔐 Bucket privé : on STOCKE le chemin (pas une URL publique).
+      // L'affichage utilise une URL signée générée à la lecture.
+      const storedFileRef = filePath;
 
       // Déterminer le destinataire
       let recipientId: string;
@@ -504,7 +510,7 @@ class UniversalCommunicationService {
         content: file.name,
         type: fileType,
         status: 'sent',
-        file_url: publicUrl,
+        file_url: storedFileRef,
         file_name: file.name,
         file_size: file.size,
       };
@@ -532,23 +538,50 @@ class UniversalCommunicationService {
 
       console.log('[Communication] Fichier envoyé:', data.id);
 
-      // 🎵 Conversion automatique pour iOS si c'est un audio WebM/OGG
+      // URL signée pour l'affichage immédiat (le DB ne contient que le chemin)
+      const signedUrl = await resolveCommunicationFileUrl(storedFileRef);
+
+      // 🎵 Conversion iOS héritée (legacy) : ne se déclenche QUE pour les anciens formats.
+      // Les nouveaux enregistrements sont déjà transcodés en WAV (lu partout) côté client.
       if (fileType === 'audio') {
         const audioExt = file.name.split('.').pop()?.toLowerCase();
         const formatsNeedingConversion = ['webm', 'ogg', 'opus'];
 
         if (audioExt && formatsNeedingConversion.includes(audioExt)) {
-          console.log('[Communication] 🔄 Lancement conversion iOS en arrière-plan...');
-
-          // Import dynamique pour éviter les dépendances circulaires
           import('@/services/AudioConversionService').then(({ autoConvertIfNeeded }) => {
-            autoConvertIfNeeded(data.id, publicUrl, file.name)
+            autoConvertIfNeeded(data.id, signedUrl || storedFileRef, file.name)
               .catch(err => console.error('[Communication] Erreur conversion:', err));
           });
         }
       }
 
-      return data as Message;
+      // 🌍 Traduction vocale automatique (ex. FR→EN) : si l'expéditeur et le destinataire
+      // ont des langues différentes, on déclenche le pipeline backend (Whisper→trad→TTS).
+      // Non bloquant : le destinataire reçoit l'audio dans SA langue dès que c'est prêt.
+      if (fileType === 'audio' && recipientId && recipientId !== senderId) {
+        void (async () => {
+          try {
+            const { data: profs } = await supabase
+              .from('profiles').select('id, preferred_language').in('id', [senderId, recipientId]);
+            const sLang = (profs?.find((p: any) => p.id === senderId)?.preferred_language as string) || 'fr';
+            const rLang = (profs?.find((p: any) => p.id === recipientId)?.preferred_language as string) || 'fr';
+            if (sLang === rLang) return;
+
+            const audioUrl = signedUrl || (await resolveCommunicationFileUrl(storedFileRef));
+            if (!audioUrl) return;
+
+            await supabase.from('messages').update({ audio_translation_status: 'pending', target_language: rLang }).eq('id', data.id);
+            await backendFetch('/edge-functions/translate-audio', {
+              method: 'POST',
+              body: { audioUrl, messageId: data.id, sourceLanguage: sLang, targetLanguage: rLang },
+            });
+          } catch (e) {
+            console.error('[Communication] Traduction vocale échouée:', e);
+          }
+        })();
+      }
+
+      return { ...data, file_url: signedUrl || storedFileRef } as Message;
     } catch (error) {
       console.error('[Communication] Erreur sendFileMessage:', error);
       throw error;
@@ -1110,7 +1143,11 @@ class UniversalCommunicationService {
             const { data } = await Promise.race([fetchPromise, timeoutPromise]);
 
             if (data) {
-              callback(data as Message);
+              // 🔐 Signer la pièce jointe éventuelle (bucket privé)
+              const fileUrl = (data as any).file_url
+                ? await resolveCommunicationFileUrl((data as any).file_url)
+                : (data as any).file_url;
+              callback({ ...(data as any), file_url: fileUrl } as Message);
             } else {
               console.warn('[Communication] ⚠️ Message non trouvé après insertion:', payload.new.id);
             }

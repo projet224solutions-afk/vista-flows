@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +46,7 @@ export function DriverNavigation({
   location,
   onContactCustomer
 }: DriverNavigationProps) {
+  const { t } = useTranslation();
   const [activeRide, setActiveRide] = useState<ActiveRide | null>(null);
   const [loading, setLoading] = useState(false);
   const [nextInstruction, setNextInstruction] = useState('');
@@ -172,7 +174,7 @@ export function DriverNavigation({
       console.log('✅ Active ride loaded:', activeRideData);
     } catch (error) {
       console.error('❌ Error loading active ride:', error);
-      toast.error('Erreur de chargement de la course');
+      toast.error(t('driverNavigation.erreurDeChargementDeLa'));
     } finally {
       setLoading(false);
     }
@@ -195,11 +197,11 @@ export function DriverNavigation({
 
       if (error) throw error;
 
-      toast.success('✅ Statut mis à jour');
+      toast.success(t('driverNavigation.statutMisAJour'));
       await loadActiveRide();
     } catch (error) {
       console.error('❌ Error updating ride status:', error);
-      toast.error('Erreur de mise à jour du statut');
+      toast.error(t('driverNavigation.erreurDeMiseAJour'));
     } finally {
       setLoading(false);
     }
@@ -450,7 +452,7 @@ export function DriverNavigation({
 
                 console.log('✅ Course annulée avec succès dans la DB');
 
-                toast.success('✅ Course annulée avec succès');
+                toast.success(t('driverNavigation.courseAnnuleeAvecSucces'));
 
                 // Réinitialiser l'état local
                 setActiveRide(null);
@@ -459,7 +461,7 @@ export function DriverNavigation({
                 await loadActiveRide();
               } catch (error) {
                 console.error('❌ Erreur annulation:', error);
-                toast.error('Impossible d\'annuler la course. Veuillez réessayer.');
+                toast.error(t('driverNavigation.impossibleDAnnulerLaCourse'));
               } finally {
                 setLoading(false);
               }

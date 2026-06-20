@@ -25,6 +25,9 @@ import {
   HardHat,
   Tractor,
   Briefcase,
+  Square,
+  Hammer,
+  Flame,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -54,47 +57,49 @@ interface ServiceCardItem {
   trending?: boolean;
 }
 
-const getPriorityServices = (stats: any): ServiceCardItem[] => [
+type TFn = (key: string) => string;
+
+const getPriorityServices = (stats: any, t: TFn): ServiceCardItem[] => [
   {
     id: "boutique",
-    title: "Boutique",
+    title: t("proximity.svc.boutique.title"),
     icon: Store,
     count: stats.boutiques,
     path: "/proximite/boutiques",
-    description: "Commerces & achats locaux",
+    description: t("proximity.svc.boutique.desc"),
     image: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80",
     logoImage: "/service-icons/logo-boutique.jpeg",
     accent: "#04439e"
   },
   {
     id: "restaurant",
-    title: "Restaurant",
+    title: t("proximity.svc.restaurant.title"),
     icon: Utensils,
     count: stats.restaurant,
     path: "/services-proximite?type=restaurant",
-    description: "Cuisine & plats",
+    description: t("proximity.svc.restaurant.desc"),
     image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80",
     logoImage: "/service-icons/logo-resto.jpeg",
     accent: "#e85d04"
   },
   {
     id: "reparation",
-    title: "Réparation",
+    title: t("proximity.svc.reparation.title"),
     icon: Wrench,
     count: stats.reparation,
     path: "/services-proximite?type=reparation",
-    description: "Électro & mécanique",
+    description: t("proximity.svc.reparation.desc"),
     image: "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
     logoImage: "/service-icons/icon-reparation.png",
     accent: "#ff4000"
   },
   {
     id: "immobilier",
-    title: "Immobilier",
+    title: t("proximity.svc.immobilier.title"),
     icon: Building2,
     count: stats.immobilier,
     path: "/services-proximite?type=location",
-    description: "Location & vente",
+    description: t("proximity.svc.immobilier.desc"),
     image: "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80",
     logoImage: "/service-icons/logo-immobilier.jpeg",
     overlayGradient: "linear-gradient(120deg,rgba(3,105,161,0.18) 0%,rgba(191,219,254,0.68) 100%)",
@@ -102,69 +107,69 @@ const getPriorityServices = (stats: any): ServiceCardItem[] => [
   },
   {
     id: "sante",
-    title: "Santé & Bien-être",
+    title: t("proximity.svc.sante.title"),
     icon: Heart,
     count: stats.sante,
     path: "/services-proximite?type=sante",
-    description: "Pharmacie & soins",
+    description: t("proximity.svc.sante.desc"),
     image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80",
     logoImage: "/service-icons/icon-sante.png",
     accent: "#ff4000"
   },
   {
     id: "construction",
-    title: "Construction & BTP",
+    title: t("proximity.svc.construction.title"),
     icon: HardHat,
     count: stats.construction,
     path: "/services-proximite?type=construction",
-    description: "Bâtiment & travaux",
+    description: t("proximity.svc.construction.desc"),
     image: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=800&q=80",
     logoImage: "/service-icons/logo-construction-btp.jpeg",
     accent: "#ff4000"
   },
   {
     id: "media",
-    title: "Photo & Vidéo",
+    title: t("proximity.svc.media.title"),
     icon: Camera,
     count: stats.media,
     path: "/services-proximite?type=media",
-    description: "Événements & création",
+    description: t("proximity.svc.media.desc"),
     image: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=800&q=80",
     logoImage: "/service-icons/icon-photo-video.png",
     accent: "#04439e"
   },
   {
     id: "informatique",
-    title: "Informatique",
+    title: t("proximity.svc.informatique.title"),
     icon: Laptop,
     count: stats.informatique,
     path: "/services-proximite?type=informatique",
-    description: "Tech & dépannage",
+    description: t("proximity.svc.informatique.desc"),
     image: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80",
     logoImage: "/service-icons/icon-informatique.png",
     accent: "#04439e"
   }
 ];
 
-const getQuickAccessServices = (stats: any): ServiceCardItem[] => [
+const getQuickAccessServices = (stats: any, t: TFn): ServiceCardItem[] => [
   {
     id: "vtc",
-    title: "Taxi",
+    title: t("proximity.svc.vtc.title"),
     icon: Bike,
     count: stats.vtc,
     path: "/proximite/taxi-moto",
-    description: "Voiture & Moto à proximité",
+    description: t("proximity.svc.vtc.desc"),
     image: "https://images.unsplash.com/photo-1601979107535-46367552bc25?auto=format&fit=crop&w=800&q=80",
     logoImage: "/service-icons/icon-taxi-moto.png",
     accent: "#04439e"
   },
   {
     id: "livraison",
-    title: "Livreur",
+    title: t("proximity.svc.livraison.title"),
     icon: Truck,
     count: stats.livraison,
     path: "/proximite/livraison",
-    description: "Courses & colis rapides",
+    description: t("proximity.svc.livraison.desc"),
     trending: stats.livraison > 5,
     image: "https://images.unsplash.com/photo-1648394794449-5dbe63f6a8b5?auto=format&fit=crop&w=800&q=80",
     logoImage: "/service-icons/icon-livreur.png",
@@ -172,23 +177,23 @@ const getQuickAccessServices = (stats: any): ServiceCardItem[] => [
   }
 ];
 
-const getComplementaryServices = (stats: any): ServiceCardItem[] => [
+const getComplementaryServices = (stats: any, t: TFn): ServiceCardItem[] => [
   {
     id: "beaute",
-    title: "Beauté & Bien-être",
+    title: t("proximity.svc.beaute.title"),
     icon: Scissors,
-    description: "Soins & styling",
+    description: t("proximity.svc.beaute.desc"),
     count: stats.beaute,
-    path: "/services-proximite?type=beaute",
+    path: "/beaute",
     image: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80",
     logoImage: "/service-icons/icon-beaute.png",
     accent: "#ff4000"
   },
   {
     id: "nettoyage",
-    title: "Nettoyage",
+    title: t("proximity.svc.nettoyage.title"),
     icon: Sparkles,
-    description: "Ménage & pressing",
+    description: t("proximity.svc.nettoyage.desc"),
     count: stats.nettoyage,
     path: "/services-proximite?type=menage",
     image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=800&q=80",
@@ -197,9 +202,9 @@ const getComplementaryServices = (stats: any): ServiceCardItem[] => [
   },
   {
     id: "sport",
-    title: "Sport & Fitness",
+    title: t("proximity.svc.sport.title"),
     icon: Dumbbell,
-    description: "Coaching & salles",
+    description: t("proximity.svc.sport.desc"),
     count: stats.sport,
     path: "/services-proximite?type=sport",
     image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80",
@@ -208,9 +213,9 @@ const getComplementaryServices = (stats: any): ServiceCardItem[] => [
   },
   {
     id: "agriculture",
-    title: "Agriculture",
+    title: t("proximity.svc.agriculture.title"),
     icon: Tractor,
-    description: "Produits locaux",
+    description: t("proximity.svc.agriculture.desc"),
     count: stats.agriculture,
     path: "/services-proximite?type=agriculture",
     image: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80",
@@ -219,9 +224,9 @@ const getComplementaryServices = (stats: any): ServiceCardItem[] => [
   },
   {
     id: "freelance",
-    title: "Administratif",
+    title: t("proximity.svc.freelance.title"),
     icon: Briefcase,
-    description: "Secrétariat & conseil",
+    description: t("proximity.svc.freelance.desc"),
     count: stats.freelance,
     path: "/services-proximite?type=freelance",
     image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80",
@@ -230,14 +235,58 @@ const getComplementaryServices = (stats: any): ServiceCardItem[] => [
   },
   {
     id: "maison",
-    title: "Maison & Déco",
+    title: t("proximity.svc.maison.title"),
     icon: Home,
-    description: "Intérieur & déco",
+    description: t("proximity.svc.maison.desc"),
     count: stats.maison,
     path: "/services-proximite?type=maison",
     image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80",
     logoImage: "/service-icons/icon-maison.png",
     accent: "#c2410c"
+  },
+  {
+    id: "plomberie",
+    title: t("proximity.svc.plomberie.title"),
+    icon: Wrench,
+    description: t("proximity.svc.plomberie.desc"),
+    count: stats.plomberie,
+    path: "/services-proximite?type=plomberie",
+    image: "https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?auto=format&fit=crop&w=800&q=80",
+    logoImage: "/service-icons/logo-plomberie.svg",
+    accent: "#0E6BA8"
+  },
+  {
+    id: "vitrerie",
+    title: t("proximity.svc.vitrerie.title"),
+    icon: Square,
+    description: t("proximity.svc.vitrerie.desc"),
+    count: stats.vitrerie,
+    path: "/services-proximite?type=vitrerie",
+    image: "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=800&q=80",
+    logoImage: "/service-icons/logo-vitrerie.svg",
+    accent: "#29A7C4"
+  },
+  {
+    id: "menuiserie",
+    title: t("proximity.svc.menuiserie.title"),
+    icon: Hammer,
+    description: t("proximity.svc.menuiserie.desc"),
+    count: stats.menuiserie,
+    path: "/services-proximite?type=menuiserie",
+    image: "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=800&q=80",
+    logoImage: "/service-icons/logo-menuiserie.svg",
+    accent: "#B5651D"
+  },
+  {
+    id: "soudure",
+    title: t("proximity.svc.soudure.title"),
+    icon: Flame,
+    description: t("proximity.svc.soudure.desc"),
+    count: stats.soudure,
+    path: "/services-proximite?type=soudure",
+    image: "https://images.unsplash.com/photo-1565952511394-1e3e5f1f2f3d?auto=format&fit=crop&w=800&q=80",
+    logoImage: "/service-icons/logo-soudure.svg",
+    accent: "#ff4000"
   }
 ];
 
@@ -308,9 +357,9 @@ export default function Proximite() {
     loadCategoriesWithProducts();
   }, []);
 
-  const priorityServices = useMemo(() => getPriorityServices(stats), [stats]);
-  const quickAccessServices = useMemo(() => getQuickAccessServices(stats), [stats]);
-  const complementaryServices = useMemo(() => getComplementaryServices(stats), [stats]);
+  const priorityServices = useMemo(() => getPriorityServices(stats, t), [stats, t]);
+  const quickAccessServices = useMemo(() => getQuickAccessServices(stats, t), [stats, t]);
+  const complementaryServices = useMemo(() => getComplementaryServices(stats, t), [stats, t]);
 
   const handleServiceClick = (path: string) => {
     navigate(path);
@@ -360,10 +409,10 @@ export default function Proximite() {
               }}
             >
               <MapPin className="w-3 h-3" />
-              {usingRealLocation ? 'GPS actif' : 'GPS désactivé'}
+              {usingRealLocation ? t('proximity.gpsActive') : t('proximity.gpsInactive')}
             </button>
             <div className="flex items-center gap-1 px-3 py-1.5 rounded-full font-medium" style={{ backgroundColor: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.85)' }}>
-              Rayon: {radiusKm} km
+              {t('proximity.radius')}: {radiusKm} km
             </div>
             {loading && (
               <span className="flex items-center gap-1 text-white/60">
@@ -376,30 +425,30 @@ export default function Proximite() {
           {/* Debug Panel */}
           {showDebug && debugInfo && (
             <div className="mb-4 p-3 rounded-2xl border text-xs space-y-2 backdrop-blur-sm" style={{ backgroundColor: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.14)' }}>
-              <div className="font-semibold text-white flex items-center gap-2">Debug GPS & Rayon {radiusKm}km</div>
+              <div className="font-semibold text-white flex items-center gap-2">{t('proximity.debugTitle')} {radiusKm}km</div>
               <div className="grid grid-cols-2 gap-2 text-white/80">
                 <div>
-                  <span>Position:</span>
+                  <span>{t('proximity.debugPosition')}:</span>
                   <div className="font-mono text-[10px] text-white/60">{debugInfo.positionUsed.latitude.toFixed(5)}, {debugInfo.positionUsed.longitude.toFixed(5)}</div>
                 </div>
                 <div>
-                  <span>Source:</span>
+                  <span>{t('proximity.debugSource')}:</span>
                   <div className="font-medium" style={{ color: debugInfo.usingRealGps ? '#ff4000' : '#ff4000' }}>
-                    {debugInfo.usingRealGps ? 'GPS réel' : 'Défaut (Coyah)'}
+                    {debugInfo.usingRealGps ? t('proximity.debugRealGps') : t('proximity.debugDefault')}
                   </div>
                 </div>
               </div>
               <div className="border-t pt-2 grid grid-cols-2 sm:grid-cols-4 gap-2" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
                 {[
-                  { label: 'Boutiques', data: debugInfo.vendors },
-                  { label: 'Services Pro', data: debugInfo.services },
-                  { label: 'Taxi', data: debugInfo.taxiMoto },
-                  { label: 'Livreurs', data: debugInfo.drivers }
+                  { label: t('proximity.debugShops'), data: debugInfo.vendors },
+                  { label: t('proximity.debugProServices'), data: debugInfo.services },
+                  { label: t('proximity.debugTaxi'), data: debugInfo.taxiMoto },
+                  { label: t('proximity.debugDrivers'), data: debugInfo.drivers }
                 ].map(item => (
                   <div key={item.label} className="rounded-lg p-2" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
                     <div className="font-medium text-white">{item.label}</div>
                     <div className="text-[10px] text-white/60">
-                      Total: {item.data.total} | Rayon: {item.data.inRadius}
+                      {t('proximity.debugTotal')}: {item.data.total} | {t('proximity.radius')}: {item.data.inRadius}
                     </div>
                   </div>
                 ))}
@@ -428,8 +477,8 @@ export default function Proximite() {
           <div className="flex items-center gap-2 mb-4">
             <TrendingUp className="w-5 h-5" style={{ color: ORANGE }} />
             <div>
-              <h2 className="text-base font-bold" style={{ color: BLUE }}>Services de Proximité Populaires</h2>
-              <p className="text-xs" style={{ color: '#5f78a5' }}>Les plus demandés près de vous, dans le bon ordre</p>
+              <h2 className="text-base font-bold" style={{ color: BLUE }}>{t('proximity.popularSectionTitle')}</h2>
+              <p className="text-xs" style={{ color: '#5f78a5' }}>{t('proximity.popularSectionSubtitle')}</p>
             </div>
           </div>
 
@@ -469,7 +518,7 @@ export default function Proximite() {
                     <h3 className="text-sm font-bold text-white leading-tight">{service.title}</h3>
                     <p className="text-[11px] text-white/70 mt-0.5">{service.description}</p>
                     <span className="mt-1.5 inline-block text-[11px] font-semibold" style={{ color: service.count > 0 ? '#ff4000' : 'rgba(255,255,255,0.5)' }}>
-                      {service.count} disponibles
+                      {service.count} {t('proximity.available')}
                     </span>
                   </div>
                 </button>
@@ -505,7 +554,7 @@ export default function Proximite() {
                     <h3 className="text-sm font-bold text-white leading-tight">{service.title}</h3>
                     <p className="text-[11px] text-white/70 mt-0.5">{service.description}</p>
                     <span className="mt-1.5 inline-block text-[11px] font-semibold" style={{ color: service.count > 0 ? '#ff4000' : 'rgba(255,255,255,0.5)' }}>
-                      {service.count} disponibles
+                      {service.count} {t('proximity.available')}
                     </span>
                   </div>
                 </button>
@@ -519,8 +568,8 @@ export default function Proximite() {
           <div className="flex items-center gap-2 mb-4">
             <Store className="w-5 h-5" style={{ color: BLUE }} />
             <div>
-              <h2 className="text-base font-bold" style={{ color: BLUE }}>Accès rapide</h2>
-              <p className="text-xs" style={{ color: '#5f78a5' }}>Livraison et déplacements à proximité</p>
+              <h2 className="text-base font-bold" style={{ color: BLUE }}>{t('proximity.quickAccess')}</h2>
+              <p className="text-xs" style={{ color: '#5f78a5' }}>{t('proximity.quickAccessSubtitle')}</p>
             </div>
           </div>
 
@@ -543,7 +592,7 @@ export default function Proximite() {
                   />
                   {service.trending && (
                     <div className="absolute top-2.5 right-2.5 z-10 rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ backgroundColor: ORANGE, color: 'white' }}>
-                      Tendance
+                      {t('proximity.trending')}
                     </div>
                   )}
                   <div className="relative z-10 flex h-full flex-col justify-end p-3.5" style={{ minHeight: 160 }}>
@@ -557,7 +606,7 @@ export default function Proximite() {
                     <h3 className="text-sm font-bold text-white leading-tight">{service.title}</h3>
                     <p className="text-[11px] text-white/70 mt-0.5">{service.description}</p>
                     <span className="mt-1.5 inline-block text-[11px] font-semibold" style={{ color: service.count > 0 ? '#ff4000' : 'rgba(255,255,255,0.5)' }}>
-                      {service.count} disponibles
+                      {service.count} {t('proximity.available')}
                     </span>
                   </div>
                 </button>
@@ -592,7 +641,7 @@ export default function Proximite() {
           ) : productCategories.length === 0 ? (
             <div className="text-center py-8" style={{ color: '#5f78a5' }}>
               <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p className="text-sm">Aucune catégorie avec des produits pour le moment</p>
+              <p className="text-sm">{t('proximity.noCategories')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -613,7 +662,7 @@ export default function Proximite() {
                     <h3 className="text-sm font-bold text-white leading-tight line-clamp-1">{category.name}</h3>
                     <div className="mt-0.5 flex items-center gap-1">
                       <span className="text-xs font-semibold" style={{ color: '#ff4000' }}>{category.product_count}</span>
-                      <span className="text-[11px] text-white/60">{category.product_count > 1 ? 'articles' : 'article'}</span>
+                      <span className="text-[11px] text-white/60">{category.product_count > 1 ? t('proximity.items') : t('proximity.item')}</span>
                     </div>
                   </div>
                 </button>
@@ -628,8 +677,8 @@ export default function Proximite() {
             <div className="flex items-center gap-2">
               <Star className="w-5 h-5" style={{ color: ORANGE }} />
               <div>
-                <h2 className="text-base font-bold" style={{ color: BLUE }}>Autres services disponibles</h2>
-                <p className="text-xs" style={{ color: '#5f78a5' }}>Des services complémentaires bien organisés</p>
+                <h2 className="text-base font-bold" style={{ color: BLUE }}>{t('proximity.otherServices')}</h2>
+                <p className="text-xs" style={{ color: '#5f78a5' }}>{t('proximity.otherServicesSubtitle')}</p>
               </div>
             </div>
             <button
@@ -637,7 +686,7 @@ export default function Proximite() {
               className="text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all"
               style={{ color: ORANGE }}
             >
-              Explorer <ArrowRight className="w-4 h-4" />
+              {t('proximity.explore')} <ArrowRight className="w-4 h-4" />
             </button>
           </div>
 
@@ -669,7 +718,7 @@ export default function Proximite() {
                     <h3 className="text-sm font-bold text-white leading-tight">{service.title}</h3>
                     <p className="text-[11px] text-white/65 mt-0.5">{service.description}</p>
                     {service.count > 0 && (
-                      <span className="mt-1 text-[11px] font-semibold" style={{ color: '#ff4000' }}>{service.count} disponibles</span>
+                      <span className="mt-1 text-[11px] font-semibold" style={{ color: '#ff4000' }}>{service.count} {t('proximity.available')}</span>
                     )}
                   </div>
                 </button>
@@ -683,15 +732,15 @@ export default function Proximite() {
           <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full opacity-10" style={{ background: 'radial-gradient(circle,#fff,transparent)' }} />
           <div className="absolute -bottom-6 -left-6 w-28 h-28 rounded-full opacity-10" style={{ background: 'radial-gradient(circle,#ff4000,transparent)' }} />
           <div className="relative z-10">
-            <h3 className="text-xl font-bold mb-2">Devenez prestataire</h3>
+            <h3 className="text-xl font-bold mb-2">{t('proximity.becomeProvider')}</h3>
             <p className="text-sm opacity-85 mb-4 max-w-md">
-              Rejoignez 224Solutions et développez votre activité avec notre plateforme de services de proximité.
+              {t('proximity.becomeProviderDesc')}
             </p>
             <button
               onClick={() => navigate('/auth')}
               className="px-5 py-2.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity shadow-lg"
             >
-              S'inscrire maintenant
+              {t('proximity.signUpNow')}
             </button>
           </div>
         </div>

@@ -1,5 +1,5 @@
-// @ts-nocheck
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
@@ -48,6 +48,7 @@ interface DebtDetailsDialogProps {
 }
 
 export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialogProps) {
+  const { t } = useTranslation();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -72,7 +73,7 @@ export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialo
       setPayments(data || []);
     } catch (error: any) {
       console.error('Erreur chargement paiements:', error);
-      toast.error('Erreur lors du chargement des paiements');
+      toast.error(t('debtDetailsDialog.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -118,7 +119,7 @@ export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader className="pb-2">
-          <DialogTitle className="text-base sm:text-lg">Détails de la dette</DialogTitle>
+          <DialogTitle className="text-base sm:text-lg">{t('debtDetailsDialog.detailsDeLaDette')}</DialogTitle>
           <DialogDescription className="text-xs sm:text-sm">
             Informations complètes sur la dette et l'historique des paiements
           </DialogDescription>
@@ -127,14 +128,14 @@ export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialo
         <div className="space-y-4 sm:space-y-6">
           {/* Informations client */}
           <div className="border rounded-lg p-3 sm:p-4 space-y-2">
-            <h3 className="font-semibold text-sm sm:text-lg mb-2 sm:mb-3">Informations Client</h3>
+            <h3 className="font-semibold text-sm sm:text-lg mb-2 sm:mb-3">{t('debtDetailsDialog.informationsClient')}</h3>
             <div className="grid grid-cols-1 xs:grid-cols-2 gap-3 text-sm">
               <div>
                 <span className="text-xs text-muted-foreground">Nom:</span>
                 <p className="font-medium text-sm">{debt.customer_name}</p>
               </div>
               <div>
-                <span className="text-xs text-muted-foreground">Téléphone:</span>
+                <span className="text-xs text-muted-foreground">{t('debtDetailsDialog.telephone')}</span>
                 <p className="font-medium text-sm">{debt.customer_phone}</p>
               </div>
               <div>
@@ -142,7 +143,7 @@ export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialo
                 <div className="mt-1">{getStatusBadge(debt.status)}</div>
               </div>
               <div>
-                <span className="text-xs text-muted-foreground">Date de création:</span>
+                <span className="text-xs text-muted-foreground">{t('debtDetailsDialog.dateDeCreation')}</span>
                 <p className="font-medium text-xs sm:text-sm">{formatDate(debt.created_at)}</p>
               </div>
             </div>
@@ -156,14 +157,14 @@ export function DebtDetailsDialog({ debt, open, onOpenChange }: DebtDetailsDialo
 
           {/* Informations financières */}
           <div className="border rounded-lg p-3 sm:p-4 space-y-3">
-            <h3 className="font-semibold text-sm sm:text-lg mb-2 sm:mb-3">Informations Financières</h3>
+            <h3 className="font-semibold text-sm sm:text-lg mb-2 sm:mb-3">{t('debtDetailsDialog.informationsFinancieres')}</h3>
             <div className="grid grid-cols-2 gap-2 sm:gap-4">
               <div className="text-center p-2 sm:p-3 bg-muted rounded-lg">
-                <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">Montant Total</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">{t('debtDetailsDialog.montantTotal')}</p>
                 <p className="text-sm sm:text-lg font-bold break-all">{formatAmount(debt.total_amount)}</p>
               </div>
               <div className="text-center p-2 sm:p-3 bg-orange-50 dark:bg-[#ff4000]/30 rounded-lg">
-                <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">Montant Payé</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">{t('debtDetailsDialog.montantPaye')}</p>
                 <p className="text-sm sm:text-lg font-bold text-[#ff4000] dark:text-[#ff4000] break-all">{formatAmount(debt.paid_amount)}</p>
               </div>
               <div className="text-center p-2 sm:p-3 bg-orange-50 dark:bg-orange-950/30 rounded-lg">

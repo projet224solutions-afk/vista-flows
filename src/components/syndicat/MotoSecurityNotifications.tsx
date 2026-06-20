@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export default function MotoSecurityNotifications({ bureauId }: Props) {
+  const { t } = useTranslation();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -42,7 +44,7 @@ export default function MotoSecurityNotifications({ bureauId }: Props) {
       setUnreadCount(data?.filter(n => !n.is_read).length || 0);
     } catch (error) {
       console.error('Erreur chargement notifications:', error);
-      toast.error('Erreur lors du chargement des notifications');
+      toast.error(t('motoSecurityNotifications.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -53,7 +55,7 @@ export default function MotoSecurityNotifications({ bureauId }: Props) {
 
     // Subscribe to real-time updates
     const channel = supabase
-      .channel('security_notifications')
+      .channel(`security_notifications-${bureauId}`)
       .on(
         'postgres_changes',
         {
@@ -63,7 +65,7 @@ export default function MotoSecurityNotifications({ bureauId }: Props) {
           filter: `bureau_id=eq.${bureauId}`
         },
         (payload: any) => {
-          toast.error('Nouvelle alerte de sécurité!', {
+          toast.error(t('motoSecurityNotifications.nouvelleAlerteDeSecurite'), {
             description: payload.new.title
           });
           loadNotifications();
@@ -86,10 +88,10 @@ export default function MotoSecurityNotifications({ bureauId }: Props) {
 
       if (error) throw error;
       loadNotifications();
-      toast.success('Notification marquée comme lue');
+      toast.success(t('motoSecurityNotifications.notificationMarqueeCommeLue'));
     } catch (error) {
       console.error('Erreur marquage notification:', error);
-      toast.error('Erreur lors du marquage de la notification');
+      toast.error(t('motoSecurityNotifications.erreurLorsDuMarquageDe'));
     }
   };
 
@@ -103,11 +105,11 @@ export default function MotoSecurityNotifications({ bureauId }: Props) {
 
       if (error) throw error;
 
-      toast.success('Toutes les notifications ont été marquées comme lues');
+      toast.success(t('motoSecurityNotifications.toutesLesNotificationsOntEte'));
       loadNotifications();
     } catch (error) {
       console.error('Erreur marquage notifications:', error);
-      toast.error('Erreur lors du marquage des notifications');
+      toast.error(t('motoSecurityNotifications.erreurLorsDuMarquageDes'));
     }
   };
 
@@ -163,7 +165,7 @@ export default function MotoSecurityNotifications({ bureauId }: Props) {
         {notifications.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <Bell className="w-12 h-12 mx-auto mb-2 opacity-50" />
-            <p>Aucune notification</p>
+            <p>{t('motoSecurityNotifications.aucuneNotification')}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -190,7 +192,7 @@ export default function MotoSecurityNotifications({ bureauId }: Props) {
                           <Badge variant="destructive" className="text-xs">Critique</Badge>
                         )}
                         {!notification.is_read && (
-                          <Badge variant="secondary" className="text-xs">Nouveau</Badge>
+                          <Badge variant="secondary" className="text-xs">{t('motoSecurityNotifications.nouveau')}</Badge>
                         )}
                       </div>
                     </div>

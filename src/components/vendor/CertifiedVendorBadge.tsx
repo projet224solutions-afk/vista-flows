@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { VendorCertificationStatus, getCertificationStatusLabel } from '@/types/vendorCertification';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface CertifiedVendorBadgeProps {
   status: VendorCertificationStatus;
@@ -29,6 +30,7 @@ export function CertifiedVendorBadge({
   showTooltip = true,
   className
 }: CertifiedVendorBadgeProps) {
+  const { t } = useTranslation();
 
   // Ne rien afficher si non certifié (pour les vues publiques)
   if (status === 'NON_CERTIFIE' && variant !== 'detailed') {
@@ -40,29 +42,29 @@ export function CertifiedVendorBadge({
       case 'CERTIFIE':
         return {
           icon: CheckCircle2,
-          label: 'Vendeur certifié',
+          label: t('certifiedVendor.certified'),
           color: 'bg-[#04439e] text-white border-[#04439e]',
           iconColor: 'text-white',
           tooltipText: verifiedAt
-            ? `Vendeur certifié le ${new Date(verifiedAt).toLocaleDateString('fr-FR')}`
-            : 'Vendeur certifié par 224Solutions'
+            ? `${t('certifiedVendor.certifiedOnPrefix')} ${new Date(verifiedAt).toLocaleDateString('fr-FR')}`
+            : t('certifiedVendor.certifiedBy')
         };
       case 'SUSPENDU':
         return {
           icon: AlertTriangle,
-          label: 'Suspendu',
+          label: t('certifiedVendor.suspended'),
           color: 'bg-[#ff4000] text-white border-[#ff4000]',
           iconColor: 'text-white',
-          tooltipText: 'Certification suspendue temporairement'
+          tooltipText: t('certifiedVendor.suspendedTooltip')
         };
       case 'NON_CERTIFIE':
       default:
         return {
           icon: XCircle,
-          label: 'Non certifié',
+          label: t('certifiedVendor.notCertified'),
           color: 'bg-gray-400 text-white border-gray-500',
           iconColor: 'text-white',
-          tooltipText: 'Vendeur non certifié - KYC requis'
+          tooltipText: t('certifiedVendor.notCertifiedTooltip')
         };
     }
   };
@@ -111,7 +113,7 @@ export function CertifiedVendorBadge({
           <span className="text-sm font-semibold">{config.label}</span>
           {verifiedAt && status === 'CERTIFIE' && (
             <span className="text-xs opacity-90">
-              Depuis {new Date(verifiedAt).toLocaleDateString('fr-FR')}
+              {t('certifiedVendor.since')} {new Date(verifiedAt).toLocaleDateString('fr-FR')}
             </span>
           )}
         </div>
@@ -164,12 +166,13 @@ export function CertifiedIcon({
   status: VendorCertificationStatus;
   className?: string;
 }) {
+  const { t } = useTranslation();
   if (status !== 'CERTIFIE') return null;
 
   return (
     <CheckCircle2
       className={cn("text-[#04439e]", className)}
-      aria-label="Vendeur certifié"
+      aria-label={t('certifiedVendor.certified')}
     />
   );
 }

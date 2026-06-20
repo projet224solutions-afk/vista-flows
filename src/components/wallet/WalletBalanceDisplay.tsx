@@ -86,7 +86,7 @@ export function WalletBalanceDisplay({ userId, className = '', compact = false }
         .channel(`wallet-${userId}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'wallets', filter: `user_id=eq.${userId}` }, () => loadWallet())
         .subscribe();
-      return () => { channel.unsubscribe(); };
+      return () => { supabase.removeChannel(channel); };
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);

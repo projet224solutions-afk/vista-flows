@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -14,6 +15,7 @@ import { getPdgVisibilityOverview, updatePdgVisibilityConfig } from '@/services/
 import { toast } from 'sonner';
 
 export default function PDGProductsManagement() {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const { products, vendors, loading, stats, toggleProductStatus, deleteProduct, updateProduct } = usePDGProductsData();
   const [visibilityOverview, setVisibilityOverview] = useState<any>(null);
@@ -68,7 +70,7 @@ export default function PDGProductsManagement() {
         Number(visibilityConfig.relevance_weight);
 
       if (Math.abs(totalWeight - 100) > 0.01) {
-        toast.error('Les poids de ranking doivent totaliser 100%');
+        toast.error(t('pDGProductsManagement.lesPoidsDeRankingDoivent'));
         return;
       }
 
@@ -78,7 +80,7 @@ export default function PDGProductsManagement() {
         return;
       }
 
-      toast.success('Configuration visibilité mise à jour');
+      toast.success(t('pDGProductsManagement.configurationVisibiliteMiseAJour'));
     } finally {
       setSavingVisibilityConfig(false);
     }
@@ -155,8 +157,8 @@ export default function PDGProductsManagement() {
       {/* En-tête */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold">Gestion des Produits</h2>
-          <p className="text-muted-foreground mt-1">Administration des produits de la plateforme</p>
+          <h2 className="text-3xl font-bold">{t('pDGProductsManagement.gestionDesProduits')}</h2>
+          <p className="text-muted-foreground mt-1">{t('pDGProductsManagement.administrationDesProduitsDeLa')}</p>
         </div>
       </div>
 
@@ -164,12 +166,12 @@ export default function PDGProductsManagement() {
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Produits</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('pDGProductsManagement.totalProduits')}</CardTitle>
             <Package className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-xs text-muted-foreground mt-1">produits enregistrés</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('pDGProductsManagement.produitsEnregistres')}</p>
           </CardContent>
         </Card>
 
@@ -208,7 +210,7 @@ export default function PDGProductsManagement() {
             <div className="text-2xl font-bold text-[#04439e]">
               {stats.totalStock.toLocaleString()}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">unités en stock</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('pDGProductsManagement.unitesEnStock')}</p>
           </CardContent>
         </Card>
 
@@ -221,7 +223,7 @@ export default function PDGProductsManagement() {
             <div className="text-2xl font-bold text-orange-500">
               {stats.lowStock}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">produits concernés</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('pDGProductsManagement.produitsConcernes')}</p>
           </CardContent>
         </Card>
 
@@ -248,7 +250,7 @@ export default function PDGProductsManagement() {
               <div className="text-2xl font-bold text-[#ff4000]">
                 {stats.orphanProducts}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">boutiques supprimées</p>
+              <p className="text-xs text-muted-foreground mt-1">{t('pDGProductsManagement.boutiquesSupprimees')}</p>
             </CardContent>
           </Card>
         )}
@@ -256,7 +258,7 @@ export default function PDGProductsManagement() {
 
       <Card className="border-primary/30">
         <CardHeader>
-          <CardTitle>Cockpit Visibilité Marketplace</CardTitle>
+          <CardTitle>{t('pDGProductsManagement.cockpitVisibiliteMarketplace')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -273,7 +275,7 @@ export default function PDGProductsManagement() {
               <p className="text-2xl font-bold">{Array.isArray(visibilityOverview?.topBoostVendors) ? visibilityOverview.topBoostVendors.length : 0}</p>
             </div>
             <div className="p-3 rounded-lg border bg-card">
-              <p className="text-xs text-muted-foreground">Plans configurés</p>
+              <p className="text-xs text-muted-foreground">{t('pDGProductsManagement.plansConfigures')}</p>
               <p className="text-2xl font-bold">{Array.isArray(visibilityOverview?.planScores) ? visibilityOverview.planScores.length : 0}</p>
             </div>
           </div>
@@ -292,7 +294,7 @@ export default function PDGProductsManagement() {
               <Input type="number" value={visibilityConfig.boost_weight} onChange={(e) => setVisibilityConfig(prev => ({ ...prev, boost_weight: Number(e.target.value || 0) }))} />
             </div>
             <div>
-              <Label>Poids qualité (%)</Label>
+              <Label>{t('pDGProductsManagement.poidsQualite')}</Label>
               <Input type="number" value={visibilityConfig.quality_weight} onChange={(e) => setVisibilityConfig(prev => ({ ...prev, quality_weight: Number(e.target.value || 0) }))} />
             </div>
             <div>
@@ -303,7 +305,7 @@ export default function PDGProductsManagement() {
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             <div>
-              <Label>Ratio sponsorisé (%)</Label>
+              <Label>{t('pDGProductsManagement.ratioSponsorise')}</Label>
               <Input type="number" value={visibilityConfig.sponsored_slots_ratio} onChange={(e) => setVisibilityConfig(prev => ({ ...prev, sponsored_slots_ratio: Number(e.target.value || 0) }))} />
             </div>
             <div>
@@ -315,7 +317,7 @@ export default function PDGProductsManagement() {
               <Input type="number" value={visibilityConfig.organic_slots_ratio} onChange={(e) => setVisibilityConfig(prev => ({ ...prev, organic_slots_ratio: Number(e.target.value || 0) }))} />
             </div>
             <div>
-              <Label>Pénalité diversité vendeur</Label>
+              <Label>{t('pDGProductsManagement.penaliteDiversiteVendeur')}</Label>
               <Input type="number" value={visibilityConfig.vendor_diversity_penalty} onChange={(e) => setVisibilityConfig(prev => ({ ...prev, vendor_diversity_penalty: Number(e.target.value || 0) }))} />
             </div>
           </div>
@@ -331,14 +333,14 @@ export default function PDGProductsManagement() {
       {/* Recherche et Filtres */}
       <Card>
         <CardHeader>
-          <CardTitle>Rechercher et filtrer</CardTitle>
+          <CardTitle>{t('pDGProductsManagement.rechercherEtFiltrer')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher par nom, SKU ou boutique..."
+                placeholder={t('pDGProductsManagement.rechercherParNomSkuOu')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -483,7 +485,7 @@ export default function PDGProductsManagement() {
             {filteredProducts.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
                 <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Aucun produit trouvé</p>
+                <p>{t('pDGProductsManagement.aucunProduitTrouve')}</p>
               </div>
             )}
           </div>
@@ -492,9 +494,9 @@ export default function PDGProductsManagement() {
 
       {/* Dialog Détails Produit */}
       <Dialog open={!!viewProduct} onOpenChange={() => setViewProduct(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Détails du Produit</DialogTitle>
+            <DialogTitle>{t('pDGProductsManagement.detailsDuProduit')}</DialogTitle>
           </DialogHeader>
           {viewProduct && (
             <div className="space-y-4">
@@ -512,11 +514,11 @@ export default function PDGProductsManagement() {
                   <p className="font-medium">{fc(viewProduct.price)}</p>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">Vendeur</Label>
+                  <Label className="text-muted-foreground">{t('pDGProductsManagement.vendeur')}</Label>
                   <div className="font-medium">{getVendorDisplay(viewProduct)}</div>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">Statut Boutique</Label>
+                  <Label className="text-muted-foreground">{t('pDGProductsManagement.statutBoutique')}</Label>
                   <Badge className={viewProduct.vendor_is_active ? "bg-[#ff4000]" : "bg-[#ff4000]"}>
                     {viewProduct.vendor_is_active ? "Active" : "Supprimée"}
                   </Badge>
@@ -528,7 +530,7 @@ export default function PDGProductsManagement() {
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">Date de création</Label>
+                  <Label className="text-muted-foreground">{t('pDGProductsManagement.dateDeCreation')}</Label>
                   <p className="font-medium">
                     {new Date(viewProduct.created_at).toLocaleDateString('fr-FR')}
                   </p>
@@ -547,9 +549,9 @@ export default function PDGProductsManagement() {
 
       {/* Dialog Édition Produit */}
       <Dialog open={!!editingProduct} onOpenChange={() => setEditingProduct(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Modifier le Produit</DialogTitle>
+            <DialogTitle>{t('pDGProductsManagement.modifierLeProduit')}</DialogTitle>
           </DialogHeader>
           {editingProduct && (
             <div className="space-y-4">
@@ -584,7 +586,7 @@ export default function PDGProductsManagement() {
                     onChange={(e) => setEditingProduct({ ...editingProduct, is_active: e.target.checked })}
                     className="w-4 h-4"
                   />
-                  <Label htmlFor="is_active" className="cursor-pointer">Produit actif</Label>
+                  <Label htmlFor="is_active" className="cursor-pointer">{t('pDGProductsManagement.produitActif')}</Label>
                 </div>
               </div>
               <div>
@@ -612,9 +614,9 @@ export default function PDGProductsManagement() {
       <Dialog open={!!showDeleteConfirm} onOpenChange={() => setShowDeleteConfirm(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirmer la suppression</DialogTitle>
+            <DialogTitle>{t('pDGProductsManagement.confirmerLaSuppression')}</DialogTitle>
           </DialogHeader>
-          <p>Êtes-vous sûr de vouloir supprimer ce produit ? Cette action est irréversible.</p>
+          <p>{t('pDGProductsManagement.etesVousSurDeVouloir')}</p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDeleteConfirm(null)}>
               Annuler

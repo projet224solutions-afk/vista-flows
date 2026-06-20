@@ -80,65 +80,29 @@ serve(async (req) => {
       });
     }
 
-    const now = new Date().toISOString();
-
-    if (resolution === "release_to_seller") {
-      // Release escrow to seller
-      const commissionPercent = 2.5;
-      try {
-        await supabaseAdmin.rpc("release_escrow", {
-          p_escrow_id: escrow.id,
-          p_commission_percent: commissionPercent,
-          p_admin_id: user.id,
-        });
-      } catch {
-        // Fallback: update directly
-        await supabaseAdmin.from("escrow_transactions").update({
-          status: "released",
-          released_at: now,
-          released_by: user.id,
-          dispute_status: "resolved",
-          admin_action: "dispute_release_to_seller",
-          admin_id: user.id,
-        }).eq("id", escrow.id);
-      }
-
-      if (escrow.order_id) {
-        await supabaseAdmin.from("orders").update({
-          status: "delivered",
-          payment_status: "paid",
-          updated_at: now,
-        }).eq("id", escrow.order_id);
-      }
-    } else {
-      // Refund to buyer
-      await supabaseAdmin.from("escrow_transactions").update({
-        status: "refunded",
-        refunded_at: now,
-        dispute_status: "resolved",
-        admin_action: "dispute_refund_to_buyer",
-        admin_id: user.id,
-      }).eq("id", escrow.id);
-
-      if (escrow.order_id) {
-        await supabaseAdmin.from("orders").update({
-          status: "cancelled",
-          payment_status: "refunded",
-          updated_at: now,
-        }).eq("id", escrow.order_id);
-      }
+    // ⚠️ DURCISSEMENT ATOMIQUE : tout le mouvement d'argent (remboursement wallet
+    // acheteur OU libération vendeur) + maj commande + résolution du litige se fait
+    // dans UNE SEULE transaction côté DB (verrou de ligne + garde anti-double-
+    // résolution). Soit tout réussit, soit tout est annulé — plus d'état partiel,
+    // plus de "résolu sans remboursement", plus de double remboursement.
+    const { error: rpcErr } = await supabaseAdmin.rpc("resolve_escrow_dispute", {
+      p_dispute_id: dispute_id,
+      p_resolution: resolution,
+      p_resolver_id: user.id,
+      p_notes: resolution_notes || null,
+    });
+    if (rpcErr) {
+      const msg = String(rpcErr.message || "");
+      const status = /already_resolved/.test(msg) ? 409
+        : /not_refundable|invalid_resolution|dispute_not_found|escrow_not_found/.test(msg) ? 400
+        : 500;
+      console.error("resolve_escrow_dispute RPC error:", msg);
+      return new Response(JSON.stringify({ error: "Résolution impossible: " + msg }), {
+        status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    // Update dispute record
-    await supabaseAdmin.from("escrow_disputes").update({
-      status: "resolved",
-      resolution,
-      resolution_notes: resolution_notes || null,
-      resolved_by: user.id,
-      resolved_at: now,
-    }).eq("id", dispute_id);
-
-    // Log action
+    // Journalisation (best-effort, non bloquant — le mouvement est déjà committé)
     try {
       await supabaseAdmin.rpc("log_escrow_action", {
         p_escrow_id: escrow.id,

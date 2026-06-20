@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { StandardIdBadge } from '@/components/StandardIdBadge';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface VendorIdDisplayProps {
   className?: string;
@@ -18,6 +19,7 @@ export function VendorIdDisplay({
   className = '',
   showName = true
 }: VendorIdDisplayProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [vendorData, setVendorData] = useState<{
     custom_id: string | null;
@@ -77,7 +79,7 @@ export function VendorIdDisplay({
     return (
       <div className={`flex items-center gap-2 ${className}`}>
         <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-        <span className="text-sm text-muted-foreground">Chargement...</span>
+        <span className="text-sm text-muted-foreground">{t('vendorIdDisplay.loading')}</span>
       </div>
     );
   }

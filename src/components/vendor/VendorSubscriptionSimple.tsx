@@ -1,5 +1,5 @@
-// @ts-nocheck
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ interface SimpleSubscription {
 }
 
 export function VendorSubscriptionSimple() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [subscription, setSubscription] = useState<SimpleSubscription | null>(null);
   const [loading, setLoading] = useState(true);
@@ -125,7 +126,7 @@ export function VendorSubscriptionSimple() {
         <CardContent className="space-y-4">
           <div className="text-center py-8">
             <XCircle className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-            <p className="text-muted-foreground mb-4">Aucun abonnement actif</p>
+            <p className="text-muted-foreground mb-4">{t('vendorSubscriptionSimple.aucunAbonnementActif')}</p>
             <Button onClick={() => setShowPlanSelector(true)}>
               🟩 Choisir un plan d'abonnement
             </Button>
@@ -175,7 +176,7 @@ export function VendorSubscriptionSimple() {
           {/* Date de fin */}
           {subscription.current_period_end && (
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Date de fin</span>
+              <span className="text-sm text-muted-foreground">{t('vendorSubscriptionSimple.dateDeFin')}</span>
               <span className="font-medium">{formatDate(subscription.current_period_end)}</span>
             </div>
           )}

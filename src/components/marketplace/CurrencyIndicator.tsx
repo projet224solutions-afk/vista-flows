@@ -208,7 +208,7 @@ export function CurrencyIndicator({
           <div className="flex items-center gap-2">
             <span>🇬🇳</span>
             <div>
-              <p className="font-medium">Franc Guinéen (GNF)</p>
+              <p className="font-medium">{t('currencyIndicator.francGuineenGnf')}</p>
               <p className="text-xs text-muted-foreground">
                 {t('marketplace.originalCurrency') || 'Devise d\'origine'}
               </p>

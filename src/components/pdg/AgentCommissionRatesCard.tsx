@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ const readNum = (v: any, def: number): number => {
 };
 
 export default function AgentCommissionRatesCard() {
+  const { t } = useTranslation();
   const [sub, setSub] = useState<number>(15);
   const [principal, setPrincipal] = useState<number>(5);
   const [loading, setLoading] = useState(true);
@@ -72,7 +74,7 @@ export default function AgentCommissionRatesCard() {
     try {
       await saveOne(KEY_SUB, s);
       await saveOne(KEY_PRINCIPAL, p);
-      toast.success('Taux de commission agent mis à jour');
+      toast.success(t('agentCommissionRatesCard.tauxDeCommissionAgentMis'));
     } catch (e: any) {
       toast.error(e?.message || "Erreur lors de l'enregistrement");
     } finally {
@@ -98,7 +100,7 @@ export default function AgentCommissionRatesCard() {
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <Label htmlFor="sub-rate">Part sous-agent (% des frais)</Label>
+            <Label htmlFor="sub-rate">{t('agentCommissionRatesCard.partSousAgentDesFrais')}</Label>
             <Input
               id="sub-rate"
               type="number"
@@ -111,7 +113,7 @@ export default function AgentCommissionRatesCard() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="principal-rate">Part agent principal (% des frais)</Label>
+            <Label htmlFor="principal-rate">{t('agentCommissionRatesCard.partAgentPrincipalDesFrais')}</Label>
             <Input
               id="principal-rate"
               type="number"

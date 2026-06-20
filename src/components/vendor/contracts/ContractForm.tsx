@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useForm } from 'react-hook-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ interface ContractFormProps {
 }
 
 export default function ContractForm({ onSuccess }: ContractFormProps) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [selectedType, setSelectedType] = useState('');
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
@@ -83,10 +85,10 @@ export default function ContractForm({ onSuccess }: ContractFormProps) {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Type de contrat */}
           <div className="space-y-2">
-            <Label>Type de contrat *</Label>
+            <Label>{t('contractForm.typeDeContrat')}</Label>
             <Select value={selectedType} onValueChange={setSelectedType}>
               <SelectTrigger>
-                <SelectValue placeholder="Sélectionner un type" />
+                <SelectValue placeholder={t('contractForm.selectionnerUnType')} />
               </SelectTrigger>
               <SelectContent>
                 {CONTRACT_TYPES.map(type => (
@@ -103,7 +105,7 @@ export default function ContractForm({ onSuccess }: ContractFormProps) {
               {/* Informations client */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="client_name">Nom du client *</Label>
+                  <Label htmlFor="client_name">{t('contractForm.nomDuClient')}</Label>
                   <Input
                     id="client_name"
                     {...register('client_name', { required: true })}
@@ -112,7 +114,7 @@ export default function ContractForm({ onSuccess }: ContractFormProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="client_email">Email du client</Label>
+                  <Label htmlFor="client_email">{t('contractForm.emailDuClient')}</Label>
                   <Input
                     id="client_email"
                     type="email"
@@ -122,7 +124,7 @@ export default function ContractForm({ onSuccess }: ContractFormProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="client_phone">Téléphone du client</Label>
+                  <Label htmlFor="client_phone">{t('contractForm.telephoneDuClient')}</Label>
                   <Input
                     id="client_phone"
                     {...register('client_phone')}
@@ -132,7 +134,7 @@ export default function ContractForm({ onSuccess }: ContractFormProps) {
 
                 {selectedContract?.fields.includes('amount') && (
                   <div className="space-y-2">
-                    <Label htmlFor="amount">Montant (GNF)</Label>
+                    <Label htmlFor="amount">{t('contractForm.montantGnf')}</Label>
                     <Input
                       id="amount"
                       type="number"
@@ -144,7 +146,7 @@ export default function ContractForm({ onSuccess }: ContractFormProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="client_info">Informations complémentaires</Label>
+                <Label htmlFor="client_info">{t('contractForm.informationsComplementaires')}</Label>
                 <Textarea
                   id="client_info"
                   {...register('client_info')}
@@ -155,7 +157,7 @@ export default function ContractForm({ onSuccess }: ContractFormProps) {
 
               {/* Champs dynamiques selon le type */}
               <div className="space-y-4 pt-4 border-t">
-                <h3 className="font-semibold">Détails du contrat</h3>
+                <h3 className="font-semibold">{t('contractForm.detailsDuContrat')}</h3>
 
                 {selectedContract?.fields.map(field => {
                   if (field === 'amount') return null; // Already handled above

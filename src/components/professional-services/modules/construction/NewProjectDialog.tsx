@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +27,7 @@ interface Props {
 }
 
 export function NewProjectDialog({ open, onClose, onSubmit, saving }: Props) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     title: '', description: '', project_type: '', location: '', city: '',
     budget_estimated: '', start_date: '', estimated_duration_days: '',
@@ -49,32 +51,32 @@ export function NewProjectDialog({ open, onClose, onSubmit, saving }: Props) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>🏗️ Nouveau projet de construction</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t('newProjectDialog.nouveauProjetDeConstruction')}</DialogTitle></DialogHeader>
         <div className="grid gap-4 py-2">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Type de projet *</Label>
+              <Label>{t('newProjectDialog.typeDeProjet')}</Label>
               <Select value={form.project_type} onValueChange={v => update('project_type', v)}>
-                <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('newProjectDialog.selectionner')} /></SelectTrigger>
                 <SelectContent>{PROJECT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Date de début</Label>
+              <Label>{t('newProjectDialog.dateDeDebut')}</Label>
               <Input type="date" value={form.start_date} onChange={e => update('start_date', e.target.value)} />
             </div>
           </div>
           <div className="space-y-2">
-            <Label>Titre du projet *</Label>
-            <Input placeholder="Ex: Construction villa 4 chambres - Kipé" value={form.title} onChange={e => update('title', e.target.value)} />
+            <Label>{t('newProjectDialog.titreDuProjet')}</Label>
+            <Input placeholder={t('newProjectDialog.exConstructionVilla4Chambres')} value={form.title} onChange={e => update('title', e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Budget estimé (GNF)</Label>
+              <Label>{t('newProjectDialog.budgetEstimeGnf')}</Label>
               <Input type="number" placeholder="0" value={form.budget_estimated} onChange={e => update('budget_estimated', e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Durée estimée (jours)</Label>
+              <Label>{t('newProjectDialog.dureeEstimeeJours')}</Label>
               <Input type="number" placeholder="90" value={form.estimated_duration_days} onChange={e => update('estimated_duration_days', e.target.value)} />
             </div>
           </div>
@@ -90,11 +92,11 @@ export function NewProjectDialog({ open, onClose, onSubmit, saving }: Props) {
           </div>
           <div className="space-y-2">
             <Label>Description</Label>
-            <Textarea placeholder="Décrivez le projet..." rows={3} value={form.description} onChange={e => update('description', e.target.value)} />
+            <Textarea placeholder={t('newProjectDialog.decrivezLeProjet')} rows={3} value={form.description} onChange={e => update('description', e.target.value)} />
           </div>
         </div>
         <div className="flex justify-end gap-3 pt-2">
-          <Button variant="outline" onClick={onClose}>Annuler</Button>
+          <Button variant="outline" onClick={onClose}>{t('newProjectDialog.annuler')}</Button>
           <Button onClick={handleSubmit} disabled={saving || !form.title || !form.project_type}>
             {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
             Créer le projet

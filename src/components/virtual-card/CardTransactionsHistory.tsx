@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,7 @@ const categoryIcons: Record<string, React.ReactNode> = {
 };
 
 export function CardTransactionsHistory({ cardId, className }: CardTransactionsHistoryProps) {
+  const { t } = useTranslation();
   const { loadTransactions } = useVirtualCard();
   const [transactions, setTransactions] = useState<CardTransaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -102,7 +104,7 @@ export function CardTransactionsHistory({ cardId, className }: CardTransactionsH
         {transactions.length === 0 ? (
           <div className="text-center py-8">
             <ArrowDownLeft className="w-12 h-12 text-white/20 mx-auto mb-3" />
-            <p className="text-white/60 text-sm">Aucune transaction</p>
+            <p className="text-white/60 text-sm">{t('cardTransactionsHistory.aucuneTransaction')}</p>
             <p className="text-white/40 text-xs mt-1">
               Vos paiements par carte apparaîtront ici
             </p>

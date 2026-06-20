@@ -1,10 +1,10 @@
-// @ts-nocheck
 /**
  * WRAPPER POS SYSTEM - Gestion des erreurs et fallback
  * S'assure que le POS s'affiche toujours correctement
  */
 
 import React, { Suspense } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, RefreshCw, CreditCard, ShoppingCart, Calculator } from 'lucide-react';
@@ -14,7 +14,9 @@ import { toast } from 'sonner';
 const POSSystem = React.lazy(() => import('./POSSystem'));
 
 // Composant de chargement
-const POSLoading = () => (
+const POSLoading = () => {
+  const { t } = useTranslation();
+  return (
   <Card className="border-0 shadow-xl rounded-2xl">
     <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-50 rounded-t-2xl">
       <CardTitle className="text-2xl font-bold bg-[#04439e] bg-clip-text text-transparent flex items-center gap-3">
@@ -25,11 +27,11 @@ const POSLoading = () => (
     <CardContent className="p-8">
       <div className="flex items-center justify-center space-y-4 flex-col">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <p className="text-gray-600 text-lg">Chargement du système de caisse...</p>
+        <p className="text-gray-600 text-lg">{t('pOSSystemWrapper.chargementDuSystemeDeCaisse')}</p>
         <div className="flex items-center gap-4 text-sm text-gray-500">
           <div className="flex items-center gap-2">
             <ShoppingCart className="w-4 h-4" />
-            <span>Produits</span>
+            <span>{t('pOSSystemWrapper.produits')}</span>
           </div>
           <div className="flex items-center gap-2">
             <Calculator className="w-4 h-4" />
@@ -37,16 +39,19 @@ const POSLoading = () => (
           </div>
           <div className="flex items-center gap-2">
             <CreditCard className="w-4 h-4" />
-            <span>Paiements</span>
+            <span>{t('pOSSystemWrapper.paiements')}</span>
           </div>
         </div>
       </div>
     </CardContent>
   </Card>
-);
+  );
+};
 
 // Composant d'erreur
-const POSError = ({ error, retry }: { error: Error, retry: () => void }) => (
+const POSError = ({ error, retry }: { error: Error, retry: () => void }) => {
+  const { t } = useTranslation();
+  return (
   <Card className="border-0 shadow-xl rounded-2xl border-orange-200">
     <CardHeader className="bg-gradient-to-r from-orange-50 to-orange-50 rounded-t-2xl">
       <CardTitle className="text-2xl font-bold text-[#ff4000] flex items-center gap-3">
@@ -92,7 +97,7 @@ const POSError = ({ error, retry }: { error: Error, retry: () => void }) => (
 
         <Button
           onClick={() => {
-            toast.info('Redirection vers le support...');
+            toast.info(t('pOSSystemWrapper.redirectionVersLeSupport'));
             // Ici on pourrait rediriger vers une page de support
           }}
           variant="outline"
@@ -121,10 +126,13 @@ const POSError = ({ error, retry }: { error: Error, retry: () => void }) => (
       )}
     </CardContent>
   </Card>
-);
+  );
+};
 
 // Composant de fallback simple
-const _POSFallback = () => (
+const _POSFallback = () => {
+  const { t } = useTranslation();
+  return (
   <Card className="border-0 shadow-xl rounded-2xl bg-gradient-to-br from-blue-50 to-blue-50">
     <CardHeader>
       <CardTitle className="text-2xl font-bold bg-[#04439e] bg-clip-text text-transparent flex items-center gap-3">
@@ -150,8 +158,8 @@ const _POSFallback = () => (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
             <ShoppingCart className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-            <h4 className="font-semibold text-gray-800">Gestion Produits</h4>
-            <p className="text-sm text-gray-600">Catalogue et inventaire</p>
+            <h4 className="font-semibold text-gray-800">{t('pOSSystemWrapper.gestionProduits')}</h4>
+            <p className="text-sm text-gray-600">{t('pOSSystemWrapper.catalogueEtInventaire')}</p>
           </div>
 
           <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
@@ -162,8 +170,8 @@ const _POSFallback = () => (
 
           <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
             <CreditCard className="w-8 h-8 text-[#04439e] mx-auto mb-2" />
-            <h4 className="font-semibold text-gray-800">Paiements</h4>
-            <p className="text-sm text-gray-600">Espèces, carte, mobile</p>
+            <h4 className="font-semibold text-gray-800">{t('pOSSystemWrapper.paiements')}</h4>
+            <p className="text-sm text-gray-600">{t('pOSSystemWrapper.especesCarteMobile')}</p>
           </div>
         </div>
 
@@ -177,7 +185,8 @@ const _POSFallback = () => (
       </div>
     </CardContent>
   </Card>
-);
+  );
+};
 
 // Composant wrapper principal
 class POSErrorBoundary extends React.Component<
@@ -213,6 +222,7 @@ class POSErrorBoundary extends React.Component<
 
 // Export du wrapper principal
 export default function POSSystemWrapper() {
+  const { t } = useTranslation();
   const [forceReload, _setForceReload] = React.useState(0);
 
   return (

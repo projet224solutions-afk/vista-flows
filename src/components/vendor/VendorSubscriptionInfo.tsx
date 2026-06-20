@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useVendorSubscription } from "@/hooks/useVendorSubscription";
@@ -21,6 +22,7 @@ import { toast } from "sonner";
 import { SubscriptionService } from "@/services/subscriptionService";
 
 export function VendorSubscriptionInfo() {
+  const { t } = useTranslation();
   const { subscription, loading, refresh } = useVendorSubscription();
   const [showPlanSelector, setShowPlanSelector] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
@@ -42,16 +44,16 @@ export function VendorSubscriptionInfo() {
       const success = await SubscriptionService.cancelSubscription(subscription.id);
 
       if (success) {
-        toast.success("Abonnement annulé avec succès", {
+        toast.success(t('vendorSubscriptionInfo.abonnementAnnuleAvecSucces'), {
           description: "Votre abonnement restera actif jusqu'à la date de fin prévue."
         });
         await refresh();
       } else {
-        toast.error("Erreur lors de l'annulation de l'abonnement");
+        toast.error(t('vendorSubscriptionInfo.erreurLorsDeLAnnulation'));
       }
     } catch (error) {
       console.error("Erreur annulation:", error);
-      toast.error("Erreur système lors de l'annulation");
+      toast.error(t('vendorSubscriptionInfo.erreurSystemeLorsDeL'));
     } finally {
       setCancelling(false);
       setShowCancelDialog(false);
@@ -88,7 +90,7 @@ export function VendorSubscriptionInfo() {
         <CardContent className="space-y-4">
           <div className="text-center py-8">
             <XCircle className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-            <p className="text-muted-foreground mb-4">Aucun abonnement actif</p>
+            <p className="text-muted-foreground mb-4">{t('vendorSubscriptionInfo.aucunAbonnementActif')}</p>
             <Button onClick={() => setShowPlanSelector(true)}>
               🟩 Choisir un plan d'abonnement
             </Button>
@@ -143,7 +145,7 @@ export function VendorSubscriptionInfo() {
           {/* Date de début */}
           {subscription.current_period_end && (
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Date de début</span>
+              <span className="text-sm text-muted-foreground">{t('vendorSubscriptionInfo.dateDeDebut')}</span>
               <span className="font-medium">
                 {formatDate(new Date(new Date(subscription.current_period_end).getTime() - 30 * 24 * 60 * 60 * 1000).toISOString())}
               </span>
@@ -153,7 +155,7 @@ export function VendorSubscriptionInfo() {
           {/* Date de fin */}
           {subscription.current_period_end && (
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Date de fin</span>
+              <span className="text-sm text-muted-foreground">{t('vendorSubscriptionInfo.dateDeFin')}</span>
               <span className="font-medium">{formatDate(subscription.current_period_end)}</span>
             </div>
           )}
@@ -243,7 +245,7 @@ export function VendorSubscriptionInfo() {
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Annuler l'abonnement ?</AlertDialogTitle>
+            <AlertDialogTitle>{t('vendorSubscriptionInfo.annulerLAbonnement')}</AlertDialogTitle>
             <AlertDialogDescription>
               Voulez-vous vraiment annuler votre abonnement ? Cette action n'arrête pas immédiatement vos accès
               mais bloque le renouvellement automatique. Votre abonnement restera actif jusqu'au{" "}
@@ -254,7 +256,7 @@ export function VendorSubscriptionInfo() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={cancelling}>Retour</AlertDialogCancel>
+            <AlertDialogCancel disabled={cancelling}>{t('vendorSubscriptionInfo.retour')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleCancelSubscription}
               disabled={cancelling}

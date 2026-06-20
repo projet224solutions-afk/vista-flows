@@ -1,4 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from "@/hooks/useTranslation";
+import { OrderDisputeThread } from "@/components/disputes/OrderDisputeThread";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { useCurrentVendor } from "@/hooks/useCurrentVendor";
 import { useMoneyFormat } from "@/components/Money";
 import { supabase } from "@/integrations/supabase/client";
+import { readSectionCache, writeSectionCache, isBrowserOffline } from "@/lib/offline/sectionCache";
 import { updateOrderStatus as updateOrderStatusBackend } from "@/services/orderBackendService";
 import { useToast } from "@/hooks/use-toast";
 import { GeocodedAddress } from "@/components/vendor/GeocodedAddress";
@@ -102,17 +106,18 @@ const statusColors: Record<string, string> = {
   cancelled: 'bg-orange-100 text-[#ff4000]'
 };
 
-const statusLabels: Record<string, string> = {
-  pending: 'En attente',
-  confirmed: 'Confirmée',
-  processing: 'En préparation',
-  preparing: 'En préparation',
-  ready: 'Prête',
-  shipped: 'Expédiée',
-  in_transit: 'En transit',
-  delivered: 'Livrée',
-  completed: 'Terminée',
-  cancelled: 'Annulée'
+// Clés i18n des statuts (résolues via t() dans le rendu — voir staging .i18n-new-keys.json).
+const statusLabelKeys: Record<string, string> = {
+  pending: 'orders.status.pending',
+  confirmed: 'orders.status.confirmed',
+  processing: 'orders.status.processing',
+  preparing: 'orders.status.preparing',
+  ready: 'orders.status.ready',
+  shipped: 'orders.status.shipped',
+  in_transit: 'orders.status.in_transit',
+  delivered: 'orders.status.delivered',
+  completed: 'orders.status.completed',
+  cancelled: 'orders.status.cancelled'
 };
 
 const paymentStatusColors: Record<string, string> = {
@@ -122,20 +127,20 @@ const paymentStatusColors: Record<string, string> = {
   refunded: 'bg-gray-100 text-gray-800'
 };
 
-const paymentStatusLabels: Record<string, string> = {
-  pending: 'En attente',
-  paid: 'Payé',
-  failed: 'Échec',
-  refunded: 'Remboursé'
+const paymentStatusLabelKeys: Record<string, string> = {
+  pending: 'orders.payStatus.pending',
+  paid: 'orders.payStatus.paid',
+  failed: 'orders.payStatus.failed',
+  refunded: 'orders.payStatus.refunded'
 };
 
-// Labels pour les méthodes de paiement
-const paymentMethodLabels: Record<string, string> = {
-  wallet: 'Wallet 224Solutions',
-  card: 'Carte bancaire',
-  cash: 'Espèces',
-  mobile_money: 'Mobile Money',
-  bank_transfer: 'Virement bancaire'
+// Clés i18n des méthodes de paiement
+const paymentMethodLabelKeys: Record<string, string> = {
+  wallet: 'orders.payMethod.wallet',
+  card: 'orders.payMethod.card',
+  cash: 'orders.payMethod.cash',
+  mobile_money: 'orders.payMethod.mobile_money',
+  bank_transfer: 'orders.payMethod.bank_transfer'
 };
 
 const isCashOnDeliveryOrder = (order: Order): boolean => {
@@ -149,11 +154,11 @@ const isCashOnDeliveryOrder = (order: Order): boolean => {
     );
 };
 
-// Fonction pour obtenir le libellé de la méthode de paiement
-const getPaymentMethodLabel = (order: Order): string => {
+// Fonction pour obtenir le libellé de la méthode de paiement (t passé en paramètre).
+const getPaymentMethodLabel = (order: Order, t: (k: string) => string): string => {
   const method = order.payment_method;
   if (isCashOnDeliveryOrder(order)) {
-    return 'Paiement à la livraison';
+    return t('orders.codLabel');
   }
   const isCOD = order.source === 'online' &&
                 method === 'cash' &&
@@ -161,22 +166,27 @@ const getPaymentMethodLabel = (order: Order): string => {
                 ((order.shipping_address as any)?.is_cod === true || order.metadata?.is_cod === true);
 
   if (isCOD) {
-    return '💵 Paiement à la livraison';
+    return `💵 ${t('orders.codLabel')}`;
   }
 
-  return paymentMethodLabels[method || ''] || method || 'Non spécifié';
+  const key = paymentMethodLabelKeys[method || ''];
+  return key ? t(key) : (method || t('orders.unspecified'));
 };
 
 export default function OrderManagement() {
+  const { t } = useTranslation();
   const { vendorId, user, loading: vendorLoading, canAccessPOS, businessType } = useCurrentVendor();
   const { format, userCurrency } = useMoneyFormat();
   const { toast } = useToast();
 
-  // Formate un montant dans sa devise d'origine (orders.currency) converti vers la devise
-  // d'affichage de l'utilisateur (taux BCRG). Défaut = userCurrency pour les agrégats
-  // (sommes multi-commandes) où il n'y a pas une devise unique fiable.
-  const fmtAmount = (amount: number, currency: string = userCurrency) => format(amount, currency);
+  // Convertit un montant de SA devise de stockage (défaut GNF, base plateforme) vers la devise
+  // d'affichage de l'utilisateur (taux BCRG). ⚠️ Le défaut DOIT être 'GNF' : avec userCurrency,
+  // format(x, userCurrency) = conversion identité → AUCUNE conversion (montants GNF affichés bruts).
+  const fmtAmount = (amount: number, currency: string = 'GNF') => format(amount, currency || 'GNF');
   const [orders, setOrders] = useState<Order[]>([]);
+  // Ventes POS CASH (table `pos_sales`, distincte de `orders` source='pos' qui ne couvre que
+  // les paiements électroniques). Sans ça, le cash était ABSENT de la vue « Ventes POS ».
+  const [posSales, setPosSales] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -186,7 +196,32 @@ export default function OrderManagement() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [activeView, setActiveView] = useState<'pos' | 'online'>('online');
   const [onlineStatusFilter, setOnlineStatusFilter] = useState<'all' | 'pending' | 'processing' | 'delivered'>('all');
+  const [onlinePeriod, setOnlinePeriod] = useState<'all' | 'day' | 'week' | 'month' | 'year'>('all');
   const [mainTab, setMainTab] = useState<'orders' | 'credit'>('orders');
+  const [searchParams] = useSearchParams();
+  const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(null);
+
+  // Redirection PRÉCISE depuis une notification :
+  //   /vendeur/orders?online=pending&focus=<id> → onglet commandes, vue « en ligne »,
+  //   filtre « en attente », défilement + surbrillance sur la commande concernée.
+  const focusParam = searchParams.get('focus') || searchParams.get('order');
+  const onlineParam = searchParams.get('online');
+  useEffect(() => {
+    if (!onlineParam && !focusParam) return;
+    setMainTab('orders');
+    setActiveView('online');
+    if (onlineParam && ['all', 'pending', 'processing', 'delivered'].includes(onlineParam)) {
+      setOnlineStatusFilter(onlineParam as 'all' | 'pending' | 'processing' | 'delivered');
+    }
+    if (loading || !focusParam) return;
+    const el = document.getElementById(`order-${focusParam}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setHighlightedOrderId(focusParam);
+    const timer = setTimeout(() => setHighlightedOrderId(null), 2600);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, focusParam, onlineParam, orders.length]);
   const [deliveryDialogOrder, setDeliveryDialogOrder] = useState<Order | null>(null);
   const [estimatedDeliveryDays, setEstimatedDeliveryDays] = useState('3');
 
@@ -255,9 +290,66 @@ export default function OrderManagement() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId, vendorLoading]);
 
+  // Charge les ventes POS cash (pos_sales) et les normalise au format Order pour la vue POS.
+  // useCallback → réutilisable (effet initial + après un remboursement, pour rafraîchir l'état).
+  const fetchPosSales = useCallback(async () => {
+    if (!vendorId) return;
+    const { data, error } = await supabase
+      .from('pos_sales')
+      .select('id, total_amount, discount_total, payment_method, customer_name, sold_at, status, pos_sale_items(id, product_id, product_name, quantity, unit_price)')
+      .eq('vendor_id', vendorId)
+      .order('sold_at', { ascending: false });
+    if (error || !data) {
+      if (error) console.warn('[OrderManagement] pos_sales load:', error.message);
+      return;
+    }
+    const normalized: Order[] = data.map((s: any) => ({
+        id: s.id,
+        order_number: `POS-${String(s.id).slice(0, 8).toUpperCase()}`,
+        status: s.status || 'completed',
+        payment_status: s.status === 'refunded' ? 'refunded' : 'paid', // cash = encaissé
+        payment_method: s.payment_method || 'cash',
+        subtotal: Number(s.total_amount) || 0,
+        tax_amount: 0,
+        shipping_amount: 0,
+        discount_amount: Number(s.discount_total) || 0,
+        total_amount: Number(s.total_amount) || 0,
+        currency: 'GNF', // pos_sales stocke en GNF (base plateforme) → converti à l'affichage
+        shipping_address: null,
+        created_at: s.sold_at,
+        updated_at: s.sold_at,
+        source: 'pos',
+        customers: s.customer_name
+          ? ({ id: '', user_id: '', profiles: { full_name: s.customer_name } } as any)
+          : undefined,
+        order_items: (s.pos_sale_items || []).map((i: any) => ({
+          id: i.id,
+          product_id: i.product_id,
+          quantity: i.quantity,
+          unit_price: Number(i.unit_price) || 0,
+          total_price: (Number(i.unit_price) || 0) * (i.quantity || 0),
+          products: { id: i.product_id, name: i.product_name, price: Number(i.unit_price) || 0, is_active: true },
+        })),
+      }));
+      setPosSales(normalized);
+  }, [vendorId, userCurrency]);
+
+  useEffect(() => {
+    if (!vendorId || vendorLoading) return;
+    fetchPosSales();
+  }, [vendorId, vendorLoading, fetchPosSales]);
+
   const fetchOrders = async () => {
     if (!vendorId || !user) {
       console.warn('⚠️ Pas de vendorId ou user pour charger les commandes');
+      setLoading(false);
+      return;
+    }
+
+    // 📴 Hors ligne : afficher les dernières commandes connues (cache), sans réseau.
+    if (isBrowserOffline()) {
+      const cached = readSectionCache<Order>('orders', vendorId);
+      if (cached) setOrders(cached);
       setLoading(false);
       return;
     }
@@ -370,18 +462,25 @@ export default function OrderManagement() {
       console.log('   - POS:', ordersWithEscrow.filter(o => o.source === 'pos').length);
       console.log('   - With Escrow:', ordersWithEscrow.filter(o => o.escrow).length);
 
-      setOrders(ordersWithEscrow);
+      setOrders(ordersWithEscrow as Order[]);
+      writeSectionCache('orders', vendorId, ordersWithEscrow as Order[]);
 
       if (ordersWithEscrow.length === 0) {
         console.warn('⚠️ Aucune commande trouvée.');
       }
     } catch (error) {
       console.error('💥 Error in fetchOrders:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les commandes.",
-        variant: "destructive"
-      });
+      // Repli sur le cache en cas d'échec réseau, sans alarmer inutilement.
+      const cached = readSectionCache<Order>('orders', vendorId);
+      if (cached) {
+        setOrders(cached);
+      } else {
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les commandes.",
+          variant: "destructive"
+        });
+      }
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -490,7 +589,7 @@ export default function OrderManagement() {
 
       toast({
         title: "✅ Statut mis à jour",
-        description: `La commande a été marquée comme ${statusLabels[newStatus]}.`,
+        description: `${t('orders.markedAsPrefix')} ${t(statusLabelKeys[newStatus] || '')}.`,
       });
 
       // Refresh to ensure sync
@@ -643,7 +742,7 @@ export default function OrderManagement() {
           onClick={(e) => {
             e.stopPropagation();
             console.log('❌ Cancelling order:', order.id);
-            if (confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) {
+            if (confirm(t('orderManagement.etesVousSurDeVouloir'))) {
               updateOrderStatus(order.id, 'cancelled');
             }
           }}
@@ -668,26 +767,25 @@ export default function OrderManagement() {
           e.stopPropagation();
           if (confirm(`Êtes-vous sûr de vouloir rembourser la commande ${order.order_number} ?`)) {
             try {
-              // Mettre à jour le statut de paiement en "refunded"
-              const { error } = await supabase
-                .from('orders')
-                .update({
-                  payment_status: 'refunded',
-                  status: 'cancelled',
-                  updated_at: new Date().toISOString()
-                })
-                .eq('id', order.id)
-                .eq('vendor_id', vendorId);
-
-              if (error) throw error;
-
-              toast({
-                title: "✅ Remboursement effectué",
-                description: `La commande ${order.order_number} a été remboursée (${fmtAmount(order.total_amount, order.currency)})`
+              // Remboursement ATOMIQUE + restitution du STOCK (gère orders ET pos_sales),
+              // idempotent côté serveur (pas de double-restock si déjà remboursé).
+              const { data, error } = await supabase.rpc('refund_pos_order_atomic' as any, {
+                p_id: order.id,
+                p_vendor_id: vendorId,
               });
 
-              // Rafraîchir les commandes
-              await fetchOrders();
+              if (error) throw error;
+              const res = data as any;
+
+              toast({
+                title: res?.already_refunded ? "Déjà remboursée" : "✅ Remboursement effectué",
+                description: res?.already_refunded
+                  ? `La commande ${order.order_number} était déjà remboursée.`
+                  : `La commande ${order.order_number} a été remboursée (${fmtAmount(order.total_amount, order.currency)}) et le stock a été remis (${res?.restocked ?? 0} article(s)).`
+              });
+
+              // Rafraîchir commandes + ventes cash → la vente remboursée disparaît de la vue.
+              await Promise.all([fetchOrders(), fetchPosSales()]);
             } catch (err) {
               console.error('Erreur remboursement:', err);
               toast({
@@ -714,20 +812,39 @@ export default function OrderManagement() {
     .filter(o => o.payment_status === 'paid')
     .reduce((sum, o) => sum + o.total_amount, 0);
 
-  // Statistics - Ventes en ligne uniquement
-  const totalOnlineOrders = onlineOrders.length;
-  const pendingOnlineOrders = onlineOrders.filter(o => o.status === 'pending').length;
-  const processingOnlineOrders = onlineOrders.filter(o =>
+  // Vue en ligne segmentée par PÉRIODE (jour/semaine/mois/année) ET masquant les commandes
+  // REMBOURSÉES/ANNULÉES (elles disparaissent → pas de double-remboursement), comme le POS.
+  const onlineVisible = (() => {
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - now.getDay()); startOfWeek.setHours(0, 0, 0, 0);
+    return onlineOrders.filter(o => {
+      if (o.payment_status === 'refunded' || o.status === 'cancelled') return false;
+      const d = new Date(o.created_at);
+      if (onlinePeriod === 'day') return d >= startOfDay;
+      if (onlinePeriod === 'week') return d >= startOfWeek;
+      if (onlinePeriod === 'month') return d >= startOfMonth;
+      if (onlinePeriod === 'year') return d >= startOfYear;
+      return true;
+    });
+  })();
+
+  // Statistics - Ventes en ligne (sur la période sélectionnée, hors remboursées)
+  const totalOnlineOrders = onlineVisible.length;
+  const pendingOnlineOrders = onlineVisible.filter(o => o.status === 'pending').length;
+  const processingOnlineOrders = onlineVisible.filter(o =>
     ['processing', 'preparing', 'ready', 'shipped', 'in_transit', 'confirmed'].includes(o.status)
   ).length;
-  const deliveredOnlineOrders = onlineOrders.filter(o =>
+  const deliveredOnlineOrders = onlineVisible.filter(o =>
     ['delivered', 'completed'].includes(o.status)
   ).length;
   const _totalOnlineRevenue = onlineOrders
     .filter(o => o.payment_status === 'paid')
     .reduce((sum, o) => sum + o.total_amount, 0);
 
-  if (loading) return <div className="p-4">Chargement des commandes...</div>;
+  if (loading) return <div className="p-4">{t('orderManagement.chargementDesCommandes')}</div>;
 
   return (
     <Tabs value={mainTab} onValueChange={(value) => setMainTab(value as 'orders' | 'credit')} className="w-full">
@@ -735,11 +852,11 @@ export default function OrderManagement() {
       <TabsList className="grid w-full grid-cols-2 h-auto">
         <TabsTrigger value="orders" className="flex items-center gap-2 text-xs sm:text-sm py-2">
           <ShoppingCart className="w-4 h-4" />
-          <span>Commandes</span>
+          <span>{t('orderManagement.commandes')}</span>
         </TabsTrigger>
         <TabsTrigger value="credit" className="flex items-center gap-2 text-xs sm:text-sm py-2">
           <CreditCard className="w-4 h-4" />
-          <span>Ventes à Crédit</span>
+          <span>{t('orderManagement.ventesACredit')}</span>
         </TabsTrigger>
       </TabsList>
 
@@ -749,8 +866,8 @@ export default function OrderManagement() {
       {/* Titre et actions - Mobile optimisé */}
       <div className="flex flex-col gap-3 md:flex-row md:justify-between md:items-center">
         <div className="min-w-0">
-          <h2 className="text-lg md:text-2xl font-bold truncate">Ventes & Commandes</h2>
-          <p className="text-xs md:text-sm text-muted-foreground truncate">Ventes POS (en boutique) et Commandes en ligne</p>
+          <h2 className="text-lg md:text-2xl font-bold truncate">{t('orderManagement.ventesCommandes')}</h2>
+          <p className="text-xs md:text-sm text-muted-foreground truncate">{t('orderManagement.ventesPosEnBoutiqueEt')}</p>
         </div>
         <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
           <Button
@@ -889,7 +1006,7 @@ export default function OrderManagement() {
                 </p>
               </div>
               <div className="bg-white/80 rounded-lg p-2 md:p-4">
-                <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">Livrées</p>
+                <p className="text-[10px] md:text-sm text-muted-foreground mb-0.5 md:mb-1">{t('orderManagement.livrees')}</p>
                 <p className="text-lg md:text-2xl font-bold text-[#ff4000]">
                   {deliveredOnlineOrders}
                 </p>
@@ -909,7 +1026,7 @@ export default function OrderManagement() {
             <div className="relative flex-1">
               <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Rechercher..."
+                placeholder={t('orderManagement.rechercher')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 h-9 text-sm"
@@ -921,13 +1038,13 @@ export default function OrderManagement() {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="px-2 py-1.5 border rounded-md text-sm flex-1 md:flex-none h-9"
               >
-                <option value="all">Tous les statuts</option>
+                <option value="all">{t('orderManagement.tousLesStatuts')}</option>
                 <option value="pending">En attente</option>
-                <option value="confirmed">Confirmées</option>
-                <option value="processing">En préparation</option>
-                <option value="shipped">Expédiées</option>
-                <option value="delivered">Livrées</option>
-                <option value="cancelled">Annulées</option>
+                <option value="confirmed">{t('orderManagement.confirmees')}</option>
+                <option value="processing">{t('orderManagement.enPreparation')}</option>
+                <option value="shipped">{t('orderManagement.expediees')}</option>
+                <option value="delivered">{t('orderManagement.livrees')}</option>
+                <option value="cancelled">{t('orderManagement.annulees')}</option>
               </select>
               <Filter className="w-4 h-4 text-muted-foreground hidden md:block" />
             </div>
@@ -938,7 +1055,13 @@ export default function OrderManagement() {
 
       {/* Tableau des Ventes POS */}
       {activeView === 'pos' ? (() => {
-        const posOrders = orders.filter(o => o.source === 'pos');
+        // POS = électronique (orders source='pos') + CASH (pos_sales normalisées). Chemins
+        // disjoints côté backend → union sans double-comptage, triée par date.
+        // Les ventes REMBOURSÉES sont EXCLUES (elles disparaissent de jour/semaine/… → le vendeur
+        // ne peut pas rembourser/restocker deux fois le même produit).
+        const posOrders = [...orders.filter(o => o.source === 'pos'), ...posSales]
+          .filter(o => o.payment_status !== 'refunded' && o.status !== 'cancelled')
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
         const now = new Date();
         const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -1051,7 +1174,7 @@ export default function OrderManagement() {
                             <CheckCircle className="w-4 h-4 text-[#ff4000]" />
                           </div>
                           <div>
-                            <p className="text-[10px] md:text-xs text-muted-foreground">Payées</p>
+                            <p className="text-[10px] md:text-xs text-muted-foreground">{t('orderManagement.payees')}</p>
                             <p className="text-lg md:text-xl font-bold">{filtered.filter(o => o.payment_status === 'paid').length}</p>
                           </div>
                         </div>
@@ -1085,10 +1208,10 @@ export default function OrderManagement() {
                         🛒 Vente POS
                       </Badge>
                       <Badge className={`${statusColors[order.status]} text-[10px] sm:text-xs shrink-0`}>
-                        {statusLabels[order.status]}
+                        {t(statusLabelKeys[order.status] || '')}
                       </Badge>
                       <Badge className={`${paymentStatusColors[order.payment_status]} text-[10px] sm:text-xs shrink-0`}>
-                        {paymentStatusLabels[order.payment_status]}
+                        {t(paymentStatusLabelKeys[order.payment_status] || '')}
                       </Badge>
                     </div>
                   </div>
@@ -1109,13 +1232,13 @@ export default function OrderManagement() {
                         </span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">ID Client:</span>
+                        <span className="text-muted-foreground">{t('orderManagement.idClient')}</span>
                         <span className="ml-2 font-mono text-[10px] sm:text-xs font-semibold bg-muted px-1.5 py-0.5 rounded">
                           {order.customers?.profiles?.public_id || 'Non attribué'}
                         </span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Téléphone:</span>
+                        <span className="text-muted-foreground">{t('orderManagement.telephone')}</span>
                         <span className="ml-2 font-semibold">
                           {order.customers?.profiles?.phone || 'Non renseigné'}
                         </span>
@@ -1156,14 +1279,14 @@ export default function OrderManagement() {
                             </div>
                             <div className="text-right">
                               <p className="text-sm font-semibold">x{item.quantity}</p>
-                              <p className="text-xs text-muted-foreground">{fmtAmount(item.unit_price)}</p>
+                              <p className="text-xs text-muted-foreground">{fmtAmount(item.unit_price, order.currency)}</p>
                             </div>
                           </div>
                         ))}
                       </div>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Montant total</p>
+                      <p className="text-sm font-medium text-muted-foreground">{t('orderManagement.montantTotal')}</p>
                       <p className="text-xl font-bold text-[hsl(15,100%,50%)]">
                         {fmtAmount(order.total_amount, order.currency)}
                       </p>
@@ -1174,10 +1297,10 @@ export default function OrderManagement() {
                       )}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Méthode de paiement</p>
+                      <p className="text-sm font-medium text-muted-foreground">{t('orderManagement.methodeDePaiement')}</p>
                       <div className="text-sm text-muted-foreground">
                         <CreditCard className="w-4 h-4 inline mr-1" />
-                        {getPaymentMethodLabel(order)}
+                        {getPaymentMethodLabel(order, t)}
                       </div>
                     </div>
                   </div>
@@ -1217,13 +1340,29 @@ export default function OrderManagement() {
         <Card className="border-2 border-blue-200 bg-blue-50/30 online-orders-section">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-blue-700">
-            📦 Commandes En Ligne ({onlineOrders.length})
+            📦 Commandes En Ligne ({onlineVisible.length})
           </CardTitle>
           <p className="text-sm text-muted-foreground">
             Commandes à préparer et livrer aux clients
           </p>
         </CardHeader>
         <CardContent>
+          {/* Filtre par période (jour/semaine/mois/année) */}
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {([
+              ['all', 'Tout'], ['day', 'Jour'], ['week', 'Semaine'], ['month', 'Mois'], ['year', 'Année'],
+            ] as const).map(([val, label]) => (
+              <Button
+                key={val}
+                size="sm"
+                variant={onlinePeriod === val ? 'default' : 'outline'}
+                className="h-8 px-3 text-xs"
+                onClick={() => setOnlinePeriod(val)}
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
           {/* Statistiques Commandes En Ligne */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
             <Card
@@ -1231,7 +1370,7 @@ export default function OrderManagement() {
               onClick={() => setOnlineStatusFilter('all')}
             >
               <CardContent className="p-4">
-                <p className="text-sm text-muted-foreground mb-1">Total commandes</p>
+                <p className="text-sm text-muted-foreground mb-1">{t('orderManagement.totalCommandes')}</p>
                 <p className="text-3xl font-bold text-blue-700">
                   {totalOnlineOrders}
                 </p>
@@ -1264,7 +1403,7 @@ export default function OrderManagement() {
               onClick={() => setOnlineStatusFilter('delivered')}
             >
               <CardContent className="p-4">
-                <p className="text-sm text-muted-foreground mb-1">Livrées</p>
+                <p className="text-sm text-muted-foreground mb-1">{t('orderManagement.livrees')}</p>
                 <p className="text-2xl font-bold text-[#ff4000]">
                   {deliveredOnlineOrders}
                 </p>
@@ -1272,9 +1411,9 @@ export default function OrderManagement() {
             </Card>
           </div>
 
-          {/* Liste des Commandes En Ligne */}
+          {/* Liste des Commandes En Ligne (période + statut, hors remboursées) */}
           <div className="space-y-4">
-            {onlineOrders.filter(order => {
+            {onlineVisible.filter(order => {
               if (onlineStatusFilter === 'all') return true;
               if (onlineStatusFilter === 'pending') return order.status === 'pending';
               if (onlineStatusFilter === 'processing') return ['processing', 'preparing', 'ready', 'shipped', 'in_transit', 'confirmed'].includes(order.status);
@@ -1291,14 +1430,14 @@ export default function OrderManagement() {
                 </p>
               </div>
             ) : (
-              onlineOrders.filter(order => {
+              onlineVisible.filter(order => {
                 if (onlineStatusFilter === 'all') return true;
                 if (onlineStatusFilter === 'pending') return order.status === 'pending';
                 if (onlineStatusFilter === 'processing') return ['processing', 'preparing', 'ready', 'shipped', 'in_transit', 'confirmed'].includes(order.status);
                 if (onlineStatusFilter === 'delivered') return ['delivered', 'completed'].includes(order.status);
                 return true;
               }).map((order) => (
-                <div key={order.id} className="border-2 border-blue-200 rounded-lg p-3 sm:p-6 bg-white hover:shadow-lg transition-all">
+                <div key={order.id} id={`order-${order.id}`} className={`border-2 rounded-lg p-3 sm:p-6 bg-white hover:shadow-lg transition-all ${highlightedOrderId === order.id ? 'border-primary ring-2 ring-primary ring-offset-2 shadow-lg' : 'border-blue-200'}`}>
                   {/* Mobile-first header layout */}
                   <div className="space-y-3 mb-4">
                     {/* Order number and ID */}
@@ -1315,10 +1454,10 @@ export default function OrderManagement() {
                         📦 Commande En Ligne
                       </Badge>
                       <Badge className={`${statusColors[order.status]} text-[10px] sm:text-xs shrink-0`}>
-                        {statusLabels[order.status]}
+                        {t(statusLabelKeys[order.status] || '')}
                       </Badge>
                       <Badge className={`${paymentStatusColors[order.payment_status]} text-[10px] sm:text-xs shrink-0`}>
-                        {paymentStatusLabels[order.payment_status]}
+                        {t(paymentStatusLabelKeys[order.payment_status] || '')}
                       </Badge>
                       {order.escrow && (
                         <Badge className={`text-[10px] sm:text-xs shrink-0 ${
@@ -1363,13 +1502,13 @@ export default function OrderManagement() {
                           </span>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">ID Client:</span>
+                          <span className="text-muted-foreground">{t('orderManagement.idClient')}</span>
                           <span className="ml-2 font-mono text-[10px] sm:text-xs font-semibold bg-muted px-1.5 py-0.5 rounded">
                             {order.customers?.profiles?.public_id || 'Non attribué'}
                           </span>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">📞 Téléphone:</span>
+                          <span className="text-muted-foreground">{t('orderManagement.telephone2')}</span>
                           <span className="ml-2 font-semibold">
                             {order.customers?.profiles?.phone || 'Non renseigné'}
                           </span>
@@ -1386,7 +1525,7 @@ export default function OrderManagement() {
                         <div className="flex items-start gap-2">
                           <MapPin className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
                           <div>
-                            <span className="text-muted-foreground text-xs">Adresse de livraison:</span>
+                            <span className="text-muted-foreground text-xs">{t('orderManagement.adresseDeLivraison')}</span>
                             <p className="font-medium text-sm mt-1">
                               {[
                                 (order.shipping_address as any)?.address || (order.shipping_address as any)?.address_line,
@@ -1421,7 +1560,7 @@ export default function OrderManagement() {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground mb-2">Articles commandés</p>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">{t('orderManagement.articlesCommandes')}</p>
                       <div className="space-y-2">
                         {order.order_items?.map((item) => (
                           <div key={item.id} className="flex items-center justify-between bg-muted/30 p-2 rounded">
@@ -1434,14 +1573,14 @@ export default function OrderManagement() {
                             </div>
                             <div className="text-right">
                               <p className="text-sm font-semibold">x{item.quantity}</p>
-                              <p className="text-xs text-muted-foreground">{fmtAmount(item.unit_price)}</p>
+                              <p className="text-xs text-muted-foreground">{fmtAmount(item.unit_price, order.currency)}</p>
                             </div>
                           </div>
                         ))}
                       </div>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Montant total</p>
+                      <p className="text-sm font-medium text-muted-foreground">{t('orderManagement.montantTotal')}</p>
                       <p className="text-xl font-bold text-blue-700">
                         {fmtAmount(order.total_amount, order.currency)}
                       </p>
@@ -1452,10 +1591,10 @@ export default function OrderManagement() {
                       )}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">Méthode de paiement</p>
+                      <p className="text-sm font-medium text-muted-foreground">{t('orderManagement.methodeDePaiement')}</p>
                       <div className="text-sm text-muted-foreground">
                         <CreditCard className="w-4 h-4 inline mr-1" />
-                        {getPaymentMethodLabel(order)}
+                        {getPaymentMethodLabel(order, t)}
                       </div>
                     </div>
                   </div>
@@ -1540,15 +1679,15 @@ export default function OrderManagement() {
 
 
       <Dialog open={!!deliveryDialogOrder} onOpenChange={(open) => !open && setDeliveryDialogOrder(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Définir le délai de livraison</DialogTitle>
+            <DialogTitle>{t('orderManagement.definirLeDelaiDeLivraison')}</DialogTitle>
             <DialogDescription>
               Ce délai démarre dès la confirmation vendeur. Si le client ne confirme pas la réception 72h après cette date, le système libérera automatiquement l'escrow.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Label htmlFor="estimated-delivery-days">Nombre de jours</Label>
+            <Label htmlFor="estimated-delivery-days">{t('orderManagement.nombreDeJours')}</Label>
             <Input
               id="estimated-delivery-days"
               type="number"
@@ -1596,12 +1735,12 @@ export default function OrderManagement() {
               {/* Informations générales */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h4 className="font-semibold mb-2">Informations commande</h4>
+                  <h4 className="font-semibold mb-2">{t('orderManagement.informationsCommande')}</h4>
                   <div className="space-y-2 text-sm">
-                    <div>Status: <Badge className={statusColors[selectedOrder.status]}>{statusLabels[selectedOrder.status]}</Badge></div>
-                    <div>Paiement: <Badge className={paymentStatusColors[selectedOrder.payment_status]}>{paymentStatusLabels[selectedOrder.payment_status]}</Badge></div>
+                    <div>{t('orders.statusLabel')} <Badge className={statusColors[selectedOrder.status]}>{t(statusLabelKeys[selectedOrder.status] || '')}</Badge></div>
+                    <div>{t('orderManagement.paiement')} <Badge className={paymentStatusColors[selectedOrder.payment_status]}>{t(paymentStatusLabelKeys[selectedOrder.payment_status] || '')}</Badge></div>
                     <div>Date: {new Date(selectedOrder.created_at).toLocaleDateString('fr-FR')}</div>
-                    <div>Méthode de paiement: {getPaymentMethodLabel(selectedOrder)}</div>
+                    <div>{t('orders.paymentMethodLabel')} {getPaymentMethodLabel(selectedOrder, t)}</div>
                   </div>
                 </div>
                 <div>
@@ -1619,7 +1758,7 @@ export default function OrderManagement() {
                     )}
                     {selectedOrder.shipping_amount > 0 && (
                       <div className="flex justify-between">
-                        <span>Livraison:</span>
+                        <span>{t('orderManagement.livraison')}</span>
                         <span>{fmtAmount(selectedOrder.shipping_amount, selectedOrder.currency)}</span>
                       </div>
                     )}
@@ -1639,7 +1778,7 @@ export default function OrderManagement() {
 
               {/* Articles commandés */}
               <div>
-                <h4 className="font-semibold mb-4">Articles commandés</h4>
+                <h4 className="font-semibold mb-4">{t('orderManagement.articlesCommandes')}</h4>
                 <div className="space-y-2">
                   {selectedOrder.order_items?.map((item) => (
                     <div key={item.id} className="flex justify-between items-center py-2 border-b">
@@ -1655,10 +1794,13 @@ export default function OrderManagement() {
                 </div>
               </div>
 
+              {/* Litige (visible si le client a demandé un remboursement) — le vendeur donne sa version */}
+              <OrderDisputeThread orderId={selectedOrder.id} currentParty="vendor" />
+
               {/* Adresses */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <h4 className="font-semibold mb-2">Adresse de livraison</h4>
+                  <h4 className="font-semibold mb-2">{t('orderManagement.adresseDeLivraison2')}</h4>
                   <div className="text-sm text-muted-foreground">
                     {selectedOrder.shipping_address ? (
                       <div>
@@ -1668,13 +1810,13 @@ export default function OrderManagement() {
                         {(selectedOrder.shipping_address as Address)?.country && <div>{(selectedOrder.shipping_address as Address).country}</div>}
                       </div>
                     ) : (
-                      <span>Non spécifiée</span>
+                      <span>{t('orderManagement.nonSpecifiee')}</span>
                     )}
                   </div>
                 </div>
                 {selectedOrder.billing_address && (
                   <div>
-                    <h4 className="font-semibold mb-2">Adresse de facturation</h4>
+                    <h4 className="font-semibold mb-2">{t('orderManagement.adresseDeFacturation')}</h4>
                     <div className="text-sm text-muted-foreground">
                       {(selectedOrder.billing_address as Address)?.street && <div>{(selectedOrder.billing_address as Address).street}</div>}
                       {(selectedOrder.billing_address as Address)?.city && <div>{(selectedOrder.billing_address as Address).city}</div>}
@@ -1737,7 +1879,7 @@ export default function OrderManagement() {
 <body>
 <div class="label">
   <div class="header">
-    <h1>📦 Étiquette Colis</h1>
+    <h1>{t('orderManagement.etiquetteColis')}</h1>
     <div class="order-num">${selectedOrder.order_number}</div>
   </div>
 
@@ -1755,7 +1897,7 @@ export default function OrderManagement() {
 
   ${addr ? `
   <div class="section">
-    <div class="section-title">Adresse de livraison</div>
+    <div class="section-title">{t('orderManagement.adresseDeLivraison2')}</div>
     <div class="address-block">
       ${addr.street || addr.address_line ? `<div class="address-line">${addr.street || addr.address_line}</div>` : ''}
       <div class="address-line">${addr.city || ''}${addr.postal_code ? ', ' + addr.postal_code : ''}</div>
@@ -1765,7 +1907,7 @@ export default function OrderManagement() {
 
   ${isCOD ? `
   <div class="section">
-    <div class="cod-badge">⚠️ Paiement à la livraison (COD)</div>
+    <div class="cod-badge">{t('orderManagement.paiementALaLivraisonCod')}</div>
     ${codPhone ? `
     <div class="cod-phone field">
       <span class="icon">📱</span>

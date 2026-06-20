@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
+import { bureauFetch } from '@/lib/bureauApi';
 import {
   isAccountLocked,
   recordFailedAttempt,
@@ -136,66 +137,35 @@ export const useBureauAuth = () => {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke<VerifyOTPResponse>(
-        'auth-verify-otp',
-        {
-          body: {
-            identifier: identifier,
-            otp: otp,
-            user_type: 'bureau'
-          }
-        }
-      );
-
-      if (error) {
-        console.error('[useBureauAuth] Erreur vérification OTP:', error);
-        toast.error('Erreur de vérification. Veuillez réessayer.');
-        return false;
-      }
-
-      if (!data) {
-        toast.error('Réponse vide du serveur');
-        return false;
-      }
+      // Vérification OTP + émission du JWT bureau SIGNÉ côté backend (auth réelle).
+      const data = await bureauFetch<any>('/api/v2/bureau/auth/verify-otp', {
+        method: 'POST', auth: false, body: { identifier, otp },
+      });
 
       if (!data.success) {
         toast.error(data.error || 'Code incorrect');
-
-        // Afficher tentatives restantes
-        if (data.attempts_remaining !== undefined) {
-          if (data.attempts_remaining === 0) {
-            toast.error('Trop de tentatives. Demandez un nouveau code.');
-            setRequiresOTP(false);
-          } else {
-            toast.warning(`⚠️ ${data.attempts_remaining} tentative(s) restante(s)`);
-          }
+        const remaining = (data as any).attempts_remaining;
+        if (remaining !== undefined) {
+          if (remaining === 0) { toast.error('Trop de tentatives. Demandez un nouveau code.'); setRequiresOTP(false); }
+          else toast.warning(`⚠️ ${remaining} tentative(s) restante(s)`);
         }
-
         return false;
       }
 
-      // Succès → Stocker session (sessionStorage pour sécurité - expire à la fermeture)
-      // On ne stocke que le minimum nécessaire et non sensible
-      if (data.session_token && data.user) {
+      const token = (data as any).token;
+      const bureau = (data as any).bureau;
+      if (token && bureau?.id) {
         const sessionData = {
-          token: data.session_token,
-          bureauId: data.user.id,
-          bureauCode: data.user.bureau_code,
-          commune: data.user.commune,
-          prefecture: data.user.prefecture,
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24h max
+          token, // JWT signé serveur (validé par /api/v2/bureau/*)
+          bureauId: bureau.id,
+          bureauCode: bureau.bureau_code,
+          commune: bureau.commune,
+          prefecture: bureau.prefecture,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         };
-
-        // Utiliser sessionStorage par défaut (plus sécurisé - session fermée = données effacées)
         sessionStorage.setItem('bureau_session', JSON.stringify(sessionData));
-
-        toast.success(`Bienvenue Bureau ${data.user.bureau_code} - ${data.user.commune} !`);
-
-        // Redirection après 500ms
-        setTimeout(() => {
-          window.location.href = data.redirect_url || '/bureau';
-        }, 500);
-
+        toast.success(`Bienvenue Bureau ${bureau.bureau_code} - ${bureau.commune} !`);
+        setTimeout(() => { window.location.href = '/bureau'; }, 500);
         return true;
       }
 

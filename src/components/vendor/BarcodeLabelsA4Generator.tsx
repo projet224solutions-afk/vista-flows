@@ -4,6 +4,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
@@ -66,6 +67,7 @@ function encodeCode128(text: string): string {
 }
 
 export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabelsA4GeneratorProps) {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const [open, setOpen] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
@@ -106,7 +108,7 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
       setSelectedProducts(new Set(validProducts.map(p => p.id)));
 
       if (validProducts.length === 0) {
-        toast.info('Aucun produit avec code-barres trouvé', {
+        toast.info(t('barcodeLabelsA4Generator.aucunProduitAvecCodeBarres'), {
           description: 'Créez des produits pour générer des étiquettes'
         });
       } else {
@@ -114,7 +116,7 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
       }
     } catch (error) {
       console.error('Erreur chargement produits:', error);
-      toast.error('Erreur lors du chargement des produits');
+      toast.error(t('barcodeLabelsA4Generator.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -181,12 +183,12 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
   const generatePDF = async () => {
     const labels = getLabelsToGenerate();
     if (labels.length === 0) {
-      toast.error('Sélectionnez au moins un produit');
+      toast.error(t('barcodeLabelsA4Generator.selectionnezAuMoinsUnProduit'));
       return;
     }
 
     setGenerating(true);
-    toast.info('Génération du PDF en cours...');
+    toast.info(t('barcodeLabelsA4Generator.generationDuPdfEnCours'));
 
     try {
       const layout = GRID_LAYOUTS[gridLayout];
@@ -282,7 +284,7 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
 
     } catch (error) {
       console.error('Erreur génération PDF:', error);
-      toast.error('Erreur lors de la génération du PDF');
+      toast.error(t('barcodeLabelsA4Generator.erreurLorsDeLaGeneration'));
     } finally {
       setGenerating(false);
     }
@@ -292,7 +294,7 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
   const printLabels = async () => {
     const labels = getLabelsToGenerate();
     if (labels.length === 0) {
-      toast.error('Sélectionnez au moins un produit');
+      toast.error(t('barcodeLabelsA4Generator.selectionnezAuMoinsUnProduit'));
       return;
     }
 
@@ -300,7 +302,7 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
 
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
-      toast.error('Popup bloquée - autorisez les popups');
+      toast.error(t('barcodeLabelsA4Generator.popupBloqueeAutorisezLesPopups'));
       return;
     }
 
@@ -322,7 +324,7 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Étiquettes codes-barres</title>
+          <title>{t('barcodeLabelsA4Generator.etiquettesCodesBarres')}</title>
           <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
           <style>
             @page { size: A4; margin: 5mm; }
@@ -399,7 +401,7 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full sm:w-auto gap-1.5 border-primary/30 hover:border-primary hover:bg-primary/5 text-sm px-3">
           <BarcodeIcon className="h-4 w-4 shrink-0" />
-          <span className="truncate">Étiquettes</span>
+          <span className="truncate">{t('barcodeLabelsA4Generator.etiquettes')}</span>
         </Button>
       </DialogTrigger>
 
@@ -450,7 +452,7 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs font-medium">Sélection</Label>
+              <Label className="text-xs font-medium">{t('barcodeLabelsA4Generator.selection')}</Label>
               <div className="flex gap-1">
                 <Button size="sm" variant="outline" onClick={selectAll} disabled={products.length === 0} className="h-7 text-xs px-2">
                   Tout
@@ -462,7 +464,7 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs font-medium">Résumé</Label>
+              <Label className="text-xs font-medium">{t('barcodeLabelsA4Generator.resume')}</Label>
               <div className="text-xs space-y-0.5">
                 <div className="flex items-center gap-1.5">
                   <Package className="h-3.5 w-3.5 text-muted-foreground" />
@@ -487,8 +489,8 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
               ) : products.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <BarcodeIcon className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                  <p className="font-medium">Aucun produit avec code-barres</p>
-                  <p className="text-xs mt-1">Créez des produits pour générer des étiquettes</p>
+                  <p className="font-medium">{t('barcodeLabelsA4Generator.aucunProduitAvecCodeBarres2')}</p>
+                  <p className="text-xs mt-1">{t('barcodeLabelsA4Generator.creezDesProduitsPourGenerer')}</p>
                 </div>
               ) : (
                 <div className="space-y-1.5">
@@ -533,7 +535,7 @@ export function BarcodeLabelsA4Generator({ vendorId, businessName }: BarcodeLabe
                         }}
                         onClick={(e) => e.stopPropagation()}
                         className="w-14 h-7 text-xs text-center"
-                        title="Quantité d'étiquettes"
+                        title={t('barcodeLabelsA4Generator.quantiteDEtiquettes')}
                       />
                     </div>
                   ))}

@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Wallet, Info, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import UniversalWalletTransactions from '@/components/wallet/UniversalWalletTransactions';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface VendorAgentWalletViewProps {
   vendorId: string;
@@ -12,6 +13,7 @@ interface VendorAgentWalletViewProps {
 }
 
 export function VendorAgentWalletView({ vendorId, agentName }: VendorAgentWalletViewProps) {
+  const { t } = useTranslation();
   const [vendorUserId, setVendorUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -46,7 +48,7 @@ export function VendorAgentWalletView({ vendorId, agentName }: VendorAgentWallet
         <CardContent className="py-8">
           <div className="flex items-center justify-center gap-2">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-            <span className="text-sm text-muted-foreground">Chargement...</span>
+            <span className="text-sm text-muted-foreground">{t('vendorAgentWallet.loading')}</span>
           </div>
         </CardContent>
       </Card>
@@ -58,7 +60,7 @@ export function VendorAgentWalletView({ vendorId, agentName }: VendorAgentWallet
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          Impossible de charger les informations du vendeur.
+          {t('vendorAgentWallet.cannotLoad')}
         </AlertDescription>
       </Alert>
     );
@@ -70,8 +72,7 @@ export function VendorAgentWalletView({ vendorId, agentName }: VendorAgentWallet
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          <strong>{agentName}</strong>, vous utilisez le wallet partagé du vendeur.
-          Toutes les transactions sont effectuées sur le compte principal du vendeur.
+          <strong>{agentName}</strong>, {t('vendorAgentWallet.sharedWalletInfo')}
         </AlertDescription>
       </Alert>
 

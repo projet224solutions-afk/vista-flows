@@ -7,6 +7,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { convertBlobToWav, isProblematicAudio } from '@/services/audioToWav';
 import {
   Send,
   Paperclip,
@@ -268,7 +269,7 @@ export default function MessageInput({
 
       mediaRecorder.onerror = (e) => {
         console.error('[Audio] Erreur MediaRecorder:', e);
-        toast.error("Erreur lors de l'enregistrement");
+        toast.error(t('messageInput.erreurLorsDeLEnregistrement'));
         stream.getTracks().forEach(track => track.stop());
         setIsRecording(false);
       };
@@ -278,25 +279,33 @@ export default function MessageInput({
 
         // Utiliser le mimeType réel du recorder
         const actualMimeType = mediaRecorder.mimeType || mimeType || 'audio/webm';
-        const audioBlob = new Blob(audioChunksRef.current, { type: actualMimeType });
+        let audioBlob = new Blob(audioChunksRef.current, { type: actualMimeType });
+        let effectiveMime = actualMimeType;
 
-        // Déterminer l'extension basée sur le type MIME réel
+        // Compatibilité UNIVERSELLE : webm/opus (Chrome/Android) illisible sur iOS/Safari
+        // → transcodage WAV côté client (lu partout). Best-effort : sinon on garde l'original.
+        if (isProblematicAudio(actualMimeType)) {
+          const wav = await convertBlobToWav(audioBlob);
+          if (wav) { audioBlob = wav; effectiveMime = 'audio/wav'; console.log('[Audio] Transcodé en WAV (compat iOS/Safari)'); }
+        }
+
+        // Déterminer l'extension basée sur le type MIME effectif
         let finalExtension = fileExtension;
-        if (actualMimeType.includes('mp4') || actualMimeType.includes('m4a')) {
-          finalExtension = 'm4a';
-        } else if (actualMimeType.includes('webm')) {
-          finalExtension = 'webm';
-        } else if (actualMimeType.includes('ogg')) {
-          finalExtension = 'ogg';
-        } else if (actualMimeType.includes('wav')) {
+        if (effectiveMime.includes('wav')) {
           finalExtension = 'wav';
+        } else if (effectiveMime.includes('mp4') || effectiveMime.includes('m4a')) {
+          finalExtension = 'm4a';
+        } else if (effectiveMime.includes('webm')) {
+          finalExtension = 'webm';
+        } else if (effectiveMime.includes('ogg')) {
+          finalExtension = 'ogg';
         }
 
         // Créer un vrai objet File
         const audioFile = new File(
           [audioBlob],
           `vocal_${Date.now()}.${finalExtension}`,
-          { type: actualMimeType }
+          { type: effectiveMime }
         );
 
         console.log('[Audio] Fichier créé:', {
@@ -308,7 +317,7 @@ export default function MessageInput({
         stream.getTracks().forEach(track => track.stop());
 
         if (audioFile.size < 1000) {
-          toast.error("L'enregistrement est trop court ou vide");
+          toast.error(t('messageInput.lEnregistrementEstTropCourt'));
           setIsRecording(false);
           return;
         }
@@ -316,7 +325,7 @@ export default function MessageInput({
         try {
           setIsSending(true);
           await onSendFile(audioFile);
-          toast.success('Message vocal envoyé');
+          toast.success(t('messageInput.messageVocalEnvoye'));
         } catch (error: any) {
           console.error('[Audio] Erreur envoi:', error);
           toast.error(error?.message || "Erreur lors de l'envoi du message vocal");
@@ -335,11 +344,11 @@ export default function MessageInput({
     } catch (error: any) {
       console.error('[Audio] Erreur enregistrement:', error);
       if (error.name === 'NotAllowedError') {
-        toast.error("Accès au microphone refusé. Autorisez l'accès dans les paramètres.");
+        toast.error(t('messageInput.accesAuMicrophoneRefuseAutorisez'));
       } else if (error.name === 'NotFoundError') {
-        toast.error("Aucun microphone détecté");
+        toast.error(t('messageInput.aucunMicrophoneDetecte'));
       } else {
-        toast.error("Impossible d'accéder au microphone");
+        toast.error(t('messageInput.impossibleDAccederAuMicrophone'));
       }
     }
   };
@@ -496,7 +505,7 @@ export default function MessageInput({
             variant="ghost"
             onClick={() => imageInputRef.current?.click()}
             disabled={disabled || isSending}
-            title="Ajouter une photo"
+            title={t('messageInput.ajouterUnePhoto')}
             className="h-9 w-9"
           >
             <ImageIcon className="w-4 h-4" />
@@ -506,7 +515,7 @@ export default function MessageInput({
             variant="ghost"
             onClick={() => videoInputRef.current?.click()}
             disabled={disabled || isSending}
-            title="Ajouter une vidéo"
+            title={t('messageInput.ajouterUneVideo')}
             className="h-9 w-9"
           >
             <FileVideo className="w-4 h-4" />
@@ -516,7 +525,7 @@ export default function MessageInput({
             variant="ghost"
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled || isSending}
-            title="Ajouter un fichier"
+            title={t('messageInput.ajouterUnFichier')}
             className="h-9 w-9"
           >
             <Paperclip className="w-4 h-4" />

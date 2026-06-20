@@ -2,6 +2,7 @@ import { ArrowUpRight, ExternalLink, Plane, Ticket } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface AffiliateFlightPartnerCardProps {
   product: any;
@@ -29,12 +30,12 @@ function normalizePartnerUrl(url?: string) {
   return `https://${trimmedUrl}`;
 }
 
-function formatPartnerReference(amount?: number | null, currency?: string) {
+function formatPartnerReference(t: (k: string) => string, amount?: number | null, currency?: string) {
   const normalizedAmount = Number(amount || 0);
   const normalizedCurrency = currency || "GNF";
 
   if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) {
-    return "Offre partenaire";
+    return t("flightPartner.partnerOffer");
   }
 
   const decimals = ZERO_DECIMAL_CURRENCIES.has(normalizedCurrency) ? 0 : 2;
@@ -43,7 +44,7 @@ function formatPartnerReference(amount?: number | null, currency?: string) {
     maximumFractionDigits: decimals,
   });
 
-  return `A partir de ${formattedAmount} ${normalizedCurrency}`;
+  return `${t("flightPartner.startingFrom")} ${formattedAmount} ${normalizedCurrency}`;
 }
 
 export function AffiliateFlightPartnerCard({
@@ -51,9 +52,10 @@ export function AffiliateFlightPartnerCard({
   fallbackCurrency = "GNF",
   onOpen,
 }: AffiliateFlightPartnerCardProps) {
+  const { t } = useTranslation();
   const coverImage = product.images?.[0];
-  const description = product.short_description || product.description || "Comparez les offres disponibles et finalisez votre reservation directement chez notre partenaire.";
-  const referencePrice = formatPartnerReference(product.price, product.currency || fallbackCurrency);
+  const description = product.short_description || product.description || t("flightPartner.descFallback");
+  const referencePrice = formatPartnerReference(t, product.price, product.currency || fallbackCurrency);
   const partnerUrl = normalizePartnerUrl(product.affiliate_url);
 
   const handlePartnerRedirect = () => {
@@ -88,21 +90,21 @@ export function AffiliateFlightPartnerCard({
         <div className="absolute left-3 top-3 flex items-center gap-2">
           <Badge className="border-0 bg-white/14 text-white backdrop-blur-sm hover:bg-white/14">
             <Ticket className="mr-1 h-3 w-3" />
-            Billet d'avion
+            {t("flightPartner.flightTicket")}
           </Badge>
         </div>
 
         <div className="absolute right-3 top-3">
           <Badge className="border-0 bg-orange-500 text-white hover:bg-orange-500">
             <ExternalLink className="mr-1 h-3 w-3" />
-            Partenaire
+            {t("flightPartner.partner")}
           </Badge>
         </div>
 
         <div className="absolute inset-x-0 bottom-0 p-4 text-white">
           <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1 text-[11px] font-medium backdrop-blur-sm">
             <Plane className="h-3.5 w-3.5" />
-            Reservation affiliee
+            {t("flightPartner.affiliateBooking")}
           </div>
           <h3 className="text-lg font-semibold leading-snug line-clamp-2">
             {product.title}
@@ -119,7 +121,7 @@ export function AffiliateFlightPartnerCard({
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-medium uppercase tracking-[0.18em] text-orange-700">
-                Mode partenaire
+                {t("flightPartner.partnerMode")}
               </p>
               <p className="mt-1 text-lg font-semibold text-orange-600">
                 {referencePrice}
@@ -139,7 +141,7 @@ export function AffiliateFlightPartnerCard({
           }}
         >
           <Plane className="mr-2 h-4 w-4" />
-          Reserver votre vol
+          {t("flightPartner.bookFlight")}
         </Button>
       </CardContent>
     </Card>

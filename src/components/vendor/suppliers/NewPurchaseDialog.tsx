@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -125,6 +126,7 @@ export function NewPurchaseDialog({
   onConfirm,
   isCreating,
 }: NewPurchaseDialogProps) {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const [step, setStep] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
@@ -448,7 +450,7 @@ export function NewPurchaseDialog({
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 md:h-4 md:w-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher un fournisseur..."
+                placeholder={t('newPurchaseDialog.rechercherUnFournisseur')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 md:pl-9 h-12 md:h-10 text-base md:text-sm"
@@ -583,11 +585,11 @@ export function NewPurchaseDialog({
                 <SelectTrigger className="w-[130px] sm:w-48 h-9 sm:h-10 text-xs sm:text-sm">
                   <Filter className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
                   <span className="truncate">
-                    <SelectValue placeholder="Catégorie" />
+                    <SelectValue placeholder={t('newPurchaseDialog.categorie')} />
                   </span>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Toutes catégories</SelectItem>
+                  <SelectItem value="all">{t('newPurchaseDialog.toutesCategories')}</SelectItem>
                   {availableCategories.map(cat => (
                     <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                   ))}
@@ -601,7 +603,7 @@ export function NewPurchaseDialog({
               <div className="flex flex-col min-h-0 border rounded-lg">
                 <div className="p-2 sm:p-3 border-b bg-muted/30">
                   <Label className="text-xs sm:text-sm font-medium flex items-center justify-between">
-                    <span>Produits disponibles</span>
+                    <span>{t('newPurchaseDialog.produitsDisponibles')}</span>
                     <Badge variant="secondary" className="text-[10px] sm:text-xs">{filteredSupplierProducts.length}</Badge>
                   </Label>
                 </div>
@@ -663,7 +665,7 @@ export function NewPurchaseDialog({
               <div className="flex flex-col min-h-0 border rounded-lg border-primary/30">
                 <div className="p-2 sm:p-3 border-b bg-primary/5">
                   <Label className="text-xs sm:text-sm font-medium flex items-center justify-between">
-                    <span className="text-primary">Sélectionnés</span>
+                    <span className="text-primary">{t('newPurchaseDialog.selectionnes')}</span>
                     <Badge className="bg-primary text-[10px] sm:text-xs">{selectedProducts.length} produit(s)</Badge>
                   </Label>
                 </div>
@@ -751,7 +753,7 @@ export function NewPurchaseDialog({
                                   <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
                                     <Hash className="h-4 w-4 text-blue-600" />
                                   </div>
-                                  <span className="text-sm font-medium text-muted-foreground">Quantité (unités)</span>
+                                  <span className="text-sm font-medium text-muted-foreground">{t('newPurchaseDialog.quantiteUnites')}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <span className={cn(
@@ -816,7 +818,7 @@ export function NewPurchaseDialog({
               <div className="p-2.5 sm:p-4 rounded-lg bg-primary/10 border border-primary/20 flex-shrink-0">
                 <div className="flex justify-between items-center gap-2">
                   <div className="min-w-0">
-                    <span className="font-medium text-xs sm:text-base">Total estimé</span>
+                    <span className="font-medium text-xs sm:text-base">{t('newPurchaseDialog.totalEstime')}</span>
                     <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 truncate">
                       {selectedProducts.length} produit(s) • {totalItems} unités
                     </p>

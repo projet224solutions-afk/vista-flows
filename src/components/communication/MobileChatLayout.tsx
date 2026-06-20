@@ -340,7 +340,7 @@ export default function MobileChatLayout({
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher..."
+                placeholder={t('mobileChatLayout.rechercher')}
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
                 className="pl-9 bg-muted/50 border-0"

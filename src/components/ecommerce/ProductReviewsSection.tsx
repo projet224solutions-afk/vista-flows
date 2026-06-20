@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Star, ThumbsUp } from 'lucide-react';
@@ -29,6 +30,7 @@ interface ProductReviewsSectionProps {
  * Section complète des avis produit (style Amazon)
  */
 export const ProductReviewsSection = ({ productId }: ProductReviewsSectionProps) => {
+  const { t } = useTranslation();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [rating, setRating] = useState({ average: 0, total: 0 });
   const [loading, setLoading] = useState(false);
@@ -118,7 +120,7 @@ export const ProductReviewsSection = ({ productId }: ProductReviewsSectionProps)
   };
 
   if (loading) {
-    return <div>Chargement des avis...</div>;
+    return <div>{t('productReviewsSection.chargementDesAvis')}</div>;
   }
 
   return (

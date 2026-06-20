@@ -4,6 +4,7 @@
  */
 
 import { useRef } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import Barcode from 'react-barcode';
 import { Button } from '@/components/ui/button';
 import { Money } from '@/components/Money';
@@ -30,6 +31,7 @@ export function ProductBarcodeDisplay({
   showActions = true,
   size = 'medium'
 }: ProductBarcodeDisplayProps) {
+  const { t } = useTranslation();
   const barcodeRef = useRef<HTMLDivElement>(null);
 
   // Déterminer le format du code-barres
@@ -53,9 +55,9 @@ export function ProductBarcodeDisplay({
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(barcode);
-      toast.success('Code-barres copié !');
+      toast.success(t('productBarcodeDisplay.codeBarresCopie'));
     } catch (_error) {
-      toast.error('Erreur lors de la copie');
+      toast.error(t('productBarcodeDisplay.erreurLorsDeLaCopie'));
     }
   };
 
@@ -74,9 +76,9 @@ export function ProductBarcodeDisplay({
       link.href = canvas.toDataURL('image/png');
       link.click();
 
-      toast.success('Code-barres téléchargé en PNG');
+      toast.success(t('productBarcodeDisplay.codeBarresTelechargeEnPng'));
     } catch (_error) {
-      toast.error('Erreur lors du téléchargement');
+      toast.error(t('productBarcodeDisplay.erreurLorsDuTelechargement'));
     }
   };
 
@@ -104,9 +106,9 @@ export function ProductBarcodeDisplay({
 
       pdf.save(`barcode-${barcode}.pdf`);
 
-      toast.success('Code-barres téléchargé en PDF');
+      toast.success(t('productBarcodeDisplay.codeBarresTelechargeEnPdf'));
     } catch (_error) {
-      toast.error('Erreur lors du téléchargement');
+      toast.error(t('productBarcodeDisplay.erreurLorsDuTelechargement'));
     }
   };
 
@@ -122,7 +124,7 @@ export function ProductBarcodeDisplay({
 
       const printWindow = window.open('', '_blank');
       if (!printWindow) {
-        toast.error('Popup bloquée - autorisez les popups');
+        toast.error(t('productBarcodeDisplay.popupBloqueeAutorisezLesPopups'));
         return;
       }
 
@@ -161,7 +163,7 @@ export function ProductBarcodeDisplay({
       printWindow.document.close();
 
     } catch (_error) {
-      toast.error('Erreur lors de l\'impression');
+      toast.error(t('productBarcodeDisplay.erreurLorsDeL'));
     }
   };
 
@@ -169,7 +171,7 @@ export function ProductBarcodeDisplay({
     return (
       <div className="flex items-center gap-2 text-muted-foreground text-sm">
         <BarcodeIcon className="h-4 w-4" />
-        <span>Aucun code-barres</span>
+        <span>{t('productBarcodeDisplay.aucunCodeBarres')}</span>
       </div>
     );
   }
@@ -179,7 +181,7 @@ export function ProductBarcodeDisplay({
       <DialogTrigger asChild>
         <div
           className="cursor-pointer hover:opacity-80 transition-opacity bg-white p-2 rounded-lg border inline-block"
-          title="Cliquer pour agrandir et imprimer"
+          title={t('productBarcodeDisplay.cliquerPourAgrandirEtImprimer')}
         >
           <div ref={barcodeRef} className="bg-white p-2">
             <Barcode
@@ -197,7 +199,7 @@ export function ProductBarcodeDisplay({
         </div>
       </DialogTrigger>
 
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <BarcodeIcon className="h-5 w-5" />

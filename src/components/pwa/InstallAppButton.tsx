@@ -10,6 +10,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Download, Smartphone, CheckCircle2, Share, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -32,6 +33,7 @@ interface InstallAppButtonProps {
 }
 
 export function InstallAppButton({ variant = 'default', className = '' }: InstallAppButtonProps) {
+  const { t } = useTranslation();
   const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [iosGuideOpen, setIosGuideOpen] = useState(false);
@@ -97,7 +99,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
     try {
       // 0) Déjà installé
       if (isStandalone) {
-        toast.success('Application déjà installée !', {
+        toast.success(t('installAppButton.applicationDejaInstallee'), {
           description: "224Solutions est déjà sur votre écran d'accueil.",
         });
         setConfirmOpen(false);
@@ -109,7 +111,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
         setConfirmOpen(false);
 
         if (isIOS && !isSafari && !isInAppBrowser) {
-          toast.info('Ouvrir dans Safari', {
+          toast.info(t('installAppButton.ouvrirDansSafari'), {
             description: "L'installation PWA sur iOS fonctionne uniquement avec Safari.",
             duration: 6000,
           });
@@ -122,7 +124,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
 
       // 2) L'installation PWA ne fonctionne pas dans un iframe / certains webviews
       if (isInIframe || isInAppBrowser) {
-        toast.info('Ouvrir dans le navigateur pour installer', {
+        toast.info(t('installAppButton.ouvrirDansLeNavigateurPour'), {
           description: isInAppBrowser
             ? "Ouvrez ce lien dans Chrome/Safari (les navigateurs intégrés bloquent l'installation)."
             : "Ouvrez l'application dans un nouvel onglet pour installer.",
@@ -140,7 +142,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
         window.localStorage.setItem('enable_pwa_preview', '1');
         const url = new URL(window.location.href);
         url.searchParams.set('pwa', '1');
-        toast.info("Activation de l'installation…", {
+        toast.info(t('installAppButton.activationDeLInstallation'), {
           description: "On recharge la page pour activer le mode PWA (une seule fois).",
           duration: 4000,
         });
@@ -152,7 +154,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
       if (isInstallable) {
         const success = await promptInstall();
         if (success) {
-          toast.success('Application installée !', {
+          toast.success(t('installAppButton.applicationInstallee'), {
             description: "224Solutions est maintenant sur votre écran d'accueil.",
           });
           setConfirmOpen(false);
@@ -164,12 +166,12 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
       setConfirmOpen(false);
 
       if (isMobile) {
-        toast.info('Installation sur Android', {
+        toast.info(t('installAppButton.installationSurAndroid'), {
           description: "Ouvrez le menu (⋮) puis 'Installer l'application' ou 'Ajouter à l'écran d'accueil'.",
           duration: 8000,
         });
       } else {
-        toast.info('Installation sur ordinateur', {
+        toast.info(t('installAppButton.installationSurOrdinateur'), {
           description: "Cliquez sur l'icône d'installation dans la barre d'adresse ou le menu du navigateur.",
           duration: 8000,
         });
@@ -193,7 +195,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
     return (
       <div className={`flex items-center gap-2 text-[#ff4000] ${className}`}>
         <CheckCircle2 className="w-5 h-5" />
-        <span className="text-sm font-medium">Application installée</span>
+        <span className="text-sm font-medium">{t('installAppButton.applicationInstallee2')}</span>
       </div>
     );
   }
@@ -223,14 +225,14 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
           <span className="font-medium">{isMac ? 'Sur Mac :' : 'Sur iPhone/iPad :'}</span>
           {isMac ? (
             <>
-              <span>1. Cliquez sur Fichier dans la barre de menu</span>
-              <span>2. Cliquez sur "Ajouter au Dock"</span>
+              <span>{t('installAppButton.t1CliquezSurFichierDans')}</span>
+              <span>{t('installAppButton.t2CliquezSurAjouterAu')}</span>
             </>
           ) : (
             <>
-              <span>1. Appuyez sur <Share className="inline w-4 h-4" /> (Partager)</span>
-              <span>2. Faites défiler et appuyez sur "Sur l'écran d'accueil"</span>
-              <span>3. Appuyez sur "Ajouter"</span>
+              <span>{t('installAppButton.t1AppuyezSur')} <Share className="inline w-4 h-4" /> (Partager)</span>
+              <span>{t('installAppButton.t2FaitesDefilerEtAppuyez')}</span>
+              <span>{t('installAppButton.t3AppuyezSurAjouter')}</span>
             </>
           )}
         </span>
@@ -240,9 +242,9 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
     if (isMobile) {
       return (
         <span className="flex flex-col gap-2 text-left">
-          <span className="font-medium">Sur Android :</span>
-          <span>1. Appuyez sur <MoreVertical className="inline w-4 h-4" /> (menu)</span>
-          <span>2. Appuyez sur "Installer l'application" ou "Ajouter à l'écran d'accueil"</span>
+          <span className="font-medium">{t('installAppButton.surAndroid')}</span>
+          <span>{t('installAppButton.t1AppuyezSur')} <MoreVertical className="inline w-4 h-4" /> (menu)</span>
+          <span>{t('installAppButton.t2AppuyezSurInstallerL')}</span>
         </span>
       );
     }
@@ -260,7 +262,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-3">
-              <p>Installez l'application pour un accès rapide depuis votre écran d'accueil.</p>
+              <p>{t('installAppButton.installezLApplicationPourUn')}</p>
               <div className="p-3 bg-muted rounded-lg text-sm">
                 {getInstallInstructions()}
               </div>
@@ -268,7 +270,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isInstalling}>Annuler</AlertDialogCancel>
+          <AlertDialogCancel disabled={isInstalling}>{t('installAppButton.annuler')}</AlertDialogCancel>
           <AlertDialogAction onClick={runInstall} disabled={isInstalling}>
             {isInstalling
               ? 'Installation…'
@@ -325,7 +327,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
           </div>
           <div className="flex-1">
             <h3 className="font-bold text-white text-lg">Installer 224Solutions</h3>
-            <p className="text-white/80 text-sm">Accès rapide depuis votre écran d'accueil</p>
+            <p className="text-white/80 text-sm">{t('installAppButton.accesRapideDepuisVotreEcran')}</p>
           </div>
           <Button onClick={handleInstallClick} variant="secondary" className="gap-2 font-semibold">
             <Download className="w-4 h-4" />
@@ -334,7 +336,7 @@ export function InstallAppButton({ variant = 'default', className = '' }: Instal
         </div>
 
         {/* Avantages */}
-        <div className="mt-4 grid grid-cols-3 gap-2 text-center text-white/90 text-xs">
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2 text-center text-white/90 text-xs">
           <div className="flex flex-col items-center gap-1">
             <span className="text-lg">⚡</span>
             <span>Plus rapide</span>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -52,6 +53,7 @@ const priorityColors = {
 };
 
 export function SupportTickets() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -130,7 +132,7 @@ export function SupportTickets() {
       setNewTicket({
         subject: '',
         description: '',
-        category: 'general',
+        category: 'technique',
         priority: 'medium',
       });
       toast({
@@ -211,7 +213,7 @@ export function SupportTickets() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>Mes Tickets</CardTitle>
-                <CardDescription>Support client</CardDescription>
+                <CardDescription>{t('supportTickets.supportClient')}</CardDescription>
               </div>
               <Button size="sm" onClick={() => setShowNewTicketForm(true)}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -225,11 +227,11 @@ export function SupportTickets() {
                 <SelectValue placeholder="Filtrer par statut" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous</SelectItem>
+                <SelectItem value="all">{t('supportTickets.tous')}</SelectItem>
                 <SelectItem value="open">Ouverts</SelectItem>
                 <SelectItem value="in_progress">En cours</SelectItem>
-                <SelectItem value="resolved">Résolus</SelectItem>
-                <SelectItem value="closed">Fermés</SelectItem>
+                <SelectItem value="resolved">{t('supportTickets.resolus')}</SelectItem>
+                <SelectItem value="closed">{t('supportTickets.fermes')}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -276,8 +278,8 @@ export function SupportTickets() {
         {showNewTicketForm ? (
           <Card>
             <CardHeader>
-              <CardTitle>Nouveau Ticket de Support</CardTitle>
-              <CardDescription>Décrivez votre problème ou votre demande</CardDescription>
+              <CardTitle>{t('supportTickets.nouveauTicketDeSupport')}</CardTitle>
+              <CardDescription>{t('supportTickets.decrivezVotreProblemeOuVotre')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -285,7 +287,7 @@ export function SupportTickets() {
                 <Input
                   value={newTicket.subject}
                   onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })}
-                  placeholder="Résumé de votre demande"
+                  placeholder={t('supportTickets.resumeDeVotreDemande')}
                 />
               </div>
 
@@ -294,14 +296,14 @@ export function SupportTickets() {
                 <Textarea
                   value={newTicket.description}
                   onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
-                  placeholder="Décrivez votre problème en détail"
+                  placeholder={t('supportTickets.decrivezVotreProblemeEnDetail')}
                   rows={6}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Catégorie</label>
+                  <label className="text-sm font-medium mb-2 block">{t('supportTickets.categorie')}</label>
                   <Select
                     value={newTicket.category}
                     onValueChange={(value) => setNewTicket({ ...newTicket, category: value })}
@@ -310,17 +312,17 @@ export function SupportTickets() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="general">Général</SelectItem>
-                      <SelectItem value="technical">Technique</SelectItem>
-                      <SelectItem value="billing">Facturation</SelectItem>
-                      <SelectItem value="account">Compte</SelectItem>
-                      <SelectItem value="other">Autre</SelectItem>
+                      <SelectItem value="technique">Technique</SelectItem>
+                      <SelectItem value="facturation">Facturation</SelectItem>
+                      <SelectItem value="produit">Produit</SelectItem>
+                      <SelectItem value="livraison">Livraison</SelectItem>
+                      <SelectItem value="autre">Autre</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Priorité</label>
+                  <label className="text-sm font-medium mb-2 block">{t('supportTickets.priorite')}</label>
                   <Select
                     value={newTicket.priority}
                     onValueChange={(value) => setNewTicket({ ...newTicket, priority: value as TicketPriority })}
@@ -400,7 +402,7 @@ export function SupportTickets() {
                 <Input
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Votre message..."
+                  placeholder={t('supportTickets.votreMessage')}
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                 />
                 <Button onClick={handleSendMessage} disabled={sendMessageMutation.isPending}>
@@ -417,7 +419,7 @@ export function SupportTickets() {
           <Card>
             <CardContent className="flex items-center justify-center h-[600px]">
               <div className="text-center">
-                <p className="text-muted-foreground mb-4">Sélectionnez un ticket ou créez-en un nouveau</p>
+                <p className="text-muted-foreground mb-4">{t('supportTickets.selectionnezUnTicketOuCreez')}</p>
                 <Button onClick={() => setShowNewTicketForm(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Nouveau Ticket

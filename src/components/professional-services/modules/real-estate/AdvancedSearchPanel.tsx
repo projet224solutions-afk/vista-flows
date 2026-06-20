@@ -2,6 +2,7 @@
  * Panneau de recherche avancée pour les biens immobiliers
  */
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,7 @@ interface AdvancedSearchPanelProps {
 }
 
 export function AdvancedSearchPanel({ filters, onFiltersChange, cities }: AdvancedSearchPanelProps) {
+  const { t } = useTranslation();
   const [showAdvanced, setShowAdvanced] = useState(false);
   const formatPrice = useFormatCurrency();
 
@@ -61,7 +63,7 @@ export function AdvancedSearchPanel({ filters, onFiltersChange, cities }: Advanc
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Rechercher par titre, ville, quartier..."
+            placeholder={t('advancedSearchPanel.rechercherParTitreVilleQuartier')}
             className="pl-10"
             value={filters.query}
             onChange={e => updateFilter('query', e.target.value)}
@@ -117,7 +119,7 @@ export function AdvancedSearchPanel({ filters, onFiltersChange, cities }: Advanc
         <Card>
           <CardContent className="p-4 space-y-4">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-semibold">Filtres avancés</h4>
+              <h4 className="text-sm font-semibold">{t('advancedSearchPanel.filtresAvances')}</h4>
               <Button variant="ghost" size="sm" onClick={resetFilters} className="gap-1 text-xs">
                 <RotateCcw className="h-3 w-3" /> Réinitialiser
               </Button>
@@ -126,19 +128,19 @@ export function AdvancedSearchPanel({ filters, onFiltersChange, cities }: Advanc
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {/* Property type */}
               <div className="space-y-1">
-                <Label className="text-xs">Type de bien</Label>
+                <Label className="text-xs">{t('advancedSearchPanel.typeDeBien')}</Label>
                 <Select value={filters.property_type} onValueChange={v => updateFilter('property_type', v)}>
                   <SelectTrigger className="h-9 text-xs">
-                    <SelectValue placeholder="Tous" />
+                    <SelectValue placeholder={t('advancedSearchPanel.tous')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tous</SelectItem>
+                    <SelectItem value="all">{t('advancedSearchPanel.tous')}</SelectItem>
                     <SelectItem value="appartement">🏢 Appartement</SelectItem>
                     <SelectItem value="maison">🏠 Maison</SelectItem>
                     <SelectItem value="villa">🏡 Villa</SelectItem>
                     <SelectItem value="terrain">🌍 Terrain</SelectItem>
                     <SelectItem value="bureau">🏬 Bureau</SelectItem>
-                    <SelectItem value="boutique">🏪 Boutique</SelectItem>
+                    <SelectItem value="boutique">{t('advancedSearchPanel.boutique')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -148,10 +150,10 @@ export function AdvancedSearchPanel({ filters, onFiltersChange, cities }: Advanc
                 <Label className="text-xs">Ville</Label>
                 <Select value={filters.city || 'all'} onValueChange={v => updateFilter('city', v === 'all' ? '' : v)}>
                   <SelectTrigger className="h-9 text-xs">
-                    <SelectValue placeholder="Toutes" />
+                    <SelectValue placeholder={t('advancedSearchPanel.toutes')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Toutes</SelectItem>
+                    <SelectItem value="all">{t('advancedSearchPanel.toutes')}</SelectItem>
                     {cities.map(c => (
                       <SelectItem key={c} value={c}>{c}</SelectItem>
                     ))}
@@ -181,7 +183,7 @@ export function AdvancedSearchPanel({ filters, onFiltersChange, cities }: Advanc
             {/* Price range */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label className="text-xs">Fourchette de prix</Label>
+                <Label className="text-xs">{t('advancedSearchPanel.fourchetteDePrix')}</Label>
                 <span className="text-xs text-muted-foreground">
                   {formatPrice(filters.min_price)} — {filters.max_price >= 5000000000 ? '∞' : formatPrice(filters.max_price)}
                 </span>

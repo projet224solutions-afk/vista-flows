@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 export function DriverSubscriptionManagement() {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
@@ -61,7 +63,7 @@ export function DriverSubscriptionManagement() {
       }
     } catch (error) {
       console.error('Erreur chargement données:', error);
-      toast.error('Erreur de chargement des données');
+      toast.error(t('driverSubscriptionManagement.erreurDeChargementDesDonnees'));
     } finally {
       setLoading(false);
     }
@@ -78,15 +80,15 @@ export function DriverSubscriptionManagement() {
       setUpdating(true);
       const success = await DriverSubscriptionService.updatePrice(price);
       if (success) {
-        toast.success('Prix mis à jour avec succès');
+        toast.success(t('driverSubscriptionManagement.prixMisAJourAvec'));
         setCurrentPrice(newPrice);
         await loadData();
       } else {
-        toast.error('Erreur lors de la mise à jour du prix');
+        toast.error(t('driverSubscriptionManagement.erreurLorsDeLaMise'));
       }
     } catch (error) {
       console.error('Erreur mise à jour prix:', error);
-      toast.error('Erreur système');
+      toast.error(t('driverSubscriptionManagement.erreurSysteme'));
     } finally {
       setUpdating(false);
     }
@@ -99,11 +101,11 @@ export function DriverSubscriptionManagement() {
         toast.success('Abonnement suspendu');
         await loadData();
       } else {
-        toast.error('Erreur lors de la suspension');
+        toast.error(t('driverSubscriptionManagement.erreurLorsDeLaSuspension'));
       }
     } catch (error) {
       console.error('Erreur suspension:', error);
-      toast.error('Erreur système');
+      toast.error(t('driverSubscriptionManagement.erreurSysteme'));
     }
   };
 
@@ -111,14 +113,14 @@ export function DriverSubscriptionManagement() {
     try {
       const success = await DriverSubscriptionService.reactivateSubscription(subscriptionId);
       if (success) {
-        toast.success('Abonnement réactivé');
+        toast.success(t('driverSubscriptionManagement.abonnementReactive'));
         await loadData();
       } else {
-        toast.error('Erreur lors de la réactivation');
+        toast.error(t('driverSubscriptionManagement.erreurLorsDeLaReactivation'));
       }
     } catch (error) {
       console.error('Erreur réactivation:', error);
-      toast.error('Erreur système');
+      toast.error(t('driverSubscriptionManagement.erreurSysteme'));
     }
   };
 
@@ -129,7 +131,7 @@ export function DriverSubscriptionManagement() {
       await loadData();
     } catch (error) {
       console.error('Erreur marquage expirés:', error);
-      toast.error('Erreur système');
+      toast.error(t('driverSubscriptionManagement.erreurSysteme'));
     }
   };
 
@@ -193,7 +195,7 @@ export function DriverSubscriptionManagement() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Expirés</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('driverSubscriptionManagement.expires')}</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -219,7 +221,7 @@ export function DriverSubscriptionManagement() {
         <TabsContent value="subscriptions" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Liste des Abonnements</CardTitle>
+              <CardTitle>{t('driverSubscriptionManagement.listeDesAbonnements')}</CardTitle>
               <CardDescription>
                 Gérez les abonnements actifs et expirés
               </CardDescription>
@@ -233,7 +235,7 @@ export function DriverSubscriptionManagement() {
                     <TableHead>Statut</TableHead>
                     <TableHead>Expiration</TableHead>
                     <TableHead>Prix</TableHead>
-                    <TableHead>Paiement</TableHead>
+                    <TableHead>{t('driverSubscriptionManagement.paiement')}</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -311,7 +313,7 @@ export function DriverSubscriptionManagement() {
         <TabsContent value="settings" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Prix de l'Abonnement</CardTitle>
+              <CardTitle>{t('driverSubscriptionManagement.prixDeLAbonnement')}</CardTitle>
               <CardDescription>
                 Modifiez le prix mensuel de l'abonnement Taxi Moto et Livreur
               </CardDescription>
@@ -325,7 +327,7 @@ export function DriverSubscriptionManagement() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="new-price">Nouveau prix (GNF)</Label>
+                <Label htmlFor="new-price">{t('driverSubscriptionManagement.nouveauPrixGnf')}</Label>
                 <div className="flex gap-2">
                   <Input
                     id="new-price"

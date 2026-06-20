@@ -4,10 +4,12 @@
  */
 
 import { useEffect, useState, useRef } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Navigation, Clock, Phone, User, Package } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { subscribeLivePosition, deliveryPositionTopic } from '@/lib/realtime/livePositions';
 import { Button } from '@/components/ui/button';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -21,6 +23,7 @@ interface ClientDeliveryTrackingProps {
 }
 
 export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingProps) {
+  const { t } = useTranslation();
   const [delivery, setDelivery] = useState<any>(null);
   const [driverPosition, setDriverPosition] = useState<{ lat: number; lng: number } | null>(null);
   const [estimatedTime, setEstimatedTime] = useState<number | null>(null);
@@ -30,11 +33,16 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
   const driverMarker = useRef<mapboxgl.Marker | null>(null);
   const [hasNotifiedTwoMinutes, setHasNotifiedTwoMinutes] = useState(false);
 
-  // Charger les détails de la livraison
+  // Charger les détails de la livraison + s'abonner (en récupérant les nettoyages, sinon
+  // les canaux postgres_changes ET broadcast n'étaient jamais fermés → fuite de souscriptions).
   useEffect(() => {
     loadDelivery();
-    subscribeToDelivery();
-    subscribeToTracking();
+    const unsubDelivery = subscribeToDelivery();
+    const unsubTracking = subscribeToTracking();
+    return () => {
+      unsubDelivery?.();
+      unsubTracking?.();
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deliveryId]);
 
@@ -58,32 +66,41 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
   useEffect(() => {
     if (!map.current || !delivery) return;
 
+    // Coordonnées : colonnes top-level (livraisons e-commerce) OU jsonb pickup_address/delivery_address
+    // (livraisons restaurant). Repli Conakry si rien.
+    const pLng = delivery.pickup_lng ?? delivery.pickup_address?.lng ?? null;
+    const pLat = delivery.pickup_lat ?? delivery.pickup_address?.lat ?? null;
+    const dLng = delivery.delivery_lng ?? delivery.delivery_address?.lng ?? null;
+    const dLat = delivery.delivery_lat ?? delivery.delivery_address?.lat ?? null;
+
     // Ajouter le marqueur de destination (client)
     const deliveryAddr = typeof delivery.delivery_address === 'string'
       ? delivery.delivery_address
-      : delivery.delivery_address?.address || 'Destination';
+      : delivery.delivery_address?.address || delivery.delivery_address?.text || 'Destination';
 
     new mapboxgl.Marker({ color: '#ff4000' })
-      .setLngLat([delivery.delivery_lng || -13.7122, delivery.delivery_lat || 9.5091])
+      .setLngLat([dLng ?? -13.7122, dLat ?? 9.5091])
       .setPopup(new mapboxgl.Popup().setHTML(`<strong>Destination</strong><br/>${deliveryAddr}`))
       .addTo(map.current);
 
     // Ajouter le marqueur de départ (pickup)
     const pickupAddr = typeof delivery.pickup_address === 'string'
       ? delivery.pickup_address
-      : delivery.pickup_address?.address || 'Point de départ';
+      : delivery.pickup_address?.address || delivery.pickup_address?.name || 'Point de départ';
 
     new mapboxgl.Marker({ color: '#f97316' })
-      .setLngLat([delivery.pickup_lng || -13.7122, delivery.pickup_lat || 9.5091])
-      .setPopup(new mapboxgl.Popup().setHTML(`<strong>Point de retrait</strong><br/>${pickupAddr}`))
+      .setLngLat([pLng ?? -13.7122, pLat ?? 9.5091])
+      .setPopup(new mapboxgl.Popup().setHTML(`<strong>${t('clientDeliveryTracking.pointDeRetrait')}</strong><br/>${pickupAddr}`))
       .addTo(map.current);
 
     // Centrer sur les deux points
-    if (delivery.pickup_lng && delivery.delivery_lng) {
+    if (pLng && dLng) {
       const bounds = new mapboxgl.LngLatBounds();
-      bounds.extend([delivery.pickup_lng, delivery.pickup_lat]);
-      bounds.extend([delivery.delivery_lng, delivery.delivery_lat]);
+      bounds.extend([pLng, pLat]);
+      bounds.extend([dLng, dLat]);
       map.current.fitBounds(bounds, { padding: 50 });
+    } else if (pLng) {
+      map.current.setCenter([pLng, pLat]); map.current.setZoom(13);
     }
   }, [delivery]);
 
@@ -100,13 +117,16 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
         .addTo(map.current);
     }
 
-    // Calculer la distance et le temps estimé
-    if (delivery?.delivery_lat && delivery?.delivery_lng) {
+    // Calculer la distance et le temps estimé — coords top-level (e-commerce) OU jsonb
+    // delivery_address (restaurant), même repli que le tracé carte.
+    const destLat = delivery?.delivery_lat ?? delivery?.delivery_address?.lat ?? null;
+    const destLng = delivery?.delivery_lng ?? delivery?.delivery_address?.lng ?? null;
+    if (destLat != null && destLng != null) {
       const dist = calculateDistance(
         driverPosition.lat,
         driverPosition.lng,
-        delivery.delivery_lat,
-        delivery.delivery_lng
+        destLat,
+        destLng
       );
       setDistance(dist);
 
@@ -154,9 +174,9 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
 
           // Notifier le client selon le statut
           if (payload.new.status === 'picked_up' && payload.old?.status !== 'picked_up') {
-            toast.success('📦 Le livreur a récupéré votre colis !');
+            toast.success(t('clientDeliveryTracking.leLivreurARecupereVotre'));
           } else if (payload.new.status === 'delivered') {
-            toast.success('✅ Votre colis a été livré !');
+            toast.success(t('clientDeliveryTracking.votreColisAEteLivre'));
           }
         }
       )
@@ -169,7 +189,7 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
 
   const subscribeToTracking = () => {
     const channel = supabase
-      .channel(`delivery-tracking:${deliveryId}`)
+      .channel(`delivery-tracking-pg:${deliveryId}`)
       .on(
         'postgres_changes',
         {
@@ -188,8 +208,17 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
       )
       .subscribe();
 
+    // 📡 DUAL-MODE scalabilité : on écoute AUSSI la position en broadcast (hors WAL,
+    // provider-agnostique → Ably/AWS par flag). Les deux mettent à jour le même état
+    // (idempotent). Quand le broadcast est validé, on pourra retirer le postgres_changes.
+    const unsubBroadcast = subscribeLivePosition(
+      deliveryPositionTopic(deliveryId),
+      (p) => setDriverPosition({ lat: p.lat, lng: p.lng })
+    );
+
     return () => {
       supabase.removeChannel(channel);
+      unsubBroadcast();
     };
   };
 
@@ -232,11 +261,11 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
       case 'pending':
         return <Badge variant="secondary">En attente</Badge>;
       case 'picked_up':
-        return <Badge className="bg-blue-500">Colis récupéré</Badge>;
+        return <Badge className="bg-blue-500">{t('clientDeliveryTracking.colisRecupere')}</Badge>;
       case 'in_transit':
-        return <Badge className="bg-[#04439e]">En livraison</Badge>;
+        return <Badge className="bg-[#04439e]">{t('clientDeliveryTracking.enLivraison')}</Badge>;
       case 'delivered':
-        return <Badge className="bg-[#ff4000]">Livré</Badge>;
+        return <Badge className="bg-[#ff4000]">{t('clientDeliveryTracking.livre')}</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
@@ -245,7 +274,7 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
   if (!delivery) {
     return (
       <div className="text-center p-8">
-        <p className="text-muted-foreground">Chargement du suivi...</p>
+        <p className="text-muted-foreground">{t('clientDeliveryTracking.chargementDuSuivi')}</p>
       </div>
     );
   }
@@ -273,7 +302,7 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
                   <p className="font-bold text-2xl text-blue-900">
                     {estimatedTime} min
                   </p>
-                  <p className="text-sm text-blue-700">Temps estimé d'arrivée</p>
+                  <p className="text-sm text-blue-700">{t('clientDeliveryTracking.tempsEstimeDArrivee')}</p>
                   {distance !== null && (
                     <p className="text-xs text-muted-foreground">
                       Distance: {distance.toFixed(1)} km
@@ -289,7 +318,7 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
             <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
               <User className="h-5 w-5 text-muted-foreground" />
               <div className="flex-1">
-                <p className="font-medium">Votre livreur</p>
+                <p className="font-medium">{t('clientDeliveryTracking.votreLivreur')}</p>
                 <p className="text-sm text-muted-foreground">ID: {delivery.driver_id.slice(0, 8)}</p>
               </div>
               <Button variant="outline" size="sm">
@@ -314,7 +343,7 @@ export function ClientDeliveryTracking({ deliveryId }: ClientDeliveryTrackingPro
             <div className="flex items-start gap-2">
               <MapPin className="h-4 w-4 text-[#ff4000] flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-medium">Livraison</p>
+                <p className="font-medium">{t('clientDeliveryTracking.livraison')}</p>
                 <p className="text-muted-foreground">
                   {typeof delivery.delivery_address === 'string'
                     ? delivery.delivery_address

@@ -71,12 +71,17 @@ export const shareholderService = {
     id: string,
     updates: UpdateShareholderDto,
     _actorId: string,
-  ): Promise<{ success: boolean; error?: string }> {
-    const res = await backendFetch(`/api/shareholders/${id}`, {
+  ): Promise<{ success: boolean; error?: string; recalculated_revenues?: number }> {
+    const res = await backendFetch<unknown>(`/api/shareholders/${id}`, {
       method: 'PUT',
       body:   updates,
     });
-    return { success: res.success, error: res.error };
+    return {
+      success: res.success,
+      error: res.error,
+      // Nombre de revenus EN ATTENTE recalculés suite au changement de part (reçus à jour)
+      recalculated_revenues: (res as { recalculated_revenues?: number }).recalculated_revenues,
+    };
   },
 
   // --------------------------------------------------------------------------
@@ -207,7 +212,8 @@ export const shareholderService = {
     });
     if (!res.success) {
       if (res.error_code === 'DUPLICATE_REVENUE') {
-        return { success: false, error: 'Revenus déjà calculés pour cette période et cet actionnaire.' };
+        // Le backend renvoie un message précis (période identique OU chevauchante)
+        return { success: false, error: res.error || 'Revenus déjà calculés pour cette période et cet actionnaire.' };
       }
       return { success: false, error: res.error };
     }

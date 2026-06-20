@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -60,6 +61,7 @@ const STATUS_LABELS = {
 const API_TYPE_COLORS = ['#04439e', '#ff4000', '#ff4000', '#ff4000', '#04439e'];
 
 export default function ApiSupervision() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [apis, setApis] = useState<ApiConnection[]>([]);
   const [alerts, setAlerts] = useState<ApiAlert[]>([]);
@@ -199,7 +201,7 @@ export default function ApiSupervision() {
       <div className="flex items-center justify-center py-12">
         <div className="flex flex-col items-center space-y-4">
           <RefreshCw className="h-12 w-12 text-primary animate-spin" />
-          <p className="text-muted-foreground">Chargement du tableau de bord...</p>
+          <p className="text-muted-foreground">{t('apiSupervision.chargementDuTableauDeBord')}</p>
         </div>
       </div>
     );
@@ -291,7 +293,7 @@ export default function ApiSupervision() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-muted-foreground text-sm">Tokens utilisés</p>
+                  <p className="text-muted-foreground text-sm">{t('apiSupervision.tokensUtilises')}</p>
                   <p className="text-3xl font-bold mt-1">
                     {stats.totalTokensUsed.toLocaleString()}
                   </p>
@@ -339,7 +341,7 @@ export default function ApiSupervision() {
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList>
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
-            <TabsTrigger value="apis">API connectées</TabsTrigger>
+            <TabsTrigger value="apis">{t('apiSupervision.apiConnectees')}</TabsTrigger>
             <TabsTrigger value="alerts">Alertes</TabsTrigger>
             <TabsTrigger value="analytics">Analytiques</TabsTrigger>
             <TabsTrigger value="core-supervision">Supervision Core</TabsTrigger>
@@ -351,7 +353,7 @@ export default function ApiSupervision() {
               {/* Répartition par type */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Répartition des API par type</CardTitle>
+                  <CardTitle>{t('apiSupervision.repartitionDesApiParType')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -379,7 +381,7 @@ export default function ApiSupervision() {
               {/* Consommation de tokens */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Consommation de tokens</CardTitle>
+                  <CardTitle>{t('apiSupervision.consommationDeTokens')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -410,7 +412,7 @@ export default function ApiSupervision() {
               {workingApis.length === 0 ? (
                 <Card>
                   <CardContent className="py-8">
-                    <p className="text-center text-muted-foreground">Aucune API fonctionnelle détectée</p>
+                    <p className="text-center text-muted-foreground">{t('apiSupervision.aucuneApiFonctionnelleDetectee')}</p>
                   </CardContent>
                 </Card>
               ) : (
@@ -443,7 +445,7 @@ export default function ApiSupervision() {
 
                         {api.metadata?.used_in_functions && api.metadata.used_in_functions.length > 0 && (
                           <div className="space-y-1">
-                            <p className="text-xs text-muted-foreground">Utilisée dans :</p>
+                            <p className="text-xs text-muted-foreground">{t('apiSupervision.utiliseeDans')}</p>
                             <div className="flex flex-wrap gap-1">
                               {api.metadata.used_in_functions.slice(0, 3).map((func: string) => (
                                 <Badge key={func} variant="outline" className="text-xs">
@@ -487,7 +489,7 @@ export default function ApiSupervision() {
                   <CardContent className="py-8">
                     <div className="text-center">
                       <CheckCircle2 className="h-12 w-12 text-[#ff4000] mx-auto mb-3" />
-                      <p className="text-[#ff4000] font-medium">Toutes les API fonctionnent correctement !</p>
+                      <p className="text-[#ff4000] font-medium">{t('apiSupervision.toutesLesApiFonctionnentCorrectement')}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -522,11 +524,11 @@ export default function ApiSupervision() {
                         {/* Raison de l'erreur */}
                         <div className="p-2 bg-orange-50 dark:bg-[#ff4000]/20 rounded text-xs text-[#ff4000]">
                           {api.metadata?.key_configured === false ? (
-                            <span>Clé API non configurée dans les variables d'environnement</span>
+                            <span>{t('apiSupervision.cleApiNonConfigureeDans')}</span>
                           ) : api.status === 'error' ? (
-                            <span>Clé invalide ou API non accessible</span>
+                            <span>{t('apiSupervision.cleInvalideOuApiNon')}</span>
                           ) : api.status === 'expired' ? (
-                            <span>API expirée - renouvellement nécessaire</span>
+                            <span>{t('apiSupervision.apiExpireeRenouvellementNecessaire')}</span>
                           ) : (
                             <span>Statut inconnu</span>
                           )}
@@ -534,7 +536,7 @@ export default function ApiSupervision() {
 
                         {api.metadata?.used_in_functions && api.metadata.used_in_functions.length > 0 && (
                           <div className="space-y-1">
-                            <p className="text-xs text-muted-foreground">Impacte les fonctions:</p>
+                            <p className="text-xs text-muted-foreground">{t('apiSupervision.impacteLesFonctions')}</p>
                             <div className="flex flex-wrap gap-1">
                               {api.metadata.used_in_functions.slice(0, 3).map((func: string) => (
                                 <Badge key={func} variant="destructive" className="text-xs">
@@ -585,7 +587,7 @@ export default function ApiSupervision() {
                   {alerts.length === 0 ? (
                     <div className="text-center py-8">
                       <CheckCircle2 className="h-12 w-12 text-[#ff4000] mx-auto mb-3" />
-                      <p className="text-muted-foreground">Aucune alerte active</p>
+                      <p className="text-muted-foreground">{t('apiSupervision.aucuneAlerteActive')}</p>
                     </div>
                   ) : (
                     alerts.map((alert) => (
@@ -624,7 +626,7 @@ export default function ApiSupervision() {
                                 }
                               } catch (error) {
                                 console.error('Erreur résolution alerte:', error);
-                                toast.error('Erreur lors de la résolution');
+                                toast.error(t('apiSupervision.erreurLorsDeLaResolution'));
                               }
                             }}
                           >
@@ -658,10 +660,10 @@ export default function ApiSupervision() {
               </CardHeader>
               <CardContent>
                 {coreFeaturesLoading ? (
-                  <div className="py-10 text-center text-muted-foreground">Chargement de la supervision core...</div>
+                  <div className="py-10 text-center text-muted-foreground">{t('apiSupervision.chargementDeLaSupervisionCore')}</div>
                 ) : coreFeatures.length === 0 ? (
                   <div className="py-10 text-center">
-                    <p className="text-muted-foreground mb-4">Aucune feature monitorée retournée</p>
+                    <p className="text-muted-foreground mb-4">{t('apiSupervision.aucuneFeatureMonitoreeRetournee')}</p>
                     <Button variant="outline" onClick={loadCoreSupervision}>
                       <RefreshCw className="h-4 w-4 mr-2" />
                       Recharger

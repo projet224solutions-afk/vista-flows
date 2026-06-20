@@ -17,6 +17,7 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { useToast } from '@/hooks/use-toast';
+import { useTranslation } from '@/hooks/useTranslation';
 import {
   Megaphone, Plus, Send, Users, Mail, MessageSquare, Bell,
   Smartphone, BarChart3, Clock, CheckCircle, XCircle, AlertTriangle,
@@ -29,51 +30,52 @@ import {
   type AudiencePreview, type CampaignAnalytics, type CreateCampaignPayload,
 } from '@/services/campaignBackendService';
 
-// ==================== CONSTANTS ====================
+// ==================== CONSTANTS (libellés = clés i18n, traduits au rendu) ====================
 
-const TARGET_TYPES: { value: CampaignTargetType; label: string; description: string }[] = [
-  { value: 'all_clients', label: 'Tous les clients', description: 'Tous vos clients actifs' },
-  { value: 'digital_only', label: 'Clients digitaux', description: 'Commandes en ligne uniquement' },
-  { value: 'physical_only', label: 'Clients physiques', description: 'Achats en boutique uniquement' },
-  { value: 'hybrid', label: 'Clients hybrides', description: 'Achètent en ligne et en boutique' },
-  { value: 'active', label: 'Clients actifs', description: 'Achat dans les 30 derniers jours' },
-  { value: 'inactive', label: 'Clients inactifs', description: 'Pas d\'achat depuis 90+ jours' },
-  { value: 'recent_buyers', label: 'Acheteurs récents', description: 'Achat cette semaine' },
-  { value: 'dormant', label: 'Clients dormants', description: 'Pas d\'achat depuis 6+ mois' },
-  { value: 'vip', label: 'Clients VIP', description: '500K+ GNF ou 10+ commandes' },
-  { value: 'custom', label: 'Segment personnalisé', description: 'Filtres personnalisés' },
+const TARGET_TYPES: { value: CampaignTargetType; labelKey: string; descKey: string }[] = [
+  { value: 'all_clients', labelKey: 'campaignCenter.targetAllClients', descKey: 'campaignCenter.targetAllClientsDesc' },
+  { value: 'digital_only', labelKey: 'campaignCenter.targetDigital', descKey: 'campaignCenter.targetDigitalDesc' },
+  { value: 'physical_only', labelKey: 'campaignCenter.targetPhysical', descKey: 'campaignCenter.targetPhysicalDesc' },
+  { value: 'hybrid', labelKey: 'campaignCenter.targetHybrid', descKey: 'campaignCenter.targetHybridDesc' },
+  { value: 'active', labelKey: 'campaignCenter.targetActive', descKey: 'campaignCenter.targetActiveDesc' },
+  { value: 'inactive', labelKey: 'campaignCenter.targetInactive', descKey: 'campaignCenter.targetInactiveDesc' },
+  { value: 'recent_buyers', labelKey: 'campaignCenter.targetRecent', descKey: 'campaignCenter.targetRecentDesc' },
+  { value: 'dormant', labelKey: 'campaignCenter.targetDormant', descKey: 'campaignCenter.targetDormantDesc' },
+  { value: 'vip', labelKey: 'campaignCenter.targetVip', descKey: 'campaignCenter.targetVipDesc' },
+  { value: 'custom', labelKey: 'campaignCenter.targetCustom', descKey: 'campaignCenter.targetCustomDesc' },
 ];
 
-const CHANNELS: { id: CampaignChannel; label: string; icon: typeof Mail; description: string }[] = [
-  { id: 'in_app', label: 'In-App', icon: Bell, description: 'Notification dans l\'app' },
-  { id: 'push', label: 'Push', icon: Smartphone, description: 'Notification push mobile' },
-  { id: 'email', label: 'Email', icon: Mail, description: 'Email marketing' },
-  { id: 'sms', label: 'SMS', icon: MessageSquare, description: 'Message texte' },
+const CHANNELS: { id: CampaignChannel; labelKey: string; icon: typeof Mail; descKey: string }[] = [
+  { id: 'in_app', labelKey: 'campaignCenter.chInApp', icon: Bell, descKey: 'campaignCenter.chInAppDesc' },
+  { id: 'push', labelKey: 'campaignCenter.chPush', icon: Smartphone, descKey: 'campaignCenter.chPushDesc' },
+  { id: 'email', labelKey: 'campaignCenter.chEmail', icon: Mail, descKey: 'campaignCenter.chEmailDesc' },
+  { id: 'sms', labelKey: 'campaignCenter.chSms', icon: MessageSquare, descKey: 'campaignCenter.chSmsDesc' },
 ];
 
 const MESSAGE_TYPES = [
-  { value: 'announcement', label: 'Annonce' },
-  { value: 'promotion', label: 'Promotion' },
-  { value: 'alert', label: 'Alerte' },
-  { value: 'update', label: 'Mise à jour' },
-  { value: 'newsletter', label: 'Newsletter' },
-  { value: 'reminder', label: 'Rappel' },
+  { value: 'announcement', labelKey: 'campaignCenter.msgAnnouncement' },
+  { value: 'promotion', labelKey: 'campaignCenter.msgPromotion' },
+  { value: 'alert', labelKey: 'campaignCenter.msgAlert' },
+  { value: 'update', labelKey: 'campaignCenter.msgUpdate' },
+  { value: 'newsletter', labelKey: 'campaignCenter.msgNewsletter' },
+  { value: 'reminder', labelKey: 'campaignCenter.msgReminder' },
 ];
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof CheckCircle }> = {
-  draft: { label: 'Brouillon', color: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200', icon: Clock },
-  scheduled: { label: 'Programmée', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200', icon: Calendar },
-  queued: { label: 'En file', color: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000] dark:text-orange-200', icon: Clock },
-  sending: { label: 'En cours', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200', icon: Send },
-  sent: { label: 'Envoyée', color: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000] dark:text-orange-200', icon: CheckCircle },
-  partial: { label: 'Partielle', color: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000] dark:text-orange-200', icon: AlertTriangle },
-  failed: { label: 'Échouée', color: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000] dark:text-orange-200', icon: XCircle },
-  cancelled: { label: 'Annulée', color: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', icon: Pause },
+const STATUS_CONFIG: Record<string, { labelKey: string; color: string; icon: typeof CheckCircle }> = {
+  draft: { labelKey: 'campaignCenter.statusDraft', color: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200', icon: Clock },
+  scheduled: { labelKey: 'campaignCenter.statusScheduled', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200', icon: Calendar },
+  queued: { labelKey: 'campaignCenter.statusQueued', color: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000] dark:text-orange-200', icon: Clock },
+  sending: { labelKey: 'campaignCenter.statusSending', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200', icon: Send },
+  sent: { labelKey: 'campaignCenter.statusSent', color: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000] dark:text-orange-200', icon: CheckCircle },
+  partial: { labelKey: 'campaignCenter.statusPartial', color: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000] dark:text-orange-200', icon: AlertTriangle },
+  failed: { labelKey: 'campaignCenter.statusFailed', color: 'bg-orange-100 text-[#ff4000] dark:bg-[#ff4000] dark:text-orange-200', icon: XCircle },
+  cancelled: { labelKey: 'campaignCenter.statusCancelled', color: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', icon: Pause },
 };
 
 // ==================== MAIN COMPONENT ====================
 
 export default function VendorCampaignCenter() {
+  const { t } = useTranslation();
   const { vendorId, loading: vendorLoading } = useCurrentVendor();
   const { toast } = useToast();
 
@@ -94,11 +96,11 @@ export default function VendorCampaignCenter() {
       const data = await listCampaigns(statusFilter);
       setCampaigns(data);
     } catch (err: any) {
-      toast({ title: 'Erreur', description: err.message || 'Impossible de charger les campagnes', variant: 'destructive' });
+      toast({ title: t('campaignCenter.error'), description: err.message || t('campaignCenter.loadError'), variant: 'destructive' });
     } finally {
       setLoading(false);
     }
-  }, [vendorId, statusFilter, toast]);
+  }, [vendorId, statusFilter, toast, t]);
 
   useEffect(() => {
     if (!vendorLoading && vendorId) loadCampaigns();
@@ -110,22 +112,22 @@ export default function VendorCampaignCenter() {
     try {
       const result = await sendCampaign(campaignId);
       toast({
-        title: 'Campagne lancée',
-        description: `${result.total_eligible} destinataires éligibles, ${result.total_deliveries} envois en cours`,
+        title: t('campaignCenter.campaignLaunched'),
+        description: `${result.total_eligible} ${t('campaignCenter.eligibleRecipients')}, ${result.total_deliveries} ${t('campaignCenter.deliveriesInProgress')}`,
       });
       loadCampaigns();
     } catch (err: any) {
-      toast({ title: 'Erreur', description: err.message || 'Échec de l\'envoi', variant: 'destructive' });
+      toast({ title: t('campaignCenter.error'), description: err.message || t('campaignCenter.sendError'), variant: 'destructive' });
     }
   };
 
   const handleCancelCampaign = async (campaignId: string) => {
     try {
       await cancelCampaign(campaignId);
-      toast({ title: 'Campagne annulée' });
+      toast({ title: t('campaignCenter.campaignCancelled') });
       loadCampaigns();
     } catch (err: any) {
-      toast({ title: 'Erreur', description: err.message || 'Échec de l\'annulation', variant: 'destructive' });
+      toast({ title: t('campaignCenter.error'), description: err.message || t('campaignCenter.cancelError'), variant: 'destructive' });
     }
   };
 
@@ -166,15 +168,15 @@ export default function VendorCampaignCenter() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Megaphone className="h-6 w-6 text-primary" />
-            Centre de Campagnes
+            {t('campaignCenter.title')}
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Envoyez des messages à vos clients via plusieurs canaux
+            {t('campaignCenter.subtitle')}
           </p>
         </div>
         <Button onClick={() => setShowCreateDialog(true)} className="gap-2">
           <Plus className="h-4 w-4" />
-          Nouvelle Campagne
+          {t('campaignCenter.newCampaign')}
         </Button>
       </div>
 
@@ -188,7 +190,7 @@ export default function VendorCampaignCenter() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.total}</p>
-                <p className="text-xs text-muted-foreground">Campagnes</p>
+                <p className="text-xs text-muted-foreground">{t('campaignCenter.statCampaigns')}</p>
               </div>
             </div>
           </CardContent>
@@ -201,7 +203,7 @@ export default function VendorCampaignCenter() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.sent}</p>
-                <p className="text-xs text-muted-foreground">Envoyées</p>
+                <p className="text-xs text-muted-foreground">{t('campaignCenter.statSent')}</p>
               </div>
             </div>
           </CardContent>
@@ -214,7 +216,7 @@ export default function VendorCampaignCenter() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.draft}</p>
-                <p className="text-xs text-muted-foreground">Brouillons</p>
+                <p className="text-xs text-muted-foreground">{t('campaignCenter.statDrafts')}</p>
               </div>
             </div>
           </CardContent>
@@ -227,7 +229,7 @@ export default function VendorCampaignCenter() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.totalReach.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Messages envoyés</p>
+                <p className="text-xs text-muted-foreground">{t('campaignCenter.statMessagesSent')}</p>
               </div>
             </div>
           </CardContent>
@@ -239,26 +241,26 @@ export default function VendorCampaignCenter() {
         <Filter className="h-4 w-4 text-muted-foreground" />
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Toutes les campagnes" />
+            <SelectValue placeholder={t('campaignCenter.allCampaigns')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Toutes</SelectItem>
-            <SelectItem value="draft">Brouillons</SelectItem>
-            <SelectItem value="sending">En cours</SelectItem>
-            <SelectItem value="sent">Envoyées</SelectItem>
-            <SelectItem value="failed">Échouées</SelectItem>
-            <SelectItem value="cancelled">Annulées</SelectItem>
+            <SelectItem value="all">{t('campaignCenter.filterAll')}</SelectItem>
+            <SelectItem value="draft">{t('campaignCenter.statDrafts')}</SelectItem>
+            <SelectItem value="sending">{t('campaignCenter.filterSending')}</SelectItem>
+            <SelectItem value="sent">{t('campaignCenter.statSent')}</SelectItem>
+            <SelectItem value="failed">{t('campaignCenter.filterFailed')}</SelectItem>
+            <SelectItem value="cancelled">{t('campaignCenter.filterCancelled')}</SelectItem>
           </SelectContent>
         </Select>
         <Button variant="outline" size="sm" onClick={loadCampaigns} className="gap-1">
-          <RefreshCw className="h-3 w-3" /> Actualiser
+          <RefreshCw className="h-3 w-3" /> {t('campaignCenter.refresh')}
         </Button>
       </div>
 
       {/* Campaign List */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Mes Campagnes</CardTitle>
+          <CardTitle className="text-base">{t('campaignCenter.myCampaigns')}</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -266,10 +268,10 @@ export default function VendorCampaignCenter() {
           ) : campaigns.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Megaphone className="h-12 w-12 mx-auto mb-4 opacity-30" />
-              <p className="text-lg font-medium">Aucune campagne</p>
-              <p className="text-sm mt-1">Créez votre première campagne pour contacter vos clients</p>
+              <p className="text-lg font-medium">{t('campaignCenter.noCampaign')}</p>
+              <p className="text-sm mt-1">{t('campaignCenter.noCampaignDesc')}</p>
               <Button onClick={() => setShowCreateDialog(true)} className="mt-4 gap-2">
-                <Plus className="h-4 w-4" /> Créer une campagne
+                <Plus className="h-4 w-4" /> {t('campaignCenter.createCampaign')}
               </Button>
             </div>
           ) : (
@@ -314,6 +316,7 @@ function CampaignRow({ campaign, onView, onSend, onCancel }: {
   onSend: () => void;
   onCancel: () => void;
 }) {
+  const { t } = useTranslation();
   const statusCfg = STATUS_CONFIG[campaign.status] || STATUS_CONFIG.draft;
   const StatusIcon = statusCfg.icon;
 
@@ -324,17 +327,17 @@ function CampaignRow({ campaign, onView, onSend, onCancel }: {
           <h3 className="font-medium truncate">{campaign.title}</h3>
           <Badge className={`text-[10px] ${statusCfg.color}`}>
             <StatusIcon className="h-3 w-3 mr-1" />
-            {statusCfg.label}
+            {t(statusCfg.labelKey)}
           </Badge>
         </div>
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Users className="h-3 w-3" />
-            {campaign.total_targeted} ciblés
+            {campaign.total_targeted} {t('campaignCenter.targeted')}
           </span>
           <span className="flex items-center gap-1">
             <Send className="h-3 w-3" />
-            {campaign.total_sent} envoyés
+            {campaign.total_sent} {t('campaignCenter.sentCount')}
           </span>
           <span className="flex items-center gap-1">
             {campaign.selected_channels?.map(ch => {
@@ -353,7 +356,7 @@ function CampaignRow({ campaign, onView, onSend, onCancel }: {
         </Button>
         {['draft', 'scheduled'].includes(campaign.status) && (
           <Button size="sm" onClick={onSend} className="gap-1">
-            <Send className="h-3 w-3" /> Envoyer
+            <Send className="h-3 w-3" /> {t('campaignCenter.send')}
           </Button>
         )}
         {['draft', 'scheduled', 'sending', 'queued'].includes(campaign.status) && (
@@ -373,6 +376,7 @@ function CreateCampaignDialog({ open, onClose, onCreated }: {
   onClose: () => void;
   onCreated: () => void;
 }) {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [creating, setCreating] = useState(false);
@@ -416,7 +420,7 @@ function CreateCampaignDialog({ open, onClose, onCreated }: {
     } catch (err: any) {
       setPreviewFailed(true);
       setAudiencePreview(null);
-      setPreviewError(err?.message || 'Impossible de calculer l\'audience. Vous pouvez continuer malgré tout.');
+      setPreviewError(err?.message || t('campaignCenter.audienceError'));
     } finally {
       setLoadingPreview(false);
     }
@@ -439,17 +443,17 @@ function CreateCampaignDialog({ open, onClose, onCreated }: {
 
   const handleSubmit = async () => {
     if (!form.title.trim() || !form.message_body.trim() || form.selected_channels.length === 0) {
-      toast({ title: 'Champs requis', description: 'Remplissez le titre, le message et choisissez au moins un canal', variant: 'destructive' });
+      toast({ title: t('campaignCenter.requiredFields'), description: t('campaignCenter.requiredFieldsDesc'), variant: 'destructive' });
       return;
     }
     setCreating(true);
     try {
       await createCampaign(form);
-      toast({ title: 'Campagne créée', description: 'Vous pouvez l\'envoyer depuis la liste' });
+      toast({ title: t('campaignCenter.campaignCreated'), description: t('campaignCenter.campaignCreatedDesc') });
       resetForm();
       onCreated();
     } catch (err: any) {
-      toast({ title: 'Erreur', description: err.message || 'Échec de la création', variant: 'destructive' });
+      toast({ title: t('campaignCenter.error'), description: err.message || t('campaignCenter.createError'), variant: 'destructive' });
     } finally {
       setCreating(false);
     }
@@ -461,37 +465,37 @@ function CreateCampaignDialog({ open, onClose, onCreated }: {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Megaphone className="h-5 w-5" />
-            Nouvelle Campagne
-            <Badge variant="outline" className="ml-2">Étape {step}/3</Badge>
+            {t('campaignCenter.newCampaign')}
+            <Badge variant="outline" className="ml-2">{t('campaignCenter.step')} {step}/3</Badge>
           </DialogTitle>
         </DialogHeader>
         <ScrollArea className="max-h-[70vh] pr-4">
           {step === 1 && (
             <div className="space-y-4 py-2">
               <div className="space-y-2">
-                <Label>Titre de la campagne *</Label>
+                <Label>{t('campaignCenter.campaignTitle')}</Label>
                 <Input
                   value={form.title}
                   onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
-                  placeholder="Ex: Soldes de printemps -30%"
+                  placeholder={t('campaignCenter.campaignTitlePlaceholder')}
                   maxLength={200}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Sujet email (optionnel)</Label>
+                <Label>{t('campaignCenter.emailSubject')}</Label>
                 <Input
                   value={form.subject || ''}
                   onChange={e => setForm(p => ({ ...p, subject: e.target.value }))}
-                  placeholder="Affiché comme objet d'email"
+                  placeholder={t('campaignCenter.emailSubjectPlaceholder')}
                   maxLength={500}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Message *</Label>
+                <Label>{t('campaignCenter.message')}</Label>
                 <Textarea
                   value={form.message_body}
                   onChange={e => setForm(p => ({ ...p, message_body: e.target.value }))}
-                  placeholder="Votre message à envoyer aux clients..."
+                  placeholder={t('campaignCenter.messagePlaceholder')}
                   rows={5}
                   maxLength={5000}
                 />
@@ -499,16 +503,16 @@ function CreateCampaignDialog({ open, onClose, onCreated }: {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Type de message</Label>
+                  <Label>{t('campaignCenter.messageType')}</Label>
                   <Select value={form.message_type} onValueChange={v => setForm(p => ({ ...p, message_type: v }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {MESSAGE_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                      {MESSAGE_TYPES.map(mt => <SelectItem key={mt.value} value={mt.value}>{t(mt.labelKey)}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>URL Image (optionnel)</Label>
+                  <Label>{t('campaignCenter.imageUrl')}</Label>
                   <Input
                     value={form.image_url || ''}
                     onChange={e => setForm(p => ({ ...p, image_url: e.target.value || undefined }))}
@@ -518,7 +522,7 @@ function CreateCampaignDialog({ open, onClose, onCreated }: {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Lien (optionnel)</Label>
+                  <Label>{t('campaignCenter.link')}</Label>
                   <Input
                     value={form.link_url || ''}
                     onChange={e => setForm(p => ({ ...p, link_url: e.target.value || undefined }))}
@@ -526,17 +530,17 @@ function CreateCampaignDialog({ open, onClose, onCreated }: {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Texte du lien</Label>
+                  <Label>{t('campaignCenter.linkText')}</Label>
                   <Input
                     value={form.link_text || ''}
                     onChange={e => setForm(p => ({ ...p, link_text: e.target.value || undefined }))}
-                    placeholder="En savoir plus"
+                    placeholder={t('campaignCenter.linkTextPlaceholder')}
                   />
                 </div>
               </div>
               <div className="flex justify-end">
                 <Button onClick={() => setStep(2)} disabled={!form.title.trim() || !form.message_body.trim()}>
-                  Suivant: Audience
+                  {t('campaignCenter.nextAudience')}
                 </Button>
               </div>
             </div>
@@ -546,7 +550,7 @@ function CreateCampaignDialog({ open, onClose, onCreated }: {
             <div className="space-y-4 py-2">
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
-                  <Target className="h-4 w-4" /> Ciblage de l'audience
+                  <Target className="h-4 w-4" /> {t('campaignCenter.audienceTargeting')}
                 </Label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {TARGET_TYPES.map(tt => (
@@ -559,8 +563,8 @@ function CreateCampaignDialog({ open, onClose, onCreated }: {
                           : 'hover:border-muted-foreground/30'
                       }`}
                     >
-                      <p className="font-medium text-sm">{tt.label}</p>
-                      <p className="text-xs text-muted-foreground">{tt.description}</p>
+                      <p className="font-medium text-sm">{t(tt.labelKey)}</p>
+                      <p className="text-xs text-muted-foreground">{t(tt.descKey)}</p>
                     </div>
                   ))}
                 </div>
@@ -568,10 +572,10 @@ function CreateCampaignDialog({ open, onClose, onCreated }: {
 
               {form.target_type === 'custom' && (
                 <div className="space-y-3 p-4 rounded-lg border bg-muted/30">
-                  <Label>Filtres personnalisés</Label>
+                  <Label>{t('campaignCenter.customFilters')}</Label>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label className="text-xs">Commandes minimum</Label>
+                      <Label className="text-xs">{t('campaignCenter.minOrders')}</Label>
                       <Input
                         type="number"
                         min={0}
@@ -581,7 +585,7 @@ function CreateCampaignDialog({ open, onClose, onCreated }: {
                       />
                     </div>
                     <div>
-                      <Label className="text-xs">Dépensé minimum (GNF)</Label>
+                      <Label className="text-xs">{t('campaignCenter.minSpent')}</Label>
                       <Input
                         type="number"
                         min={0}
@@ -600,9 +604,9 @@ function CreateCampaignDialog({ open, onClose, onCreated }: {
                   <CardContent className="pt-4 pb-3">
                     <div className="flex items-center gap-2 mb-3">
                       <Users className="h-4 w-4 text-primary" />
-                      <span className="font-medium">Audience estimée : {audiencePreview.total} clients</span>
+                      <span className="font-medium">{t('campaignCenter.estimatedAudience')} {audiencePreview.total} {t('campaignCenter.clients')}</span>
                     </div>
-                    <div className="grid grid-cols-4 gap-2 text-center">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
                       {CHANNELS.map(ch => {
                         const count = audiencePreview.channels[ch.id] || 0;
                         const Icon = ch.icon;
@@ -610,7 +614,7 @@ function CreateCampaignDialog({ open, onClose, onCreated }: {
                           <div key={ch.id} className="p-2 rounded-md bg-background">
                             <Icon className="h-4 w-4 mx-auto mb-1 text-muted-foreground" />
                             <p className="text-sm font-bold">{count}</p>
-                            <p className="text-[10px] text-muted-foreground">{ch.label}</p>
+                            <p className="text-[10px] text-muted-foreground">{t(ch.labelKey)}</p>
                           </div>
                         );
                       })}
@@ -618,18 +622,18 @@ function CreateCampaignDialog({ open, onClose, onCreated }: {
                   </CardContent>
                 </Card>
               )}
-              {loadingPreview && <p className="text-sm text-muted-foreground text-center">Calcul de l'audience...</p>}
+              {loadingPreview && <p className="text-sm text-muted-foreground text-center">{t('campaignCenter.calculatingAudience')}</p>}
               {previewFailed && (
                 <div className="flex items-center gap-2 text-sm text-[#ff4000] dark:text-[#ff4000] bg-orange-50 dark:bg-[#ff4000]/30 p-3 rounded-lg">
                   <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-                  <span>{previewError || 'Impossible de calculer l\'audience. Vous pouvez continuer malgré tout.'}</span>
+                  <span>{previewError || t('campaignCenter.audienceError')}</span>
                 </div>
               )}
 
               <div className="flex justify-between">
-                <Button variant="outline" onClick={() => setStep(1)}>Retour</Button>
+                <Button variant="outline" onClick={() => setStep(1)}>{t('campaignCenter.back')}</Button>
                 <Button onClick={() => setStep(3)} disabled={loadingPreview || (!previewFailed && !audiencePreview) || (audiencePreview !== null && audiencePreview.total === 0)}>
-                  Suivant: Canaux
+                  {t('campaignCenter.nextChannels')}
                 </Button>
               </div>
             </div>
@@ -639,7 +643,7 @@ function CreateCampaignDialog({ open, onClose, onCreated }: {
             <div className="space-y-4 py-2">
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
-                  <Send className="h-4 w-4" /> Canaux de diffusion
+                  <Send className="h-4 w-4" /> {t('campaignCenter.broadcastChannels')}
                 </Label>
                 <div className="grid grid-cols-2 gap-3">
                   {CHANNELS.map(ch => {
@@ -658,8 +662,8 @@ function CreateCampaignDialog({ open, onClose, onCreated }: {
                           <Checkbox checked={selected} />
                           <Icon className="h-5 w-5" />
                           <div>
-                            <p className="font-medium text-sm">{ch.label}</p>
-                            <p className="text-xs text-muted-foreground">{available} éligibles</p>
+                            <p className="font-medium text-sm">{t(ch.labelKey)}</p>
+                            <p className="text-xs text-muted-foreground">{available} {t('campaignCenter.eligible')}</p>
                           </div>
                         </div>
                       </div>
@@ -672,22 +676,22 @@ function CreateCampaignDialog({ open, onClose, onCreated }: {
               <Card className="bg-muted/30">
                 <CardContent className="pt-4 pb-3">
                   <h4 className="font-medium mb-3 flex items-center gap-2">
-                    <Eye className="h-4 w-4" /> Résumé avant envoi
+                    <Eye className="h-4 w-4" /> {t('campaignCenter.summaryBeforeSend')}
                   </h4>
                   <div className="space-y-1 text-sm">
-                    <p><span className="text-muted-foreground">Titre:</span> {form.title}</p>
-                    <p><span className="text-muted-foreground">Audience:</span> {audiencePreview?.total || 0} clients</p>
-                    <p><span className="text-muted-foreground">Canaux:</span> {form.selected_channels.map(ch => CHANNELS.find(c => c.id === ch)?.label).join(', ')}</p>
-                    <p><span className="text-muted-foreground">Type:</span> {MESSAGE_TYPES.find(t => t.value === form.message_type)?.label}</p>
+                    <p><span className="text-muted-foreground">{t('campaignCenter.sumTitle')}</span> {form.title}</p>
+                    <p><span className="text-muted-foreground">{t('campaignCenter.sumAudience')}</span> {audiencePreview?.total || 0} {t('campaignCenter.clients')}</p>
+                    <p><span className="text-muted-foreground">{t('campaignCenter.sumChannels')}</span> {form.selected_channels.map(ch => { const c = CHANNELS.find(x => x.id === ch); return c ? t(c.labelKey) : ch; }).join(', ')}</p>
+                    <p><span className="text-muted-foreground">{t('campaignCenter.sumType')}</span> {(() => { const mt = MESSAGE_TYPES.find(x => x.value === form.message_type); return mt ? t(mt.labelKey) : form.message_type; })()}</p>
                   </div>
                 </CardContent>
               </Card>
 
               <div className="flex justify-between">
-                <Button variant="outline" onClick={() => setStep(2)}>Retour</Button>
+                <Button variant="outline" onClick={() => setStep(2)}>{t('campaignCenter.back')}</Button>
                 <Button onClick={handleSubmit} disabled={creating} className="gap-2">
                   {creating ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                  Créer la campagne
+                  {t('campaignCenter.createCampaignBtn')}
                 </Button>
               </div>
             </div>
@@ -706,6 +710,7 @@ function CampaignDetailDialog({ open, campaign, analytics, onClose }: {
   analytics: CampaignAnalytics | null;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   if (!campaign) return null;
 
   const statusCfg = STATUS_CONFIG[campaign.status] || STATUS_CONFIG.draft;
@@ -717,50 +722,50 @@ function CampaignDetailDialog({ open, campaign, analytics, onClose }: {
           <DialogTitle className="flex items-center gap-2">
             <Megaphone className="h-5 w-5" />
             {campaign.title}
-            <Badge className={`${statusCfg.color} ml-2`}>{statusCfg.label}</Badge>
+            <Badge className={`${statusCfg.color} ml-2`}>{t(statusCfg.labelKey)}</Badge>
           </DialogTitle>
         </DialogHeader>
         <ScrollArea className="max-h-[70vh] pr-4">
           <Tabs defaultValue="overview" className="w-full">
             <TabsList className="w-full">
-              <TabsTrigger value="overview" className="flex-1">Aperçu</TabsTrigger>
-              <TabsTrigger value="analytics" className="flex-1">Analytics</TabsTrigger>
+              <TabsTrigger value="overview" className="flex-1">{t('campaignCenter.tabOverview')}</TabsTrigger>
+              <TabsTrigger value="analytics" className="flex-1">{t('campaignCenter.tabAnalytics')}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="space-y-4 mt-4">
               <Card>
                 <CardContent className="pt-4 space-y-3">
                   <div>
-                    <Label className="text-xs text-muted-foreground">Message</Label>
+                    <Label className="text-xs text-muted-foreground">{t('campaignCenter.message')}</Label>
                     <p className="text-sm">{campaign.message_body}</p>
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     <div>
-                      <Label className="text-xs text-muted-foreground">Ciblage</Label>
+                      <Label className="text-xs text-muted-foreground">{t('campaignCenter.targeting')}</Label>
                       <p className="text-sm font-medium">
-                        {TARGET_TYPES.find(t => t.value === campaign.target_type)?.label || campaign.target_type}
+                        {(() => { const tt = TARGET_TYPES.find(x => x.value === campaign.target_type); return tt ? t(tt.labelKey) : campaign.target_type; })()}
                       </p>
                     </div>
                     <div>
-                      <Label className="text-xs text-muted-foreground">Canaux</Label>
+                      <Label className="text-xs text-muted-foreground">{t('campaignCenter.channels')}</Label>
                       <div className="flex gap-1 mt-1">
                         {campaign.selected_channels?.map(ch => {
                           const chCfg = CHANNELS.find(c => c.id === ch);
                           if (!chCfg) return null;
-                          return <Badge key={ch} variant="outline" className="text-[10px]">{chCfg.label}</Badge>;
+                          return <Badge key={ch} variant="outline" className="text-[10px]">{t(chCfg.labelKey)}</Badge>;
                         })}
                       </div>
                     </div>
                     <div>
-                      <Label className="text-xs text-muted-foreground">Créée le</Label>
+                      <Label className="text-xs text-muted-foreground">{t('campaignCenter.createdOn')}</Label>
                       <p className="text-sm">{new Date(campaign.created_at).toLocaleDateString('fr-FR')}</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-4 gap-3 pt-2">
-                    <StatBox label="Ciblés" value={campaign.total_targeted} />
-                    <StatBox label="Éligibles" value={campaign.total_eligible} />
-                    <StatBox label="Envoyés" value={campaign.total_sent} color="text-[#ff4000]" />
-                    <StatBox label="Échoués" value={campaign.total_failed} color="text-[#ff4000]" />
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                    <StatBox label={t('campaignCenter.targeted')} value={campaign.total_targeted} />
+                    <StatBox label={t('campaignCenter.eligible')} value={campaign.total_eligible} />
+                    <StatBox label={t('campaignCenter.sentCount')} value={campaign.total_sent} color="text-[#ff4000]" />
+                    <StatBox label={t('campaignCenter.failedCount')} value={campaign.total_failed} color="text-[#ff4000]" />
                   </div>
                 </CardContent>
               </Card>
@@ -770,23 +775,23 @@ function CampaignDetailDialog({ open, campaign, analytics, onClose }: {
               {analytics ? (
                 <>
                   {/* Summary */}
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     <Card>
                       <CardContent className="pt-4 text-center">
                         <p className="text-3xl font-bold text-[#ff4000]">{analytics.rates.delivery_rate}%</p>
-                        <p className="text-xs text-muted-foreground">Taux de délivrance</p>
+                        <p className="text-xs text-muted-foreground">{t('campaignCenter.deliveryRate')}</p>
                       </CardContent>
                     </Card>
                     <Card>
                       <CardContent className="pt-4 text-center">
                         <p className="text-3xl font-bold text-blue-600">{analytics.rates.read_rate}%</p>
-                        <p className="text-xs text-muted-foreground">Taux de lecture</p>
+                        <p className="text-xs text-muted-foreground">{t('campaignCenter.readRate')}</p>
                       </CardContent>
                     </Card>
                     <Card>
                       <CardContent className="pt-4 text-center">
                         <p className="text-3xl font-bold text-[#ff4000]">{analytics.rates.failure_rate}%</p>
-                        <p className="text-xs text-muted-foreground">Taux d'échec</p>
+                        <p className="text-xs text-muted-foreground">{t('campaignCenter.failureRate')}</p>
                       </CardContent>
                     </Card>
                   </div>
@@ -794,7 +799,7 @@ function CampaignDetailDialog({ open, campaign, analytics, onClose }: {
                   {/* By Channel */}
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-sm">Performance par canal</CardTitle>
+                      <CardTitle className="text-sm">{t('campaignCenter.channelPerformance')}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
@@ -804,9 +809,9 @@ function CampaignDetailDialog({ open, campaign, analytics, onClose }: {
                           return (
                             <div key={channel} className="space-y-1">
                               <div className="flex items-center justify-between text-sm">
-                                <span className="font-medium">{chCfg?.label || channel}</span>
+                                <span className="font-medium">{chCfg ? t(chCfg.labelKey) : channel}</span>
                                 <span className="text-muted-foreground">
-                                  {stats.sent || 0} envoyés / {stats.total} total ({deliveryRate}%)
+                                  {stats.sent || 0} {t('campaignCenter.sentCount')} / {stats.total} {t('campaignCenter.total')} ({deliveryRate}%)
                                 </span>
                               </div>
                               <Progress value={deliveryRate} className="h-2" />
@@ -820,7 +825,7 @@ function CampaignDetailDialog({ open, campaign, analytics, onClose }: {
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                  <p>Analytics disponibles après l'envoi</p>
+                  <p>{t('campaignCenter.analyticsAfterSend')}</p>
                 </div>
               )}
             </TabsContent>

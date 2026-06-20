@@ -3,6 +3,7 @@
  */
 
 import { useRef } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Download, Printer, X } from 'lucide-react';
@@ -42,6 +43,7 @@ export default function BadgeGeneratorDialog({
   bureauCommune,
   bureauPhone
 }: BadgeGeneratorDialogProps) {
+  const { t } = useTranslation();
   // Utiliser le titre sauvegardé ou construire automatiquement basé sur la commune
   const locationName = bureauCommune || bureauName;
   const defaultTitle = locationName && locationName !== 'VOTRE BUREAU'
@@ -62,7 +64,7 @@ export default function BadgeGeneratorDialog({
     if (!badgeRef.current) return;
 
     try {
-      toast.info('Génération du badge en cours...');
+      toast.info(t('badgeGeneratorDialog.generationDuBadgeEnCours'));
 
       const [html2canvas] = await loadPdfLibs();
       const canvas = await html2canvas(badgeRef.current, {
@@ -91,10 +93,10 @@ export default function BadgeGeneratorDialog({
       link.click();
       document.body.removeChild(link);
 
-      toast.success('Badge téléchargé avec succès');
+      toast.success(t('badgeGeneratorDialog.badgeTelechargeAvecSucces'));
     } catch (error) {
       console.error('Error downloading badge:', error);
-      toast.error('Erreur lors du téléchargement du badge');
+      toast.error(t('badgeGeneratorDialog.erreurLorsDuTelechargementDu'));
     }
   };
 
@@ -102,7 +104,7 @@ export default function BadgeGeneratorDialog({
     if (!badgeRef.current) return;
 
     try {
-      toast.info('Génération du PDF en cours...');
+      toast.info(t('badgeGeneratorDialog.generationDuPdfEnCours'));
 
       const [html2canvas, jsPDF] = await loadPdfLibs();
       const canvas = await html2canvas(badgeRef.current, {
@@ -138,10 +140,10 @@ export default function BadgeGeneratorDialog({
       pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
       pdf.save(`badge-${vehicleData.member_id}-${Date.now()}.pdf`);
 
-      toast.success('Badge PDF téléchargé avec succès');
+      toast.success(t('badgeGeneratorDialog.badgePdfTelechargeAvecSucces'));
     } catch (error) {
       console.error('Error downloading PDF:', error);
-      toast.error('Erreur lors de la génération du PDF');
+      toast.error(t('badgeGeneratorDialog.erreurLorsDeLaGeneration'));
     }
   };
 
@@ -150,7 +152,7 @@ export default function BadgeGeneratorDialog({
 
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
-      toast.error('Impossible d\'ouvrir la fenêtre d\'impression');
+      toast.error(t('badgeGeneratorDialog.impossibleDOuvrirLaFenetre'));
       return;
     }
 
@@ -189,7 +191,7 @@ export default function BadgeGeneratorDialog({
 
     setTimeout(() => {
       printWindow.print();
-      toast.success('Badge envoyé à l\'imprimante');
+      toast.success(t('badgeGeneratorDialog.badgeEnvoyeALImprimante'));
     }, 500);
   };
 

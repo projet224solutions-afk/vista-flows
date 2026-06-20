@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   ArrowLeft,
   Briefcase,
@@ -23,6 +24,9 @@ import {
   Utensils,
   Wrench,
   Car,
+  Square,
+  Hammer,
+  Flame,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -89,6 +93,10 @@ const SERVICE_CATEGORIES: ServiceCategory[] = [
   { id: "sante", name: "Santé & Bien-être", icon: Heart },
   { id: "informatique", name: "Informatique & Tech", icon: Laptop },
   { id: "construction", name: "Construction & BTP", icon: Building2 },
+  { id: "plomberie", name: "Plomberie", icon: Wrench },
+  { id: "vitrerie", name: "Vitrerie", icon: Square },
+  { id: "menuiserie", name: "Menuiserie", icon: Hammer },
+  { id: "soudure", name: "Soudure & Métallerie", icon: Flame },
   { id: "agriculture", name: "Agriculture", icon: ShoppingBag },
   { id: "freelance", name: "Services Pro", icon: Briefcase },
   { id: "maison", name: "Maison & Déco", icon: Home },
@@ -98,6 +106,7 @@ const SERVICE_CATEGORIES: ServiceCategory[] = [
 ];
 
 export default function ServicesProximite() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { userPosition, positionReady, usingRealLocation } = useGeoDistance();
@@ -136,7 +145,7 @@ export default function ServicesProximite() {
   const hasLoadedRef = useRef(false);
 
   useEffect(() => {
-    document.title = "Services de Proximité | 224SOLUTIONS";
+    document.title = t('servicesProximite.servicesDeProximite224solutions');
   }, []);
 
   const loadServices = useCallback(async (lat: number, lng: number) => {
@@ -284,7 +293,7 @@ export default function ServicesProximite() {
       setServices(nearby);
     } catch (error) {
       console.error('Erreur chargement services:', error);
-      toast.error('Erreur lors du chargement des services');
+      toast.error(t('servicesProximite.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
       loadingRef.current = false;
@@ -395,7 +404,7 @@ export default function ServicesProximite() {
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <div className="min-w-0">
-                <h1 className="text-lg font-bold text-foreground truncate">Services de Proximité</h1>
+                <h1 className="text-lg font-bold text-foreground truncate">{t('servicesProximite.servicesDeProximite')}</h1>
                 <p className="text-xs text-muted-foreground truncate">Dans un rayon de {RADIUS_KM} km</p>
               </div>
             </div>
@@ -417,7 +426,7 @@ export default function ServicesProximite() {
           <div className="mt-3 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
-              placeholder="Rechercher un service..."
+              placeholder={t('servicesProximite.rechercherUnService')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 h-11 rounded-xl bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-primary/50"
@@ -443,6 +452,21 @@ export default function ServicesProximite() {
           ))}
         </div>
       </section>
+
+      {/* CTA parcours client artisan (demande → devis multiples) */}
+      {["plomberie", "vitrerie", "menuiserie", "soudure"].includes(selectedCategory) && (
+        <section className="px-4 py-3">
+          <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#ff4000]/30 bg-[#ff4000]/5 p-4">
+            <div className="min-w-0">
+              <div className="font-semibold">Besoin d'un artisan ({SERVICE_CATEGORIES.find((c) => c.id === selectedCategory)?.name}) ?</div>
+              <div className="text-sm text-muted-foreground">{t('servicesProximite.publiezVotreDemandeRecevezPlusieurs')}</div>
+            </div>
+            <Button className="ml-auto" onClick={() => navigate(`/services/artisan/demande?type=${selectedCategory}`)}>
+              Demander un devis
+            </Button>
+          </div>
+        </section>
+      )}
 
       {/* Filtre par VILLE (chips défilables) — alimenté par la ville effective des services */}
       {availableCities.length > 0 && (
@@ -481,13 +505,13 @@ export default function ServicesProximite() {
         {loading ? (
           <div className="rounded-2xl border border-border/50 bg-card p-10 text-center">
             <RefreshCw className="w-6 h-6 animate-spin text-primary mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">Chargement des services...</p>
+            <p className="text-sm text-muted-foreground">{t('servicesProximite.chargementDesServices')}</p>
           </div>
         ) : filteredServices.length === 0 ? (
           <div className="rounded-2xl border border-border/50 bg-card p-10 text-center">
             <Store className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-            <p className="text-sm font-medium text-foreground mb-1">Aucun service trouvé</p>
-            <p className="text-sm text-muted-foreground mb-4">Essayez de modifier les filtres ou la recherche.</p>
+            <p className="text-sm font-medium text-foreground mb-1">{t('servicesProximite.aucunServiceTrouve')}</p>
+            <p className="text-sm text-muted-foreground mb-4">{t('servicesProximite.essayezDeModifierLesFiltres')}</p>
             <Button variant="outline" onClick={() => { setSearchQuery(""); setSelectedCategory("all"); }}>
               Réinitialiser les filtres
             </Button>

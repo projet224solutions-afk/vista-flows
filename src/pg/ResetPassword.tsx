@@ -276,7 +276,7 @@ export default function ResetPassword() {
           {state === "loading" && (
             <div className="flex flex-col items-center py-8 gap-3">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Vérification en cours...</p>
+              <p className="text-sm text-muted-foreground">{t('resetPassword.verificationEnCours')}</p>
             </div>
           )}
 
@@ -284,7 +284,7 @@ export default function ResetPassword() {
           {state === "success" && (
             <div className="flex flex-col items-center py-8 gap-3">
               <CheckCircle2 className="w-12 h-12 text-[#ff4000]" />
-              <p className="text-sm text-muted-foreground">Redirection vers la connexion...</p>
+              <p className="text-sm text-muted-foreground">{t('resetPassword.redirectionVersLaConnexion')}</p>
             </div>
           )}
 
@@ -298,7 +298,7 @@ export default function ResetPassword() {
                 </Alert>
               )}
               <div className="space-y-2">
-                <Label htmlFor="resend-email">Votre adresse email</Label>
+                <Label htmlFor="resend-email">{t('resetPassword.votreAdresseEmail')}</Label>
                 <Input
                   id="resend-email"
                   type="email"
@@ -335,7 +335,7 @@ export default function ResetPassword() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="new-password">Nouveau mot de passe</Label>
+                <Label htmlFor="new-password">{t('resetPassword.nouveauMotDePasse')}</Label>
                 <div className="relative">
                   <Input
                     id="new-password"
@@ -384,7 +384,7 @@ export default function ResetPassword() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirmer le mot de passe</Label>
+                <Label htmlFor="confirm-password">{t('resetPassword.confirmerLeMotDePasse')}</Label>
                 <div className="relative">
                   <Input
                     id="confirm-password"
@@ -405,13 +405,13 @@ export default function ResetPassword() {
                   </button>
                 </div>
                 {confirmPassword && newPassword !== confirmPassword && (
-                  <p className="text-xs text-destructive">Les mots de passe ne correspondent pas</p>
+                  <p className="text-xs text-destructive">{t('resetPassword.lesMotsDePasseNe')}</p>
                 )}
               </div>
 
               <Button type="submit" disabled={loading} className="w-full">
                 {loading ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Mise à jour...</>
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {t('resetPassword.miseAJour')}</>
                 ) : (
                   "Mettre à jour le mot de passe"
                 )}

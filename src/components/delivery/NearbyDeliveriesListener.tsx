@@ -4,6 +4,7 @@
  */
 
 import { useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -13,6 +14,7 @@ interface NearbyDeliveriesListenerProps {
 }
 
 export function NearbyDeliveriesListener({ onNewDelivery, enabled }: NearbyDeliveriesListenerProps) {
+  const { t } = useTranslation();
   useEffect(() => {
     if (!enabled) return;
 
@@ -30,7 +32,7 @@ export function NearbyDeliveriesListener({ onNewDelivery, enabled }: NearbyDeliv
         },
         (payload) => {
           console.log('[NearbyDeliveriesListener] New delivery:', payload);
-          toast.info('🚚 Nouvelle livraison disponible!', {
+          toast.info(t('nearbyDeliveriesListener.nouvelleLivraisonDisponible'), {
             description: 'Consultez l\'onglet Missions'
           });
           onNewDelivery();

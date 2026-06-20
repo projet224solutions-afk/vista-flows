@@ -4,6 +4,7 @@
  */
 
 import { useState, useRef } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Camera, Check, Upload, X } from 'lucide-react';
@@ -23,6 +24,7 @@ interface DeliveryProofUploadProps {
 }
 
 export function DeliveryProofUpload({ deliveryId, onProofUploaded, onCancel }: DeliveryProofUploadProps) {
+  const { t } = useTranslation();
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [signature, setSignature] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -43,22 +45,22 @@ export function DeliveryProofUpload({ deliveryId, onProofUploaded, onCancel }: D
 
   const handleSubmit = async () => {
     if (!photoPreview) {
-      toast.error('Veuillez prendre une photo de la livraison');
+      toast.error(t('deliveryProofUpload.veuillezPrendreUnePhotoDe'));
       return;
     }
 
     if (!signature) {
-      toast.error('La signature du client est requise');
+      toast.error(t('deliveryProofUpload.laSignatureDuClientEst'));
       return;
     }
 
     setUploading(true);
     try {
       onProofUploaded(photoPreview, signature);
-      toast.success('✅ Preuve enregistrée avec succès !');
+      toast.success(t('deliveryProofUpload.preuveEnregistreeAvecSucces'));
     } catch (error) {
       console.error('Error uploading proof:', error);
-      toast.error('Erreur lors de l\'enregistrement');
+      toast.error(t('deliveryProofUpload.erreurLorsDeLEnregistrement'));
     } finally {
       setUploading(false);
     }
@@ -122,7 +124,7 @@ export function DeliveryProofUpload({ deliveryId, onProofUploaded, onCancel }: D
     <Dialog open={true} onOpenChange={(open) => !open && onCancel()}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Confirmation de livraison</DialogTitle>
+          <DialogTitle>{t('deliveryProofUpload.confirmationDeLivraison')}</DialogTitle>
           <DialogDescription>
             Prenez une photo et récupérez la signature du client
           </DialogDescription>
@@ -130,7 +132,7 @@ export function DeliveryProofUpload({ deliveryId, onProofUploaded, onCancel }: D
         <div className="space-y-6 mt-4">
         {/* Photo de preuve */}
         <div className="space-y-3">
-          <label className="text-sm font-medium">📸 Photo de la livraison</label>
+          <label className="text-sm font-medium">{t('deliveryProofUpload.photoDeLaLivraison')}</label>
           <input
             ref={fileInputRef}
             type="file"
@@ -144,7 +146,7 @@ export function DeliveryProofUpload({ deliveryId, onProofUploaded, onCancel }: D
             <div className="relative">
               <img
                 src={photoPreview}
-                alt="Preuve de livraison"
+                alt={t('deliveryProofUpload.preuveDeLivraison')}
                 className="w-full h-48 object-cover rounded-lg border"
               />
               <Button
@@ -165,7 +167,7 @@ export function DeliveryProofUpload({ deliveryId, onProofUploaded, onCancel }: D
             >
               <div className="flex flex-col items-center gap-2">
                 <Camera className="h-8 w-8 text-muted-foreground" />
-                <span>Prendre une photo</span>
+                <span>{t('deliveryProofUpload.prendreUnePhoto')}</span>
               </div>
             </Button>
           )}
@@ -173,7 +175,7 @@ export function DeliveryProofUpload({ deliveryId, onProofUploaded, onCancel }: D
 
         {/* Signature client */}
         <div className="space-y-3">
-          <label className="text-sm font-medium">✍️ Signature du client</label>
+          <label className="text-sm font-medium">{t('deliveryProofUpload.signatureDuClient')}</label>
           <div className="border rounded-lg p-2 bg-white">
             <canvas
               ref={canvasRef}

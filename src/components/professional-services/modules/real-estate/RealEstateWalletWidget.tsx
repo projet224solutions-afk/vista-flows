@@ -2,6 +2,7 @@
  * Widget Wallet pour le module immobilier
  */
 import { WalletBalanceWidget } from '@/components/wallet/WalletBalanceWidget';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Wallet, TrendingUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
@@ -11,6 +12,7 @@ interface RealEstateWalletWidgetProps {
 }
 
 export function RealEstateWalletWidget({ className }: RealEstateWalletWidgetProps) {
+  const { t } = useTranslation();
   return (
     <Card className={className}>
       <CardHeader className="pb-3">
@@ -32,8 +34,8 @@ export function RealEstateWalletWidget({ className }: RealEstateWalletWidgetProp
           <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
             <ArrowDownRight className="h-4 w-4 text-destructive" />
             <div>
-              <p className="text-xs text-muted-foreground">Dépenses</p>
-              <p className="text-sm font-semibold">Publicités</p>
+              <p className="text-xs text-muted-foreground">{t('realEstateWalletWidget.depenses')}</p>
+              <p className="text-sm font-semibold">{t('realEstateWalletWidget.publicites')}</p>
             </div>
           </div>
         </div>

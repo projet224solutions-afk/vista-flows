@@ -1,10 +1,10 @@
-// @ts-nocheck
 /**
  * 🎨 DASHBOARD PDG - VUE D'ENSEMBLE
  * KPIs et statistiques RÉELLES en temps réel depuis Supabase
  */
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useEffect, useState } from 'react';
 import {
   TrendingUp,
@@ -49,6 +49,7 @@ interface CoreFeatureRegistryRow {
 }
 
 export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
+  const { t } = useTranslation();
   const stats = usePDGStats();
   const { user } = useAuth();
   const [coreSummaryLoading, setCoreSummaryLoading] = useState(false);
@@ -116,7 +117,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       <div className="flex items-center justify-center py-12">
         <div className="flex items-center gap-3">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <span className="text-muted-foreground">Chargement des statistiques...</span>
+          <span className="text-muted-foreground">{t('pDGDashboardHome.chargementDesStatistiques')}</span>
         </div>
       </div>
     );
@@ -129,7 +130,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
           <div className="flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-destructive" />
             <div>
-              <p className="font-medium text-destructive">Erreur de chargement</p>
+              <p className="font-medium text-destructive">{t('pDGDashboardHome.erreurDeChargement')}</p>
               <p className="text-sm text-muted-foreground">{stats.error}</p>
             </div>
             <Button onClick={stats.refresh} variant="outline" size="sm" className="ml-auto">
@@ -280,7 +281,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
                   <Wallet className="w-5 h-5 text-primary" />
                   Wallet PDG
                 </CardTitle>
-                <CardDescription>Solde et gestion du wallet principal</CardDescription>
+                <CardDescription>{t('pDGDashboardHome.soldeEtGestionDuWallet')}</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -290,7 +291,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
             ) : (
               <div className="text-center text-muted-foreground py-4">
                 <Wallet className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>Connexion requise</p>
+                <p>{t('pDGDashboardHome.connexionRequise')}</p>
               </div>
             )}
           </CardContent>
@@ -303,7 +304,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
               <Zap className="w-5 h-5 text-primary" />
               Alertes & Notifications
             </CardTitle>
-            <CardDescription>Événements importants nécessitant votre attention</CardDescription>
+            <CardDescription>{t('pDGDashboardHome.evenementsImportantsNecessitantVotreAtte')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {alerts.map((alert, index) => {
@@ -338,7 +339,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
                   <Activity className="w-5 h-5 text-primary" />
                   Statistiques Détaillées
                 </CardTitle>
-                <CardDescription>Vue d'ensemble de la plateforme</CardDescription>
+                <CardDescription>{t('pDGDashboardHome.vueDEnsembleDeLa')}</CardDescription>
               </div>
               <Button onClick={stats.refresh} variant="outline" size="sm">
                 <RefreshCw className="w-4 h-4 mr-2" />
@@ -349,7 +350,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
           <CardContent className="space-y-3 sm:space-y-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
               <div className="space-y-1 sm:space-y-2 p-2 sm:p-0 bg-muted/30 sm:bg-transparent rounded-lg">
-                <p className="text-xs sm:text-sm text-muted-foreground">Produits</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">{t('pDGDashboardHome.produits')}</p>
                 <p className="text-xl sm:text-2xl font-bold">{stats.totalProducts || 0}</p>
                 <p className="text-[10px] sm:text-xs text-muted-foreground">{stats.activeProducts || 0} actifs</p>
               </div>
@@ -377,7 +378,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
       <Card className="border border-border/40 bg-card/50 backdrop-blur-sm">
         <CardHeader>
           <CardTitle>Actions Rapides</CardTitle>
-          <CardDescription>Accès rapide aux fonctionnalités principales</CardDescription>
+          <CardDescription>{t('pDGDashboardHome.accesRapideAuxFonctionnalitesPrincipales')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
@@ -522,7 +523,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
             </p>
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
-                <p className="text-xs text-muted-foreground">Détection</p>
+                <p className="text-xs text-muted-foreground">{t('pDGDashboardHome.detection')}</p>
                 <p className="text-lg font-bold text-[#04439e]">1 min</p>
               </div>
               <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
@@ -570,7 +571,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
                 <p className="text-lg font-bold text-blue-600">{stats.totalBureaus || 0}</p>
               </div>
               <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
-                <p className="text-xs text-muted-foreground">Validés</p>
+                <p className="text-xs text-muted-foreground">{t('pDGDashboardHome.valides')}</p>
                 <p className="text-lg font-bold text-blue-600">{stats.validatedBureaus || 0}</p>
               </div>
             </div>
@@ -614,7 +615,7 @@ export function PDGDashboardHome({ onNavigate }: PDGDashboardHomeProps) {
                 <p className="text-lg font-bold text-[#ff4000]">{coreSummaryLoading ? '...' : coreSummary.totalFeatures}</p>
               </div>
               <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">
-                <p className="text-xs text-muted-foreground">Événements 24h</p>
+                <p className="text-xs text-muted-foreground">{t('pDGDashboardHome.evenements24h')}</p>
                 <p className="text-lg font-bold text-[#ff4000]">{coreSummaryLoading ? '...' : coreSummary.totalEvents24h}</p>
               </div>
               <div className="p-3 bg-white/50 dark:bg-black/20 rounded-lg">

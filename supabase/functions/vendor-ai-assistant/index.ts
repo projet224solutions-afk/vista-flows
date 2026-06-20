@@ -3698,18 +3698,37 @@ ${isPlatformQuery ? "→ APPELER search_proximity_services ou get_available_taxi
 
     const wantsStream = body.stream !== false;
 
+    // 🎯 MODE DÉDIÉ « RÉPONSE À UN AVIS CLIENT »
+    // Quand l'appel vient du panneau "Répondre avec l'IA" (review_id + contexte avis),
+    // on court-circuite l'énorme prompt entreprise + les outils, qui faisaient fuiter
+    // le raisonnement du modèle ("Faits vérifiés / Incertitudes / Actions").
+    // → prompt minimal qui ne produit QUE la réponse finale au client.
+    const isReviewReply = !!(body?.review_id && (body?.context?.review_content || body?.review_type === 'product_review' || body?.review_type === 'vendor_rating'));
+    const reviewReplySystem = `Tu rédiges la réponse PUBLIQUE d'un vendeur à un avis client.
+RÈGLES ABSOLUES :
+- Renvoie UNIQUEMENT le texte final de la réponse au client (2 à 3 phrases).
+- N'affiche AUCUN raisonnement, AUCUNE structure "Faits vérifiés / Incertitudes / Actions", aucune méta-explication, aucun préambule.
+- Ton chaleureux et professionnel, en français. Remercie le client et adapte le ton à la note.
+- Ne mentionne jamais d'identifiants techniques ni d'incertitudes.`;
+
     if (wantsStream) {
       const requestBody = {
         model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: enterpriseSystemPrompt },
-          { role: "system", content: policyNudge },
-          ...conversationMessages,
-        ],
-        tools: enterpriseTools,
+        messages: isReviewReply
+          ? [
+              { role: "system", content: reviewReplySystem },
+              ...conversationMessages,
+            ]
+          : [
+              { role: "system", content: enterpriseSystemPrompt },
+              { role: "system", content: policyNudge },
+              ...conversationMessages,
+            ],
+        // Pas d'outils en mode réponse d'avis (réponse directe)
+        ...(isReviewReply ? {} : { tools: enterpriseTools }),
         stream: true,
-        max_tokens: 4096,
-        temperature: 0.65,
+        max_tokens: isReviewReply ? 400 : 4096,
+        temperature: isReviewReply ? 0.5 : 0.65,
       };
 
       console.log("Calling Lovable AI Gateway for ENTERPRISE vendor assistant (streaming)...");

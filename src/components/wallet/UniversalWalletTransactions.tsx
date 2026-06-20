@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { PaymentMethodsManager } from '@/components/payment/PaymentMethodsManager';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useTranslation } from '@/hooks/useTranslation';
 import { signedInvoke } from '@/lib/security/hmacSigner';
 import { toast } from 'sonner';
 import {
@@ -84,6 +86,7 @@ interface Transaction {
 
 export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _showBalance = true }: UniversalWalletTransactionsProps = {}) => {
   // Utiliser le contexte Auth comme tous les autres composants de l'application
+  const { t } = useTranslation();
   const { user, profile } = useAuth();
   const { currency: vendorCurrency } = useVendorCurrency();
   // Convertisseur fiable (devise d'affichage = devise synchronisée du profil/wallet) pour
@@ -101,6 +104,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
   const [userCustomId, setUserCustomId] = useState<string | null>(null);
 
   // États pour les formulaires
+  const [showPaymentMethods, setShowPaymentMethods] = useState(false);
   const [depositAmount, setDepositAmount] = useState('');
   const [depositMethod, setDepositMethod] = useState<'card' | 'mobile_money' | 'card_stripe'>('card');
   const [mobileMoneyPhone, setMobileMoneyPhone] = useState('');
@@ -334,7 +338,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
 
         if (insertError) {
           console.error('❌ Erreur création wallet:', insertError);
-          toast.error('Impossible de créer le wallet');
+          toast.error(t('wallet.cannotCreate'));
           setLoading(false);
           return;
         }
@@ -342,14 +346,14 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
         if (newWallet) {
           setWallet(newWallet);
           console.log('✅ Wallet créé avec succès');
-          toast.success('Wallet créé avec succès');
+          toast.success(t('wallet.created'));
         }
       }
 
       setLoading(false);
     } catch (error) {
       console.error('Erreur chargement wallet:', error);
-      toast.error('Erreur lors du chargement du wallet');
+      toast.error(t('wallet.loadError'));
       setLoading(false);
     }
   };
@@ -671,7 +675,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
     const normalizedRole = (profile?.role || '').toString().toLowerCase().trim();
 
     if (!normalizedRole) {
-      toast.error('UNAUTHORIZED_ACTION: Rôle utilisateur non défini');
+      toast.error(t('wallet.roleUndefined'));
       return false;
     }
 
@@ -692,7 +696,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
 
   const handleDeposit = async () => {
     if (!effectiveUserId || !depositAmount) {
-      toast.error('Veuillez entrer un montant');
+      toast.error(t('wallet.enterAmount'));
       return;
     }
 
@@ -703,7 +707,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
 
     const amount = parseFloat(depositAmount);
     if (isNaN(amount) || amount <= 0) {
-      toast.error('INVALID_AMOUNT: Montant invalide');
+      toast.error(t('wallet.invalidAmount'));
       return;
     }
 
@@ -757,7 +761,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
           _walletData = reloadedWallet;
         } catch (initError) {
           console.error('❌ Erreur initialisation:', initError);
-          toast.error('Impossible d\'initialiser le wallet');
+          toast.error(t('universalWalletTransactions.impossibleDInitialiserLeWallet'));
           setProcessing(false);
           return;
         }
@@ -792,14 +796,14 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
     const cleanPhone = mobileMoneyPhone.replace(/[^0-9]/g, '').replace(/^(224|00224)/, '');
 
     if (!cleanPhone || cleanPhone.length !== 9) {
-      toast.error('Numéro de téléphone invalide', {
-        description: `Entrez 9 chiffres (ex: 621234567). Vous avez entré: ${cleanPhone.length} chiffres`
+      toast.error(t('wallet.invalidPhone'), {
+        description: `${t('wallet.enter9DigitsEx')}: ${cleanPhone.length}`
       });
       return;
     }
 
     setProcessing(true);
-    const loadingToast = toast.loading('Initialisation du paiement Mobile Money...');
+    const loadingToast = toast.loading(t('wallet.initMobileMoney'));
 
     try {
       // ✅ ChapChapPay pour les depots Mobile Money
@@ -821,7 +825,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
       if (error) throw error;
 
       if (data?.success) {
-        toast.success('Demande de paiement envoyée!', {
+        toast.success(t('wallet.paymentRequestSent'), {
           description: `Confirmez le paiement sur votre téléphone ${paymentMethod === 'orange_money' ? 'Orange Money' : 'MTN MoMo'}`
         });
 
@@ -833,7 +837,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
     } catch (error: any) {
       toast.dismiss(loadingToast);
       console.error('❌ Erreur paiement Mobile Money:', error);
-      toast.error('Échec du paiement Mobile Money', {
+      toast.error(t('wallet.mobileMoneyFailed'), {
         description: error.message
       });
     } finally {
@@ -858,7 +862,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
 
         if (walletData && wallet && walletData.balance > wallet.balance) {
           clearInterval(checkStatus);
-          toast.success('✅ Paiement confirmé!', {
+          toast.success(`✅ ${t('wallet.paymentConfirmed')}`, {
             description: `${formatWalletBalance(amount)} ajoutés à votre wallet`
           });
           setDepositAmount('');
@@ -867,8 +871,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
           await Promise.all([loadWalletData(), loadTransactions()]);
         } else if (attempts >= maxAttempts) {
           clearInterval(checkStatus);
-          toast.warning('⏱️ Délai dépassé', {
-            description: 'Vérifiez manuellement le statut du paiement'
+          toast.warning(`⏱️ ${t('wallet.timeoutExceeded')}`, {
+            description: t('wallet.checkStatusManually')
           });
         }
       } catch (error) {
@@ -879,7 +883,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
 
   const executeWithdraw = async (pin: string) => {
     if (!effectiveUserId || !withdrawAmount) {
-      toast.error('Veuillez entrer un montant');
+      toast.error(t('wallet.enterAmount'));
       return;
     }
 
@@ -890,7 +894,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
 
     const amount = parseFloat(withdrawAmount);
     if (isNaN(amount) || amount <= 0) {
-      toast.error('INVALID_AMOUNT: Montant invalide');
+      toast.error(t('wallet.invalidAmount'));
       return;
     }
 
@@ -909,7 +913,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
     if (withdrawMethod === 'mobile_money') {
       const cleanPhone = withdrawPhone.replace(/[^0-9]/g, '').replace(/^(224|00224)/, '');
       if (!cleanPhone || cleanPhone.length !== 9) {
-        toast.error('Numéro de téléphone invalide (9 chiffres requis)');
+        toast.error(t('wallet.invalidPhone9'));
         return;
       }
     }
@@ -976,8 +980,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
 
         console.log('✅ Demande de retrait bancaire enregistrée:', data);
 
-        toast.success('Demande de retrait enregistrée !', {
-          description: `${formatWalletBalance(data.netAmount || amount)} net (frais: ${formatWalletBalance(data.withdrawalFee || 0)}). Votre demande sera examinée par notre équipe.`
+        toast.success(t('wallet.withdrawRequestSaved'), {
+          description: `${formatWalletBalance(data.netAmount || amount)} net (${formatWalletBalance(data.withdrawalFee || 0)}). ${t('wallet.reviewedByTeam')}`
         });
       }
 
@@ -1010,7 +1014,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
         // Ignore fallback error and show original message
       }
 
-      toast.error(error.message || 'Erreur lors du retrait');
+      toast.error(error.message || t('wallet.withdrawError'));
       return false;
     } finally {
       setProcessing(false);
@@ -1019,7 +1023,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
 
   const handleWithdraw = async () => {
     if (!effectiveUserId || !withdrawAmount) {
-      toast.error('Veuillez entrer un montant');
+      toast.error(t('wallet.enterAmount'));
       return;
     }
 
@@ -1028,23 +1032,20 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
 
   const handlePreviewTransfer = async () => {
     if (!user?.id || !transferAmount || !recipientId || !transferDescription) {
-      toast.error('Veuillez remplir tous les champs');
+      toast.error(t('wallet.fillAllFields'));
       return;
     }
 
     const amount = parseFloat(transferAmount);
     if (isNaN(amount) || amount <= 0) {
-      toast.error('Montant invalide');
+      toast.error(t('wallet.amountInvalid'));
       return;
     }
 
-    if (amount < 100) {
-      toast.error(`Le montant minimum est de 100 ${wallet?.currency || 'GNF'}`);
-      return;
-    }
-
+    // Pas de minimum codé en dur dans la devise du wallet (100 EUR = absurde). Le backend
+    // applique le vrai minimum sur l'ÉQUIVALENT GNF (≈ 100 GNF) — sensible à la devise.
     if (amount > (wallet?.balance || 0)) {
-      toast.error('Solde insuffisant');
+      toast.error(t('wallet.insufficientBalance'));
       return;
     }
 
@@ -1092,7 +1093,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
 
       if (profileError) {
         console.error('❌ Erreur recherche profil:', profileError);
-        toast.error('Erreur lors de la recherche du destinataire');
+        toast.error(t('wallet.recipientSearchError'));
         return;
       }
 
@@ -1116,7 +1117,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
 
         if (agentError) {
           console.error('❌ Erreur recherche agent:', agentError);
-          toast.error('Erreur lors de la recherche de l\'agent');
+          toast.error(t('wallet.agentSearchError'));
           return;
         }
 
@@ -1136,7 +1137,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
 
           if (bureauError) {
             console.error('❌ Erreur recherche bureau:', bureauError);
-            toast.error('Erreur lors de la recherche du bureau');
+            toast.error(t('wallet.bureauSearchError'));
             return;
           }
 
@@ -1151,7 +1152,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
 
             if (walletError || !bureauWallet) {
               console.error('❌ Bureau sans wallet:', walletError);
-              toast.error('Ce bureau n\'a pas de portefeuille configuré');
+              toast.error(t('wallet.bureauNoWallet'));
               return;
             }
 
@@ -1165,7 +1166,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
       // Si aucun destinataire trouvé
       if (!recipientUuid) {
         console.error('❌ Aucun destinataire trouvé avec ID:', recipientId);
-        toast.error(`Destinataire introuvable: ${recipientId}`);
+        toast.error(`${t('wallet.recipientNotFound')}: ${recipientId}`);
         return;
       }
 
@@ -1173,7 +1174,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
       const isBureauTransfer = recipientUuid.startsWith('bureau:');
 
       if (!isBureauTransfer && recipientUuid === effectiveUserId) {
-        toast.error('Vous ne pouvez pas transférer à vous-même');
+        toast.error(t('wallet.cannotTransferSelf'));
         return;
       }
 
@@ -1192,7 +1193,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
         const totalDebit = amount + feeAmount;
 
         if (totalDebit > (wallet?.balance || 0)) {
-          toast.error('Solde insuffisant pour couvrir le montant et les frais');
+          toast.error(t('wallet.insufficientForFees'));
           return;
         }
 
@@ -1306,7 +1307,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
 
     if (!effectiveUserId || !transferPreview) {
       console.error('❌ Transfert annulé: données manquantes', { effectiveUserId, transferPreview });
-      toast.error('Données de transfert manquantes');
+      toast.error(t('wallet.transferDataMissing'));
       return false;
     }
 
@@ -1582,7 +1583,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
       setPinSetupOpen(false);
 
       if (pinSetupMode === 'setup' && pinAction) {
-        toast.success('Code PIN activé. Confirmez maintenant votre opération.');
+        toast.success(t('wallet.pinActivated'));
         setPinPromptOpen(true);
         return;
       }
@@ -1648,8 +1649,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
           <div className="flex flex-col items-center gap-4 text-center">
             <AlertCircle className="w-12 h-12 text-muted-foreground" />
             <div>
-              <p className="font-semibold">Chargement du profil...</p>
-              <p className="text-sm text-muted-foreground">Veuillez patienter</p>
+              <p className="font-semibold">{t('wallet.loadingProfile')}</p>
+              <p className="text-sm text-muted-foreground">{t('wallet.pleaseWait')}</p>
             </div>
           </div>
         </CardContent>
@@ -1667,8 +1668,8 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
               <Wallet className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
             </div>
             <div className="min-w-0">
-              <CardTitle className="text-base sm:text-lg truncate">Historique Wallet</CardTitle>
-              <CardDescription className="text-xs sm:text-sm truncate">Gérez vos transactions</CardDescription>
+              <CardTitle className="text-base sm:text-lg truncate">{t('wallet.history')}</CardTitle>
+              <CardDescription className="text-xs sm:text-sm truncate">{t('wallet.manageTransactions')}</CardDescription>
             </div>
           </div>
           <Button
@@ -1686,7 +1687,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
         {/* Solde - optimisé mobile */}
         <div className="bg-client-gradient rounded-lg p-4 sm:p-6 text-white">
           <div className="flex items-center justify-between mb-2 sm:mb-3">
-            <p className="text-xs sm:text-sm opacity-90">Solde actuel</p>
+            <p className="text-xs sm:text-sm opacity-90">{t('wallet.currentBalance')}</p>
             {isAgent && agentInfo ? (
               <Badge variant="secondary" className="bg-white/20 text-white border-white/30 text-[10px] sm:text-xs px-1.5 sm:px-2">
                 {agentInfo.agent_code}
@@ -1727,13 +1728,13 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
         </div>
 
         {/* Boutons d'actions - optimisés mobile */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
           {/* Dépôt */}
           <Dialog open={depositOpen} onOpenChange={setDepositOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" className="flex flex-col h-16 sm:h-20 gap-1 sm:gap-2 px-1 sm:px-4">
                 <ArrowDownToLine className="w-4 h-4 sm:w-5 sm:h-5 text-[#ff4000]" />
-                <span className="text-[10px] sm:text-xs">Dépôt</span>
+                <span className="text-[10px] sm:text-xs">{t('wallet.deposit')}</span>
               </Button>
             </DialogTrigger>
             <DialogContent
@@ -1744,20 +1745,20 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
               onEscapeKeyDown={(e) => e.preventDefault()}
             >
               <DialogHeader>
-                <DialogTitle>Effectuer un dépôt</DialogTitle>
+                <DialogTitle>{t('wallet.makeDeposit')}</DialogTitle>
                 <DialogDescription>
-                  Ajoutez des fonds à votre wallet
+                  {t('wallet.addFunds')}
                 </DialogDescription>
               </DialogHeader>
               <Tabs value={depositMethod} onValueChange={(v) => setDepositMethod(v as 'card' | 'mobile_money' | 'card_stripe')}>
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="card" className="gap-1 text-xs">
                     <CreditCard className="w-3 h-3" />
-                    Carte
+                    {t('wallet.card')}
                   </TabsTrigger>
                   <TabsTrigger value="mobile_money" className="gap-1 text-xs">
                     <Smartphone className="w-3 h-3" />
-                    Mobile
+                    {t('wallet.mobile')}
                   </TabsTrigger>
                   <TabsTrigger value="card_stripe" className="gap-1 text-xs">
                     PayPal
@@ -1785,10 +1786,10 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
 
                 <TabsContent value="mobile_money" className="space-y-4 mt-4">
                   <div>
-                    <Label htmlFor="mobile-provider">Opérateur</Label>
+                    <Label htmlFor="mobile-provider">{t('wallet.operator')}</Label>
                     <Select value={mobileMoneyProvider} onValueChange={(v) => setMobileMoneyProvider(v as 'orange' | 'mtn')}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner" />
+                        <SelectValue placeholder={t('wallet.select')} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="orange">
@@ -1808,7 +1809,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                   </div>
 
                   <div>
-                    <Label htmlFor="mobile-phone">Numéro de téléphone</Label>
+                    <Label htmlFor="mobile-phone">{t('auth.phoneNumber')}</Label>
                     <div className="flex gap-2">
                       <Input
                         value="224"
@@ -1824,7 +1825,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                         onChange={(e) => setMobileMoneyPhone(e.target.value.replace(/\D/g, ''))}
                       />
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">9 chiffres sans le +224</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('wallet.digits9')}</p>
                   </div>
 
                   <div>
@@ -1873,15 +1874,15 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
             </DialogTrigger>
             <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto" onPointerDownOutside={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
               <DialogHeader>
-                <DialogTitle>Effectuer un retrait</DialogTitle>
+                <DialogTitle>{t('wallet.makeWithdraw')}</DialogTitle>
                 <DialogDescription>
-                  Retirez des fonds de votre wallet vers votre compte
+                  {t('wallet.withdrawFundsDesc')}
                 </DialogDescription>
               </DialogHeader>
 
               <div className="p-3 bg-orange-50 rounded-lg border border-orange-200 mb-2">
                 <p className="text-sm text-orange-800">
-                  Solde disponible: <span className="font-bold">{formatWalletBalance(wallet?.balance || 0)}</span>
+                  {t('wallet.availableBalance')}: <span className="font-bold">{formatWalletBalance(wallet?.balance || 0)}</span>
                 </p>
               </div>
 
@@ -1889,11 +1890,11 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="mobile_money" className="gap-1 text-xs">
                     <Smartphone className="w-3 h-3" />
-                    Mobile
+                    {t('wallet.mobile')}
                   </TabsTrigger>
                   <TabsTrigger value="bank" className="gap-1 text-xs">
                     <Building2 className="w-3 h-3" />
-                    Banque
+                    {t('wallet.bank')}
                   </TabsTrigger>
                   <TabsTrigger value="paypal" className="gap-1 text-xs">
                     <span className="text-[10px] font-bold">PP</span>
@@ -1904,10 +1905,10 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                 {/* Retrait Mobile Money */}
                 <TabsContent value="mobile_money" className="space-y-4 mt-4">
                   <div>
-                    <Label htmlFor="withdraw-provider">Opérateur</Label>
+                    <Label htmlFor="withdraw-provider">{t('wallet.operator')}</Label>
                     <Select value={withdrawProvider} onValueChange={(v) => setWithdrawProvider(v as 'orange' | 'mtn')}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner" />
+                        <SelectValue placeholder={t('wallet.select')} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="orange">
@@ -1927,7 +1928,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                   </div>
 
                   <div>
-                    <Label htmlFor="withdraw-phone">Numéro de téléphone</Label>
+                    <Label htmlFor="withdraw-phone">{t('auth.phoneNumber')}</Label>
                     <div className="flex gap-2">
                       <Input
                         value="224"
@@ -1943,12 +1944,12 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                         onChange={(e) => setWithdrawPhone(e.target.value.replace(/\D/g, ''))}
                       />
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">9 chiffres sans le +224</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('wallet.digits9')}</p>
                   </div>
 
                   <div>
                     <Label>Montants rapides</Label>
-                    <div className="grid grid-cols-3 gap-2 mt-1">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-1">
                       {[10000, 25000, 50000, 100000, 200000, 500000].map((amt) => (
                         <Button
                           key={amt}
@@ -1984,12 +1985,12 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                     disabled={processing || !withdrawAmount || !withdrawPhone || withdrawPhone.length !== 9 || parseFloat(withdrawAmount) < 5000}
                     className="w-full bg-orange-600 hover:bg-orange-700"
                   >
-                    {processing ? 'Traitement...' : `Retirer ${withdrawAmount ? parseFloat(withdrawAmount).toLocaleString() : '0'} ${wallet?.currency || 'GNF'}`}
+                    {processing ? t('wallet.processing') : `${t('wallet.withdrawBtn')} ${withdrawAmount ? parseFloat(withdrawAmount).toLocaleString() : '0'} ${wallet?.currency || 'GNF'}`}
                   </Button>
 
                   <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
                     <AlertCircle className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                    <p className="text-xs text-blue-700">Le retrait sera traité sous 24-48h</p>
+                    <p className="text-xs text-blue-700">{t('wallet.withdraw2448')}</p>
                   </div>
                 </TabsContent>
 
@@ -1999,29 +2000,29 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                     <div className="flex items-start gap-3">
                       <Building2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-sm font-medium">Retrait par virement bancaire</p>
+                        <p className="text-sm font-medium">{t('wallet.bankTransferWithdraw')}</p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Votre demande sera examinée par notre équipe avant traitement. Les fonds sont réservés jusqu'à validation. Délai: 3-5 jours ouvrés.
+                          {t('wallet.bankTransferDesc')}
                         </p>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <Label htmlFor="bank-holder">Titulaire du compte</Label>
+                    <Label htmlFor="bank-holder">{t('wallet.accountHolder')}</Label>
                     <Input
                       id="bank-holder"
-                      placeholder="Nom complet du titulaire"
+                      placeholder={t('wallet.accountHolderPlaceholder')}
                       value={bankAccountHolder}
                       onChange={(e) => setBankAccountHolder(e.target.value)}
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="bank-name">Nom de la banque</Label>
+                    <Label htmlFor="bank-name">{t('wallet.bankName')}</Label>
                     <Input
                       id="bank-name"
-                      placeholder="Ex: BCRG, Ecobank, BICIGUI..."
+                      placeholder={t('wallet.bankNamePlaceholder')}
                       value={bankName}
                       onChange={(e) => setBankName(e.target.value)}
                     />
@@ -2039,7 +2040,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
 
                   <div>
                     <Label>Montants rapides</Label>
-                    <div className="grid grid-cols-3 gap-2 mt-1">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-1">
                       {[50000, 100000, 200000, 500000, 1000000, 2000000].map((amt) => (
                         <Button
                           key={amt}
@@ -2089,18 +2090,18 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                 {/* Retrait PayPal */}
                 <TabsContent value="paypal" className="space-y-4 mt-4">
                   <div>
-                    <Label htmlFor="pp-wd-email">Email PayPal du destinataire</Label>
+                    <Label htmlFor="pp-wd-email">{t('wallet.paypalEmail')}</Label>
                     <Input
                       id="pp-wd-email"
                       type="email"
-                      placeholder="votre@email.com"
+                      placeholder={t('wallet.emailPlaceholder')}
                       value={paypalWithdrawEmail}
                       onChange={(e) => setPaypalWithdrawEmail(e.target.value)}
                     />
                   </div>
                   <div>
                     <Label>Montants rapides (USD)</Label>
-                    <div className="grid grid-cols-3 gap-2 mt-1">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-1">
                       {[10, 25, 50, 100, 250, 500].map((amt) => (
                         <Button
                           key={amt}
@@ -2115,7 +2116,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="pp-wd-amt">Montant (USD)</Label>
+                    <Label htmlFor="pp-wd-amt">{t('wallet.amountUsd')}</Label>
                     <Input
                       id="pp-wd-amt"
                       type="number"
@@ -2130,34 +2131,34 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                   <Button
                     onClick={async () => {
                       const numAmt = parseFloat(paypalWithdrawAmount);
-                      if (!numAmt || numAmt < 5) { toast.error('Minimum $5 USD'); return; }
-                      if (!paypalWithdrawEmail || !paypalWithdrawEmail.includes('@')) { toast.error('Email PayPal invalide'); return; }
+                      if (!numAmt || numAmt < 5) { toast.error(t('wallet.minUsd5')); return; }
+                      if (!paypalWithdrawEmail || !paypalWithdrawEmail.includes('@')) { toast.error(t('wallet.invalidPaypalEmail')); return; }
                       setProcessing(true);
                       try {
                         const { data, error } = await signedInvoke('paypal-withdrawal', {
                           amount: numAmt, currency: 'USD', paypalEmail: paypalWithdrawEmail,
                         });
                         if (error) throw new Error(error.message);
-                        if (!data?.success) throw new Error(data?.error || 'Erreur retrait');
-                        toast.success(data.message || 'Retrait PayPal effectué !');
+                        if (!data?.success) throw new Error(data?.error || t('wallet.withdrawError'));
+                        toast.success(data.message || t('wallet.paypalWithdrawDone'));
                         setPaypalWithdrawAmount('');
                         setPaypalWithdrawEmail('');
                         setWithdrawOpen(false);
                         window.dispatchEvent(new Event('wallet-updated'));
                         await Promise.all([loadWalletData(), loadTransactions()]);
                       } catch (err: any) {
-                        toast.error(err.message || 'Erreur retrait PayPal');
+                        toast.error(err.message || t('wallet.paypalWithdrawError'));
                       } finally { setProcessing(false); }
                     }}
                     disabled={processing || !paypalWithdrawAmount || parseFloat(paypalWithdrawAmount) < 5 || !paypalWithdrawEmail}
                     className="w-full bg-[#0070BA] hover:bg-[#003087] text-white"
                     size="lg"
                   >
-                    {processing ? 'Traitement...' : `Retirer $${paypalWithdrawAmount || '0'} vers PayPal`}
+                    {processing ? t('wallet.processing') : `${t('wallet.withdrawBtn')} $${paypalWithdrawAmount || '0'} ${t('wallet.toPaypal')}`}
                   </Button>
                   <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
                     <Shield className="w-4 h-4 text-primary flex-shrink-0" />
-                    <p className="text-xs text-muted-foreground">Paiement sécurisé via PayPal Payouts</p>
+                    <p className="text-xs text-muted-foreground">{t('wallet.securePaypal')}</p>
                   </div>
                 </TabsContent>
               </Tabs>
@@ -2169,31 +2170,31 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
             <DialogTrigger asChild>
               <Button variant="outline" className="flex flex-col h-16 sm:h-20 gap-1 sm:gap-2 px-1 sm:px-4">
                 <Send className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-                <span className="text-[10px] sm:text-xs">Transfert</span>
+                <span className="text-[10px] sm:text-xs">{t('wallet.transfer')}</span>
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Effectuer un transfert</DialogTitle>
+                <DialogTitle>{t('wallet.makeTransfer')}</DialogTitle>
                 <DialogDescription>
-                  Transférez des fonds à un autre utilisateur
+                  {t('wallet.transferDesc')}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="recipient-id">Destinataire</Label>
+                  <Label htmlFor="recipient-id">{t('wallet.recipient')}</Label>
                   <Input
                     id="recipient-id"
-                    placeholder="ID, email ou téléphone"
+                    placeholder={t('wallet.recipientPlaceholder')}
                     value={recipientId}
                     onChange={(e) => setRecipientId(e.target.value)}
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Entrez l'ID (ex: CLT0001), l'email ou le numéro de téléphone
+                    {t('wallet.recipientHelp')}
                   </p>
                 </div>
                 <div>
-                  <Label htmlFor="transfer-amount">Montant</Label>
+                  <Label htmlFor="transfer-amount">{t('wallet.amount')}</Label>
                   <Input
                     id="transfer-amount"
                     type="number"
@@ -2202,14 +2203,14 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                     onChange={(e) => setTransferAmount(e.target.value)}
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Solde disponible: {formatWalletBalance(wallet?.balance || 0)}
+                    {t('wallet.availableBalance')}: {formatWalletBalance(wallet?.balance || 0)}
                   </p>
                 </div>
                 <div>
-                  <Label htmlFor="transfer-description">Motif du transfert</Label>
+                  <Label htmlFor="transfer-description">{t('wallet.transferReason')}</Label>
                   <Input
                     id="transfer-description"
-                    placeholder="Ex: Paiement facture, Remboursement..."
+                    placeholder={t('wallet.transferReasonPlaceholder')}
                     value={transferDescription}
                     onChange={(e) => setTransferDescription(e.target.value)}
                   />
@@ -2219,7 +2220,7 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                   disabled={processing || !transferAmount || !recipientId || !transferDescription}
                   className="w-full bg-blue-600 hover:bg-blue-700"
                 >
-                  {processing ? 'Traitement...' : 'Voir les frais et confirmer'}
+                  {processing ? t('wallet.processing') : t('wallet.seeFeesConfirm')}
                 </Button>
               </div>
             </DialogContent>
@@ -2232,53 +2233,53 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center gap-2">
                 <AlertCircle className="w-5 h-5 text-primary" />
-                Confirmer le transfert
+                {t('wallet.confirmTransfer')}
               </AlertDialogTitle>
               <AlertDialogDescription asChild>
                 <div className="space-y-4 mt-4">
                   <div className="p-4 bg-slate-50 rounded-lg space-y-3">
                     {transferPreview?.recipient_name && (
                       <div className="flex justify-between items-center pb-3 border-b">
-                        <span className="text-sm font-medium">👤 Destinataire</span>
+                        <span className="text-sm font-medium">👤 {t('wallet.recipient')}</span>
                         <span className="text-lg font-semibold text-primary">{transferPreview.recipient_name}</span>
                       </div>
                     )}
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">💰 Montant à transférer</span>
+                      <span className="text-sm font-medium">💰 {t('wallet.amountToTransfer')}</span>
                       <span className="text-lg font-bold">{formatWalletBalance(transferPreview?.amount || 0)}</span>
                     </div>
                     {(transferPreview?.fee_amount || 0) > 0 && (
                       <div className="flex justify-between items-center text-orange-600">
-                        <span className="text-sm font-medium">💸 Frais de transfert ({transferPreview?.fee_percent}%)</span>
+                        <span className="text-sm font-medium">💸 {t('wallet.transferFees')} ({transferPreview?.fee_percent}%)</span>
                         <span className="text-lg font-bold">{formatWalletBalance(transferPreview?.fee_amount || 0)}</span>
                       </div>
                     )}
                     <div className="border-t pt-3 flex justify-between items-center">
-                      <span className="text-sm font-medium">📉 Total débité de votre compte</span>
+                      <span className="text-sm font-medium">📉 {t('wallet.totalDebited')}</span>
                       <span className="text-xl font-bold text-destructive">{formatWalletBalance(transferPreview?.total_debit || 0)}</span>
                     </div>
                     <div className="flex justify-between items-center text-[#ff4000]">
-                      <span className="text-sm font-medium">📈 Montant net reçu par le destinataire</span>
+                      <span className="text-sm font-medium">📈 {t('wallet.netReceived')}</span>
                       <span className="text-lg font-bold">{formatWalletBalance(transferPreview?.amount_received || 0)}</span>
                     </div>
                   </div>
 
                   <div className="p-3 bg-muted border border-border rounded-lg">
                     <p className="text-sm">
-                      <strong>Solde actuel:</strong> {formatWalletBalance(transferPreview?.current_balance || 0)}
+                      <strong>{t('wallet.currentBalance')}:</strong> {formatWalletBalance(transferPreview?.current_balance || 0)}
                       <br />
-                      <strong>Solde après transfert:</strong> {formatWalletBalance(transferPreview?.balance_after || 0)}
+                      <strong>{t('wallet.balanceAfter')}:</strong> {formatWalletBalance(transferPreview?.balance_after || 0)}
                     </p>
                   </div>
 
                   <p className="text-sm text-muted-foreground">
-                    Souhaitez-vous confirmer ce transfert ?
+                    {t('wallet.confirmTransferQ')}
                   </p>
                 </div>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={processing}>Non, annuler</AlertDialogCancel>
+              <AlertDialogCancel disabled={processing}>{t('wallet.noCancel')}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={(e) => {
                   e.preventDefault();
@@ -2289,10 +2290,10 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
                 {processing ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Transfert en cours...
+                    {t('wallet.transferInProgress')}
                   </>
                 ) : (
-                  'Oui, confirmer'
+                  t('wallet.yesConfirm')
                 )}
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -2353,17 +2354,36 @@ export const UniversalWalletTransactions = ({ userId: propUserId, showBalance: _
           }}
         />
 
+        {/* Moyens de paiement — sous Dépôt/Retrait/Transfert */}
+        <Button
+          variant="outline"
+          className="w-full gap-2 mb-4"
+          onClick={() => setShowPaymentMethods(true)}
+        >
+          <CreditCard className="w-4 h-4" />
+          Moyens de paiement
+        </Button>
+
+        <Dialog open={showPaymentMethods} onOpenChange={setShowPaymentMethods}>
+          <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{t('wallet.paymentMethods')}</DialogTitle>
+            </DialogHeader>
+            <PaymentMethodsManager />
+          </DialogContent>
+        </Dialog>
+
         {/* Historique des transactions - optimisé mobile */}
         <div>
           <div className="flex items-center gap-2 mb-2 sm:mb-3">
             <History className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
-            <h3 className="font-semibold text-sm sm:text-base">Historique récent</h3>
+            <h3 className="font-semibold text-sm sm:text-base">{t('wallet.recentHistory')}</h3>
           </div>
 
           {transactions.length === 0 ? (
             <div className="text-center py-6 sm:py-8 text-muted-foreground">
               <History className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 opacity-50" />
-              <p className="text-xs sm:text-sm">Aucune transaction</p>
+              <p className="text-xs sm:text-sm">{t('wallet.noTransaction')}</p>
             </div>
           ) : (
             <div className="space-y-1.5 sm:space-y-2">

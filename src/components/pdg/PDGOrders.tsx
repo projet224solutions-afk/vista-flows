@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +24,7 @@ interface Order {
 }
 
 export default function PDGOrders() {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +40,7 @@ export default function PDGOrders() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast.error('Vous devez être connecté');
+        toast.error(t('pDGOrders.vousDevezEtreConnecte'));
         return null;
       }
 
@@ -50,7 +52,7 @@ export default function PDGOrders() {
 
       if (error || !vendor) {
         console.error('Erreur profil vendeur:', error);
-        toast.error('Profil vendeur introuvable');
+        toast.error(t('pDGOrders.profilVendeurIntrouvable'));
         return null;
       }
 
@@ -87,7 +89,7 @@ export default function PDGOrders() {
       setStats({ pending, confirmed, completed, cancelled });
     } catch (error: any) {
       console.error('Erreur chargement commandes:', error);
-      toast.error('Erreur lors du chargement des commandes');
+      toast.error(t('pDGOrders.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -115,7 +117,7 @@ export default function PDGOrders() {
       <div className="flex items-center justify-center py-12">
         <div className="flex items-center gap-3">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <span>Chargement des commandes...</span>
+          <span>{t('pDGOrders.chargementDesCommandes')}</span>
         </div>
       </div>
     );
@@ -139,7 +141,7 @@ export default function PDGOrders() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Confirmées</CardTitle>
+            <CardTitle className="text-sm">{t('pDGOrders.confirmees')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -151,7 +153,7 @@ export default function PDGOrders() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Terminées</CardTitle>
+            <CardTitle className="text-sm">{t('pDGOrders.terminees')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -163,7 +165,7 @@ export default function PDGOrders() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Annulées</CardTitle>
+            <CardTitle className="text-sm">{t('pDGOrders.annulees')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -179,7 +181,7 @@ export default function PDGOrders() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Commandes récentes</CardTitle>
+              <CardTitle>{t('pDGOrders.commandesRecentes')}</CardTitle>
               <CardDescription>Les {orders.length} dernières commandes</CardDescription>
             </div>
             <Button onClick={loadOrders} variant="outline" size="sm">

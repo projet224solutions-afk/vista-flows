@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,7 @@ interface Contact {
 }
 
 export default function VendorCommunication() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const { user } = useAuth();
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -159,7 +161,7 @@ export default function VendorCommunication() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Rechercher un contact..."
+                  placeholder={t('vendorCommunication.rechercherUnContact')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9"

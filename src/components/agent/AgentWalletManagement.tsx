@@ -1,4 +1,5 @@
 import { useCallback, useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +24,7 @@ export default function AgentWalletManagement({
   agentCode,
   showTransactions = true
 }: AgentWalletManagementProps) {
+  const { t } = useTranslation();
   const [agentUserId, setAgentUserId] = useState<string | null>(null);
   const [agentUserCode, setAgentUserCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -99,7 +101,7 @@ export default function AgentWalletManagement({
         <CardContent className="pt-6">
           <div className="flex items-center justify-center py-8">
             <RefreshCw className="w-6 h-6 animate-spin text-primary" />
-            <p className="ml-2 text-muted-foreground">Chargement du wallet agent...</p>
+            <p className="ml-2 text-muted-foreground">{t('agentWalletManagement.chargementDuWalletAgent')}</p>
           </div>
         </CardContent>
       </Card>
@@ -141,7 +143,7 @@ export default function AgentWalletManagement({
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Shield className="w-5 h-5 text-[#ff4000]" />
-            <span>Portefeuille Agent</span>
+            <span>{t('agentWalletManagement.portefeuilleAgent')}</span>
             {agentUserCode && (
               <Badge variant="outline" className="ml-auto bg-orange-50 text-[#ff4000] border-orange-300">
                 {agentUserCode}

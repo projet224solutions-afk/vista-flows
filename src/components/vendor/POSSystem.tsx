@@ -1,5 +1,5 @@
-// @ts-nocheck
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, _CardHeader, _CardTitle } from '@/components/ui/card';
 import { usePOSPersistence, clearPOSState, type POSPersistedState } from '@/hooks/usePOSPersistence';
 import { Button } from '@/components/ui/button';
@@ -99,6 +99,7 @@ interface Customer {
 }
 
 export function POSSystem() {
+  const { t } = useTranslation();
   // Devise unifiée (CurrencyContext synchronisé au profil — fiable, ne retombe pas sur GNF
   // sur un simple retard de taux comme l'ancien useVendorCurrency). Le POS affiche donc
   // toujours la VRAIE devise de la boutique (ex: XOF) sur les prix, le panier ET le reçu.
@@ -349,8 +350,11 @@ export function POSSystem() {
           toast.success(`${result.synced} vente(s) hors-ligne synchronisée(s) !`);
         }
 
+        // Sync AUTOMATIQUE (montage / reconnexion) : on reste silencieux sur les échecs pour
+        // ne pas répéter un message à chaque ouverture du POS. Les ventes non récupérables sont
+        // abandonnées par syncOfflinePosSales ; l'indicateur réseau permet une relance manuelle.
         if (result.failed > 0) {
-          toast.error(`${result.failed} vente(s) restent en échec de synchronisation`);
+          console.warn(`[POS] ${result.failed} vente(s) restent en échec de synchronisation`);
         }
       } catch (error) {
         console.error('Erreur synchronisation offline:', error);
@@ -390,7 +394,7 @@ export function POSSystem() {
           if (cachedProducts && cachedProducts.length > 0) {
             console.log('📦 [POS] Utilisation du cache offline:', cachedProducts.length, 'produits');
             setProducts(cachedProducts);
-            toast.info('Mode hors ligne - Produits chargés depuis le cache', {
+            toast.info(t('pOSSystem.modeHorsLigneProduitsCharges'), {
               description: `${cachedProducts.length} produit(s) disponible(s)`,
               duration: 3000
             });
@@ -401,7 +405,7 @@ export function POSSystem() {
         }
 
         // Pas de cache disponible
-        toast.error('Mode hors ligne - Aucun produit en cache', {
+        toast.error(t('pOSSystem.modeHorsLigneAucunProduit'), {
           description: 'Visitez le POS une fois avec internet pour charger les produits.',
           duration: 5000
         });
@@ -487,7 +491,7 @@ export function POSSystem() {
           if (cachedProducts && cachedProducts.length > 0) {
             console.log('📦 [POS] Fallback sur cache après erreur');
             setProducts(cachedProducts);
-            toast.info('Mode hors ligne - Produits chargés depuis le cache');
+            toast.info(t('pOSSystem.modeHorsLigneProduitsCharges'));
             return;
           }
         } catch (cacheError) {
@@ -495,7 +499,7 @@ export function POSSystem() {
         }
       }
 
-      toast.error('Erreur lors du chargement des produits');
+      toast.error(t('pOSSystem.erreurLorsDuChargementDes'));
     } finally {
       setProductsLoading(false);
     }
@@ -710,7 +714,7 @@ export function POSSystem() {
     const unitPrice = originalProduct?.price || productOrCartItem.price;
 
     if (product.stock <= 0) {
-      toast.error('Produit en rupture de stock');
+      toast.error(t('pOSSystem.produitEnRuptureDeStock'));
       return;
     }
 
@@ -755,7 +759,7 @@ export function POSSystem() {
     const product = originalProduct || productOrCartItem;
 
     if (!product.sell_by_carton || !product.units_per_carton || product.units_per_carton <= 1) {
-      toast.error('Ce produit ne peut pas être vendu par carton');
+      toast.error(t('pOSSystem.ceProduitNePeutPas'));
       return;
     }
 
@@ -873,7 +877,7 @@ export function POSSystem() {
 
   const removeFromCart = (productId: string) => {
     setCart(prev => prev.filter(item => item.id !== productId));
-    toast.info('Article retiré du panier');
+    toast.info(t('pOSSystem.articleRetireDuPanier'));
   };
 
   const clearCart = () => {
@@ -887,7 +891,7 @@ export function POSSystem() {
     setMarketingContactInput('');
     // Effacer aussi les données persistées
     clearPOSState();
-    toast.info('Panier vidé');
+    toast.info(t('pOSSystem.panierVide'));
   };
 
   const getNormalizedMarketingContact = () => {
@@ -925,7 +929,7 @@ export function POSSystem() {
     }, vendorId);
 
     if (!response.success) {
-      toast.warning('Vente enregistrée, mais le contact campagne n\'a pas été ajouté', {
+      toast.warning(t('pOSSystem.venteEnregistreeMaisLeContact'), {
         description: response.error || 'Vous pourrez le ressaisir plus tard.',
       });
       return;
@@ -1015,15 +1019,15 @@ export function POSSystem() {
   // Traiter la vente à crédit
   const processCreditSale = async () => {
     if (!creditCustomerName.trim()) {
-      toast.error('Veuillez entrer le nom du client');
+      toast.error(t('pOSSystem.veuillezEntrerLeNomDu'));
       return;
     }
     if (!creditDueDate) {
-      toast.error('Veuillez sélectionner une date d\'échéance');
+      toast.error(t('pOSSystem.veuillezSelectionnerUneDateD'));
       return;
     }
     if (!vendorId) {
-      toast.error('Vendeur non identifié');
+      toast.error(t('pOSSystem.vendeurNonIdentifie'));
       return;
     }
 
@@ -1105,7 +1109,7 @@ export function POSSystem() {
         setCreditNotes('');
         setCart([]);
 
-        toast.success('✅ Vente à crédit enregistrée (hors-ligne)', {
+        toast.success(t('pOSSystem.venteACreditEnregistreeHors'), {
           description: `Client: ${creditSaleData.data.customer_name} - ${formatPriceWithCurrency(total)}${selectedCurrency !== 'GNF' ? ` (${total.toLocaleString()} GNF)` : ''} - Sera synchronisée à la reconnexion.`,
           duration: 5000
         });
@@ -1130,7 +1134,7 @@ export function POSSystem() {
       // 1. Créer un client temporaire ou récupérer l'ID existant
       const customerId = await getOrCreateCustomerId();
       if (!customerId) {
-        toast.error('Erreur lors de la création du client');
+        toast.error(t('pOSSystem.erreurLorsDeLaCreation'));
         setIsProcessingCredit(false);
         return;
       }
@@ -1169,7 +1173,7 @@ export function POSSystem() {
         throw new Error(orderResponse.error || 'Impossible de créer la commande à crédit');
       }
 
-      toast.success('Vente à crédit enregistrée !', {
+      toast.success(t('pOSSystem.venteACreditEnregistree'), {
         description: `${creditCustomerName} - ${formatPriceWithCurrency(total)}${selectedCurrency !== 'GNF' ? ` (${total.toLocaleString()} GNF)` : ''} - Stock mis à jour`,
       });
 
@@ -1186,7 +1190,7 @@ export function POSSystem() {
 
     } catch (error: any) {
       console.error('Erreur vente à crédit:', error);
-      toast.error('Erreur lors de l\'enregistrement', {
+      toast.error(t('pOSSystem.erreurLorsDeLEnregistrement'), {
         description: error.message,
       });
     } finally {
@@ -1275,7 +1279,7 @@ export function POSSystem() {
     // Note: Le montant reçu n'est plus obligatoire pour valider
 
     if (marketingContactInput.trim() && !getNormalizedMarketingContact()) {
-      toast.error('Le contact client doit être un email valide ou un numéro valide');
+      toast.error(t('pOSSystem.leContactClientDoitEtre'));
       return;
     }
 
@@ -1283,13 +1287,13 @@ export function POSSystem() {
     setIsProcessingPayment(true);
 
     if (!vendorId) {
-      toast.error('Vendeur non identifié');
+      toast.error(t('pOSSystem.vendeurNonIdentifie'));
       setIsProcessingPayment(false);
       return;
     }
 
     if (!user?.id) {
-      toast.error('Utilisateur non connecté');
+      toast.error(t('pOSSystem.utilisateurNonConnecte'));
       setIsProcessingPayment(false);
       return;
     }
@@ -1299,7 +1303,7 @@ export function POSSystem() {
 
     // En mode offline, seuls les paiements en espèces sont autorisés
     if (isOffline && paymentMethod !== 'cash') {
-      toast.error('Mode hors ligne: Seuls les paiements en espèces sont disponibles', {
+      toast.error(t('pOSSystem.modeHorsLigneSeulsLes'), {
         description: 'Mobile Money et carte bancaire nécessitent une connexion internet.',
         duration: 5000
       });
@@ -1310,7 +1314,7 @@ export function POSSystem() {
     // Validation Mobile Money (seulement si online)
     if (paymentMethod === 'mobile_money') {
       if (!mobileMoneyPhone || mobileMoneyPhone.length !== 9) {
-        toast.error('Veuillez entrer un numéro de téléphone valide (9 chiffres)');
+        toast.error(t('pOSSystem.veuillezEntrerUnNumeroDe'));
         setIsProcessingPayment(false);
         return;
       }
@@ -1320,7 +1324,7 @@ export function POSSystem() {
       if (mobileMoneyProvider === 'orange') {
         const ok = starts.startsWith('610') || starts.startsWith('611') || starts.startsWith('62');
         if (!ok) {
-          toast.error('Numéro non compatible Orange Money', {
+          toast.error(t('pOSSystem.numeroNonCompatibleOrangeMoney'), {
             description: 'Orange Money (GN) commence généralement par 610, 611 ou 62.',
           });
           setIsProcessingPayment(false);
@@ -1329,7 +1333,7 @@ export function POSSystem() {
       }
       if (mobileMoneyProvider === 'mtn') {
         if (!starts.startsWith('66')) {
-          toast.error('Numéro non compatible MTN MoMo', {
+          toast.error(t('pOSSystem.numeroNonCompatibleMtnMomo'), {
             description: 'MTN MoMo (GN) commence généralement par 66.',
           });
           setIsProcessingPayment(false);
@@ -1341,7 +1345,7 @@ export function POSSystem() {
     try {
       // Pour Mobile Money, utiliser ChapChapPay E-Commerce (redirection vers page de paiement)
       if (paymentMethod === 'mobile_money') {
-        toast.loading('Initialisation du paiement ChapChapPay...');
+        toast.loading(t('pOSSystem.initialisationDuPaiementChapchappay'));
 
         // Mapper le provider vers le format ChapChapPay
         const chapchapPaymentMethod: ChapChapPayMethod = mobileMoneyProvider === 'orange' ? 'orange_money' : 'mtn_momo';
@@ -1402,7 +1406,7 @@ export function POSSystem() {
 
         if (!chapchapResult.success) {
           console.error('[POS] ChapChapPay payment error:', chapchapResult.error);
-          toast.error('Erreur lors de l\'initialisation du paiement', {
+          toast.error(t('pOSSystem.erreurLorsDeLInitialisation'), {
             description: chapchapResult.error || 'Veuillez réessayer',
           });
           // Annuler la commande si le paiement échoue
@@ -1418,13 +1422,13 @@ export function POSSystem() {
           .eq('id', order.id);
 
         // Notification: demande de paiement envoyée
-        toast.info('Demande de paiement envoyée', {
+        toast.info(t('pOSSystem.demandeDePaiementEnvoyee'), {
           description: `Confirmez le paiement sur votre téléphone ${mobileMoneyProvider === 'orange' ? 'Orange Money' : 'MTN MoMo'}.`
         });
 
         // Polling pour vérifier le statut du paiement
         if (chapchapResult.transactionId) {
-          toast.loading('En attente de confirmation...', { id: 'payment-polling' });
+          toast.loading(t('pOSSystem.enAttenteDeConfirmation'), { id: 'payment-polling' });
 
           const finalStatus = await pollStatus(chapchapResult.transactionId, (status) => {
             console.log('[POS] Payment status:', status);
@@ -1433,7 +1437,7 @@ export function POSSystem() {
           toast.dismiss('payment-polling');
 
           if (finalStatus?.status === 'completed' || finalStatus?.status === 'success') {
-            toast.success('🎉 Paiement confirmé !');
+            toast.success(t('pOSSystem.paiementConfirme'));
 
             // Mettre à jour la commande - POS orders are completed immediately (no delivery needed)
             const { error: updateError } = await updatePosOrderStatus(order.id, {
@@ -1448,7 +1452,7 @@ export function POSSystem() {
             setShowReceipt(true);
             await loadVendorProducts();
           } else if (finalStatus?.status === 'failed' || finalStatus?.status === 'cancelled' || finalStatus?.status === 'expired') {
-            toast.error('Paiement échoué, annulé ou expiré');
+            toast.error(t('pOSSystem.paiementEchoueAnnuleOuExpire'));
 
             // Marquer la commande comme échouée
             await supabase.from('orders')
@@ -1456,7 +1460,7 @@ export function POSSystem() {
               .eq('id', order.id);
           } else {
             // Paiement en attente
-            toast.warning('Paiement en attente', {
+            toast.warning(t('pOSSystem.paiementEnAttente'), {
               description: 'Le statut du paiement sera mis à jour via webhook.'
             });
           }
@@ -1516,7 +1520,7 @@ export function POSSystem() {
 
         } catch (cardError: any) {
           console.error('Card payment error:', cardError);
-          toast.error('Erreur paiement carte', {
+          toast.error(t('pOSSystem.erreurPaiementCarte'), {
             description: cardError.message || 'Veuillez réessayer'
           });
           return;
@@ -1596,7 +1600,7 @@ export function POSSystem() {
           setShowOrderSummary(false);
           setShowReceipt(true);
 
-          toast.success('✅ Vente enregistrée (mode hors-ligne)', {
+          toast.success(t('pOSSystem.venteEnregistreeModeHorsLigne'), {
             description: `N° ${offlineOrderNumber} - Sera synchronisée à la reconnexion.`,
             duration: 5000
           });
@@ -1666,7 +1670,7 @@ export function POSSystem() {
         setShowOrderSummary(false);
         setShowReceipt(true);
         await collectMarketingContactAfterSale();
-        toast.success('Paiement effectué avec succès! (mode fallback)');
+        toast.success(t('pOSSystem.paiementEffectueAvecSuccesMode'));
         await loadVendorProducts();
         return;
       }
@@ -1691,7 +1695,7 @@ export function POSSystem() {
       setLastOrderNumber(order.order_number || order.id.substring(0, 8).toUpperCase());
       setShowOrderSummary(false);
       setShowReceipt(true);
-      toast.success('Paiement effectué avec succès!');
+      toast.success(t('pOSSystem.paiementEffectueAvecSucces'));
       await loadVendorProducts();
     } catch (error: any) {
       console.error('❌ [POS] Erreur paiement complète:', error);
@@ -1709,7 +1713,7 @@ export function POSSystem() {
             setShowOrderSummary(false);
             setShowReceipt(true);
             await collectMarketingContactAfterSale();
-            toast.success('Paiement effectué avec succès! (fallback réseau)');
+            toast.success(t('pOSSystem.paiementEffectueAvecSuccesFallback'));
             await loadVendorProducts();
             return;
           } catch (fallbackError: any) {
@@ -1717,7 +1721,7 @@ export function POSSystem() {
           }
         }
 
-        toast.error('Connexion perdue', {
+        toast.error(t('pOSSystem.connexionPerdue'), {
           description: 'Passez en mode hors-ligne pour continuer les ventes en espèces.',
           duration: 5000
         });
@@ -1729,7 +1733,7 @@ export function POSSystem() {
           || error?.hint
           || JSON.stringify(error);
 
-        toast.error('Erreur lors du paiement', {
+        toast.error(t('pOSSystem.erreurLorsDuPaiement'), {
           description: errorMessage,
           duration: 10000 // Augmenté pour avoir le temps de lire
         });
@@ -1769,7 +1773,7 @@ export function POSSystem() {
       return newCustomer.id;
     } catch (error: any) {
       console.error('[POS] getOrCreateCustomerId error:', error);
-      toast.error('Erreur lors de la creation du client', {
+      toast.error(t('pOSSystem.erreurLorsDeLaCreation2'), {
         description: error?.message || 'Veuillez reessayer'
       });
       return null;
@@ -1782,7 +1786,7 @@ export function POSSystem() {
       addToCart(product);
       setBarcodeInput('');
     } else {
-      toast.error('Produit non trouvé');
+      toast.error(t('pOSSystem.produitNonTrouve'));
     }
   };
 
@@ -1871,7 +1875,7 @@ export function POSSystem() {
                   <div className="space-y-4">
                     {/* Logo Upload Section */}
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Logo de l'entreprise</label>
+                      <label className="text-sm font-medium mb-2 block">{t('pOSSystem.logoDeLEntreprise')}</label>
                       <div className="flex items-start gap-4">
                         {/* Aperçu du logo */}
                         <div className="w-20 h-20 border-2 border-dashed border-border rounded-lg overflow-hidden bg-muted flex items-center justify-center">
@@ -1896,7 +1900,7 @@ export function POSSystem() {
                               if (!file) return;
 
                               if (file.size > 2 * 1024 * 1024) {
-                                toast.error('Le fichier est trop volumineux (max 2MB)');
+                                toast.error(t('pOSSystem.leFichierEstTropVolumineux'));
                                 return;
                               }
 
@@ -1919,10 +1923,10 @@ export function POSSystem() {
                                   .getPublicUrl(filePath);
 
                                 await updateSettings({ logo_url: publicUrlData.publicUrl });
-                                toast.success('Logo mis à jour');
+                                toast.success(t('pOSSystem.logoMisAJour'));
                               } catch (error) {
                                 console.error('Erreur upload logo:', error);
-                                toast.error('Erreur lors du téléchargement du logo');
+                                toast.error(t('pOSSystem.erreurLorsDuTelechargementDu'));
                               }
                             }}
                             className="cursor-pointer text-sm"
@@ -1937,11 +1941,11 @@ export function POSSystem() {
                     <Separator />
 
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Nom de l'entreprise</label>
+                      <label className="text-sm font-medium mb-2 block">{t('pOSSystem.nomDeLEntreprise')}</label>
                       <Input
                         value={settings?.company_name || ''}
                         onChange={(e) => updateSettings({ company_name: e.target.value })}
-                        placeholder="Nom de votre entreprise"
+                        placeholder={t('pOSSystem.nomDeVotreEntreprise')}
                       />
                     </div>
 
@@ -2001,11 +2005,11 @@ export function POSSystem() {
                     </div>
 
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Pied de page des reçus</label>
+                      <label className="text-sm font-medium mb-2 block">{t('pOSSystem.piedDePageDesRecus')}</label>
                       <Textarea
                         value={settings?.receipt_footer || ''}
                         onChange={(e) => updateSettings({ receipt_footer: e.target.value })}
-                        placeholder="Merci de votre visite !"
+                        placeholder={t('pOSSystem.merciDeVotreVisite')}
                         className="h-20"
                       />
                     </div>
@@ -2063,7 +2067,7 @@ export function POSSystem() {
                   <div className="flex-1 relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="Rechercher..."
+                      placeholder={t('pOSSystem.rechercher')}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-9 h-10 text-sm border-2 border-border/50 focus:border-primary/50 bg-background/80"
@@ -2076,7 +2080,7 @@ export function POSSystem() {
                     size="icon"
                     onClick={() => setShowBarcodeScanner(true)}
                     className="h-10 w-10 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-md"
-                    title="Scanner un produit"
+                    title={t('pOSSystem.scannerUnProduit')}
                   >
                     <Scan className="h-5 w-5" />
                   </Button>
@@ -2204,7 +2208,7 @@ export function POSSystem() {
                   <div className="flex flex-col items-center justify-center h-full gap-4 py-8">
                     <ShoppingBag className="h-12 w-12 text-muted-foreground/50" />
                     <div className="text-center">
-                      <div className="text-sm font-semibold text-muted-foreground mb-1">Aucun produit</div>
+                      <div className="text-sm font-semibold text-muted-foreground mb-1">{t('pOSSystem.aucunProduit')}</div>
                       <div className="text-xs text-muted-foreground">
                         {searchTerm ? 'Modifiez votre recherche' : 'Ajoutez des produits'}
                       </div>
@@ -2374,7 +2378,7 @@ export function POSSystem() {
                                     setShowQuantityKeypad(true);
                                   }}
                                   className="h-8 w-8 p-0 flex-shrink-0 border-primary/30 hover:border-primary hover:bg-primary/10"
-                                  title="Saisir quantité"
+                                  title={t('pOSSystem.saisirQuantite')}
                                 >
                                   <Calculator className="h-3.5 w-3.5 text-primary" />
                                 </Button>
@@ -2420,7 +2424,7 @@ export function POSSystem() {
         </div>
 
         {/* Section Panier - Interface professionnelle - Responsive optimisé mobile */}
-        <div className={`w-full md:w-80 lg:w-[380px] flex-shrink-0 flex flex-col min-w-0 max-w-full ${isMobile ? 'flex-1 min-h-0' : 'md:min-h-0 md:max-h-full'} ${isMobile && mobileTab !== 'cart' ? 'hidden' : ''}`}>
+        <div className={`w-full md:w-80 lg:w-full max-w-[380px] flex-shrink-0 flex flex-col min-w-0 max-w-full ${isMobile ? 'flex-1 min-h-0' : 'md:min-h-0 md:max-h-full'} ${isMobile && mobileTab !== 'cart' ? 'hidden' : ''}`}>
           {/* Panier - Design optimisé mobile */}
           <Card className="shadow-xl border-0 bg-card overflow-hidden flex flex-col max-w-full flex-1">
             {/* En-tête compact */}
@@ -2464,7 +2468,7 @@ export function POSSystem() {
                   <div className="flex flex-col items-center justify-center h-32 text-center">
                     <ShoppingBag className="h-8 w-8 text-muted-foreground/40 mb-2" />
                     <p className="text-muted-foreground font-medium text-sm">Panier vide</p>
-                    <p className="text-xs text-muted-foreground/80">Ajoutez des produits</p>
+                    <p className="text-xs text-muted-foreground/80">{t('pOSSystem.ajoutezDesProduits')}</p>
                   </div>
                 ) : (
                   <div className="space-y-1 pr-4">
@@ -2622,7 +2626,7 @@ export function POSSystem() {
                   )}
 
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-semibold text-foreground">Total à payer</span>
+                    <span className="text-[10px] font-semibold text-foreground">{t('pOSSystem.totalAPayer')}</span>
                     <div className="text-right">
                       <span className="text-lg sm:text-xl font-black text-primary">{formatPriceWithCurrency(total)}</span>
                     </div>
@@ -2678,7 +2682,7 @@ export function POSSystem() {
 
                     {/* Numéro de téléphone */}
                     <div className="space-y-1">
-                      <Label className="text-[10px] text-muted-foreground">Numéro de téléphone du client</Label>
+                      <Label className="text-[10px] text-muted-foreground">{t('pOSSystem.numeroDeTelephoneDuClient')}</Label>
                       <Input
                         type="tel"
                         value={mobileMoneyPhone}
@@ -2752,7 +2756,7 @@ export function POSSystem() {
 
           <div className="space-y-4">
             <div className="bg-muted/30 p-4 rounded-lg">
-              <h3 className="font-semibold mb-3">Récapitulatif</h3>
+              <h3 className="font-semibold mb-3">{t('pOSSystem.recapitulatif')}</h3>
               <div className="space-y-2 text-sm">
                 {cart.map(item => (
                   <div key={item.id} className="flex justify-between">
@@ -2813,7 +2817,7 @@ export function POSSystem() {
 
             <div className="bg-muted/20 p-3 rounded-lg">
               <div className="text-sm">
-                <strong>Mode de paiement:</strong> {
+                <strong>{t('pOSSystem.modeDePaiement')}</strong> {
                   paymentMethod === 'cash' ? 'Espèces' :
                   paymentMethod === 'card' ? 'Carte bancaire (Stripe)' :
                   'Mobile Money (ChapChapPay)'
@@ -2821,7 +2825,7 @@ export function POSSystem() {
               </div>
               {paymentMethod === 'cash' && receivedAmount > 0 && (
                 <div className="text-sm mt-1">
-                  <strong>Montant reçu:</strong> {formatPriceWithCurrency(receivedAmount)}
+                  <strong>{t('pOSSystem.montantRecu')}</strong> {formatPriceWithCurrency(receivedAmount)}
                   {selectedCurrency !== 'GNF' && (
                     <span className="block text-[10px] text-muted-foreground">({receivedAmount.toLocaleString()} GNF)</span>
                   )}<br/>
@@ -2836,8 +2840,8 @@ export function POSSystem() {
             <div className="rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3 space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <div>
-                  <p className="text-sm font-semibold">Contact client</p>
-                  <p className="text-xs text-muted-foreground">Choisissez mail ou numéro avant la validation POS.</p>
+                  <p className="text-sm font-semibold">{t('pOSSystem.contactClient')}</p>
+                  <p className="text-xs text-muted-foreground">{t('pOSSystem.choisissezMailOuNumeroAvant')}</p>
                 </div>
                 <Button
                   type="button"
@@ -2863,7 +2867,7 @@ export function POSSystem() {
                   <Input
                     value={marketingContactInput}
                     onChange={(e) => setMarketingContactInput(e.target.value)}
-                    placeholder="Email ou numéro du client"
+                    placeholder={t('pOSSystem.emailOuNumeroDuClient')}
                     className="h-9"
                   />
                   <p className="text-[11px] text-muted-foreground">
@@ -2888,7 +2892,7 @@ export function POSSystem() {
 
       {/* Dialog de vente à crédit */}
       <Dialog open={showCreditSaleModal} onOpenChange={setShowCreditSaleModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CreditCard className="h-5 w-5 text-primary" />
@@ -2898,7 +2902,7 @@ export function POSSystem() {
 
           <div className="space-y-4">
             <div className="bg-muted/30 p-4 rounded-lg">
-              <h3 className="font-semibold mb-3">Récapitulatif panier</h3>
+              <h3 className="font-semibold mb-3">{t('pOSSystem.recapitulatifPanier')}</h3>
               <div className="space-y-2 text-sm max-h-32 overflow-y-auto">
                 {cart.map(item => (
                   <div key={item.id} className="flex justify-between">
@@ -2957,16 +2961,16 @@ export function POSSystem() {
 
             <div className="space-y-3">
               <div>
-                <Label htmlFor="creditCustomer">Nom du client *</Label>
+                <Label htmlFor="creditCustomer">{t('pOSSystem.nomDuClient')}</Label>
                 <Input
                   id="creditCustomer"
-                  placeholder="Nom du client"
+                  placeholder={t('pOSSystem.nomDuClient2')}
                   value={creditCustomerName}
                   onChange={(e) => setCreditCustomerName(e.target.value)}
                 />
               </div>
               <div>
-                <Label htmlFor="creditCustomerPhone">Contact du client</Label>
+                <Label htmlFor="creditCustomerPhone">{t('pOSSystem.contactDuClient')}</Label>
                 <Input
                   id="creditCustomerPhone"
                   type="tel"
@@ -2976,7 +2980,7 @@ export function POSSystem() {
                 />
               </div>
               <div>
-                <Label htmlFor="creditDueDate">Date d'échéance *</Label>
+                <Label htmlFor="creditDueDate">{t('pOSSystem.dateDEcheance')}</Label>
                 <Input
                   id="creditDueDate"
                   type="date"
@@ -2988,7 +2992,7 @@ export function POSSystem() {
                 <Label htmlFor="creditNotes">Notes (optionnel)</Label>
                 <Textarea
                   id="creditNotes"
-                  placeholder="Notes sur la vente à crédit..."
+                  placeholder={t('pOSSystem.notesSurLaVenteA')}
                   value={creditNotes}
                   onChange={(e) => setCreditNotes(e.target.value)}
                   rows={2}
@@ -3143,14 +3147,14 @@ export function POSSystem() {
               await loadVendorProducts();
             } catch (error: any) {
               console.error('❌ Erreur mise à jour commande Stripe:', error);
-              toast.error('Erreur lors de la finalisation du paiement', {
+              toast.error(t('pOSSystem.erreurLorsDeLaFinalisation'), {
                 description: error?.message || 'Veuillez réessayer'
               });
             }
           }}
           onError={(error) => {
             console.error('❌ Erreur paiement Stripe:', error);
-            toast.error('Paiement échoué', {
+            toast.error(t('pOSSystem.paiementEchoue'), {
               description: error
             });
           }}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ export default function EditVehicleDialog({
   vehicleData,
   onUpdate
 }: EditVehicleDialogProps) {
+  const { t } = useTranslation();
   const [saving, setSaving] = useState(false);
   const [serialNumber, setSerialNumber] = useState('');
   const [licensePlate, setLicensePlate] = useState('');
@@ -58,7 +60,7 @@ export default function EditVehicleDialog({
   const handleSave = async () => {
     try {
       setSaving(true);
-      toast.info('Enregistrement des modifications...');
+      toast.info(t('editVehicleDialog.enregistrementDesModifications'));
 
       // SÉCURITÉ: Vérifier si le véhicule est volé avant de permettre un changement de statut
       const { data: currentVehicle, error: checkError } = await supabase
@@ -72,7 +74,7 @@ export default function EditVehicleDialog({
       // BLOQUER le changement manuel de statut si le véhicule est volé
       if (currentVehicle?.is_stolen || currentVehicle?.stolen_status === 'stolen') {
         if (status !== 'suspended' && status !== currentVehicle.status) {
-          toast.error('Impossible de modifier le statut d\'un véhicule volé. Utilisez la procédure de récupération.');
+          toast.error(t('editVehicleDialog.impossibleDeModifierLeStatut'));
           setSaving(false);
           return;
         }
@@ -81,7 +83,7 @@ export default function EditVehicleDialog({
       // Ne pas permettre de changer manuellement vers/depuis 'stolen' ou 'suspended' si security_lock
       if (currentVehicle?.security_lock_level && currentVehicle.security_lock_level > 0) {
         if (status !== currentVehicle.status) {
-          toast.error('Véhicule verrouillé pour raison de sécurité. Contactez l\'administrateur.');
+          toast.error(t('editVehicleDialog.vehiculeVerrouillePourRaisonDe'));
           setSaving(false);
           return;
         }
@@ -107,7 +109,7 @@ export default function EditVehicleDialog({
         throw error;
       }
 
-      toast.success('Véhicule mis à jour avec succès');
+      toast.success(t('editVehicleDialog.vehiculeMisAJourAvec'));
       onUpdate();
       onOpenChange(false);
     } catch (error: any) {
@@ -120,7 +122,7 @@ export default function EditVehicleDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Car className="w-5 h-5" />
@@ -132,7 +134,7 @@ export default function EditVehicleDialog({
           {/* Numéro de série et Plaque */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="serial-number">Numéro de Série</Label>
+              <Label htmlFor="serial-number">{t('editVehicleDialog.numeroDeSerie')}</Label>
               <Input
                 id="serial-number"
                 type="text"
@@ -155,10 +157,10 @@ export default function EditVehicleDialog({
 
           {/* Type de véhicule */}
           <div className="space-y-2">
-            <Label>Type de véhicule</Label>
+            <Label>{t('editVehicleDialog.typeDeVehicule')}</Label>
             <Select value={vehicleType} onValueChange={setVehicleType}>
               <SelectTrigger>
-                <SelectValue placeholder="Sélectionner le type" />
+                <SelectValue placeholder={t('editVehicleDialog.selectionnerLeType')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="motorcycle">Moto</SelectItem>
@@ -181,7 +183,7 @@ export default function EditVehicleDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="model">Modèle</Label>
+              <Label htmlFor="model">{t('editVehicleDialog.modele')}</Label>
               <Input
                 id="model"
                 type="text"
@@ -195,7 +197,7 @@ export default function EditVehicleDialog({
           {/* Année et Couleur */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="year">Année</Label>
+              <Label htmlFor="year">{t('editVehicleDialog.annee')}</Label>
               <Input
                 id="year"
                 type="number"
@@ -223,13 +225,13 @@ export default function EditVehicleDialog({
             <Label>Statut</Label>
             <Select value={status} onValueChange={setStatus}>
               <SelectTrigger>
-                <SelectValue placeholder="Sélectionner le statut" />
+                <SelectValue placeholder={t('editVehicleDialog.selectionnerLeStatut')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="active">Actif</SelectItem>
                 <SelectItem value="suspended">Suspendu</SelectItem>
                 <SelectItem value="maintenance">En maintenance</SelectItem>
-                <SelectItem value="retired">Retiré</SelectItem>
+                <SelectItem value="retired">{t('editVehicleDialog.retire')}</SelectItem>
               </SelectContent>
             </Select>
           </div>

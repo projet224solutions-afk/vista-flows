@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -104,6 +105,7 @@ export function POSCartSection({
   onAddToCart,
   onAddToCartByCarton,
 }: POSCartSectionProps) {
+  const { t } = useTranslation();
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editDiscountType, setEditDiscountType] = useState<'percent' | 'amount'>('percent');
   const [editDiscountValue, setEditDiscountValue] = useState<number>(0);
@@ -130,7 +132,7 @@ export function POSCartSection({
 
     const finalPrice = unitPrice - discountAmt;
     if (finalPrice < 0) {
-      toast.error('La remise ne peut pas être supérieure au prix');
+      toast.error(t('pOSCartSection.laRemiseNePeutPas'));
       return;
     }
 
@@ -141,7 +143,7 @@ export function POSCartSection({
     });
 
     setEditingItemId(null);
-    toast.success('Remise appliquée');
+    toast.success(t('pOSCartSection.remiseAppliquee'));
   };
 
   const removeDiscount = () => {
@@ -152,7 +154,7 @@ export function POSCartSection({
       discountAmount: 0,
     });
     setEditingItemId(null);
-    toast.info('Remise supprimée');
+    toast.info(t('pOSCartSection.remiseSupprimee'));
   };
 
   // Calculate item financials
@@ -230,7 +232,7 @@ export function POSCartSection({
               <div className="flex flex-col items-center justify-center h-32 text-center">
                 <ShoppingBag className="h-8 w-8 text-muted-foreground/40 mb-2" />
                 <p className="text-muted-foreground font-medium text-sm">Panier vide</p>
-                <p className="text-xs text-muted-foreground/80">Ajoutez des produits</p>
+                <p className="text-xs text-muted-foreground/80">{t('pOSCartSection.ajoutezDesProduits')}</p>
               </div>
             ) : (
               <div className="space-y-1">
@@ -454,7 +456,7 @@ export function POSCartSection({
               )}
 
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-semibold text-foreground">Total à payer</span>
+                <span className="text-[10px] font-semibold text-foreground">{t('pOSCartSection.totalAPayer')}</span>
                 <div className="text-right">
                   <span className="text-lg sm:text-xl font-black text-primary">
                     {formatCurrency(total)}
@@ -468,14 +470,14 @@ export function POSCartSection({
 
       {/* Discount Dialog */}
       <Dialog open={!!editingItemId} onOpenChange={(open) => !open && setEditingItemId(null)}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Remise sur {editingItem?.name}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Type de remise</label>
+              <label className="text-sm font-medium mb-2 block">{t('pOSCartSection.typeDeRemise')}</label>
               <Select
                 value={editDiscountType}
                 onValueChange={(v: 'percent' | 'amount') => setEditDiscountType(v)}
@@ -485,7 +487,7 @@ export function POSCartSection({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="percent">Pourcentage (%)</SelectItem>
-                  <SelectItem value="amount">Montant fixe (GNF)</SelectItem>
+                  <SelectItem value="amount">{t('pOSCartSection.montantFixeGnf')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

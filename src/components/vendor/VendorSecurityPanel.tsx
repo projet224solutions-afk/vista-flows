@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +9,7 @@ import { VendorKYCForm } from './VendorKYCForm';
 import { Shield, CheckCircle, XCircle, AlertTriangle, RefreshCw, FileCheck } from 'lucide-react';
 
 export function VendorSecurityPanel() {
+  const { t } = useTranslation();
   const { kyc, trustScore, suspiciousActivities, loading, calculateTrustScore, reload } = useVendorSecurity();
   const [showKYCForm, setShowKYCForm] = useState(false);
 
@@ -28,11 +30,11 @@ export function VendorSecurityPanel() {
   const getKYCStatusBadge = (status?: string) => {
     switch (status) {
       case 'verified':
-        return <Badge className="bg-[#ff4000]"><CheckCircle className="h-3 w-3 mr-1" />Vérifié</Badge>;
+        return <Badge className="bg-[#ff4000]"><CheckCircle className="h-3 w-3 mr-1" />{t('vendorSecurityPanel.verifie')}</Badge>;
       case 'under_review':
         return <Badge variant="secondary"><RefreshCw className="h-3 w-3 mr-1" />En cours</Badge>;
       case 'rejected':
-        return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Rejeté</Badge>;
+        return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />{t('vendorSecurityPanel.rejete')}</Badge>;
       default:
         return <Badge variant="outline"><AlertTriangle className="h-3 w-3 mr-1" />En attente</Badge>;
     }
@@ -45,7 +47,7 @@ export function VendorSecurityPanel() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
-            <h2 className="text-lg font-semibold">Score de Confiance</h2>
+            <h2 className="text-lg font-semibold">{t('vendorSecurityPanel.scoreDeConfiance')}</h2>
           </div>
           <Button variant="outline" size="sm" onClick={calculateTrustScore}>
             <RefreshCw className="h-4 w-4 mr-2" />
@@ -65,7 +67,7 @@ export function VendorSecurityPanel() {
             <div className="grid grid-cols-2 gap-4 mt-6">
               <div className="text-center p-3 bg-muted rounded-lg">
                 <p className="text-2xl font-bold">{trustScore.successful_orders}</p>
-                <p className="text-sm text-muted-foreground">Commandes réussies</p>
+                <p className="text-sm text-muted-foreground">{t('vendorSecurityPanel.commandesReussies')}</p>
               </div>
               <div className="text-center p-3 bg-muted rounded-lg">
                 <p className="text-2xl font-bold">{trustScore.total_sales}</p>
@@ -77,7 +79,7 @@ export function VendorSecurityPanel() {
               </div>
               <div className="text-center p-3 bg-muted rounded-lg">
                 <p className="text-2xl font-bold">{trustScore.account_age_days}</p>
-                <p className="text-sm text-muted-foreground">Jours d'ancienneté</p>
+                <p className="text-sm text-muted-foreground">{t('vendorSecurityPanel.joursDAnciennete')}</p>
               </div>
             </div>
           </div>
@@ -93,7 +95,7 @@ export function VendorSecurityPanel() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <FileCheck className="h-5 w-5" />
-            <h2 className="text-lg font-semibold">Vérification d'Identité (KYC)</h2>
+            <h2 className="text-lg font-semibold">{t('vendorSecurityPanel.verificationDIdentiteKyc')}</h2>
           </div>
           {getKYCStatusBadge(kyc?.status)}
         </div>
@@ -101,7 +103,7 @@ export function VendorSecurityPanel() {
         {kyc ? (
           <div className="space-y-3">
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <span>Téléphone vérifié</span>
+              <span>{t('vendorSecurityPanel.telephoneVerifie')}</span>
               {kyc.phone_verified ? (
                 <CheckCircle className="h-5 w-5 text-[#ff4000]" />
               ) : (
@@ -110,7 +112,7 @@ export function VendorSecurityPanel() {
             </div>
             {kyc.phone_number && (
               <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                <span>Numéro</span>
+                <span>{t('vendorSecurityPanel.numero')}</span>
                 <span className="font-mono">{kyc.phone_number}</span>
               </div>
             )}
@@ -139,7 +141,7 @@ export function VendorSecurityPanel() {
             <p className="text-muted-foreground mb-4">
               Vérifiez votre identité pour augmenter votre score de confiance
             </p>
-            <Button onClick={() => setShowKYCForm(true)}>Commencer la vérification</Button>
+            <Button onClick={() => setShowKYCForm(true)}>{t('vendorSecurityPanel.commencerLaVerification')}</Button>
           </div>
         )}
       </Card>
@@ -149,7 +151,7 @@ export function VendorSecurityPanel() {
         <Card className="p-6">
           <div className="flex items-center gap-2 mb-4">
             <AlertTriangle className="h-5 w-5 text-orange-600" />
-            <h2 className="text-lg font-semibold">Activités Suspectes</h2>
+            <h2 className="text-lg font-semibold">{t('vendorSecurityPanel.activitesSuspectes')}</h2>
             <Badge variant="destructive">{suspiciousActivities.length}</Badge>
           </div>
 

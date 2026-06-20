@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -34,6 +35,7 @@ const userTypes = [
 ] as const;
 
 export default function PDGKYCManagement() {
+  const { t } = useTranslation();
   const [settings, setSettings] = useState<KYCSettings>({
     vendeur: false,
     client: false,
@@ -121,7 +123,7 @@ export default function PDGKYCManagement() {
         if (error) throw error;
       }
 
-      toast.success('Paramètres KYC enregistrés');
+      toast.success(t('pDGKYCManagement.parametresKycEnregistres'));
     } catch (err: any) {
       console.error('Erreur sauvegarde:', err);
       toast.error(err.message || 'Erreur lors de la sauvegarde');
@@ -151,7 +153,7 @@ export default function PDGKYCManagement() {
                 <Shield className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <CardTitle className="text-xl">Gestion KYC</CardTitle>
+                <CardTitle className="text-xl">{t('pDGKYCManagement.gestionKyc')}</CardTitle>
                 <CardDescription>
                   Activer ou désactiver la vérification KYC par type d'utilisateur
                 </CardDescription>
@@ -235,12 +237,12 @@ export default function PDGKYCManagement() {
       {/* Info */}
       <Card className="bg-muted/50">
         <CardContent className="p-4">
-          <h4 className="font-medium mb-2">À propos du KYC</h4>
+          <h4 className="font-medium mb-2">{t('pDGKYCManagement.aProposDuKyc')}</h4>
           <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• Quand le KYC est activé, les utilisateurs doivent vérifier leur identité</li>
-            <li>• Les utilisateurs non vérifiés peuvent avoir des restrictions</li>
+            <li>{t('pDGKYCManagement.quandLeKycEstActive')}</li>
+            <li>{t('pDGKYCManagement.lesUtilisateursNonVerifiesPeuvent')}</li>
             <li>• Vous pouvez activer/désactiver le KYC à tout moment</li>
-            <li>• Les statuts KYC existants sont conservés</li>
+            <li>{t('pDGKYCManagement.lesStatutsKycExistantsSont')}</li>
           </ul>
         </CardContent>
       </Card>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -87,6 +88,7 @@ export function GoogleMapsNavigation({
   currentLocation,
   onContactCustomer,
 }: GoogleMapsNavigationProps) {
+  const { t } = useTranslation();
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const driverMarker = useRef<mapboxgl.Marker | null>(null);
@@ -347,7 +349,7 @@ export function GoogleMapsNavigation({
         '_blank'
       );
     }
-    toast.success('Navigation ouverte dans Google Maps');
+    toast.success(t('googleMapsNavigation.navigationOuverteDansGoogleMaps'));
   };
 
   const cancelRide = async () => {
@@ -370,7 +372,7 @@ export function GoogleMapsNavigation({
 
       if (error) throw error;
 
-      toast.success('Course annulée avec succès');
+      toast.success(t('googleMapsNavigation.courseAnnuleeAvecSucces'));
       if (sourceReady.current && map.current) {
         const src = map.current.getSource('route') as mapboxgl.GeoJSONSource;
         src?.setData({ type: 'FeatureCollection', features: [] });
@@ -378,7 +380,7 @@ export function GoogleMapsNavigation({
       setRouteInfo(null);
       setTimeout(() => window.location.reload(), 1000);
     } catch {
-      toast.error("Impossible d'annuler la course");
+      toast.error(t('googleMapsNavigation.impossibleDAnnulerLaCourse'));
     }
   };
 
@@ -461,7 +463,7 @@ export function GoogleMapsNavigation({
               <div className="bg-white rounded-xl p-3 text-center shadow-sm">
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <Clock className="w-3 h-3 text-gray-500" />
-                  <p className="text-xs text-gray-500">Durée estimée</p>
+                  <p className="text-xs text-gray-500">{t('googleMapsNavigation.dureeEstimee')}</p>
                 </div>
                 <p className="text-2xl font-bold text-blue-600">
                   {routeInfo.duration}{' '}
@@ -483,7 +485,7 @@ export function GoogleMapsNavigation({
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-700">Position GPS active</p>
-                <p className="text-xs text-gray-500">Suivi en temps réel activé</p>
+                <p className="text-xs text-gray-500">{t('googleMapsNavigation.suiviEnTempsReelActive')}</p>
               </div>
             </div>
             <Button
@@ -504,7 +506,7 @@ export function GoogleMapsNavigation({
             {/* Client */}
             <div className="bg-gray-50 rounded-xl p-3">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-semibold text-gray-700">Client</span>
+                <span className="text-sm font-semibold text-gray-700">{t('googleMapsNavigation.client')}</span>
                 <Button
                   variant="outline"
                   size="sm"
@@ -592,7 +594,7 @@ export function GoogleMapsNavigation({
             <div className="bg-gray-100 rounded-full p-5 w-20 h-20 mx-auto mb-4 flex items-center justify-center">
               <MapPin className="w-10 h-10 text-gray-300" />
             </div>
-            <h3 className="text-base font-semibold text-gray-600 mb-1">Aucune course active</h3>
+            <h3 className="text-base font-semibold text-gray-600 mb-1">{t('googleMapsNavigation.aucuneCourseActive')}</h3>
             <p className="text-sm text-gray-400">
               Acceptez une course pour démarrer la navigation
             </p>

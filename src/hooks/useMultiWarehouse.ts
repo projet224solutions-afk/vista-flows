@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Hook de gestion multi-entrepôts et multi-POS
  * 224SOLUTIONS - Système professionnel

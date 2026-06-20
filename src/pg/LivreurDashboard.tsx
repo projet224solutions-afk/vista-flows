@@ -4,8 +4,9 @@
  * Toutes les fonctionnalités du Taxi-Moto intégrées + Responsive
  */
 
-import { useState, useEffect, lazy, Suspense } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { NotificationBellButton } from '@/components/shared/NotificationBellButton';
 import { useTranslation } from "@/hooks/useTranslation";
 import { Money } from '@/components/Money';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -54,11 +55,12 @@ const SupportTicketsUniversal = lazy(() => import('@/components/shared/SupportTi
 export default function LivreurDashboard() {
   const fc = useFormatCurrency();
   const { user, profile } = useAuth();
-  const { location, getCurrentLocation } = useCurrentLocation();
+  const { location, getCurrentLocation, watchLocation, stopWatching } = useCurrentLocation();
   const { isMobile, isTablet } = useResponsive();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState('missions');
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'missions');
   const [showProofUpload, setShowProofUpload] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -89,7 +91,6 @@ export default function LivreurDashboard() {
     loadTracking,
     subscribeToTracking,
     trackPosition: trackDeliveryPosition,
-    processPayment: _processDeliveryPayment,
     loadDeliveryHistory,
     loadCurrentDelivery
   } = useDelivery();
@@ -166,7 +167,7 @@ export default function LivreurDashboard() {
 
   const loading = deliveryLoading || rideLoading;
 
-  // Charger la position GPS au montage avec capture d'erreur
+  // Charger la position GPS au montage avec capture d'erreur (relevé initial rapide)
   useEffect(() => {
     getCurrentLocation().catch(err => {
       console.error('[LivreurDashboard] GPS error:', err);
@@ -174,15 +175,30 @@ export default function LivreurDashboard() {
     });
   }, [getCurrentLocation, captureError]);
 
-  // Mettre à jour la position du driver toutes les 30 secondes si en ligne
+  // 📍 SUIVI GPS CONTINU tant que le livreur est en ligne : sans ce watch, `location`
+  // restait figée au relevé initial → la position publiée ne bougeait jamais (livreur
+  // immobile sur la carte du client). On démarre/arrête le watch selon le statut en ligne.
+  useEffect(() => {
+    if (!driver?.is_online) return;
+    const watchId = watchLocation();
+    return () => {
+      if (watchId != null) stopWatching(watchId);
+    };
+  }, [driver?.is_online, watchLocation, stopWatching]);
+
+  // Horodatages de dernière publication (throttle par ref → ne PAS réinitialiser un timer
+  // à chaque point GPS, sinon il ne se déclenche jamais quand le watch émet en continu).
+  const lastDriverPosUpdateRef = useRef(0);
+  const lastDeliveryTrackRef = useRef(0);
+  const lastRideTrackRef = useRef(0);
+
+  // Mettre à jour la position du driver (profil) au plus toutes les 30 s, en ligne.
   useEffect(() => {
     if (!driver?.is_online || !location) return;
-
-    const intervalId = setInterval(() => {
-      updateLocation({ lat: location.latitude, lng: location.longitude });
-    }, 30000); // Toutes les 30 secondes
-
-    return () => clearInterval(intervalId);
+    const now = Date.now();
+    if (now - lastDriverPosUpdateRef.current < 30000) return;
+    lastDriverPosUpdateRef.current = now;
+    updateLocation({ lat: location.latitude, lng: location.longitude });
   }, [driver?.is_online, location, updateLocation]);
 
   // Recharger les livraisons quand on bascule sur l'onglet missions
@@ -210,33 +226,35 @@ export default function LivreurDashboard() {
     }
   }, [location, currentDelivery, currentRide, findNearbyDeliveries]);
 
-  // S'abonner au tracking en temps réel pour livraison ou course
+  // S'abonner au tracking realtime — clé = id UNIQUEMENT (pas `location`), sinon le canal
+  // serait recréé à chaque point GPS (churn de souscriptions).
   useEffect(() => {
-    if (currentDelivery) {
-      const unsubscribe = subscribeToTracking(currentDelivery.id);
+    if (!currentDelivery?.id) return;
+    const unsubscribe = subscribeToTracking(currentDelivery.id);
+    return () => { unsubscribe(); };
+  }, [currentDelivery?.id, subscribeToTracking]);
 
-      // Envoyer la position toutes les 10 secondes
-      const intervalId = setInterval(() => {
-        if (location) {
-          trackDeliveryPosition(
-            currentDelivery.id,
-            location.latitude,
-            location.longitude,
-            undefined,
-            undefined,
-            location.accuracy
-          );
-        }
-      }, 10000);
+  // Publier la position du livreur à chaque nouveau point GPS, throttlé à 10 s par ref
+  // (pas d'intervalle dépendant de `location` → évite la réinitialisation permanente du timer).
+  useEffect(() => {
+    if (!location) return;
+    const now = Date.now();
 
-      return () => {
-        unsubscribe();
-        clearInterval(intervalId);
-      };
-    }
-
-    if (currentRide && location) {
-      const intervalId = setInterval(() => {
+    if (currentDelivery?.id) {
+      if (now - lastDeliveryTrackRef.current >= 10000) {
+        lastDeliveryTrackRef.current = now;
+        trackDeliveryPosition(
+          currentDelivery.id,
+          location.latitude,
+          location.longitude,
+          undefined,
+          undefined,
+          location.accuracy
+        );
+      }
+    } else if (currentRide?.id) {
+      if (now - lastRideTrackRef.current >= 10000) {
+        lastRideTrackRef.current = now;
         trackRidePosition(
           currentRide.id,
           location.latitude,
@@ -244,11 +262,9 @@ export default function LivreurDashboard() {
           undefined,
           undefined
         );
-      }, 10000);
-
-      return () => clearInterval(intervalId);
+      }
     }
-  }, [currentDelivery, currentRide, location, trackDeliveryPosition, trackRidePosition, subscribeToTracking]);
+  }, [location, currentDelivery?.id, currentRide?.id, trackDeliveryPosition, trackRidePosition]);
 
   /**
    * Accepter une livraison
@@ -331,10 +347,10 @@ export default function LivreurDashboard() {
         status: 'open',
       });
       if (error) throw error;
-      toast.success('Problème signalé au support — un ticket a été créé');
+      toast.success(t('livreurDashboard.problemeSignaleAuSupportUn'));
     } catch (error) {
       console.error('Erreur signalement course:', error);
-      toast.error('Impossible de signaler le problème');
+      toast.error(t('livreurDashboard.impossibleDeSignalerLeProbleme'));
     }
   };
 
@@ -381,7 +397,7 @@ export default function LivreurDashboard() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-3">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-sm text-muted-foreground">Chargement du dashboard livreur...</p>
+          <p className="text-sm text-muted-foreground">{t('livreurDashboard.chargementDuDashboardLivreur')}</p>
         </div>
       </div>
     }>
@@ -405,7 +421,7 @@ export default function LivreurDashboard() {
       {error && (
         <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg text-[#ff4000] mb-4">
           <p className="font-medium">{error.message}</p>
-          <button onClick={clearError} className="text-sm underline mt-2">Fermer</button>
+          <button onClick={clearError} className="text-sm underline mt-2">{t('livreurDashboard.fermer')}</button>
         </div>
       )}
 
@@ -472,6 +488,9 @@ export default function LivreurDashboard() {
               driverName={driverName}
               className="h-9 px-2 gap-1 text-xs text-orange-600 hover:text-[#ff4000] hover:bg-orange-50"
             />
+
+            {/* Notifications (cloche partagée → /notifications, clic = redirection ciblée) */}
+            <NotificationBellButton />
 
             {/* Bouton de navigation */}
             <Button
@@ -553,7 +572,7 @@ export default function LivreurDashboard() {
                 <div className="flex items-center gap-3">
                   <AlertTriangle className="h-5 w-5 text-[#ff4000]" />
                   <div>
-                    <p className="font-medium text-[#ff4000]">GPS désactivé</p>
+                    <p className="font-medium text-[#ff4000]">{t('livreurDashboard.gpsDesactive')}</p>
                     <p className="text-sm text-[#ff4000]">
                       Activez le GPS pour voir les missions à proximité et filtrer par distance
                     </p>
@@ -587,7 +606,7 @@ export default function LivreurDashboard() {
                         <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
                           <MapPin className="h-5 w-5 flex-shrink-0 text-primary mt-0.5" />
                           <div className="flex-1">
-                            <p className="font-medium">Point de collecte</p>
+                            <p className="font-medium">{t('livreurDashboard.pointDeCollecte')}</p>
                             <p className="text-sm text-muted-foreground mt-1">
                               {typeof currentDelivery.pickup_address === 'string'
                                 ? currentDelivery.pickup_address
@@ -610,7 +629,7 @@ export default function LivreurDashboard() {
                     </div>
 
                     <div className="p-5 bg-gradient-to-r from-orange-500/20 to-[#ff4000]/20 rounded-xl border border-orange-500/30">
-                      <p className="text-sm text-muted-foreground mb-2 font-medium">💰 Votre rémunération</p>
+                      <p className="text-sm text-muted-foreground mb-2 font-medium">{t('livreurDashboard.votreRemuneration')}</p>
                       <p className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-[#ff4000] bg-clip-text text-transparent">
                         <Money amount={currentDelivery.delivery_fee || 0} from="GNF" />
                       </p>
@@ -712,7 +731,7 @@ export default function LivreurDashboard() {
                         <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
                           <MapPin className="h-5 w-5 flex-shrink-0 text-primary mt-0.5" />
                           <div className="flex-1">
-                            <p className="font-medium">Point de départ</p>
+                            <p className="font-medium">{t('livreurDashboard.pointDeDepart')}</p>
                             <p className="text-sm text-muted-foreground mt-1">
                               {typeof currentRide.pickup_address === 'string'
                                 ? currentRide.pickup_address
@@ -735,7 +754,7 @@ export default function LivreurDashboard() {
                     </div>
 
                     <div className="p-4 bg-[#ff4000]/10 rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-1">Prix de la course</p>
+                      <p className="text-sm text-muted-foreground mb-1">{t('livreurDashboard.prixDeLaCourse')}</p>
                       <p className="text-3xl font-bold text-[#ff4000]">
                         <Money amount={currentRide.price_total || 0} from="GNF" />
                       </p>
@@ -779,8 +798,8 @@ export default function LivreurDashboard() {
               <Card className="p-8">
                 <div className="text-center text-muted-foreground">
                   <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p className="font-medium">Aucune mission active</p>
-                  <p className="text-sm mt-1">Acceptez une livraison ou une course pour commencer</p>
+                  <p className="font-medium">{t('livreurDashboard.aucuneMissionActive')}</p>
+                  <p className="text-sm mt-1">{t('livreurDashboard.acceptezUneLivraisonOuUne')}</p>
                 </div>
               </Card>
             )}
@@ -792,8 +811,8 @@ export default function LivreurDashboard() {
               <Card className="p-8">
                 <div className="text-center text-muted-foreground">
                   <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p className="font-medium">Aucun historique</p>
-                  <p className="text-sm mt-1">Vos livraisons et courses terminées apparaëtront ici</p>
+                  <p className="font-medium">{t('livreurDashboard.aucunHistorique')}</p>
+                  <p className="text-sm mt-1">{t('livreurDashboard.vosLivraisonsEtCoursesTerminees')}</p>
                 </div>
               </Card>
             ) : (
@@ -933,13 +952,13 @@ export default function LivreurDashboard() {
                       <Badge variant="secondary">{nearbyDeliveries.length}</Badge>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                      <span className="text-sm font-medium">Livraison en cours</span>
+                      <span className="text-sm font-medium">{t('livreurDashboard.livraisonEnCours')}</span>
                       <Badge variant={currentDelivery ? 'default' : 'secondary'}>
                         {currentDelivery ? '1' : '0'}
                       </Badge>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                      <span className="text-sm font-medium">Livraisons terminées</span>
+                      <span className="text-sm font-medium">{t('livreurDashboard.livraisonsTerminees')}</span>
                       <Badge variant="outline">
                         {deliveryHistory.filter(d => d.status === 'delivered').length}
                       </Badge>
@@ -972,9 +991,9 @@ export default function LivreurDashboard() {
 
       {/* Dialog de chat pour communication avec client/vendeur */}
       <Dialog open={showChat} onOpenChange={setShowChat}>
-        <DialogContent className="max-w-2xl h-[600px] p-0">
+        <DialogContent className="max-w-2xl h-[600px] p-0 max-h-[90vh] overflow-y-auto">
           <DialogHeader className="px-6 pt-6 pb-0">
-            <DialogTitle>Communication - Livraison</DialogTitle>
+            <DialogTitle>{t('livreurDashboard.communicationLivraison')}</DialogTitle>
           </DialogHeader>
           {currentDelivery && user && currentDelivery.client_id && (
             <div className="flex-1 px-6 pb-6 h-full overflow-hidden">
@@ -1001,13 +1020,13 @@ export default function LivreurDashboard() {
       {/* Modal de paiement */}
       {showPaymentModal && (currentDelivery || currentRide) && user && (
         <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Traitement du paiement</DialogTitle>
+              <DialogTitle>{t('livreurDashboard.traitementDuPaiement')}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="p-4 bg-muted/50 rounded-lg text-center">
-                <p className="text-sm text-muted-foreground mb-1">Montant à encaisser</p>
+                <p className="text-sm text-muted-foreground mb-1">{t('livreurDashboard.montantAEncaisser')}</p>
                 <p className="text-3xl font-bold text-primary">
                   <Money amount={currentDelivery ? (currentDelivery.delivery_fee || 0) : (currentRide?.price_total || 0)} from="GNF" />
                 </p>

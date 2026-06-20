@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -71,6 +72,7 @@ const generateSessionId = () => {
 };
 
 export default function CopiloteChat({ className = '', height = 'calc(100vh - 140px)', userRole = 'client', serviceId }: CopiloteChatProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -171,7 +173,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
   const handleAttachImage = async (file?: File) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      toast.error('Veuillez sélectionner une image.');
+      toast.error(t('copiloteChat.veuillezSelectionnerUneImage'));
       return;
     }
     const dataUrl = await toDataUrl(file);
@@ -460,7 +462,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
       recognition.onstart = () => {
         setIsListening(true);
         setInterimTranscript('');
-        toast.info('🎙️ Je vous écoute…', { duration: 2000 });
+        toast.info(t('copiloteChat.jeVousEcoute'), { duration: 2000 });
       };
       recognition.onresult = (event: any) => {
         let interim = '';
@@ -482,7 +484,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
         setInterimTranscript('');
         transcriptAccumRef.current = '';
         if (event.error === 'not-allowed') {
-          toast.error('Accès au microphone refusé. Autorisez-le dans les paramètres.');
+          toast.error(t('copiloteChat.accesAuMicrophoneRefuseAutorisez'));
         } else if (event.error === 'network') {
           // Web Speech API échoue sur réseau → basculer vers MediaRecorder
           toast.info('🎙️ Basculement vers enregistrement audio…', { duration: 1500 });
@@ -542,11 +544,11 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
             setInput(text);
             sendMessage(text);
           } else {
-            toast.error('Transcription vide. Réessayez en parlant plus fort.');
+            toast.error(t('copiloteChat.transcriptionVideReessayezEnParlant'));
           }
         } catch {
           setInterimTranscript('');
-          toast.error('Transcription échouée. Tapez votre message.');
+          toast.error(t('copiloteChat.transcriptionEchoueeTapezVotreMessage'));
         }
       };
 
@@ -554,13 +556,13 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
       mediaRecorderRef.current = recorder;
       setIsListening(true);
       setInterimTranscript('');
-      toast.info('🎙️ Enregistrement… Cliquez à nouveau pour arrêter.', { duration: 3000 });
+      toast.info(t('copiloteChat.enregistrementCliquezANouveauPour'), { duration: 3000 });
     } catch (err: any) {
       setIsListening(false);
       if (err?.name === 'NotAllowedError') {
-        toast.error('Accès au microphone refusé. Autorisez-le dans les paramètres.');
+        toast.error(t('copiloteChat.accesAuMicrophoneRefuseAutorisez'));
       } else {
-        toast.error('Microphone indisponible sur cet appareil.');
+        toast.error(t('copiloteChat.microphoneIndisponibleSurCetAppareil'));
       }
     }
   };
@@ -716,7 +718,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
     const { data: sessionData } = await supabase.auth.getSession();
     const accessToken = sessionData.session?.access_token;
     if (userRole === 'vendeur' && !accessToken) {
-      toast.error('Veuillez vous connecter pour utiliser le Copilote vendeur');
+      toast.error(t('copiloteChat.veuillezVousConnecterPourUtiliser'));
       return;
     }
 
@@ -968,10 +970,10 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
       setAttachedImage(null);
       console.log(`🔄 Nouvelle session créée: ${newSession}`);
 
-      toast.success('Conversation réinitialisée');
+      toast.success(t('copiloteChat.conversationReinitialisee'));
     } catch (error) {
       console.error('Erreur lors de l\'effacement:', error);
-      toast.error('Erreur lors de l\'effacement de l\'historique');
+      toast.error(t('copiloteChat.erreurLorsDeLEffacement'));
     }
   };
 
@@ -1041,11 +1043,11 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
 
       if (productId && !UUID_RE.test(productId)) {
         // UUID invalide généré par l'IA — ne pas naviguer
-        return <span className="text-muted-foreground line-through text-xs italic" title="Lien produit non valide">{children}</span>;
+        return <span className="text-muted-foreground line-through text-xs italic" title={t('copiloteChat.lienProduitNonValide')}>{children}</span>;
       }
       if (shopId && !UUID_RE.test(shopId)) {
         // Slug/slug invalide — ne pas naviguer
-        return <span className="text-muted-foreground line-through text-xs italic" title="Boutique non trouvée">{children}</span>;
+        return <span className="text-muted-foreground line-through text-xs italic" title={t('copiloteChat.boutiqueNonTrouvee')}>{children}</span>;
       }
 
       return (
@@ -1136,38 +1138,38 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
                       <>
                         <div className="flex items-center space-x-2">
                           <span>📊</span>
-                          <span>Analyse complète de l'interface (produits, ventes, clients, finances...)</span>
+                          <span>{t('copiloteChat.analyseCompleteDeLInterface')}</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <span>💡</span>
-                          <span>Recommandations intelligentes basées sur vos données</span>
+                          <span>{t('copiloteChat.recommandationsIntelligentesBaseesSurVos')}</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <span>📈</span>
-                          <span>Tableaux de bord et insights professionnels</span>
+                          <span>{t('copiloteChat.tableauxDeBordEtInsights')}</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <span>🎯</span>
-                          <span>Scores de santé et alertes prioritaires</span>
+                          <span>{t('copiloteChat.scoresDeSanteEtAlertes')}</span>
                         </div>
                       </>
                     ) : (
                       <>
                         <div className="flex items-center space-x-2">
                           <span>📦</span>
-                          <span>Gestion des produits</span>
+                          <span>{t('copiloteChat.gestionDesProduits')}</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <span>📊</span>
-                          <span>Analyse des ventes</span>
+                          <span>{t('copiloteChat.analyseDesVentes')}</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <span>👥</span>
-                          <span>Gestion des clients</span>
+                          <span>{t('copiloteChat.gestionDesClients')}</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <span>💰</span>
-                          <span>Finances et paiements</span>
+                          <span>{t('copiloteChat.financesEtPaiements')}</span>
                         </div>
                       </>
                     )
@@ -1175,15 +1177,15 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
                     <>
                       <div className="flex items-center space-x-2">
                         <span>💬</span>
-                        <span>Chat en temps réel</span>
+                        <span>{t('copiloteChat.chatEnTempsReel')}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <span>💰</span>
-                        <span>Gestion de votre wallet</span>
+                        <span>{t('copiloteChat.gestionDeVotreWallet')}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <span>📦</span>
-                        <span>Suivi des commandes</span>
+                        <span>{t('copiloteChat.suiviDesCommandes')}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <span>🔧</span>
@@ -1279,7 +1281,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
                   <div className="bg-muted rounded-2xl px-4 py-3">
                     <div className="flex items-center space-x-1">
                       <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
-                      <span className="text-base sm:text-lg text-muted-foreground">Copilote 224 réfléchit...</span>
+                      <span className="text-base sm:text-lg text-muted-foreground">{t('copiloteChat.copilote224Reflechit')}</span>
                     </div>
                   </div>
                 </div>
@@ -1296,7 +1298,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
       <div className="mt-auto sticky bottom-0 px-2.5 py-2.5 sm:px-8 sm:py-5 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/85">
         {userRole === 'vendeur' && vendorAccess.hasVendor === false && (
           <div className="mb-4 rounded-lg border border-border bg-muted/50 p-4 text-sm sm:text-base">
-            <div className="font-medium">Accès vendeur requis</div>
+            <div className="font-medium">{t('copiloteChat.accesVendeurRequis')}</div>
             <div className="text-muted-foreground">
               Votre compte n'est pas associé à une boutique.
             </div>
@@ -1322,7 +1324,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
               <div className="w-10 h-10 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
                 <img
                   src={attachedImage.dataUrl}
-                  alt="aperçu"
+                  alt={t('copiloteChat.apercu')}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -1399,7 +1401,7 @@ export default function CopiloteChat({ className = '', height = 'calc(100vh - 14
               (userRole === 'vendeur' && (vendorAccess.loading || vendorAccess.hasVendor === false))
             }
             className={`h-9 w-9 sm:h-12 sm:w-12 rounded-lg flex items-center justify-center flex-shrink-0 ${attachedImage ? 'border-primary text-primary' : ''}`}
-            title="Recherche par image — Copilote analysera la photo pour trouver le produit"
+            title={t('copiloteChat.rechercheParImageCopiloteAnalysera')}
           >
             <ScanSearch className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
           </Button>

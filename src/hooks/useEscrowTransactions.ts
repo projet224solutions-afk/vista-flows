@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { backendFetch } from '@/services/backendApi';
 import { toast } from 'sonner';
 
 export interface EscrowLog {
@@ -41,7 +42,11 @@ export interface EscrowTransaction {
   };
 }
 
-export function useEscrowTransactions() {
+/** 'admin' = PDG (toutes les transactions) ; 'mine' = vendeur/client (les siennes uniquement). */
+type EscrowScope = 'admin' | 'mine';
+
+export function useEscrowTransactions(options?: { scope?: EscrowScope }) {
+  const scope: EscrowScope = options?.scope ?? 'mine';
   const [transactions, setTransactions] = useState<EscrowTransaction[]>([]);
   const [logs, setLogs] = useState<Record<string, EscrowLog[]>>({});
   const [loading, setLoading] = useState(true);
@@ -51,35 +56,27 @@ export function useEscrowTransactions() {
     try {
       setLoading(true);
 
-      // Charger les transactions escrow
-      const { data: escrowData, error: escrowError } = await supabase
-        .from('escrow_transactions')
-        .select('*')
-        .order('created_at', { ascending: false});
-
-      if (escrowError) throw escrowError;
-
-      // Charger les informations des vendeurs et commandes pour chaque transaction
-      const enrichedData = await Promise.all((escrowData || []).map(async (transaction) => {
-        // Charger les infos du vendeur
-        const { data: vendorData } = await supabase
-          .from('vendors')
-          .select('id, business_name, user_id')
-          .eq('id', transaction.receiver_id)
-          .maybeSingle();
-
-        // Charger les infos de la commande
-        const { data: orderData } = await supabase
-          .from('orders')
-          .select('id, order_number')
-          .eq('id', transaction.order_id)
-          .maybeSingle();
-
-        return {
-          ...transaction,
-          receiver: vendorData || undefined,
-          order: orderData || undefined
-        };
+      // ⚠️ Chargement via le BACKEND NODE (service_role) qui contourne la RLS de
+      // escrow_transactions (payer_id/receiver_id = auth.uid()) :
+      //  - scope 'admin' → /api/admin/escrow/transactions : TOUTES les transactions (PDG only).
+      //  - scope 'mine'  → /api/orders/escrow/my-transactions : SEULEMENT celles de l'utilisateur
+      //    (vendeur=receiver / acheteur=payer). Indispensable car la route admin est réservée
+      //    au PDG (403) et cassait l'escrow du vendeur. Enrichi serveur (order + litige) = rapide.
+      const endpoint = scope === 'admin'
+        ? '/api/admin/escrow/transactions'
+        : '/api/orders/escrow/my-transactions';
+      const res = await backendFetch<any[]>(endpoint, { method: 'GET' });
+      if (!res.success) throw new Error(res.error || 'Erreur');
+      const enrichedData = (res.data || []).map((t: any) => ({
+        ...t,
+        // Normalisation à la source : certaines lignes ont des montants NULL en base.
+        // On garantit des nombres pour que .toLocaleString()/reduce() ne crashent jamais
+        // (l'onglet plantait sur "Cannot read properties of null (reading 'toLocaleString')").
+        amount: Number(t.amount) || 0,
+        commission_amount: Number(t.commission_amount) || 0,
+        commission_percent: Number(t.commission_percent) || 0,
+        currency: t.currency || 'GNF',
+        receiver: t.vendor || undefined, // compat avec l'UI existante
       }));
 
       setTransactions(enrichedData as EscrowTransaction[]);
@@ -134,58 +131,30 @@ export function useEscrowTransactions() {
     }
   };
 
-  const releaseEscrow = async (escrowId: string, notes?: string) => {
+  // ⚠️ Libération / remboursement / litige passent désormais par des routes Node ATOMIQUES
+  // (RPC release_escrow / refund_order_escrow + insert escrow_disputes). Les anciennes
+  // edge-functions 'escrow-release/refund/dispute' étaient des STUBS (release ne faisait RIEN ;
+  // refund flippait un statut sur la MAUVAISE table sans créditer l'acheteur).
+  const releaseEscrow = async (escrowId: string, _notes?: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error('Vous devez être connecté');
-        throw new Error('Not authenticated');
-      }
-
-      const { data, error } = await supabase.functions.invoke('escrow-release', {
-        body: {
-          escrow_id: escrowId,
-          notes: notes
-        }
-      });
-
-      if (error) throw error;
-      if (!data?.success) {
-        throw new Error(data?.error || 'Erreur inconnue');
-      }
-
+      const res = await backendFetch(`/api/admin/escrow/${escrowId}/release`, { method: 'POST' });
+      if (!res.success) throw new Error(res.error || 'Erreur inconnue');
       toast.success('Fonds libérés avec succès');
       await loadTransactions();
-      return data;
+      return res.data;
     } catch (err: any) {
       toast.error(err.message || 'Erreur lors de la libération des fonds');
       throw err;
     }
   };
 
-  const refundEscrow = async (escrowId: string, reason?: string) => {
+  const refundEscrow = async (escrowId: string, _reason?: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error('Vous devez être connecté');
-        throw new Error('Not authenticated');
-      }
-
-      const { data, error } = await supabase.functions.invoke('escrow-refund', {
-        body: {
-          escrow_id: escrowId,
-          reason: reason
-        }
-      });
-
-      if (error) throw error;
-      if (!data?.success) {
-        throw new Error(data?.error || 'Erreur inconnue');
-      }
-
+      const res = await backendFetch(`/api/admin/escrow/${escrowId}/refund`, { method: 'POST' });
+      if (!res.success) throw new Error(res.error || 'Erreur inconnue');
       toast.success('Remboursement effectué avec succès');
       await loadTransactions();
-      return data;
+      return res.data;
     } catch (err: any) {
       toast.error(err.message || 'Erreur lors du remboursement');
       throw err;
@@ -194,29 +163,18 @@ export function useEscrowTransactions() {
 
   const disputeEscrow = async (escrowId: string, reason?: string) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error('Vous devez être connecté');
-        throw new Error('Not authenticated');
-      }
-
-      const { data, error } = await supabase.functions.invoke('escrow-dispute', {
-        body: {
-          escrow_id: escrowId,
-          reason: reason
-        }
+      const res = await backendFetch<{ dispute_id: string }>(`/api/admin/escrow/${escrowId}/dispute`, {
+        method: 'POST',
+        body: JSON.stringify({ reason }),
       });
-
-      if (error) throw error;
-      if (!data?.success) {
-        const errorMsg = data?.error || 'Erreur inconnue';
+      if (!res.success) {
+        const errorMsg = res.error || 'Erreur inconnue';
         toast.error(errorMsg);
         throw new Error(errorMsg);
       }
-
       toast.success('Litige ouvert avec succès');
       await loadTransactions();
-      return data;
+      return res.data;
     } catch (err: any) {
       const errorMsg = err.message || 'Erreur lors de l\'ouverture du litige';
       if (!errorMsg.includes('déjà ouvert')) {
@@ -228,26 +186,32 @@ export function useEscrowTransactions() {
 
   const requestRelease = async (escrowId: string) => {
     try {
-      await supabase.rpc('log_escrow_action', {
-        p_escrow_id: escrowId,
-        p_action: 'requested_release',
-        p_performed_by: (await supabase.auth.getUser()).data.user?.id,
-        p_note: 'Demande de libération par le vendeur'
-      });
-      toast.success('Demande de libération envoyée');
+      // Passe par le BACKEND NODE : journalise ET notifie le client + le PDG.
+      // (L'ancienne version ne faisait que log_escrow_action → personne n'était notifié.)
+      const res = await backendFetch<{ notified: number }>(
+        `/api/orders/escrow/${escrowId}/request-release`,
+        { method: 'POST' }
+      );
+      if (!res.success) throw new Error(res.error || 'Erreur');
+      toast.success('Demande de libération envoyée (client et PDG notifiés)');
       await loadTransactions();
     } catch (err: any) {
-      toast.error('Erreur lors de la demande');
+      toast.error(err.message || 'Erreur lors de la demande');
       throw err;
     }
   };
 
+  // Nom de canal UNIQUE par instance du hook : deux composants (page vendeur + PDG, ou
+  // double-montage StrictMode) qui réutilisaient le même nom 'escrow_transactions_changes'
+  // provoquaient « cannot add postgres_changes callbacks ... after subscribe() ».
+  const channelIdRef = useRef(`escrow_tx_${Math.random().toString(36).slice(2)}`);
+
   useEffect(() => {
     loadTransactions();
 
-    // S'abonner aux changements en temps réel
-    const subscription = supabase
-      .channel('escrow_transactions_changes')
+    // S'abonner aux changements en temps réel (canal propre à cette instance)
+    const channel = supabase
+      .channel(channelIdRef.current)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'escrow_transactions' },
@@ -258,7 +222,7 @@ export function useEscrowTransactions() {
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, []);
 

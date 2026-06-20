@@ -24,6 +24,7 @@ export interface ProfessionalService {
   logo_url: string | null;
   cover_image_url: string | null;
   address: string | null;
+  city: string | null;
   phone: string | null;
   email: string | null;
   website: string | null;
@@ -110,6 +111,7 @@ export const useProfessionalServices = () => {
     description?: string;
     phone?: string;
     email?: string;
+    city?: string;
     address?: string;
     latitude?: number;
     longitude?: number;
@@ -130,6 +132,7 @@ export const useProfessionalServices = () => {
             description: data.description,
             phone: data.phone,
             email: data.email || user.email,
+            city: data.city || null,
             address: data.address,
             latitude: data.latitude || null,
             longitude: data.longitude || null,

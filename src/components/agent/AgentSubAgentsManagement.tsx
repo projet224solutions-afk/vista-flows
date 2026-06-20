@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -76,6 +77,7 @@ export interface AgentSubAgentsManagementProps {
 }
 
 export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsManagementProps = {}) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [subAgents, setSubAgents] = useState<SubAgent[]>([]);
   const [agentProfile, setAgentProfile] = useState<AgentProfile | null>(null);
@@ -146,7 +148,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
         setAgentProfile(profile);
       } catch (error) {
         console.error('Erreur chargement agent:', error);
-        toast.error('Erreur lors du chargement du profil agent');
+        toast.error(t('agentSubAgentsManagement.erreurLorsDuChargementDu'));
       }
     };
 
@@ -223,7 +225,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
         });
       } catch (error) {
         console.error('Erreur chargement sous-agents:', error);
-        toast.error('Erreur lors du chargement des sous-agents');
+        toast.error(t('agentSubAgentsManagement.erreurLorsDuChargementDes'));
       } finally {
         setLoading(false);
       }
@@ -241,12 +243,12 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
     commission_rate?: number;
   }) => {
     if (!agentProfile?.id || !agentProfile?.pdg_id) {
-      toast.error('Profil agent non trouvé');
+      toast.error(t('agentSubAgentsManagement.profilAgentNonTrouve'));
       return null;
     }
 
     if (!agentProfile.can_create_sub_agent) {
-      toast.error('Vous n\'avez pas la permission de créer des sous-agents');
+      toast.error(t('agentSubAgentsManagement.vousNAvezPasLa'));
       return null;
     }
 
@@ -313,7 +315,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
 
       if (error) throw error;
 
-      toast.success('Sous-agent mis à jour avec succès');
+      toast.success(t('agentSubAgentsManagement.sousAgentMisAJour'));
       window.location.reload();
       return true;
     } catch (error: any) {
@@ -332,7 +334,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
 
       if (error) throw error;
 
-      toast.success('Sous-agent désactivé avec succès');
+      toast.success(t('agentSubAgentsManagement.sousAgentDesactiveAvecSucces'));
       window.location.reload();
       return true;
     } catch (error: any) {
@@ -350,7 +352,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
     e.preventDefault();
 
     if (!agentProfile) {
-      toast.error('Profil agent manquant');
+      toast.error(t('agentSubAgentsManagement.profilAgentManquant'));
       return;
     }
 
@@ -370,7 +372,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
 
     // Validation du mot de passe pour la création uniquement
     if (!editingSubAgent && (!formData.password || formData.password.length < 8)) {
-      toast.error('Le mot de passe doit contenir au moins 8 caractères');
+      toast.error(t('agentSubAgentsManagement.leMotDePasseDoit'));
       return;
     }
 
@@ -447,7 +449,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
 
   const handleSubAgentAction = async (subAgentId: string, action: 'activate' | 'suspend' | 'delete') => {
     if (action === 'delete') {
-      if (!confirm('Êtes-vous sûr de vouloir désactiver ce sous-agent ?')) return;
+      if (!confirm(t('agentSubAgentsManagement.etesVousSurDeVouloir'))) return;
       await deleteSubAgent(subAgentId);
     } else if (action === 'suspend') {
       await toggleSubAgentStatus(subAgentId, false);
@@ -488,7 +490,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
       {/* En-tête */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Gestion des Sous-Agents</h2>
+          <h2 className="text-2xl font-bold">{t('agentSubAgentsManagement.gestionDesSousAgents')}</h2>
           <p className="text-sm text-muted-foreground mt-1">
             Créez et gérez vos sous-agents
           </p>
@@ -551,7 +553,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone">Téléphone *</Label>
+                <Label htmlFor="phone">{t('agentSubAgentsManagement.telephone')}</Label>
                 <Input
                   id="phone"
                   required
@@ -563,7 +565,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
 
               {!editingSubAgent && (
                 <div className="space-y-2">
-                  <Label htmlFor="password">Mot de passe * (min. 8 caractères)</Label>
+                  <Label htmlFor="password">{t('agentSubAgentsManagement.motDePasseMin8')}</Label>
                   <Input
                     id="password"
                     type="password"
@@ -679,7 +681,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
-            placeholder="Rechercher un sous-agent..."
+            placeholder={t('agentSubAgentsManagement.rechercherUnSousAgent')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -715,7 +717,7 @@ export default function AgentSubAgentsManagement({ agentId }: AgentSubAgentsMana
                     <span className="font-medium">{subAgent.commission_rate}%</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Utilisateurs créés:</span>
+                    <span className="text-muted-foreground">{t('agentSubAgentsManagement.utilisateursCrees')}</span>
                     <span className="font-medium">{subAgent.total_users_created || 0}</span>
                   </div>
                 </div>

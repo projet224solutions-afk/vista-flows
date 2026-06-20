@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/formatters';
 import { Button } from '@/components/ui/button';
@@ -61,6 +62,7 @@ interface UserProfileCardProps {
 }
 
 export const UserProfileCard = ({ className = '', showWalletDetails = true }: UserProfileCardProps) => {
+  const { t } = useTranslation();
   const { user, profile } = useAuth();
   const [userInfo, setUserInfo] = useState<UserInfo>({
     customId: null,
@@ -171,7 +173,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
 
   const _createVirtualCard = async () => {
     if (!user || !userInfo.wallet) {
-      toast.error('Wallet requis pour créer une carte virtuelle');
+      toast.error(t('userProfileCard.walletRequisPourCreerUne'));
       return;
     }
 
@@ -204,12 +206,12 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
 
       if (error) throw error;
 
-      toast.success('Carte virtuelle créée avec succès !');
+      toast.success(t('userProfileCard.carteVirtuelleCreeeAvecSucces'));
       await loadUserInfo(); // Recharger les données
 
     } catch (error) {
       console.error('Erreur création carte virtuelle:', error);
-      toast.error('Erreur lors de la création de la carte virtuelle');
+      toast.error(t('userProfileCard.erreurLorsDeLaCreation'));
     } finally {
       setCreatingCard(false);
     }
@@ -218,7 +220,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
   const _copyCardNumber = () => {
     if (userInfo.virtualCard) {
       navigator.clipboard.writeText(userInfo.virtualCard.card_number);
-      toast.success('Numéro de carte copié !');
+      toast.success(t('userProfileCard.numeroDeCarteCopie'));
     }
   };
 
@@ -233,13 +235,13 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
   // Fonction pour effectuer un dépôt
   const handleDeposit = async () => {
     if (!user?.id || !depositAmount) {
-      toast.error('Veuillez entrer un montant');
+      toast.error(t('userProfileCard.veuillezEntrerUnMontant'));
       return;
     }
 
     const amount = parseFloat(depositAmount);
     if (isNaN(amount) || amount <= 0) {
-      toast.error('Montant invalide');
+      toast.error(t('userProfileCard.montantInvalide'));
       return;
     }
 
@@ -283,18 +285,18 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
   // Fonction pour effectuer un retrait
   const handleWithdraw = async () => {
     if (!user?.id || !withdrawAmount) {
-      toast.error('Veuillez entrer un montant');
+      toast.error(t('userProfileCard.veuillezEntrerUnMontant'));
       return;
     }
 
     const amount = parseFloat(withdrawAmount);
     if (isNaN(amount) || amount <= 0) {
-      toast.error('Montant invalide');
+      toast.error(t('userProfileCard.montantInvalide'));
       return;
     }
 
     if (amount > (userInfo.wallet?.balance || 0)) {
-      toast.error('Solde insuffisant');
+      toast.error(t('userProfileCard.soldeInsuffisant'));
       return;
     }
 
@@ -338,18 +340,18 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
   // Fonction pour prévisualiser un transfert
   const handlePreviewTransfer = async () => {
     if (!user?.id || !transferAmount || !recipientId) {
-      toast.error('Veuillez remplir tous les champs');
+      toast.error(t('userProfileCard.veuillezRemplirTousLesChamps'));
       return;
     }
 
     const amount = parseFloat(transferAmount);
     if (isNaN(amount) || amount <= 0) {
-      toast.error('Montant invalide');
+      toast.error(t('userProfileCard.montantInvalide'));
       return;
     }
 
     if (amount > (userInfo.wallet?.balance || 0)) {
-      toast.error('Solde insuffisant');
+      toast.error(t('userProfileCard.soldeInsuffisant'));
       return;
     }
 
@@ -478,25 +480,25 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
 
             {/* Boutons d'opérations */}
             {userInfo.wallet && (
-              <div className="grid grid-cols-3 gap-2 mt-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
                 {/* Bouton Dépôt */}
                 <Dialog open={depositOpen} onOpenChange={setDepositOpen}>
                   <DialogTrigger asChild>
                     <Button size="sm" variant="outline" className="flex flex-col h-auto py-2">
                       <ArrowDownToLine className="w-4 h-4 mb-1 text-[#ff4000]" />
-                      <span className="text-xs">Dépôt</span>
+                      <span className="text-xs">{t('userProfileCard.depot')}</span>
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Effectuer un dépôt</DialogTitle>
+                      <DialogTitle>{t('userProfileCard.effectuerUnDepot')}</DialogTitle>
                       <DialogDescription>
                         Ajoutez des fonds à votre wallet
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                       <div>
-                        <Label htmlFor="deposit-amount">Montant (GNF)</Label>
+                        <Label htmlFor="deposit-amount">{t('userProfileCard.montantGnf')}</Label>
                         <Input
                           id="deposit-amount"
                           type="number"
@@ -526,14 +528,14 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Effectuer un retrait</DialogTitle>
+                      <DialogTitle>{t('userProfileCard.effectuerUnRetrait')}</DialogTitle>
                       <DialogDescription>
                         Retirez des fonds de votre wallet
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                       <div>
-                        <Label htmlFor="withdraw-amount">Montant (GNF)</Label>
+                        <Label htmlFor="withdraw-amount">{t('userProfileCard.montantGnf')}</Label>
                         <Input
                           id="withdraw-amount"
                           type="number"
@@ -566,23 +568,23 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Effectuer un transfert</DialogTitle>
+                      <DialogTitle>{t('userProfileCard.effectuerUnTransfert')}</DialogTitle>
                       <DialogDescription>
                         Transférez des fonds à un autre utilisateur
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                       <div>
-                        <Label htmlFor="recipient-id">ID du destinataire</Label>
+                        <Label htmlFor="recipient-id">{t('userProfileCard.idDuDestinataire')}</Label>
                         <Input
                           id="recipient-id"
-                          placeholder="UUID du destinataire"
+                          placeholder={t('userProfileCard.uuidDuDestinataire')}
                           value={recipientId}
                           onChange={(e) => setRecipientId(e.target.value)}
                         />
                       </div>
                       <div>
-                        <Label htmlFor="transfer-amount">Montant (GNF)</Label>
+                        <Label htmlFor="transfer-amount">{t('userProfileCard.montantGnf')}</Label>
                         <Input
                           id="transfer-amount"
                           type="number"
@@ -621,7 +623,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
                 <div className="space-y-4 mt-4">
                   <div className="p-4 bg-slate-50 rounded-lg space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">💰 Montant à transférer</span>
+                      <span className="text-sm font-medium">{t('userProfileCard.montantATransferer')}</span>
                       <span className="text-lg font-bold">{formatPrice(transferPreview?.amount || 0, transferPreview?.currency_sent)}</span>
                     </div>
                     <div className="flex justify-between items-center text-orange-600">
@@ -629,20 +631,20 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
                       <span className="text-lg font-bold">{formatPrice(transferPreview?.fee_amount || 0, transferPreview?.currency_sent)}</span>
                     </div>
                     <div className="border-t pt-3 flex justify-between items-center">
-                      <span className="text-sm font-medium">📉 Total débité de votre compte</span>
+                      <span className="text-sm font-medium">{t('userProfileCard.totalDebiteDeVotreCompte')}</span>
                       <span className="text-xl font-bold text-[#ff4000]">{formatPrice(transferPreview?.total_debit || 0, transferPreview?.currency_sent)}</span>
                     </div>
                     <div className="flex justify-between items-center text-[#ff4000]">
-                      <span className="text-sm font-medium">📈 Montant net reçu par le destinataire</span>
+                      <span className="text-sm font-medium">{t('userProfileCard.montantNetRecuParLe')}</span>
                       <span className="text-lg font-bold">{formatPrice(transferPreview?.amount_received || 0, transferPreview?.currency_received || transferPreview?.currency_sent)}</span>
                     </div>
                   </div>
 
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm text-blue-800">
-                      <strong>Solde actuel:</strong> {formatPrice(transferPreview?.current_balance || 0, transferPreview?.currency_sent)}
+                      <strong>{t('userProfileCard.soldeActuel')}</strong> {formatPrice(transferPreview?.current_balance || 0, transferPreview?.currency_sent)}
                       <br />
-                      <strong>Solde après transfert:</strong> {formatPrice(transferPreview?.balance_after || 0, transferPreview?.currency_sent)}
+                      <strong>{t('userProfileCard.soldeApresTransfert')}</strong> {formatPrice(transferPreview?.balance_after || 0, transferPreview?.currency_sent)}
                     </p>
                   </div>
 
@@ -653,7 +655,7 @@ export const UserProfileCard = ({ className = '', showWalletDetails = true }: Us
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={processing}>Non, annuler</AlertDialogCancel>
+              <AlertDialogCancel disabled={processing}>{t('userProfileCard.nonAnnuler')}</AlertDialogCancel>
               <AlertDialogAction onClick={handleConfirmTransfer} disabled={processing}>
                 Oui, confirmer
               </AlertDialogAction>

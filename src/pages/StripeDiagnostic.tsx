@@ -1,3 +1,4 @@
+import { useTranslation } from "@/hooks/useTranslation";
 /**
  * 🔍 DIAGNOSTIC SYSTÈME DE PAIEMENT STRIPE
  * Vérifie toutes les interfaces de paiement et la connexion Stripe
@@ -37,6 +38,7 @@ interface DiagnosticResult {
 }
 
 export default function StripeDiagnostic() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [running, setRunning] = useState(false);
   const [results, setResults] = useState<DiagnosticResult[]>([]);
@@ -582,7 +584,7 @@ export default function StripeDiagnostic() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Diagnostic Système Stripe</h1>
+          <h1 className="text-3xl font-bold">{t('stripeDiagnostic.diagnosticSystemeStripe')}</h1>
           <p className="text-muted-foreground mt-2">
             Vérification complète de l'intégration Stripe et des interfaces de paiement
           </p>
@@ -595,7 +597,7 @@ export default function StripeDiagnostic() {
       {/* Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Lancer le diagnostic</CardTitle>
+          <CardTitle>{t('stripeDiagnostic.lancerLeDiagnostic')}</CardTitle>
           <CardDescription>
             Vérifie la configuration, les composants, la base de données et la connexion Stripe
           </CardDescription>
@@ -635,14 +637,14 @@ export default function StripeDiagnostic() {
 
       {/* Résumé */}
       {results.length > 0 && (
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium">Total</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{summary.total}</div>
-              <p className="text-xs text-muted-foreground">Tests effectués</p>
+              <p className="text-xs text-muted-foreground">{t('stripeDiagnostic.testsEffectues')}</p>
             </CardContent>
           </Card>
 
@@ -656,7 +658,7 @@ export default function StripeDiagnostic() {
               <div className="text-2xl font-bold text-[#ff4000] dark:text-[#ff4000]">
                 {summary.success}
               </div>
-              <p className="text-xs text-[#ff4000] dark:text-[#ff4000]">Tests réussis</p>
+              <p className="text-xs text-[#ff4000] dark:text-[#ff4000]">{t('stripeDiagnostic.testsReussis')}</p>
             </CardContent>
           </Card>
 
@@ -670,7 +672,7 @@ export default function StripeDiagnostic() {
               <div className="text-2xl font-bold text-[#ff4000] dark:text-[#ff4000]">
                 {summary.warning}
               </div>
-              <p className="text-xs text-[#ff4000] dark:text-[#ff4000]">À vérifier</p>
+              <p className="text-xs text-[#ff4000] dark:text-[#ff4000]">{t('stripeDiagnostic.aVerifier')}</p>
             </CardContent>
           </Card>
 
@@ -684,7 +686,7 @@ export default function StripeDiagnostic() {
               <div className="text-2xl font-bold text-[#ff4000] dark:text-[#ff4000]">
                 {summary.error}
               </div>
-              <p className="text-xs text-[#ff4000] dark:text-[#ff4000]">À corriger</p>
+              <p className="text-xs text-[#ff4000] dark:text-[#ff4000]">{t('stripeDiagnostic.aCorriger')}</p>
             </CardContent>
           </Card>
         </div>
@@ -741,7 +743,7 @@ export default function StripeDiagnostic() {
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
             <strong>{summary.error} erreur(s) détectée(s)</strong>
-            <p className="mt-2">Consultez les détails ci-dessus et corrigez les problèmes avant d'utiliser le système de paiement.</p>
+            <p className="mt-2">{t('stripeDiagnostic.consultezLesDetailsCiDessus')}</p>
           </AlertDescription>
         </Alert>
       )}
@@ -750,8 +752,8 @@ export default function StripeDiagnostic() {
         <Alert>
           <CheckCircle2 className="h-4 w-4 text-[#ff4000]" />
           <AlertDescription>
-            <strong className="text-[#ff4000]">Système opérationnel !</strong>
-            <p className="mt-2">Tous les tests sont passés avec succès. Le système de paiement Stripe est prêt à être utilisé.</p>
+            <strong className="text-[#ff4000]">{t('stripeDiagnostic.systemeOperationnel')}</strong>
+            <p className="mt-2">{t('stripeDiagnostic.tousLesTestsSontPasses')}</p>
             <div className="mt-4 flex space-x-2">
               <Button size="sm" onClick={() => navigate('/test-stripe-payment')}>
                 <ExternalLink className="w-4 h-4 mr-2" />

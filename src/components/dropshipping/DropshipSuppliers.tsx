@@ -3,6 +3,7 @@
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,6 +22,7 @@ interface DropshipSuppliersProps {
 }
 
 export function DropshipSuppliers({ suppliers }: DropshipSuppliersProps) {
+  const { t } = useTranslation();
   const getCountryFlag = (country: string) => {
     const flags: Record<string, string> = {
       'CN': '🇨🇳',
@@ -48,8 +50,8 @@ export function DropshipSuppliers({ suppliers }: DropshipSuppliersProps) {
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             <Building2 className="w-16 h-16 mx-auto mb-4 opacity-50" />
-            <h3 className="font-medium text-lg mb-2">Aucun fournisseur disponible</h3>
-            <p>Les fournisseurs seront ajoutés prochainement</p>
+            <h3 className="font-medium text-lg mb-2">{t('dropshipSuppliers.aucunFournisseurDisponible')}</h3>
+            <p>{t('dropshipSuppliers.lesFournisseursSerontAjoutesProchainemen')}</p>
           </CardContent>
         </Card>
       ) : (

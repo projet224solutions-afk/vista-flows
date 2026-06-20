@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Plane, Star, ExternalLink, ArrowRight,
   Calendar, Users, Clock, Filter
@@ -50,6 +51,7 @@ interface FlightsSectionProps {
 }
 
 export function FlightsSection({ mode, isAffiliate, affiliateCode }: FlightsSectionProps) {
+  const { t } = useTranslation();
   const [airlines, setAirlines] = useState<Airline[]>([]);
   const [flightOffers, setFlightOffers] = useState<FlightOffer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,7 +111,7 @@ export function FlightsSection({ mode, isAffiliate, affiliateCode }: FlightsSect
     } else if (airline?.website_url) {
       window.open(airline.website_url, '_blank');
     }
-    toast.info('Redirection vers le site partenaire...');
+    toast.info(t('flightsSection.redirectionVersLeSitePartenaire'));
   };
 
   const fc = useFormatCurrency();
@@ -140,7 +142,7 @@ export function FlightsSection({ mode, isAffiliate, affiliateCode }: FlightsSect
           <CardContent className="p-4">
             <div className="grid grid-cols-2 gap-3 mb-3">
               <Input
-                placeholder="Ville de départ..."
+                placeholder={t('flightsSection.villeDeDepart')}
                 value={searchOrigin}
                 onChange={(e) => setSearchOrigin(e.target.value)}
                 className="text-sm"
@@ -296,7 +298,7 @@ export function FlightsSection({ mode, isAffiliate, affiliateCode }: FlightsSect
       {airlines.length === 0 && flightOffers.length === 0 && (
         <div className="text-center py-12">
           <Plane className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
-          <p className="text-muted-foreground">Aucune offre de vol disponible</p>
+          <p className="text-muted-foreground">{t('flightsSection.aucuneOffreDeVolDisponible')}</p>
         </div>
       )}
     </div>

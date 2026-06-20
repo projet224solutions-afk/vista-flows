@@ -116,7 +116,7 @@ function RevenueCalculatorDialog({
     `${(n ?? 0).toLocaleString('fr-FR')} ${cur}`;
 
   return (
-    <DialogContent className="max-w-md">
+    <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>Calculer les revenus</DialogTitle>
       </DialogHeader>
@@ -257,7 +257,7 @@ function SuspendDialog({
 }) {
   const isSuspended = shareholder.status === 'suspended';
   return (
-    <DialogContent className="max-w-sm">
+    <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
           {isSuspended
@@ -313,7 +313,7 @@ function TransferDialog({
   );
 
   return (
-    <DialogContent className="max-w-md">
+    <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2">
           <ArrowRightLeft className="w-5 h-5 text-blue-600" />
@@ -403,7 +403,7 @@ function DeleteShareholderDialog({
   const [confirmed, setConfirmed] = useState('');
 
   return (
-    <DialogContent className="max-w-sm">
+    <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle className="flex items-center gap-2 text-[#ff4000]">
           <Trash2 className="w-5 h-5" />
@@ -1138,7 +1138,7 @@ function VotesTabPDG({
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {[
           { label: 'Ouverts',     count: openVotes.length,      color: 'text-[#ff4000]',  bg: 'bg-orange-50' },
           { label: 'Brouillons',  count: draftVotes.length,     color: 'text-gray-600',   bg: 'bg-gray-50' },
@@ -1664,7 +1664,7 @@ export default function PDGShareholderManagement() {
 
       {/* Dialogs */}
       <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Ajouter un actionnaire</DialogTitle>
           </DialogHeader>

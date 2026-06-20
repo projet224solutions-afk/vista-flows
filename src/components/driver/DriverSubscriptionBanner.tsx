@@ -1,10 +1,12 @@
 import { AlertTriangle, Clock, Ban } from 'lucide-react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import { useDriverSubscription } from '@/hooks/useDriverSubscription';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 export function DriverSubscriptionBanner() {
+  const { t } = useTranslation();
   const { subscription, isExpired, isExpiringSoon, daysRemaining, hasAccess, isDriver, loading } = useDriverSubscription();
   const navigate = useNavigate();
 
@@ -31,7 +33,7 @@ export function DriverSubscriptionBanner() {
               <Ban className="w-4 h-4 text-[#ff4000]" />
             </div>
             <div className="flex-1 min-w-0">
-              <h4 className="text-[#ff4000] font-bold text-sm">Abonnement Expiré</h4>
+              <h4 className="text-[#ff4000] font-bold text-sm">{t('driverSubscriptionBanner.abonnementExpire')}</h4>
               <p className="text-[#ff4000]/80 text-xs mt-0.5 leading-relaxed">
                 Vous ne pouvez plus recevoir de courses. Veuillez renouveler pour continuer.
               </p>

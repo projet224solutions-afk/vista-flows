@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -101,6 +102,7 @@ interface SubscriptionPlansProps {
 }
 
 export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
+  const { t } = useTranslation();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [currentSubscription, setCurrentSubscription] = useState<ActiveSubscription | null>(null);
   const [loading, setLoading] = useState(true);
@@ -217,7 +219,7 @@ export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
                   <div className="text-3xl font-extrabold tracking-tight text-foreground">
                     <Money amount={plan.monthly_price_gnf} from="GNF" />
                   </div>
-                  <div className="text-sm text-muted-foreground/90">pour 1 mois</div>
+                  <div className="text-sm text-muted-foreground/90">{t('subscriptionPlans.pour1Mois')}</div>
                 </div>
               </CardHeader>
 
@@ -256,7 +258,7 @@ export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
 
       <Card className="border-border/70 bg-card/70">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Verification des fonctionnalites par plan</CardTitle>
+          <CardTitle className="text-base">{t('subscriptionPlans.verificationDesFonctionnalitesParPlan')}</CardTitle>
           <CardDescription className="text-xs">
             Controle rapide des limites et fonctionnalites reellement appliquees a chaque plan.
           </CardDescription>
@@ -295,7 +297,7 @@ export function SubscriptionPlans({ onSelectPlan }: SubscriptionPlansProps) {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-semibold">Votre abonnement actuel</h3>
+                <h3 className="font-semibold">{t('subscriptionPlans.votreAbonnementActuel')}</h3>
                 <p className="text-sm text-muted-foreground">
                   Plan <strong>{currentSubscription.plan_display_name}</strong> -{' '}
                   {SubscriptionService.getDaysRemaining(currentSubscription.current_period_end)}{' '}

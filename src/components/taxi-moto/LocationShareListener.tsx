@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,7 @@ import { TaxiArrivalTracking } from './TaxiArrivalTracking';
 import { ClientNavigationToMerchant } from './ClientNavigationToMerchant';
 
 export function LocationShareListener() {
+  const { t } = useTranslation();
   const { user, profile } = useAuth();
   const displayName = profile?.first_name
     ? `${profile.first_name} ${profile?.last_name || ''}`.trim()
@@ -75,7 +77,7 @@ export function LocationShareListener() {
   const handleDecline = () => {
     decline();
     setArrivalOpen(false);
-    toast.info('Demande de localisation refusée');
+    toast.info(t('locationShareListener.demandeDeLocalisationRefusee'));
   };
 
   return (
@@ -83,7 +85,7 @@ export function LocationShareListener() {
       {/* Modale BLOQUANTE de demande de partage */}
       <Dialog open={!!request} onOpenChange={() => { /* bloquant */ }}>
         <DialogContent
-          className="max-w-sm [&>button]:hidden"
+          className="max-w-sm [&>button]:hidden max-h-[90vh] overflow-y-auto"
           onPointerDownOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}

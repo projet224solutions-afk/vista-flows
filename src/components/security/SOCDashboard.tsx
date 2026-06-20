@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { useSecurityOps } from "@/hooks/useSecurityOps";
 import { toast } from "sonner";
 
 export function SOCDashboard() {
+  const { t } = useTranslation();
   const { incidents, alerts, stats, loading, loadSecurityData } = useSecurityOps(true);
   const [socStatus, _setSocStatus] = useState({
     operational: true,
@@ -23,7 +25,7 @@ export function SOCDashboard() {
 
   const handleRefresh = () => {
     loadSecurityData();
-    toast.success('Dashboard SOC actualisé');
+    toast.success(t('sOCDashboard.dashboardSocActualise'));
   };
 
   const getStatusColor = (status: string) => {
@@ -109,14 +111,14 @@ export function SOCDashboard() {
         {/* Incidents récents */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <h4 className="font-semibold text-sm">Incidents récents</h4>
+            <h4 className="font-semibold text-sm">{t('sOCDashboard.incidentsRecents')}</h4>
             <Badge variant="outline">{recentIncidents.length} actifs</Badge>
           </div>
 
           {recentIncidents.length === 0 ? (
             <div className="p-4 border rounded-lg text-center text-muted-foreground">
               <CheckCircle className="w-8 h-8 mx-auto mb-2 text-[#ff4000]" />
-              <p className="text-sm">Aucun incident actif</p>
+              <p className="text-sm">{t('sOCDashboard.aucunIncidentActif')}</p>
             </div>
           ) : (
             recentIncidents.map((incident: any) => (

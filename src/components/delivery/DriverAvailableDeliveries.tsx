@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -60,6 +61,7 @@ interface DriverAvailableDeliveriesProps {
 }
 
 export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAvailableDeliveriesProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [deliveries, setDeliveries] = useState<AvailableDelivery[]>([]);
   const [loading, setLoading] = useState(false);
@@ -127,7 +129,7 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
       setLastRefresh(new Date());
     } catch (error) {
       console.error('Error loading deliveries:', error);
-      toast.error('Erreur lors du chargement des livraisons');
+      toast.error(t('driverAvailableDeliveries.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -147,7 +149,7 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
 
       if (checkError) throw checkError;
       if (check.status !== 'pending' || check.driver_id) {
-        toast.error('Cette livraison n\'est plus disponible');
+        toast.error(t('driverAvailableDeliveries.cetteLivraisonNEstPlus'));
         await loadAvailableDeliveries();
         return;
       }
@@ -166,12 +168,12 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
 
       if (error) throw error;
 
-      toast.success('Livraison acceptée !');
+      toast.success(t('driverAvailableDeliveries.livraisonAcceptee'));
       onAccept(delivery);
       setDeliveries(prev => prev.filter(d => d.id !== delivery.id));
     } catch (error) {
       console.error('Error accepting delivery:', error);
-      toast.error('Erreur lors de l\'acceptation');
+      toast.error(t('driverAvailableDeliveries.erreurLorsDeLAcceptation'));
     } finally {
       setAcceptingId(null);
     }
@@ -180,7 +182,7 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
   const handleRefuse = (deliveryId: string) => {
     // Masquer localement (le livreur peut l'ignorer)
     setDeliveries(prev => prev.filter(d => d.id !== deliveryId));
-    toast.info('Livraison ignorée');
+    toast.info(t('driverAvailableDeliveries.livraisonIgnoree'));
   };
 
   // Charger au montage et s'abonner aux nouvelles livraisons
@@ -229,7 +231,7 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
       <Card className="border-dashed">
         <CardContent className="pt-8 pb-8 text-center">
           <Package className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
-          <p className="text-muted-foreground mb-4">Aucune livraison disponible</p>
+          <p className="text-muted-foreground mb-4">{t('driverAvailableDeliveries.aucuneLivraisonDisponible')}</p>
           <Button onClick={loadAvailableDeliveries} variant="outline" disabled={loading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Actualiser
@@ -278,24 +280,24 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
             </div>
 
             {/* Distances */}
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               <div className="text-center p-2 bg-orange-100/50 dark:bg-orange-900/20 rounded">
                 <MapPin className="h-4 w-4 mx-auto text-orange-600 mb-1" />
-                <p className="text-xs text-muted-foreground">Vers vendeur</p>
+                <p className="text-xs text-muted-foreground">{t('driverAvailableDeliveries.versVendeur')}</p>
                 <p className="font-bold text-sm text-orange-700 dark:text-orange-400">
                   {(delivery.distance_to_vendor || 2).toFixed(1)} km
                 </p>
               </div>
               <div className="text-center p-2 bg-orange-100/50 dark:bg-[#ff4000]/20 rounded">
                 <Navigation className="h-4 w-4 mx-auto text-[#ff4000] mb-1" />
-                <p className="text-xs text-muted-foreground">Vers client</p>
+                <p className="text-xs text-muted-foreground">{t('driverAvailableDeliveries.versClient')}</p>
                 <p className="font-bold text-sm text-[#ff4000] dark:text-[#ff4000]">
                   {(delivery.distance_vendor_to_client || delivery.distance_km || 5).toFixed(1)} km
                 </p>
               </div>
               <div className="text-center p-2 bg-blue-100/50 dark:bg-blue-900/20 rounded">
                 <Clock className="h-4 w-4 mx-auto text-blue-600 mb-1" />
-                <p className="text-xs text-muted-foreground">Temps estimé</p>
+                <p className="text-xs text-muted-foreground">{t('driverAvailableDeliveries.tempsEstime')}</p>
                 <p className="font-bold text-sm text-blue-700 dark:text-blue-400">
                   ~{delivery.estimated_time_minutes || 15} min
                 </p>
@@ -306,11 +308,11 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
             <div className="p-3 bg-gradient-to-r from-orange-50 to-orange-50 dark:from-[#ff4000]/20 dark:to-[#ff4000]/20 rounded-lg border border-orange-200/50">
               <div className="flex items-center gap-2 mb-2">
                 <Calculator className="h-4 w-4 text-[#ff4000]" />
-                <span className="text-xs font-medium text-[#ff4000] dark:text-[#ff4000]">Tarification vendeur</span>
+                <span className="text-xs font-medium text-[#ff4000] dark:text-[#ff4000]">{t('driverAvailableDeliveries.tarificationVendeur')}</span>
               </div>
               <div className="space-y-1 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Prix de base</span>
+                  <span className="text-muted-foreground">{t('driverAvailableDeliveries.prixDeBase')}</span>
                   <span>{formatCurrency(delivery.base_price || 5000)}</span>
                 </div>
                 <div className="flex justify-between">
@@ -320,7 +322,7 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
                   <span>{formatCurrency(delivery.distance_price || 0)}</span>
                 </div>
                 <div className="flex justify-between pt-1 border-t border-orange-200/50 font-medium">
-                  <span>Total livraison</span>
+                  <span>{t('driverAvailableDeliveries.totalLivraison')}</span>
                   <span className="text-[#ff4000] dark:text-[#ff4000]">{formatCurrency(delivery.delivery_fee)}</span>
                 </div>
               </div>
@@ -331,7 +333,7 @@ export function DriverAvailableDeliveries({ onAccept, driverLocation }: DriverAv
               <div className="flex items-center gap-2">
                 <DollarSign className="h-5 w-5" />
                 <div>
-                  <p className="text-xs opacity-90">Vos gains (98.5%)</p>
+                  <p className="text-xs opacity-90">{t('driverAvailableDeliveries.vosGains985')}</p>
                   <p className="font-bold">{formatCurrency(Math.round(delivery.delivery_fee * 0.985))}</p>
                 </div>
               </div>

@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -56,6 +57,7 @@ interface ClientDeliveryRequestProps {
 }
 
 export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryRequestProps) {
+  const { t } = useTranslation();
   const { user, profile } = useAuth();
   const [step, setStep] = useState<'vendor' | 'details' | 'confirm'>('vendor');
 
@@ -90,7 +92,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
   // Recherche vendeur par ID
   const lookupVendor = async () => {
     if (!vendorId.trim()) {
-      toast.error('Veuillez saisir l\'ID du vendeur');
+      toast.error(t('clientDeliveryRequest.veuillezSaisirLIdDu'));
       return;
     }
 
@@ -104,7 +106,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
         .single();
 
       if (error || !data) {
-        toast.error('Vendeur introuvable. Vérifiez l\'ID.');
+        toast.error(t('clientDeliveryRequest.vendeurIntrouvableVerifiezLId'));
         return;
       }
 
@@ -119,11 +121,11 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
         longitude: -13.5784
       });
 
-      toast.success('Vendeur trouvé !');
+      toast.success(t('clientDeliveryRequest.vendeurTrouve'));
       setStep('details');
     } catch (error) {
       console.error('Error looking up vendor:', error);
-      toast.error('Erreur lors de la recherche');
+      toast.error(t('clientDeliveryRequest.erreurLorsDeLaRecherche'));
     } finally {
       setLoadingVendor(false);
     }
@@ -167,10 +169,10 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
         setDeliveryAddress(data.results[0].formatted_address);
       }
 
-      toast.success('Position GPS détectée');
+      toast.success(t('clientDeliveryRequest.positionGpsDetectee'));
     } catch (error) {
       console.error('Geolocation error:', error);
-      toast.error('Impossible de détecter votre position');
+      toast.error(t('clientDeliveryRequest.impossibleDeDetecterVotrePosition'));
     } finally {
       setLocatingClient(false);
     }
@@ -179,7 +181,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
   // Calculer le prix estimé
   const calculatePrice = async () => {
     if (!vendorInfo || !clientCoords) {
-      toast.error('Informations manquantes pour le calcul');
+      toast.error(t('clientDeliveryRequest.informationsManquantesPourLeCalcul'));
       return;
     }
 
@@ -227,7 +229,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
       setStep('confirm');
     } catch (error) {
       console.error('Error calculating price:', error);
-      toast.error('Erreur lors du calcul du prix');
+      toast.error(t('clientDeliveryRequest.erreurLorsDuCalculDu'));
     } finally {
       setCalculatingPrice(false);
     }
@@ -236,7 +238,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
   // Soumettre la commande
   const submitOrder = async () => {
     if (!vendorInfo || !clientCoords || !priceEstimate || !user) {
-      toast.error('Informations incomplètes');
+      toast.error(t('clientDeliveryRequest.informationsIncompletes'));
       return;
     }
 
@@ -274,11 +276,11 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
 
       if (error) throw error;
 
-      toast.success('🎉 Commande créée ! Un livreur sera assigné bientôt.');
+      toast.success(t('clientDeliveryRequest.commandeCreeeUnLivreurSera'));
       onDeliveryCreated?.(data.id);
     } catch (error) {
       console.error('Error creating delivery:', error);
-      toast.error('Erreur lors de la création de la commande');
+      toast.error(t('clientDeliveryRequest.erreurLorsDeLaCreation'));
     } finally {
       setSubmitting(false);
     }
@@ -299,9 +301,9 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>ID ou code du vendeur</Label>
+              <Label>{t('clientDeliveryRequest.idOuCodeDuVendeur')}</Label>
               <Input
-                placeholder="Ex: VND0001 ou ID complet"
+                placeholder={t('clientDeliveryRequest.exVnd0001OuIdComplet')}
                 value={vendorId}
                 onChange={(e) => setVendorId(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && lookupVendor()}
@@ -364,7 +366,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
             <CardContent className="space-y-3">
               <div className="flex gap-2">
                 <Input
-                  placeholder="Votre adresse de livraison"
+                  placeholder={t('clientDeliveryRequest.votreAdresseDeLivraison')}
                   value={deliveryAddress}
                   onChange={(e) => setDeliveryAddress(e.target.value)}
                   className="flex-1"
@@ -445,7 +447,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
               <div className="space-y-2">
                 <Label>Description (optionnel)</Label>
                 <Textarea
-                  placeholder="Décrivez le contenu..."
+                  placeholder={t('clientDeliveryRequest.decrivezLeContenu')}
                   value={packageDescription}
                   onChange={(e) => setPackageDescription(e.target.value)}
                   rows={2}
@@ -485,11 +487,11 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
           {/* Instructions spéciales */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Instructions spéciales</CardTitle>
+              <CardTitle className="text-base">{t('clientDeliveryRequest.instructionsSpeciales')}</CardTitle>
             </CardHeader>
             <CardContent>
               <Textarea
-                placeholder="Instructions pour le livreur..."
+                placeholder={t('clientDeliveryRequest.instructionsPourLeLivreur')}
                 value={specialInstructions}
                 onChange={(e) => setSpecialInstructions(e.target.value)}
                 rows={2}
@@ -524,7 +526,7 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
         <div className="space-y-4">
           <Card className="border-2 border-[#ff4000] bg-gradient-to-br from-orange-50 to-orange-50 dark:from-[#ff4000]/20 dark:to-[#ff4000]/20">
             <CardHeader>
-              <CardTitle className="text-center">Récapitulatif de la commande</CardTitle>
+              <CardTitle className="text-center">{t('clientDeliveryRequest.recapitulatifDeLaCommande')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Trajet */}
@@ -551,14 +553,14 @@ export function ClientDeliveryRequest({ onDeliveryCreated }: ClientDeliveryReque
                   <p className="font-bold">{priceEstimate.totalDistance} km</p>
                 </div>
                 <div className="p-2 bg-white/80 rounded-lg">
-                  <p className="text-xs text-muted-foreground">Temps estimé</p>
+                  <p className="text-xs text-muted-foreground">{t('clientDeliveryRequest.tempsEstime')}</p>
                   <p className="font-bold">{priceEstimate.totalDuration} min</p>
                 </div>
               </div>
 
               {/* Paiement */}
               <div className="flex items-center justify-between p-3 bg-white rounded-lg">
-                <span className="text-muted-foreground">Mode de paiement</span>
+                <span className="text-muted-foreground">{t('clientDeliveryRequest.modeDePaiement')}</span>
                 <Badge variant={paymentMethod === 'cod' ? 'secondary' : 'default'}>
                   {paymentMethod === 'cod' ? 'À la livraison' : 'Prépayé'}
                 </Badge>

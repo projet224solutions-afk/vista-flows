@@ -3,6 +3,7 @@
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,6 +31,7 @@ const statusConfig: Record<string, { label: string; color: string }> = {
 };
 
 export function PharmacySalesPanel({ stats, recentSales }: PharmacySalesPanelProps) {
+  const { t } = useTranslation();
   const formatCurrency = useFormatCurrency();
   const navigate = useNavigate();
 
@@ -76,8 +78,8 @@ export function PharmacySalesPanel({ stats, recentSales }: PharmacySalesPanelPro
           {recentSales.length === 0 ? (
             <div className="text-center py-10">
               <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-muted-foreground/30" />
-              <p className="text-sm text-muted-foreground">Aucune vente enregistrée</p>
-              <p className="text-xs text-muted-foreground/70 mt-1">Les ventes apparaîtront ici automatiquement</p>
+              <p className="text-sm text-muted-foreground">{t('pharmacySalesPanel.aucuneVenteEnregistree')}</p>
+              <p className="text-xs text-muted-foreground/70 mt-1">{t('pharmacySalesPanel.lesVentesApparaitrontIciAutomatiquement')}</p>
             </div>
           ) : (
             <div className="space-y-2">

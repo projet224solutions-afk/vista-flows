@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { usePriceConverter } from '@/hooks/usePriceConverter';
@@ -15,6 +16,7 @@ import { format, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 export default function PDGRevenueAnalytics() {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const { convert, userCurrency } = usePriceConverter();
   const compactAxis = (v: number) => {
@@ -155,7 +157,7 @@ export default function PDGRevenueAnalytics() {
       <Card className="w-full">
         <CardContent className="p-12 text-center">
           <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">Chargement des revenus...</p>
+          <p className="text-muted-foreground">{t('pDGRevenueAnalytics.chargementDesRevenus')}</p>
         </CardContent>
       </Card>
     );
@@ -166,7 +168,7 @@ export default function PDGRevenueAnalytics() {
       {/* En-tête avec actions */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">💼 Analyse des Revenus PDG</h2>
+          <h2 className="text-3xl font-bold tracking-tight">{t('pDGRevenueAnalytics.analyseDesRevenusPdg')}</h2>
           <p className="text-muted-foreground mt-1">
             Suivi et différenciation des sources de revenus de la plateforme
           </p>
@@ -250,7 +252,7 @@ export default function PDGRevenueAnalytics() {
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
           <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
-          <TabsTrigger value="details">Historique détaillé</TabsTrigger>
+          <TabsTrigger value="details">{t('pDGRevenueAnalytics.historiqueDetaille')}</TabsTrigger>
           <TabsTrigger value="settings">Configuration</TabsTrigger>
         </TabsList>
 
@@ -260,8 +262,8 @@ export default function PDGRevenueAnalytics() {
             {/* Graphique en camembert */}
             <Card>
               <CardHeader>
-                <CardTitle>Répartition des Revenus</CardTitle>
-                <CardDescription>Distribution par source de revenu</CardDescription>
+                <CardTitle>{t('pDGRevenueAnalytics.repartitionDesRevenus')}</CardTitle>
+                <CardDescription>{t('pDGRevenueAnalytics.distributionParSourceDeRevenu')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -289,8 +291,8 @@ export default function PDGRevenueAnalytics() {
             {/* Graphique temporel */}
             <Card>
               <CardHeader>
-                <CardTitle>Évolution Temporelle</CardTitle>
-                <CardDescription>Revenus sur les 30 derniers jours</CardDescription>
+                <CardTitle>{t('pDGRevenueAnalytics.evolutionTemporelle')}</CardTitle>
+                <CardDescription>{t('pDGRevenueAnalytics.revenusSurLes30Derniers')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -312,7 +314,7 @@ export default function PDGRevenueAnalytics() {
           {/* Informations supplémentaires */}
           <Card>
             <CardHeader>
-              <CardTitle>💡 Mécanismes de Commission</CardTitle>
+              <CardTitle>{t('pDGRevenueAnalytics.mecanismesDeCommission')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-[#04439e] rounded-lg">
@@ -345,8 +347,8 @@ export default function PDGRevenueAnalytics() {
         <TabsContent value="details">
           <Card>
             <CardHeader>
-              <CardTitle>Historique des Transactions Génératrices</CardTitle>
-              <CardDescription>Liste complète des revenus enregistrés</CardDescription>
+              <CardTitle>{t('pDGRevenueAnalytics.historiqueDesTransactionsGeneratrices')}</CardTitle>
+              <CardDescription>{t('pDGRevenueAnalytics.listeCompleteDesRevenusEnregistres')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">

@@ -11,6 +11,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -54,6 +55,7 @@ export function ShareLocationButton({
   variant = 'default',
   className,
 }: ShareLocationButtonProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState<'id' | 'link' | null>(null);
 
@@ -91,7 +93,7 @@ export function ShareLocationButton({
       toast.success(kind === 'id' ? 'ID copié' : 'Lien copié');
       setTimeout(() => setCopied(null), 1500);
     } catch {
-      toast.error('Impossible de copier');
+      toast.error(t('shareLocationButton.impossibleDeCopier'));
     }
   };
 
@@ -124,7 +126,7 @@ export function ShareLocationButton({
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MapPin className="w-5 h-5 text-primary" />
@@ -134,14 +136,14 @@ export function ShareLocationButton({
 
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Communiquez cet <strong>ID</strong> (ou ce <strong>lien</strong>) au chauffeur.
+            Communiquez cet <strong>ID</strong> {t('shareLocationButton.ouCe')} <strong>lien</strong>) au chauffeur.
             Il le saisira dans son application et vous recevrez une <strong>demande de
             partage</strong> à confirmer pour qu'il vous localise en temps réel.
           </p>
 
           {/* ID */}
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">Votre ID</label>
+            <label className="text-xs font-medium text-muted-foreground">{t('shareLocationButton.votreId')}</label>
             <div className="flex gap-2">
               <code className="flex-1 text-sm font-mono bg-muted rounded px-3 py-2 truncate">
                 {shareId || '—'}
@@ -172,7 +174,7 @@ export function ShareLocationButton({
                 size="icon"
                 disabled={!shareLink}
                 onClick={() => shareLink && copy(shareLink, 'link')}
-                title="Copier le lien"
+                title={t('shareLocationButton.copierLeLien')}
               >
                 {copied === 'link' ? <Check className="w-4 h-4 text-[#ff4000]" /> : <Copy className="w-4 h-4" />}
               </Button>

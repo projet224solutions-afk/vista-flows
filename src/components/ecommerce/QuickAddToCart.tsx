@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { useTranslation } from "@/hooks/useTranslation";
 import { ShoppingCart, Heart } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -16,12 +17,13 @@ interface QuickAddToCartProps {
  * Bouton rapide pour ajouter au panier (style Amazon 1-Click)
  */
 export const QuickAddToCart = ({ productId, price, stock = 0, onAddSuccess }: QuickAddToCartProps) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [inWishlist, setInWishlist] = useState(false);
 
   const handleAddToCart = async () => {
     if (stock <= 0) {
-      toast.error('Produit en rupture de stock');
+      toast.error(t('quickAddToCart.produitEnRuptureDeStock'));
       return;
     }
 
@@ -35,7 +37,7 @@ export const QuickAddToCart = ({ productId, price, stock = 0, onAddSuccess }: Qu
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast.error('Connectez-vous pour ajouter au panier');
+        toast.error(t('quickAddToCart.connectezVousPourAjouterAu'));
         return;
       }
 
@@ -70,7 +72,7 @@ export const QuickAddToCart = ({ productId, price, stock = 0, onAddSuccess }: Qu
         if (error) throw error;
       }
 
-      toast.success('✅ Ajouté au panier');
+      toast.success(t('quickAddToCart.ajouteAuPanier'));
       onAddSuccess?.();
     } catch (error: any) {
       console.error('Error adding to cart:', error);
@@ -89,7 +91,7 @@ export const QuickAddToCart = ({ productId, price, stock = 0, onAddSuccess }: Qu
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast.error('Connectez-vous pour ajouter à la wishlist');
+        toast.error(t('quickAddToCart.connectezVousPourAjouterA'));
         return;
       }
 
@@ -103,12 +105,12 @@ export const QuickAddToCart = ({ productId, price, stock = 0, onAddSuccess }: Qu
 
       if (error) {
         if (error.code === '23505') {
-          toast.info('Déjà dans votre wishlist');
+          toast.info(t('quickAddToCart.dejaDansVotreWishlist'));
         } else {
           throw error;
         }
       } else {
-        toast.success('❤️ Ajouté à la wishlist');
+        toast.success(t('quickAddToCart.ajouteALaWishlist'));
         setInWishlist(true);
       }
     } catch (error: any) {

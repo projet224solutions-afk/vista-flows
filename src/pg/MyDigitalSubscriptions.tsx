@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -59,6 +60,7 @@ const cycleLabels: Record<string, string> = {
 };
 
 export default function MyDigitalSubscriptions() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -178,7 +180,7 @@ export default function MyDigitalSubscriptions() {
           </Button>
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-foreground">Mes Abonnements</h1>
-            <p className="text-sm text-muted-foreground">Gérez vos abonnements aux produits numériques</p>
+            <p className="text-sm text-muted-foreground">{t('myDigitalSubscriptions.gerezVosAbonnementsAuxProduits')}</p>
           </div>
           <Button variant="outline" size="sm" onClick={loadSubscriptions} disabled={loading}>
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
@@ -222,7 +224,7 @@ export default function MyDigitalSubscriptions() {
             <CardContent className="p-12 text-center space-y-4">
               <Package className="w-16 h-16 mx-auto text-muted-foreground/30" />
               <div>
-                <h3 className="text-lg font-semibold text-foreground">Aucun abonnement</h3>
+                <h3 className="text-lg font-semibold text-foreground">{t('myDigitalSubscriptions.aucunAbonnement')}</h3>
                 <p className="text-sm text-muted-foreground mt-1">
                   Explorez les produits numériques avec abonnement sur le marketplace
                 </p>
@@ -355,7 +357,7 @@ export default function MyDigitalSubscriptions() {
       <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Annuler cet abonnement ?</AlertDialogTitle>
+            <AlertDialogTitle>{t('myDigitalSubscriptions.annulerCetAbonnement')}</AlertDialogTitle>
             <AlertDialogDescription>
               Vous garderez l'accès au contenu jusqu'à la fin de la période en cours.
               Aucun remboursement ne sera effectué pour la période déjà payée.

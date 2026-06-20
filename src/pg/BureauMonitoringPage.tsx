@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Settings } from 'lucide-react';
@@ -11,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export default function BureauMonitoringPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [bureauId, setBureauId] = useState<string | null>(null);
   const [bureauName, setBureauName] = useState<string>('');
@@ -55,7 +57,7 @@ export default function BureauMonitoringPage() {
         }
       } catch (error) {
         console.error('Error loading bureau:', error);
-        toast.error('Erreur lors du chargement du bureau');
+        toast.error(t('bureauMonitoringPage.erreurLorsDuChargementDu'));
       } finally {
         setLoading(false);
       }
@@ -75,7 +77,7 @@ export default function BureauMonitoringPage() {
   if (!bureauId) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <h1 className="text-2xl font-bold mb-4">Accès Non Autorisé</h1>
+        <h1 className="text-2xl font-bold mb-4">{t('bureauMonitoringPage.accesNonAutorise')}</h1>
         <p className="text-muted-foreground mb-6">
           Vous devez être connecté en tant que bureau/syndicat pour accéder à cette page.
         </p>

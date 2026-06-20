@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -93,6 +94,7 @@ export default function MessageItem({
   onEdit,
   onReply
 }: MessageItemProps) {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteForEveryone, setDeleteForEveryone] = useState(false);
@@ -430,7 +432,7 @@ export default function MessageItem({
                                 <AlertCircle className="w-4 h-4 text-[#ff4000]" />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <span className="text-xs text-[#ff4000] font-medium">Format non supporté</span>
+                                <span className="text-xs text-[#ff4000] font-medium">{t('messageItem.formatNonSupporte')}</span>
                               </div>
                               <a
                                 href={attachment.url}
@@ -502,7 +504,7 @@ export default function MessageItem({
                                 download={attachment.name || 'vocal.m4a'}
                                 onClick={(e) => e.stopPropagation()}
                                 className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-background/20 transition-colors"
-                                title="Télécharger"
+                                title={t('messageItem.telecharger')}
                               >
                                 <Download className="w-3.5 h-3.5 opacity-70" />
                               </a>
@@ -737,7 +739,7 @@ export default function MessageItem({
                                 ? "hover:bg-primary-foreground/20"
                                 : "hover:bg-muted"
                             )}
-                            title="Télécharger"
+                            title={t('messageItem.telecharger')}
                           >
                             <Download className="w-4 h-4 opacity-70" />
                           </a>
@@ -802,7 +804,7 @@ export default function MessageItem({
               {/* Timestamp */}
               <div className="text-xs opacity-70 mt-1">
                 {message.timestamp}
-                {isEditing && <span className="ml-2">(modifié)</span>}
+                {isEditing && <span className="ml-2">{t('messageItem.modifie')}</span>}
               </div>
             </>
           )}
@@ -813,7 +815,7 @@ export default function MessageItem({
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer ce message ?</AlertDialogTitle>
+            <AlertDialogTitle>{t('messageItem.supprimerCeMessage')}</AlertDialogTitle>
             <AlertDialogDescription>
               {deleteForEveryone
                 ? "Ce message sera supprimé pour tous les participants. Cette action est irréversible."
@@ -821,7 +823,7 @@ export default function MessageItem({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeleteForEveryone(false)}>Annuler</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setDeleteForEveryone(false)}>{t('messageItem.annuler')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
               Supprimer
             </AlertDialogAction>
@@ -835,7 +837,7 @@ export default function MessageItem({
           {previewImageUrl && (
             <img
               src={previewImageUrl}
-              alt="Prévisualisation"
+              alt={t('messageItem.previsualisation')}
               className="w-full h-auto rounded"
             />
           )}

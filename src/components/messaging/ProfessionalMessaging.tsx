@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +22,7 @@ import { cn } from '@/lib/utils';
 const AgoraVideoCall = React.lazy(() => import('@/components/communication/AgoraVideoCall'));
 const AgoraAudioCall = React.lazy(() => import('@/components/communication/AgoraAudioCall'));
 import { AutoTranslatedMessageBubble } from '@/components/messaging/AutoTranslatedMessageBubble';
+import { ChatLanguageSelector } from '@/components/messaging/ChatLanguageSelector';
 import { Message as CommunicationMessage } from '@/types/communication.types';
 import {
   MessageSquare,
@@ -73,6 +75,7 @@ interface Contact {
 }
 
 export default function ProfessionalMessaging() {
+  const { t } = useTranslation();
   const { user, profile } = useAuth();
   const { endCall } = useAgora();
   const { userLanguage } = useAutoTranslation({ autoTranslate: true });
@@ -101,7 +104,7 @@ export default function ProfessionalMessaging() {
 
   const handleStartCall = (type: 'audio' | 'video') => {
     if (!activeConversation?.participantId || !user?.id) {
-      toast.error('Impossible de démarrer l\'appel');
+      toast.error(t('professionalMessaging.impossibleDeDemarrerLAppel'));
       return;
     }
     setCallType(type);
@@ -293,10 +296,10 @@ export default function ProfessionalMessaging() {
       setActiveConversation(newConversation);
       setShowNewChat(false);
       setShowMobileChat(true);
-      toast.success('Conversation créée');
+      toast.success(t('professionalMessaging.conversationCreee'));
     } catch (error) {
       console.error('Error creating conversation:', error);
-      toast.error('Erreur lors de la création');
+      toast.error(t('professionalMessaging.erreurLorsDeLaCreation'));
     }
   };
 
@@ -386,7 +389,7 @@ export default function ProfessionalMessaging() {
       inputRef.current?.focus();
     } catch (error) {
       console.error('Error sending message:', error);
-      toast.error('Erreur lors de l\'envoi');
+      toast.error(t('professionalMessaging.erreurLorsDeLEnvoi'));
     } finally {
       setIsSending(false);
     }
@@ -396,7 +399,7 @@ export default function ProfessionalMessaging() {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
-        toast.error('Le fichier ne doit pas dépasser 10 Mo');
+        toast.error(t('professionalMessaging.leFichierNeDoitPas'));
         return;
       }
       setSelectedFile(file);
@@ -513,7 +516,7 @@ export default function ProfessionalMessaging() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Rechercher..."
+              placeholder={t('professionalMessaging.rechercher')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 bg-muted/50 border-0"
@@ -530,7 +533,7 @@ export default function ProfessionalMessaging() {
             ) : filteredConversations.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <MessageSquare className="w-12 h-12 mb-3 opacity-40" />
-                <p className="text-sm">Aucune conversation</p>
+                <p className="text-sm">{t('professionalMessaging.aucuneConversation')}</p>
               </div>
             ) : (
               filteredConversations.map(conv => (
@@ -607,6 +610,7 @@ export default function ProfessionalMessaging() {
               </div>
 
               <div className="flex items-center gap-1">
+                <ChatLanguageSelector />
                 <Button variant="ghost" size="icon" onClick={() => handleStartCall('audio')} className="h-9 w-9">
                   <Phone className="w-4 h-4" />
                 </Button>
@@ -623,8 +627,8 @@ export default function ProfessionalMessaging() {
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                   <MessageSquare className="w-16 h-16 mb-4 opacity-30" />
-                  <p>Aucun message</p>
-                  <p className="text-sm">Commencez la conversation</p>
+                  <p>{t('professionalMessaging.aucunMessage')}</p>
+                  <p className="text-sm">{t('professionalMessaging.commencezLaConversation')}</p>
                 </div>
               ) : (
                 <>
@@ -712,7 +716,7 @@ export default function ProfessionalMessaging() {
                   ref={inputRef}
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Écrivez votre message..."
+                  placeholder={t('professionalMessaging.ecrivezVotreMessage')}
                   className="flex-1 bg-muted/50 border-0"
                   disabled={isSending}
                 />
@@ -726,21 +730,21 @@ export default function ProfessionalMessaging() {
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
             <MessageSquare className="w-20 h-20 mb-4 opacity-20" />
-            <p className="text-lg">Sélectionnez une conversation</p>
+            <p className="text-lg">{t('professionalMessaging.selectionnezUneConversation')}</p>
           </div>
         )}
       </div>
 
       {/* Dialog nouvelle conversation */}
       <Dialog open={showNewChat} onOpenChange={setShowNewChat}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Nouvelle conversation</DialogTitle>
+            <DialogTitle>{t('professionalMessaging.nouvelleConversation')}</DialogTitle>
           </DialogHeader>
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Rechercher un contact..."
+              placeholder={t('professionalMessaging.rechercherUnContact')}
               value={searchContacts}
               onChange={(e) => { setSearchContacts(e.target.value); searchForContacts(e.target.value); }}
               className="pl-9"
@@ -769,7 +773,7 @@ export default function ProfessionalMessaging() {
 
       {/* Dialog appel */}
       <Dialog open={showCallDialog} onOpenChange={setShowCallDialog}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           {callType === 'video' ? (
             <AgoraVideoCall channel={activeConversation?.id || ''} isIncoming={false} onCallEnd={handleEndCall} />
           ) : (

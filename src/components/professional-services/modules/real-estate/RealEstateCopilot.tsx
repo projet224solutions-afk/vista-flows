@@ -2,6 +2,7 @@
  * Copilote IA pour le module immobilier
  */
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,6 +41,7 @@ const SUGGESTIONS = [
 ];
 
 export function RealEstateCopilot({ stats, className }: RealEstateCopilotProps) {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -100,11 +102,11 @@ export function RealEstateCopilot({ stats, className }: RealEstateCopilotProps) 
     } catch (err: any) {
       console.error('Copilot error:', err);
       if (err.message?.includes('402')) {
-        toast.error('Crédits IA insuffisants');
+        toast.error(t('realEstateCopilot.creditsIaInsuffisants'));
       } else if (err.message?.includes('429')) {
-        toast.error('Trop de requêtes, réessayez');
+        toast.error(t('realEstateCopilot.tropDeRequetesReessayez'));
       } else {
-        toast.error('Erreur du copilote');
+        toast.error(t('realEstateCopilot.erreurDuCopilote'));
       }
     } finally {
       setLoading(false);
@@ -124,7 +126,7 @@ export function RealEstateCopilot({ stats, className }: RealEstateCopilotProps) 
   }
 
   return (
-    <Card className={`fixed bottom-20 right-4 z-50 w-[360px] max-h-[500px] shadow-elegant ${className}`}>
+    <Card className={`fixed bottom-20 right-4 z-50 w-full max-w-[360px] max-h-[500px] shadow-elegant ${className}`}>
       <CardHeader className="pb-2 flex flex-row items-center justify-between">
         <CardTitle className="text-sm flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-primary" />
@@ -205,7 +207,7 @@ export function RealEstateCopilot({ stats, className }: RealEstateCopilotProps) 
           <Input
             value={input}
             onChange={e => setInput(e.target.value)}
-            placeholder="Posez votre question..."
+            placeholder={t('realEstateCopilot.posezVotreQuestion')}
             className="text-sm h-9"
             disabled={loading}
           />

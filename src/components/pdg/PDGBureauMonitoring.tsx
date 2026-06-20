@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { formatCurrency } from '@/lib/formatters';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -43,6 +44,7 @@ interface BureauStats {
 }
 
 export default function PDGBureauMonitoring() {
+  const { t } = useTranslation();
   const _navigate = useNavigate();
   const [bureaus, setBureaus] = useState<BureauStats[]>([]);
   const [loading, setLoading] = useState(true);
@@ -112,7 +114,7 @@ export default function PDGBureauMonitoring() {
 
     } catch (error: any) {
       console.error('Erreur chargement bureaux:', error);
-      toast.error('Erreur de chargement des bureaux');
+      toast.error(t('pDGBureauMonitoring.erreurDeChargementDesBureaux'));
     } finally {
       setLoading(false);
     }
@@ -238,7 +240,7 @@ export default function PDGBureauMonitoring() {
           <div className="flex items-center gap-3">
             <DollarSign className="w-8 h-8 text-[#ff4000]" />
             <div>
-              <p className="text-sm text-muted-foreground">Revenus totaux du jour</p>
+              <p className="text-sm text-muted-foreground">{t('pDGBureauMonitoring.revenusTotauxDuJour')}</p>
               <p className="text-3xl font-bold text-[#ff4000]">
                 {formatCurrency(globalStats.todayEarnings)}
               </p>
@@ -299,7 +301,7 @@ export default function PDGBureauMonitoring() {
                       ) : error ? (
                         <p className="text-xs text-[#ff4000]">{error}</p>
                       ) : stats ? (
-                        <div className="grid grid-cols-3 gap-2 text-center">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-center">
                           <div className="p-2 bg-muted/50 rounded">
                             <div className="text-lg font-bold">{stats.total_drivers}</div>
                             <div className="text-xs text-muted-foreground">Chauffeurs</div>

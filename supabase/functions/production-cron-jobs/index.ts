@@ -137,38 +137,42 @@ Deno.serve(async (req) => {
     results['pos_reconciliation'] = { success: false, affected: 0, error: e.message }
   }
 
-  // ===== 5. AUTO-RELEASE ESCROW TRANSACTIONS =====
+  // ===== 5. AUTO-RELEASE ESCROW TRANSACTIONS (ATOMIQUE) =====
+  // ⚠️ CORRECTIF : avant, ce cron faisait un simple UPDATE status='released' SANS créditer le vendeur
+  //    ni écrire la ligne d'historique → escrows libérés mais VENDEURS NON PAYÉS (bug d'argent, faux
+  //    « released_no_ledger »). Désormais on délègue au primitif canonique release_escrow_to_seller
+  //    (crédit vendeur converti + commission PDG + ligne wallet_transactions + statut, en 1 transaction),
+  //    exactement comme le job backend Node. NB : idéalement retirer ce cron au profit du backend.
   try {
-    const { data, error } = await supabase
+    const { data: due } = await supabase
       .from('escrow_transactions')
-      .update({
-        status: 'released',
-        released_at: new Date().toISOString(),
-      })
+      .select('id, order_id')
       .eq('status', 'held')
       .lt('auto_release_at', new Date().toISOString())
-      .select('id, order_id')
+      .not('seller_confirmed_at', 'is', null)
+      .is('dispute_status', null)
 
-    // Also update order status to delivered if still shipped
-    if (data && data.length > 0) {
-      for (const escrow of data) {
-        await supabase
-          .from('orders')
-          .update({
-            status: 'delivered',
-            delivered_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', escrow.order_id)
-          .in('status', ['shipped', 'confirmed', 'preparing'])
-      }
+    let released = 0
+    for (const escrow of (due ?? [])) {
+      const { data: rel, error: relErr } = await supabase.rpc('release_escrow_to_seller', {
+        p_escrow_id: escrow.id,
+        p_reason: 'auto_release_cron',
+      })
+      // L'idempotence/autorisation est gérée dans le RPC ; on n'avance que si la libération a réussi.
+      if (relErr || (rel && (rel as any).success === false)) continue
+      released++
+      await supabase
+        .from('orders')
+        .update({
+          status: 'delivered',
+          delivered_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', escrow.order_id)
+        .in('status', ['shipped', 'confirmed', 'preparing'])
     }
 
-    results['escrow_auto_release'] = {
-      success: !error,
-      affected: data?.length ?? 0,
-      ...(error && { error: error.message }),
-    }
+    results['escrow_auto_release'] = { success: true, affected: released }
   } catch (e: any) {
     results['escrow_auto_release'] = { success: false, affected: 0, error: e.message }
   }

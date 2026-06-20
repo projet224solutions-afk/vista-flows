@@ -4,6 +4,7 @@
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -19,6 +20,7 @@ interface PharmacyInventoryPanelProps {
 }
 
 export function PharmacyInventoryPanel({ stats }: PharmacyInventoryPanelProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { stock } = stats;
   const inStock = stock.totalProducts - stock.outOfStockCount - stock.lowStockCount;
@@ -141,8 +143,8 @@ export function PharmacyInventoryPanel({ stats }: PharmacyInventoryPanelProps) {
             <Plus className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <p className="font-semibold text-sm">Ajouter un médicament ou produit</p>
-            <p className="text-xs text-muted-foreground">Référencer dans votre inventaire</p>
+            <p className="font-semibold text-sm">{t('pharmacyInventoryPanel.ajouterUnMedicamentOuProduit')}</p>
+            <p className="text-xs text-muted-foreground">{t('pharmacyInventoryPanel.referencerDansVotreInventaire')}</p>
           </div>
         </CardContent>
       </Card>

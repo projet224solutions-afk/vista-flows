@@ -9,23 +9,25 @@ import {
   Pill, ClipboardList, BarChart3
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface PharmacyQuickActionsProps {
   onTabChange: (tab: string) => void;
 }
 
 const actions = [
-  { icon: Plus, label: 'Nouveau produit', route: '/vendeur/products', color: 'bg-[#ff4000]' },
-  { icon: Pill, label: 'Ordonnance', tab: 'prescriptions', color: 'bg-blue-500' },
-  { icon: ShoppingCart, label: 'Commandes', route: '/vendeur/orders', color: 'bg-[#04439e]' },
-  { icon: Users, label: 'Patients', tab: 'clients', color: 'bg-[#ff4000]' },
-  { icon: Package, label: 'Inventaire', tab: 'inventory', color: 'bg-[#ff4000]' },
-  { icon: ClipboardList, label: 'Alertes stock', tab: 'inventory', color: 'bg-orange-500' },
-  { icon: FileText, label: 'Rapports', tab: 'reports', color: 'bg-[#04439e]' },
-  { icon: BarChart3, label: 'Analytics', tab: 'overview', color: 'bg-[#04439e]' },
+  { icon: Plus, labelKey: 'pharmacyActions.newProduct', route: '/vendeur/products', color: 'bg-[#ff4000]' },
+  { icon: Pill, labelKey: 'pharmacyActions.prescription', tab: 'prescriptions', color: 'bg-blue-500' },
+  { icon: ShoppingCart, labelKey: 'pharmacyActions.orders', route: '/vendeur/orders', color: 'bg-[#04439e]' },
+  { icon: Users, labelKey: 'pharmacyActions.patients', tab: 'clients', color: 'bg-[#ff4000]' },
+  { icon: Package, labelKey: 'pharmacyActions.inventory', tab: 'inventory', color: 'bg-[#ff4000]' },
+  { icon: ClipboardList, labelKey: 'pharmacyActions.stockAlerts', tab: 'inventory', color: 'bg-orange-500' },
+  { icon: FileText, labelKey: 'pharmacyActions.reports', tab: 'reports', color: 'bg-[#04439e]' },
+  { icon: BarChart3, labelKey: 'pharmacyActions.analytics', tab: 'overview', color: 'bg-[#04439e]' },
 ];
 
 export function PharmacyQuickActions({ onTabChange }: PharmacyQuickActionsProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (
@@ -34,7 +36,7 @@ export function PharmacyQuickActions({ onTabChange }: PharmacyQuickActionsProps)
         <div className="grid grid-cols-4 md:grid-cols-8 gap-2 md:gap-3">
           {actions.map((action) => (
             <button
-              key={action.label}
+              key={action.labelKey}
               onClick={() => {
                 if (action.route) navigate(action.route);
                 else if (action.tab) onTabChange(action.tab);
@@ -45,7 +47,7 @@ export function PharmacyQuickActions({ onTabChange }: PharmacyQuickActionsProps)
                 <action.icon className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
               <span className="text-[10px] md:text-xs font-medium text-muted-foreground text-center leading-tight">
-                {action.label}
+                {t(action.labelKey)}
               </span>
             </button>
           ))}

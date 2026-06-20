@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { readSectionCache, writeSectionCache, isBrowserOffline } from '@/lib/offline/sectionCache';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -101,6 +102,11 @@ export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }:
   const { data: purchases = [], isLoading } = useQuery({
     queryKey: ['stock-purchases-validated', vendorId],
     queryFn: async () => {
+      // 📴 Hors ligne : derniers achats validés connus (cache).
+      if (isBrowserOffline()) {
+        return readSectionCache<Purchase>('stock_purchases_validated', vendorId) ?? [];
+      }
+
       const { data, error } = await supabase
         .from('stock_purchases')
         .select('*')
@@ -108,7 +114,12 @@ export function PurchasesList({ vendorId, initialPurchaseId, onPurchaseViewed }:
         .eq('status', 'validated')
         .order('validated_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        const cached = readSectionCache<Purchase>('stock_purchases_validated', vendorId);
+        if (cached) return cached;
+        throw error;
+      }
+      writeSectionCache('stock_purchases_validated', vendorId, (data || []) as Purchase[]);
       return data as Purchase[];
     },
     enabled: !!vendorId,

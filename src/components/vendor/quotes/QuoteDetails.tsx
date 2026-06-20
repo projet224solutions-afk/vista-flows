@@ -97,6 +97,7 @@ export default function QuoteDetails({ quote, open, onClose, onConvert }: QuoteD
 
       const { backendFetch } = await import('@/services/backendApi');
       const resp = await backendFetch<any>('/api/documents/quote-pdf', {
+        method: 'POST',
         body: { quote_id: freshQuote.id, ref: freshQuote.ref }
       });
 

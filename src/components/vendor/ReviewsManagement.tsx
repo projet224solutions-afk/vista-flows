@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -28,6 +29,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { CountryFlag } from '@/components/CountryFlag';
 
 interface Review {
   id: string;
@@ -46,10 +48,12 @@ interface Review {
   };
   profiles?: {
     full_name: string;
+    country?: string | null;
   };
 }
 
 export default function ReviewsManagement() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,7 +83,7 @@ export default function ReviewsManagement() {
         .single();
 
       if (vendorError || !vendor) {
-        toast.error('Boutique introuvable');
+        toast.error(t('reviewsManagement.boutiqueIntrouvable'));
         return;
       }
 
@@ -101,16 +105,37 @@ export default function ReviewsManagement() {
 
       if (reviewsError) throw reviewsError;
 
+      // Récupérer les vrais noms des auteurs via RPC sécurisée (ne renvoie que
+      // les noms des avis sur les produits de CE vendeur).
+      const reviewIds = (reviewsData || []).map((r: any) => r.id);
+      const infoById = new Map<string, { name: string; country: string | null }>();
+      if (reviewIds.length > 0) {
+        const { data: authorRows } = await supabase.rpc('get_review_author_names', {
+          p_review_ids: reviewIds,
+        });
+        (authorRows || []).forEach((row: any) => {
+          if (row?.review_id) {
+            infoById.set(row.review_id, {
+              name: row.author_name || 'Client',
+              country: row.author_country || null,
+            });
+          }
+        });
+      }
+
       // Mapper les données pour correspondre au type Review
       const mappedReviews: Review[] = (reviewsData || []).map((r: any) => ({
         ...r,
-        profiles: { full_name: 'Client' } // Fallback car la relation directe ne fonctionne pas
+        profiles: {
+          full_name: infoById.get(r.id)?.name || 'Client',
+          country: infoById.get(r.id)?.country || null,
+        },
       }));
 
       setReviews(mappedReviews);
     } catch (error: any) {
       console.error('Erreur chargement avis:', error);
-      toast.error('Erreur lors du chargement des avis');
+      toast.error(t('reviewsManagement.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -126,7 +151,7 @@ export default function ReviewsManagement() {
       const accessToken = sessionData.session?.access_token;
 
       if (!accessToken) {
-        toast.error('Session expirée');
+        toast.error(t('reviewsManagement.sessionExpiree'));
         return;
       }
 
@@ -212,10 +237,10 @@ Réponse:`;
         }
       }
 
-      toast.success('Réponse générée par l\'IA !');
+      toast.success(t('reviewsManagement.reponseGenereeParL'));
     } catch (error) {
       console.error('Erreur génération IA:', error);
-      toast.error('Erreur lors de la génération de la réponse');
+      toast.error(t('reviewsManagement.erreurLorsDeLaGeneration'));
     } finally {
       setGeneratingAI(false);
     }
@@ -223,7 +248,7 @@ Réponse:`;
 
   const submitResponse = async () => {
     if (!selectedReview || !response.trim()) {
-      toast.error('Veuillez entrer une réponse');
+      toast.error(t('reviewsManagement.veuillezEntrerUneReponse'));
       return;
     }
 
@@ -240,13 +265,13 @@ Réponse:`;
 
       if (error) throw error;
 
-      toast.success('Réponse publiée avec succès !');
+      toast.success(t('reviewsManagement.reponsePublieeAvecSucces'));
       setResponse('');
       setSelectedReview(null);
       loadVendorAndReviews();
     } catch (error) {
       console.error('Erreur publication réponse:', error);
-      toast.error('Erreur lors de la publication');
+      toast.error(t('reviewsManagement.erreurLorsDeLaPublication'));
     } finally {
       setSubmitting(false);
     }
@@ -342,7 +367,8 @@ Réponse:`;
                             </Avatar>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
-                                <span className="font-medium">
+                                <span className="font-medium flex items-center gap-1.5">
+                                  <CountryFlag country={review.profiles?.country} size={13} />
                                   {review.profiles?.full_name || 'Client'}
                                 </span>
                                 {review.verified_purchase && (
@@ -393,7 +419,8 @@ Réponse:`;
                             </Avatar>
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
-                                <span className="font-medium">
+                                <span className="font-medium flex items-center gap-1.5">
+                                  <CountryFlag country={review.profiles?.country} size={13} />
                                   {review.profiles?.full_name || 'Client'}
                                 </span>
                               </div>
@@ -457,7 +484,8 @@ Réponse:`;
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-medium text-sm">
+                      <p className="font-medium text-sm flex items-center gap-1.5">
+                        <CountryFlag country={selectedReview.profiles?.country} size={13} />
                         {selectedReview.profiles?.full_name || 'Client'}
                       </p>
                       {renderStars(selectedReview.rating)}
@@ -471,7 +499,7 @@ Réponse:`;
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium">Votre réponse</label>
+                    <label className="text-sm font-medium">{t('reviewsManagement.votreReponse')}</label>
                     <Button
                       size="sm"
                       variant="outline"
@@ -496,7 +524,7 @@ Réponse:`;
                   <Textarea
                     value={response}
                     onChange={(e) => setResponse(e.target.value)}
-                    placeholder="Écrivez votre réponse ou utilisez l'IA pour générer une suggestion..."
+                    placeholder={t('reviewsManagement.ecrivezVotreReponseOuUtilisez')}
                     rows={6}
                     className="resize-none"
                   />

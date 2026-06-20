@@ -13,10 +13,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   Pill, XCircle, RefreshCw, Plus, Activity,
   ShoppingCart, Package, Users, ClipboardList,
-  Settings, Stethoscope
+  Settings, Stethoscope, CreditCard
 } from 'lucide-react';
 import { useServiceHealthStats } from '@/hooks/useServiceHealthStats';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from '@/hooks/useTranslation';
+// Caisse hors ligne : on réutilise DIRECTEMENT le POS vendeur (déjà 100% offline/atomique).
+// La pharmacie est un vendeur (products/orders par vendor_id) → POSSystem résout le bon
+// vendor_id du pharmacien connecté via useCurrentVendor, sans aucun prop ni duplication.
+import POSSystemWrapper from '@/components/vendor/POSSystemWrapper';
 import { PharmacyQuickActions } from './pharmacy/PharmacyQuickActions';
 import { PharmacyKPICards } from './pharmacy/PharmacyKPICards';
 import { PharmacyOverviewPanel } from './pharmacy/PharmacyOverviewPanel';
@@ -29,6 +34,7 @@ interface HealthModuleProps {
 }
 
 export function HealthModule({ serviceId, businessName }: HealthModuleProps) {
+  const { t } = useTranslation();
   const { stats, recentSales, loading, error, refresh } = useServiceHealthStats(serviceId);
   const [activeTab, setActiveTab] = useState('overview');
   const navigate = useNavigate();
@@ -68,7 +74,7 @@ export function HealthModule({ serviceId, businessName }: HealthModuleProps) {
           <p className="text-destructive font-medium">{error}</p>
           <Button onClick={refresh} className="mt-4 gap-2">
             <RefreshCw className="w-4 h-4" />
-            Réessayer
+            {t('healthModule.retry')}
           </Button>
         </CardContent>
       </Card>
@@ -88,10 +94,9 @@ export function HealthModule({ serviceId, businessName }: HealthModuleProps) {
                 <Pill className="w-7 h-7 text-white" />
               </div>
               <div className="text-white">
-                <h3 className="text-xl font-bold mb-1">Bienvenue dans votre Pharmacie</h3>
+                <h3 className="text-xl font-bold mb-1">{t('healthModule.welcomeTitle')}</h3>
                 <p className="text-white/80 text-sm max-w-md">
-                  Gérez vos médicaments, suivez votre inventaire, traitez les ordonnances
-                  et analysez vos performances — tout depuis un seul endroit.
+                  {t('healthModule.welcomeDesc')}
                 </p>
               </div>
             </div>
@@ -106,8 +111,8 @@ export function HealthModule({ serviceId, businessName }: HealthModuleProps) {
                   <Plus className="w-5 h-5 text-[#ff4000]" />
                 </div>
                 <div className="text-left">
-                  <p className="font-semibold text-sm">Ajouter des produits</p>
-                  <p className="text-xs text-muted-foreground">Médicaments, parapharmacie</p>
+                  <p className="font-semibold text-sm">{t('healthModule.addProducts')}</p>
+                  <p className="text-xs text-muted-foreground">{t('healthModule.addProductsDesc')}</p>
                 </div>
               </button>
 
@@ -119,8 +124,8 @@ export function HealthModule({ serviceId, businessName }: HealthModuleProps) {
                   <ShoppingCart className="w-5 h-5 text-blue-600" />
                 </div>
                 <div className="text-left">
-                  <p className="font-semibold text-sm">Gérer les commandes</p>
-                  <p className="text-xs text-muted-foreground">Ventes et livraisons</p>
+                  <p className="font-semibold text-sm">{t('healthModule.manageOrders')}</p>
+                  <p className="text-xs text-muted-foreground">{t('healthModule.manageOrdersDesc')}</p>
                 </div>
               </button>
 
@@ -132,8 +137,8 @@ export function HealthModule({ serviceId, businessName }: HealthModuleProps) {
                   <Settings className="w-5 h-5 text-[#04439e]" />
                 </div>
                 <div className="text-left">
-                  <p className="font-semibold text-sm">Configurer</p>
-                  <p className="text-xs text-muted-foreground">Horaires, infos, profil</p>
+                  <p className="font-semibold text-sm">{t('healthModule.configure')}</p>
+                  <p className="text-xs text-muted-foreground">{t('healthModule.configureDesc')}</p>
                 </div>
               </button>
             </div>
@@ -159,23 +164,27 @@ export function HealthModule({ serviceId, businessName }: HealthModuleProps) {
         <TabsList className="w-full justify-start overflow-x-auto flex-nowrap bg-muted/50 h-auto p-1">
           <TabsTrigger value="overview" className="gap-1.5 text-xs md:text-sm whitespace-nowrap">
             <Activity className="w-4 h-4" />
-            Vue d'ensemble
+            {t('healthModule.tabOverview')}
           </TabsTrigger>
           <TabsTrigger value="inventory" className="gap-1.5 text-xs md:text-sm whitespace-nowrap">
             <Package className="w-4 h-4" />
-            Inventaire
+            {t('healthModule.tabInventory')}
+          </TabsTrigger>
+          <TabsTrigger value="pos" className="gap-1.5 text-xs md:text-sm whitespace-nowrap">
+            <CreditCard className="w-4 h-4" />
+            {t('healthModule.tabPos')}
           </TabsTrigger>
           <TabsTrigger value="reports" className="gap-1.5 text-xs md:text-sm whitespace-nowrap">
             <ShoppingCart className="w-4 h-4" />
-            Ventes
+            {t('healthModule.tabSales')}
           </TabsTrigger>
           <TabsTrigger value="clients" className="gap-1.5 text-xs md:text-sm whitespace-nowrap">
             <Users className="w-4 h-4" />
-            Patients
+            {t('healthModule.tabPatients')}
           </TabsTrigger>
           <TabsTrigger value="prescriptions" className="gap-1.5 text-xs md:text-sm whitespace-nowrap">
             <ClipboardList className="w-4 h-4" />
-            Ordonnances
+            {t('healthModule.tabPrescriptions')}
           </TabsTrigger>
         </TabsList>
 
@@ -187,6 +196,18 @@ export function HealthModule({ serviceId, businessName }: HealthModuleProps) {
           <PharmacyInventoryPanel stats={stats} />
         </TabsContent>
 
+        {/* CAISSE PHARMACIE — POS vendeur réutilisé tel quel (offline natif : encaisse sans
+            internet, ventes stockées puis synchronisées vers pos_sales à la reconnexion). */}
+        <TabsContent value="pos" className="mt-4">
+          <div className="rounded-xl border bg-orange-50/50 dark:bg-[#ff4000]/10 border-orange-200 dark:border-[#ff4000]/40 p-3 mb-4 flex items-center gap-2 text-sm">
+            <Pill className="w-4 h-4 text-[#ff4000] flex-shrink-0" />
+            <span className="text-muted-foreground">
+              {t('healthModule.posInfo')}
+            </span>
+          </div>
+          <POSSystemWrapper />
+        </TabsContent>
+
         <TabsContent value="reports" className="mt-4">
           <PharmacySalesPanel stats={stats} recentSales={recentSales} />
         </TabsContent>
@@ -195,13 +216,13 @@ export function HealthModule({ serviceId, businessName }: HealthModuleProps) {
           <Card>
             <CardContent className="py-12 text-center">
               <Users className="w-14 h-14 mx-auto mb-4 text-muted-foreground/30" />
-              <h3 className="font-semibold text-lg mb-1">Fichier Patients</h3>
+              <h3 className="font-semibold text-lg mb-1">{t('healthModule.patientsTitle')}</h3>
               <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-4">
-                Gérez vos patients, leur historique d'achats et leurs ordonnances depuis un dossier centralisé.
+                {t('healthModule.patientsDesc')}
               </p>
               <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
                 <Users className="w-4 h-4" />
-                <span>{stats.clients.total} patient(s) enregistré(s)</span>
+                <span>{stats.clients.total} {t('healthModule.patientsRegistered')}</span>
               </div>
             </CardContent>
           </Card>
@@ -211,13 +232,13 @@ export function HealthModule({ serviceId, businessName }: HealthModuleProps) {
           <Card>
             <CardContent className="py-12 text-center">
               <ClipboardList className="w-14 h-14 mx-auto mb-4 text-muted-foreground/30" />
-              <h3 className="font-semibold text-lg mb-1">Gestion des Ordonnances</h3>
+              <h3 className="font-semibold text-lg mb-1">{t('healthModule.prescriptionsTitle')}</h3>
               <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-4">
-                Recevez, validez et suivez les ordonnances de vos patients. Traçabilité complète et historique.
+                {t('healthModule.prescriptionsDesc')}
               </p>
               <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
                 <ClipboardList className="w-4 h-4" />
-                <span>{stats.prescriptions.total} ordonnance(s) • {stats.prescriptions.pending} en attente</span>
+                <span>{stats.prescriptions.total} {t('healthModule.prescriptionsWord')} • {stats.prescriptions.pending} {t('healthModule.pendingWord')}</span>
               </div>
             </CardContent>
           </Card>
@@ -229,6 +250,7 @@ export function HealthModule({ serviceId, businessName }: HealthModuleProps) {
 
 /** Header réutilisable */
 function PharmacyHeader({ businessName, onRefresh }: { businessName?: string; onRefresh: () => void }) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
@@ -236,13 +258,13 @@ function PharmacyHeader({ businessName, onRefresh }: { businessName?: string; on
           <Stethoscope className="w-5 h-5 text-[#ff4000] dark:text-[#ff4000]" />
         </div>
         <div>
-          <h2 className="text-xl md:text-2xl font-bold leading-tight">{businessName || 'Ma Pharmacie'}</h2>
-          <p className="text-xs md:text-sm text-muted-foreground">Gestion pharmaceutique intégrée</p>
+          <h2 className="text-xl md:text-2xl font-bold leading-tight">{businessName || t('healthModule.myPharmacy')}</h2>
+          <p className="text-xs md:text-sm text-muted-foreground">{t('healthModule.integratedMgmt')}</p>
         </div>
       </div>
       <Button onClick={onRefresh} variant="outline" size="sm" className="gap-1.5">
         <RefreshCw className="w-3.5 h-3.5" />
-        <span className="hidden md:inline">Actualiser</span>
+        <span className="hidden md:inline">{t('healthModule.refresh')}</span>
       </Button>
     </div>
   );

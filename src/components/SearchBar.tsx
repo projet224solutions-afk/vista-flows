@@ -1,4 +1,5 @@
 import { Search, Filter, Camera } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useRef } from "react";
@@ -22,6 +23,7 @@ export default function SearchBar({
   showCamera = false,
   onCameraCapture
 }: SearchBarProps) {
+  const { t } = useTranslation();
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const handleCameraClick = () => {

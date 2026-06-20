@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ interface ApiAnalyticsProps {
 }
 
 export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
+  const { t } = useTranslation();
   const [_timeRange, _setTimeRange] = useState<'24h' | '7d' | '30d'>('7d');
   const [loading, setLoading] = useState(false);
   const [allLogs, setAllLogs] = useState<ApiUsageLog[]>([]);
@@ -45,7 +47,7 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
       setAllLogs(combined);
     } catch (error) {
       console.error('Erreur chargement logs:', error);
-      toast.error('Erreur lors du chargement des analytiques');
+      toast.error(t('apiAnalytics.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -139,7 +141,7 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
     return (
       <div className="flex items-center justify-center py-12">
         <Activity className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-3 text-muted-foreground">Chargement des analytiques...</span>
+        <span className="ml-3 text-muted-foreground">{t('apiAnalytics.chargementDesAnalytiques')}</span>
       </div>
     );
   }
@@ -152,7 +154,7 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Requêtes</p>
+                <p className="text-sm text-muted-foreground">{t('apiAnalytics.totalRequetes')}</p>
                 <p className="text-2xl font-bold">{stats.totalRequests.toLocaleString()}</p>
               </div>
               <Activity className="h-8 w-8 text-primary" />
@@ -164,7 +166,7 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Taux de succès</p>
+                <p className="text-sm text-muted-foreground">{t('apiAnalytics.tauxDeSucces')}</p>
                 <p className="text-2xl font-bold text-[#ff4000]">{stats.successRate}%</p>
               </div>
               <CheckCircle2 className="h-8 w-8 text-[#ff4000]" />
@@ -222,8 +224,8 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
         <TabsContent value="timeline" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Activité sur 30 jours</CardTitle>
-              <CardDescription>Évolution des requêtes et tokens consommés</CardDescription>
+              <CardTitle>{t('apiAnalytics.activiteSur30Jours')}</CardTitle>
+              <CardDescription>{t('apiAnalytics.evolutionDesRequetesEtTokens')}</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={350}>
@@ -252,7 +254,7 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Temps de réponse et erreurs</CardTitle>
+              <CardTitle>{t('apiAnalytics.tempsDeReponseEtErreurs')}</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -297,8 +299,8 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
         <TabsContent value="performance" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Radar de performance</CardTitle>
-              <CardDescription>Comparaison des API principales</CardDescription>
+              <CardTitle>{t('apiAnalytics.radarDePerformance')}</CardTitle>
+              <CardDescription>{t('apiAnalytics.comparaisonDesApiPrincipales')}</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={400}>
@@ -320,7 +322,7 @@ export default function ApiAnalytics({ apis }: ApiAnalyticsProps) {
         <TabsContent value="status" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Distribution des codes HTTP</CardTitle>
+              <CardTitle>{t('apiAnalytics.distributionDesCodesHttp')}</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={350}>

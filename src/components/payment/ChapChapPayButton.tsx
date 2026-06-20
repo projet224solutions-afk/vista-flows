@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -114,6 +115,7 @@ export function ChapChapPayButton({
   showMethodSelector = true,
   defaultMethod = 'orange_money'
 }: ChapChapPayButtonProps) {
+  const { t } = useTranslation();
   const {
     createEcommercePayment,
     initiatePullPayment,
@@ -135,7 +137,7 @@ export function ChapChapPayButton({
 
   const handlePayment = async () => {
     if (requiresPhone && (!phoneNumber || phoneNumber.length < 9)) {
-      toast.error('Numéro de téléphone invalide');
+      toast.error(t('chapChapPayButton.numeroDeTelephoneInvalide'));
       return;
     }
 
@@ -191,7 +193,7 @@ export function ChapChapPayButton({
           setCurrentTransactionId(result.transactionId || null);
           setProcessing(false);
           setPaymentStatus('idle');
-          toast.info('Entrez le code OTP reçu par SMS');
+          toast.info(t('chapChapPayButton.entrezLeCodeOtpRecu'));
           return;
         }
 
@@ -208,16 +210,16 @@ export function ChapChapPayButton({
 
           if (finalStatus.status === 'completed') {
             setPaymentStatus('success');
-            toast.success('🎉 Paiement réussi !');
+            toast.success(t('chapChapPayButton.paiementReussi'));
             onPaymentSuccess?.(result.transactionId, 'SUCCESS');
             setOpen(false);
           } else if (finalStatus.status === 'failed' || finalStatus.status === 'cancelled') {
             setPaymentStatus('failed');
-            toast.error('Paiement échoué');
+            toast.error(t('chapChapPayButton.paiementEchoue'));
             onPaymentFailed?.(finalStatus.error || 'Paiement refusé');
           } else {
             // Toujours en attente après timeout
-            toast.info('Paiement en attente de confirmation');
+            toast.info(t('chapChapPayButton.paiementEnAttenteDeConfirmation'));
             onPaymentPending?.(result.transactionId);
           }
         }
@@ -237,7 +239,7 @@ export function ChapChapPayButton({
     return (
       <div className="p-6 text-center bg-orange-50 rounded-lg border border-orange-200">
         <CheckCircle className="h-12 w-12 text-[#ff4000] mx-auto mb-3" />
-        <h3 className="text-lg font-bold text-[#ff4000] mb-2">Paiement réussi !</h3>
+        <h3 className="text-lg font-bold text-[#ff4000] mb-2">{t('chapChapPayButton.paiementReussi2')}</h3>
         <p className="text-sm text-[#ff4000]">
           {amount.toLocaleString()} {currency}
         </p>
@@ -264,7 +266,7 @@ export function ChapChapPayButton({
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-primary" />
@@ -281,14 +283,14 @@ export function ChapChapPayButton({
             <p className="text-3xl font-bold text-primary">
               {amount.toLocaleString()} {currency}
             </p>
-            <p className="text-sm text-muted-foreground">Montant à payer</p>
+            <p className="text-sm text-muted-foreground">{t('chapChapPayButton.montantAPayer')}</p>
           </div>
 
           {/* Erreur */}
           {paymentStatus === 'failed' && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>Paiement échoué. Veuillez réessayer.</AlertDescription>
+              <AlertDescription>{t('chapChapPayButton.paiementEchoueVeuillezReessayer')}</AlertDescription>
             </Alert>
           )}
 

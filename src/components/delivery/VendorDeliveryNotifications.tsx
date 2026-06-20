@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,7 @@ interface DeliveryNotification {
 }
 
 export function VendorDeliveryNotifications() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<DeliveryNotification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -128,7 +130,7 @@ export function VendorDeliveryNotifications() {
           (payload) => {
             console.log('New delivery notification:', payload);
             loadNotifications();
-            toast.success('📦 Nouvelle notification de livraison !');
+            toast.success(t('vendorDeliveryNotifications.nouvelleNotificationDeLivraison'));
           }
         )
         .subscribe();
@@ -168,7 +170,7 @@ export function VendorDeliveryNotifications() {
 
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
       setUnreadCount(0);
-      toast.success('Toutes les notifications marquées comme lues');
+      toast.success(t('vendorDeliveryNotifications.toutesLesNotificationsMarqueesComme'));
     } catch (error) {
       console.error('Error marking all as read:', error);
     }
@@ -233,7 +235,7 @@ export function VendorDeliveryNotifications() {
             ) : notifications.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>Aucune notification</p>
+                <p>{t('vendorDeliveryNotifications.aucuneNotification')}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -287,7 +289,7 @@ export function VendorDeliveryNotifications() {
 
       {/* Modal détails de la notification */}
       <Dialog open={!!selectedNotification} onOpenChange={() => setSelectedNotification(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-[#ff4000]" />
@@ -301,7 +303,7 @@ export function VendorDeliveryNotifications() {
               <Card>
                 <CardContent className="pt-4 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Client</span>
+                    <span className="text-sm text-muted-foreground">{t('vendorDeliveryNotifications.client')}</span>
                     <span className="font-medium">{selectedNotification.delivery?.customer_name}</span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -313,13 +315,13 @@ export function VendorDeliveryNotifications() {
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Montant</span>
+                    <span className="text-sm text-muted-foreground">{t('vendorDeliveryNotifications.montant')}</span>
                     <span className="font-bold text-[#ff4000]">
                       {formatCurrency(selectedNotification.delivery?.delivery_fee || 0)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Confirmé le</span>
+                    <span className="text-sm text-muted-foreground">{t('vendorDeliveryNotifications.confirmeLe')}</span>
                     <span className="text-sm">
                       {selectedNotification.delivery?.completed_at
                         ? formatDate(selectedNotification.delivery.completed_at)
@@ -338,7 +340,7 @@ export function VendorDeliveryNotifications() {
                   </p>
                   <img
                     src={selectedNotification.delivery.proof_photo_url}
-                    alt="Preuve de livraison"
+                    alt={t('vendorDeliveryNotifications.preuveDeLivraison')}
                     className="w-full h-48 object-cover rounded-lg border"
                   />
                   <Button
@@ -363,7 +365,7 @@ export function VendorDeliveryNotifications() {
                   <div className="bg-white border rounded-lg p-4">
                     <img
                       src={selectedNotification.delivery.client_signature}
-                      alt="Signature client"
+                      alt={t('vendorDeliveryNotifications.signatureClient')}
                       className="w-full h-24 object-contain"
                     />
                   </div>

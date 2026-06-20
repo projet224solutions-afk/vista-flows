@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +33,7 @@ interface RealtimeSyncPanelProps {
 }
 
 export default function RealtimeSyncPanel({ className }: RealtimeSyncPanelProps) {
+    const { t } = useTranslation();
     const {
         stats,
         updates,
@@ -195,8 +197,8 @@ export default function RealtimeSyncPanel({ className }: RealtimeSyncPanelProps)
                         {updates.length === 0 ? (
                             <div className="text-center py-8 text-gray-500">
                                 <Activity className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                                <p>Aucune mise à jour récente</p>
-                                <p className="text-sm">Les mises à jour apparaîtront ici en temps réel</p>
+                                <p>{t('realtimeSyncPanel.aucuneMiseAJourRecente')}</p>
+                                <p className="text-sm">{t('realtimeSyncPanel.lesMisesAJourApparaitront')}</p>
                             </div>
                         ) : (
                             <ScrollArea className="h-64">

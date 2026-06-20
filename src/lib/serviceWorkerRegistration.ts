@@ -30,7 +30,7 @@ function registerSW() {
       console.log("[PWA] SW registered, scope:", registration.scope);
 
       // Toujours vérifier immédiatement les mises à jour pour éviter les écrans blancs liés aux anciens chunks.
-      registration.update().catch(() => {});
+      registration.update().catch(() => { });
 
       if (registration.waiting) {
         console.log("[PWA] Waiting SW detected — auto-activating...");
@@ -55,7 +55,7 @@ function registerSW() {
       // Check for updates every 30 min (more aggressive for PWA)
       const interval = isPWAStandalone() ? 30 * 60 * 1000 : 60 * 60 * 1000;
       setInterval(() => {
-        registration.update().catch(() => {});
+        registration.update().catch(() => { });
       }, interval);
 
     } catch (error) {
@@ -64,7 +64,7 @@ function registerSW() {
   }, 500);
 }
 
-function _showUpdateMessage() {
+function showUpdateMessage() {
   if (document.getElementById("pwa-update-banner")) return;
 
   const alertBox = document.createElement("div");
@@ -74,11 +74,11 @@ function _showUpdateMessage() {
       <span>🔄</span>
       <span>Nouvelle version disponible</span>
     </div>
-    <button id="pwa-update-btn" style="background:white;color:#04439e;border:none;padding:6px 12px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px">Actualiser</button>
+    <button id="pwa-update-btn" style="background:white;color:#023288;border:none;padding:6px 12px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px">Actualiser</button>
   `;
   alertBox.style.cssText = `
     position:fixed;bottom:20px;left:20px;right:20px;max-width:400px;margin:0 auto;
-    padding:12px 16px;background:#04439e;color:white;border-radius:12px;z-index:99999;
+    padding:12px 16px;background:#023288;color:white;border-radius:12px;z-index:99999;
     box-shadow:0 10px 40px rgba(2,50,136,0.3);display:flex;justify-content:space-between;
     align-items:center;font-family:system-ui;font-size:14px;animation:pwaSlideUp .3s ease-out
   `;

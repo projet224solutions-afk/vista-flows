@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +26,7 @@ import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
 export default function PDGWalletApiManagement() {
+  const { t } = useTranslation();
   const [requests, setRequests] = useState<WalletApiRequest[]>([]);
   const [keys, setKeys] = useState<WalletApiKey[]>([]);
   const [stats, setStats] = useState({
@@ -126,8 +128,8 @@ export default function PDGWalletApiManagement() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending': return <Badge variant="outline" className="text-[#ff4000] border-[#ff4000]/50"><Clock className="w-3 h-3 mr-1" />En attente</Badge>;
-      case 'approved': return <Badge className="bg-[#ff4000] text-white"><CheckCircle className="w-3 h-3 mr-1" />Approuvée</Badge>;
-      case 'rejected': return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Refusée</Badge>;
+      case 'approved': return <Badge className="bg-[#ff4000] text-white"><CheckCircle className="w-3 h-3 mr-1" />{t('pDGWalletApiManagement.approuvee')}</Badge>;
+      case 'rejected': return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />{t('pDGWalletApiManagement.refusee')}</Badge>;
       default: return <Badge variant="outline">{status}</Badge>;
     }
   };
@@ -149,7 +151,7 @@ export default function PDGWalletApiManagement() {
             <Key className="w-6 h-6 text-primary" />
             API 224Wallet — Gestion
           </h2>
-          <p className="text-sm text-muted-foreground">Demandes d'accès, clés API et transactions</p>
+          <p className="text-sm text-muted-foreground">{t('pDGWalletApiManagement.demandesDAccesClesApi')}</p>
         </div>
         <Button variant="outline" size="sm" onClick={fetchData}>
           <RefreshCw className="w-4 h-4 mr-2" /> Actualiser
@@ -172,13 +174,13 @@ export default function PDGWalletApiManagement() {
         </Card>
         <Card className="border-[#ff4000]/30 bg-[#ff4000]/5">
           <CardContent className="p-3">
-            <p className="text-xs text-[#ff4000]">Approuvées</p>
+            <p className="text-xs text-[#ff4000]">{t('pDGWalletApiManagement.approuvees')}</p>
             <p className="text-xl font-bold text-[#ff4000]">{stats.approvedRequests}</p>
           </CardContent>
         </Card>
         <Card className="border-border/50">
           <CardContent className="p-3">
-            <p className="text-xs text-muted-foreground">Clés actives</p>
+            <p className="text-xs text-muted-foreground">{t('pDGWalletApiManagement.clesActives')}</p>
             <p className="text-xl font-bold">{stats.activeKeys}</p>
           </CardContent>
         </Card>
@@ -238,9 +240,9 @@ export default function PDGWalletApiManagement() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Service</TableHead>
+                      <TableHead>{t('pDGWalletApiManagement.service')}</TableHead>
                       <TableHead>Cas d'utilisation</TableHead>
-                      <TableHead>Volume estimé</TableHead>
+                      <TableHead>{t('pDGWalletApiManagement.volumeEstime')}</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead>Statut</TableHead>
                       <TableHead>Actions</TableHead>
@@ -284,7 +286,7 @@ export default function PDGWalletApiManagement() {
                                     value={commissionRate}
                                     onChange={e => setCommissionRate(e.target.value)}
                                     className="w-16 h-7 text-xs"
-                                    title="Taux de commission %"
+                                    title={t('pDGWalletApiManagement.tauxDeCommission')}
                                   />
                                   <span className="text-xs text-muted-foreground">%</span>
                                 </div>
@@ -326,8 +328,8 @@ export default function PDGWalletApiManagement() {
         <TabsContent value="keys" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Clés API Actives</CardTitle>
-              <CardDescription>Toutes les clés API 224Wallet générées</CardDescription>
+              <CardTitle>{t('pDGWalletApiManagement.clesApiActives')}</CardTitle>
+              <CardDescription>{t('pDGWalletApiManagement.toutesLesClesApi224wallet')}</CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="w-full">
@@ -335,7 +337,7 @@ export default function PDGWalletApiManagement() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Nom</TableHead>
-                      <TableHead>Clé</TableHead>
+                      <TableHead>{t('pDGWalletApiManagement.cle')}</TableHead>
                       <TableHead>Mode</TableHead>
                       <TableHead>Commission</TableHead>
                       <TableHead>Transactions</TableHead>
@@ -402,22 +404,22 @@ export default function PDGWalletApiManagement() {
       <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Refuser la demande</DialogTitle>
+            <DialogTitle>{t('pDGWalletApiManagement.refuserLaDemande')}</DialogTitle>
             <DialogDescription>
               Refuser la demande API de {selectedRequest?.business_name}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
-            <Label>Raison du refus *</Label>
+            <Label>{t('pDGWalletApiManagement.raisonDuRefus')}</Label>
             <Textarea
               value={rejectionReason}
               onChange={e => setRejectionReason(e.target.value)}
-              placeholder="Expliquez pourquoi la demande est refusée..."
+              placeholder={t('pDGWalletApiManagement.expliquezPourquoiLaDemandeEst')}
               rows={3}
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRejectDialog(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setShowRejectDialog(false)}>{t('pDGWalletApiManagement.annuler')}</Button>
             <Button variant="destructive" onClick={handleReject} disabled={submitting || !rejectionReason.trim()}>
               {submitting ? 'Refus...' : 'Confirmer le refus'}
             </Button>

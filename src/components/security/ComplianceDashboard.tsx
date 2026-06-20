@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,7 @@ interface ComplianceAudit {
 }
 
 export function ComplianceDashboard() {
+  const { t } = useTranslation();
   const [certifications, setCertifications] = useState<Certification[]>([]);
   const [audits, setAudits] = useState<ComplianceAudit[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,7 +65,7 @@ export function ComplianceDashboard() {
       if (auditRes.data) setAudits(auditRes.data);
     } catch (error) {
       console.error('Error loading compliance data:', error);
-      toast.error('Erreur chargement données conformité');
+      toast.error(t('complianceDashboard.erreurChargementDonneesConformite'));
     } finally {
       setLoading(false);
     }
@@ -75,19 +77,19 @@ export function ComplianceDashboard() {
 
   const handleRefresh = () => {
     loadData();
-    toast.success('Données de conformité actualisées');
+    toast.success(t('complianceDashboard.donneesDeConformiteActualisees'));
   };
 
   const getStatusBadge = (status: Certification['status']) => {
     switch (status) {
       case 'certified':
-        return <Badge className="bg-[#ff4000]"><CheckCircle className="w-3 h-3 mr-1" />Certifié</Badge>;
+        return <Badge className="bg-[#ff4000]"><CheckCircle className="w-3 h-3 mr-1" />{t('complianceDashboard.certifie')}</Badge>;
       case 'in_progress':
         return <Badge className="bg-blue-500"><Clock className="w-3 h-3 mr-1" />En cours</Badge>;
       case 'planned':
-        return <Badge variant="outline"><Calendar className="w-3 h-3 mr-1" />Planifié</Badge>;
+        return <Badge variant="outline"><Calendar className="w-3 h-3 mr-1" />{t('complianceDashboard.planifie')}</Badge>;
       case 'expired':
-        return <Badge variant="destructive"><AlertTriangle className="w-3 h-3 mr-1" />Expiré</Badge>;
+        return <Badge variant="destructive"><AlertTriangle className="w-3 h-3 mr-1" />{t('complianceDashboard.expire')}</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -138,7 +140,7 @@ export function ComplianceDashboard() {
           <div className="p-4 rounded-lg border bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
             <div className="flex items-center gap-2 mb-2">
               <Shield className="w-5 h-5 text-blue-600" />
-              <span className="font-semibold">Programme de Conformité Actif</span>
+              <span className="font-semibold">{t('complianceDashboard.programmeDeConformiteActif')}</span>
             </div>
             <p className="text-sm text-muted-foreground">
               {certifiedCount} certifications actives • {inProgressCount} en cours •
@@ -157,7 +159,7 @@ export function ComplianceDashboard() {
               <CheckCircle className="w-8 h-8 text-[#ff4000]" />
               <div>
                 <div className="text-2xl font-bold">{certifiedCount}</div>
-                <div className="text-xs text-muted-foreground">Certifiées</div>
+                <div className="text-xs text-muted-foreground">{t('complianceDashboard.certifiees')}</div>
               </div>
             </div>
           </CardContent>

@@ -2,6 +2,7 @@
  * Modal de détail pour chaque statistique client
  */
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,7 @@ const formatPrice = (price: number) =>
   new Intl.NumberFormat('fr-FR').format(price) + ' GNF';
 
 export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDetailModalProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [data, setData] = useState<any[]>([]);
@@ -74,21 +76,21 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
         product_id: productId,
       });
       if (error) throw error;
-      toast.success('Ajouté aux favoris !');
+      toast.success(t('clientStatDetailModal.ajouteAuxFavoris'));
       loadData();
       setFavResults(prev => prev.filter(p => p.id !== productId));
     } catch (err: any) {
-      if (err?.code === '23505') toast.info('Déjà dans vos favoris');
-      else toast.error('Erreur lors de l\'ajout');
+      if (err?.code === '23505') toast.info(t('clientStatDetailModal.dejaDansVosFavoris'));
+      else toast.error(t('clientStatDetailModal.erreurLorsDeLAjout'));
     } finally { setAddingId(null); }
   };
 
   const removeFromFavorites = async (wishlistId: string) => {
     try {
       await supabase.from('wishlists').delete().eq('id', wishlistId);
-      toast.success('Retiré des favoris');
+      toast.success(t('clientStatDetailModal.retireDesFavoris'));
       setData(prev => prev.filter(f => f.id !== wishlistId));
-    } catch { toast.error('Erreur lors de la suppression'); }
+    } catch { toast.error(t('clientStatDetailModal.erreurLorsDeLaSuppression')); }
   };
 
   const loadData = async () => {
@@ -248,14 +250,14 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
             {statType === 'orders' && (
               <div className="space-y-4">
                 {summary && (
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     <div className="text-center p-2 bg-muted rounded-lg">
                       <p className="text-lg font-bold">{summary.total}</p>
                       <p className="text-[10px] text-muted-foreground">Total</p>
                     </div>
                     <div className="text-center p-2 bg-orange-50 dark:bg-[#ff4000]/20 rounded-lg">
                       <p className="text-lg font-bold text-[#ff4000]">{summary.completed}</p>
-                      <p className="text-[10px] text-muted-foreground">Livrées</p>
+                      <p className="text-[10px] text-muted-foreground">{t('clientStatDetailModal.livrees')}</p>
                     </div>
                     <div className="text-center p-2 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
                       <p className="text-lg font-bold text-orange-600">{summary.pending}</p>
@@ -263,12 +265,12 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
                     </div>
                     <div className="text-center p-2 bg-orange-50 dark:bg-[#ff4000]/20 rounded-lg">
                       <p className="text-lg font-bold text-[#ff4000]">{summary.cancelled}</p>
-                      <p className="text-[10px] text-muted-foreground">Annulées</p>
+                      <p className="text-[10px] text-muted-foreground">{t('clientStatDetailModal.annulees')}</p>
                     </div>
                   </div>
                 )}
                 <div className="space-y-2">
-                  {data.length === 0 && <p className="text-center text-muted-foreground py-8">Aucune commande</p>}
+                  {data.length === 0 && <p className="text-center text-muted-foreground py-8">{t('clientStatDetailModal.aucuneCommande')}</p>}
                   {data.map((order) => (
                     <div key={order.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                       <div>
@@ -291,8 +293,8 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
                 {data.length === 0 && (
                   <div className="text-center py-8">
                     <CheckCircle className="w-12 h-12 mx-auto text-[#ff4000] mb-2" />
-                    <p className="text-muted-foreground">Aucune commande en cours</p>
-                    <p className="text-xs text-muted-foreground mt-1">Toutes vos commandes sont terminées</p>
+                    <p className="text-muted-foreground">{t('clientStatDetailModal.aucuneCommandeEnCours')}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('clientStatDetailModal.toutesVosCommandesSontTerminees')}</p>
                   </div>
                 )}
                 {data.map((order) => (
@@ -324,8 +326,8 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
                 {data.length === 0 && !showAddFav && (
                   <div className="text-center py-8">
                     <Heart className="w-12 h-12 mx-auto text-muted-foreground/30 mb-2" />
-                    <p className="text-muted-foreground">Aucun favori</p>
-                    <p className="text-xs text-muted-foreground mt-1">Utilisez le bouton ci-dessus pour ajouter</p>
+                    <p className="text-muted-foreground">{t('clientStatDetailModal.aucunFavori')}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('clientStatDetailModal.utilisezLeBoutonCiDessus')}</p>
                   </div>
                 )}
 
@@ -356,7 +358,7 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5">
                               <p className="text-sm font-medium truncate hover:text-primary transition-colors">{fav.vendor?.business_name || 'Boutique'}</p>
-                              <Badge variant="secondary" className="text-[9px] px-1.5 py-0">Boutique</Badge>
+                              <Badge variant="secondary" className="text-[9px] px-1.5 py-0">{t('clientStatDetailModal.boutique')}</Badge>
                             </div>
                             <p className="text-[10px] text-muted-foreground">Ajouté le {formatDate(fav.created_at)}</p>
                           </div>
@@ -420,7 +422,7 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
                 {summary && (
                   <div className="grid grid-cols-2 gap-2">
                     <div className="text-center p-3 bg-orange-50 dark:bg-[#ff4000]/20 rounded-lg">
-                      <p className="text-xs text-muted-foreground mb-1">Total dépensé</p>
+                      <p className="text-xs text-muted-foreground mb-1">{t('clientStatDetailModal.totalDepense')}</p>
                       <p className="text-lg font-bold text-[#ff4000]">{formatPrice(summary.total)}</p>
                     </div>
                     <div className="text-center p-3 bg-muted rounded-lg">
@@ -428,18 +430,18 @@ export function ClientStatDetailModal({ open, onClose, statType }: ClientStatDet
                       <p className="text-lg font-bold">{formatPrice(Math.round(summary.avg))}</p>
                     </div>
                     <div className="text-center p-3 bg-muted rounded-lg">
-                      <p className="text-xs text-muted-foreground mb-1">Nb commandes</p>
+                      <p className="text-xs text-muted-foreground mb-1">{t('clientStatDetailModal.nbCommandes')}</p>
                       <p className="text-lg font-bold">{summary.count}</p>
                     </div>
                     <div className="text-center p-3 bg-muted rounded-lg">
-                      <p className="text-xs text-muted-foreground mb-1">Plus grosse commande</p>
+                      <p className="text-xs text-muted-foreground mb-1">{t('clientStatDetailModal.plusGrosseCommande')}</p>
                       <p className="text-lg font-bold">{formatPrice(summary.max)}</p>
                     </div>
                   </div>
                 )}
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-muted-foreground">Historique</p>
-                  {data.length === 0 && <p className="text-center text-muted-foreground py-4">Aucune dépense</p>}
+                  {data.length === 0 && <p className="text-center text-muted-foreground py-4">{t('clientStatDetailModal.aucuneDepense')}</p>}
                   {data.map((order) => (
                     <div key={order.id} className="flex items-center justify-between p-2 bg-muted/30 rounded-lg">
                       <div>

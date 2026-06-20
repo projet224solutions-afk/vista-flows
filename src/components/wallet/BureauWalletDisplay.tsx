@@ -4,6 +4,7 @@ import { Wallet, RefreshCw, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface BureauWalletDisplayProps {
   bureauId: string;
@@ -18,6 +19,7 @@ export function BureauWalletDisplay({
   className = '',
   compact = false
 }: BureauWalletDisplayProps) {
+  const { t } = useTranslation();
   const [balance, setBalance] = useState<number>(0);
   const [currency, setCurrency] = useState<string>('GNF');
   const [loading, setLoading] = useState(true);
@@ -56,8 +58,10 @@ export function BureauWalletDisplay({
 
     // Subscribe to wallet changes
     if (bureauId) {
+      // Topic UNIQUE à ce composant (≠ BureauWalletManagement de l'onglet Wallet)
+      // pour éviter la réutilisation d'un canal déjà souscrit (crash supabase-js).
       const channel = supabase
-        .channel(`bureau-wallet-${bureauId}`)
+        .channel(`bureau-wallet-display-${bureauId}`)
         .on(
           'postgres_changes',
           {
@@ -74,7 +78,7 @@ export function BureauWalletDisplay({
         .subscribe();
 
       return () => {
-        channel.unsubscribe();
+        supabase.removeChannel(channel);
       };
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -101,7 +105,7 @@ export function BureauWalletDisplay({
         <CardContent className={compact ? "py-2 px-3" : "py-3 px-4"}>
           <div className="flex items-center gap-2">
             <Wallet className="w-4 h-4 text-orange-600" />
-            <span className="text-xs text-orange-600 font-medium">Wallet non créé</span>
+            <span className="text-xs text-orange-600 font-medium">{t('bureauWalletDisplay.walletNonCree')}</span>
           </div>
         </CardContent>
       </Card>

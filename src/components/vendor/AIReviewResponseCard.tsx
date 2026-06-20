@@ -3,6 +3,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Bot, Check, X, Edit2, Zap, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,6 +28,7 @@ export default function AIReviewResponseCard({
   aiAnalyzedAt,
   onStatusChange
 }: AIReviewResponseCardProps) {
+  const { t } = useTranslation();
   const [response, setResponse] = useState(aiSuggestedResponse);
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,7 +58,7 @@ export default function AIReviewResponseCard({
       onStatusChange();
     } catch (error) {
       console.error('Error approving response:', error);
-      toast.error('Erreur lors de l\'approbation');
+      toast.error(t('aIReviewResponseCard.erreurLorsDeL'));
     } finally {
       setIsSubmitting(false);
       setIsEditing(false);
@@ -75,11 +77,11 @@ export default function AIReviewResponseCard({
 
       if (error) throw error;
 
-      toast.success('Réponse rejetée');
+      toast.success(t('aIReviewResponseCard.reponseRejetee'));
       onStatusChange();
     } catch (error) {
       console.error('Error rejecting response:', error);
-      toast.error('Erreur lors du rejet');
+      toast.error(t('aIReviewResponseCard.erreurLorsDuRejet'));
     } finally {
       setIsSubmitting(false);
     }
@@ -129,7 +131,7 @@ export default function AIReviewResponseCard({
           value={response}
           onChange={(e) => setResponse(e.target.value)}
           className="min-h-[100px] mb-3"
-          placeholder="Modifier la réponse..."
+          placeholder={t('aIReviewResponseCard.modifierLaReponse')}
         />
       ) : (
         <div className="p-3 bg-background rounded-md mb-3 text-sm text-foreground">

@@ -14,8 +14,10 @@ import { toast } from 'sonner';
 import { CurrencySelect } from '@/components/ui/currency-select';
 import { useFxRates } from '@/hooks/useFxRates';
 import { formatCurrency } from '@/data/currencies';
+import { useTranslation } from "@/hooks/useTranslation";
 
 export function CurrencyConverter() {
+  const { t } = useTranslation();
   const [amount, setAmount] = useState('');
   const [fromCurrency, setFromCurrency] = useState('GNF');
   const [toCurrency, setToCurrency] = useState('USD');
@@ -31,7 +33,7 @@ export function CurrencyConverter() {
   const handleConvert = () => {
     const amountNum = parseFloat(amount);
     if (isNaN(amountNum) || amountNum <= 0) {
-      toast.error('Montant invalide');
+      toast.error(t('currencyConverter.montantInvalide'));
       return;
     }
 
@@ -49,7 +51,7 @@ export function CurrencyConverter() {
 
     const converted = amountNum * rate;
     setResult(converted);
-    toast.success('Conversion effectuée');
+    toast.success(t('currencyConverter.conversionEffectuee'));
   };
 
   const swapCurrencies = () => {
@@ -76,7 +78,7 @@ export function CurrencyConverter() {
       <CardContent className="space-y-4">
         {/* De */}
         <div className="space-y-2">
-          <Label>Montant à convertir</Label>
+          <Label>{t('currencyConverter.montantAConvertir')}</Label>
           <div className="flex gap-2">
             <Input
               type="number"
@@ -103,7 +105,7 @@ export function CurrencyConverter() {
 
         {/* Vers */}
         <div className="space-y-2">
-          <Label>Résultat</Label>
+          <Label>{t('currencyConverter.resultat')}</Label>
           <div className="flex gap-2">
             <Input
               type="text"

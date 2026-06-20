@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Square, Mic, CheckCircle } from 'lucide-react';
 import { taxiMotoSOSService } from '@/services/taxi/TaxiMotoSOSService';
@@ -30,6 +31,7 @@ export function TaxiMotoSOSButton({
   className,
   variant = 'default'
 }: TaxiMotoSOSButtonProps) {
+  const { t } = useTranslation();
   const [isPressed, setIsPressed] = useState(false);
   const [isActive, setIsActive] = useState(false);
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
@@ -113,7 +115,7 @@ export function TaxiMotoSOSButton({
       if (result.success && result.sos_id) {
         setActiveSOSId(result.sos_id);
         startCooldownTimer();
-        toast.success('🚨 SOS ENVOYÉ — Enregistrement démarré', {
+        toast.success(t('taxiMotoSOSButton.sosEnvoyeEnregistrementDemarre'), {
           description: 'Audio & vidéo enregistrés. Envoi automatique au bureau dans 60s.',
           duration: 8000
         });
@@ -124,7 +126,7 @@ export function TaxiMotoSOSButton({
     } catch (error) {
       console.error('Erreur SOS:', error);
       setIsActive(false);
-      toast.error('Erreur lors de l\'envoi du SOS');
+      toast.error(t('taxiMotoSOSButton.erreurLorsDeLEnvoi'));
     }
   };
 
@@ -134,7 +136,7 @@ export function TaxiMotoSOSButton({
     if (recordingTimer.current) clearInterval(recordingTimer.current);
     setSending(true);
     sosMediaRecorder.stopSOSRecording(activeSOSId);
-    toast.info('⏹️ Enregistrement arrêté — Envoi au Bureau Syndicat en cours...', {
+    toast.info(t('taxiMotoSOSButton.enregistrementArreteEnvoiAuBureau'), {
       duration: 4000
     });
     // Fermer le panneau après l'envoi

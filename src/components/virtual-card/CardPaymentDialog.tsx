@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
@@ -11,9 +12,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useVirtualCard } from '@/hooks/useVirtualCard';
-import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { CreditCard, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// La carte virtuelle opère en GNF (devise débitée par process_card_payment).
+const gnf = (v: number) => `${(Number(v) || 0).toLocaleString('fr-FR')} GNF`;
 
 interface CardPaymentDialogProps {
   open: boolean;
@@ -43,7 +46,7 @@ export function CardPaymentDialog({
   monthlyRemaining,
   onSuccess
 }: CardPaymentDialogProps) {
-  const fc = useFormatCurrency();
+  const { t } = useTranslation();
   const { processPayment, loading } = useVirtualCard();
   const [amount, setAmount] = useState('');
   const [merchantName, setMerchantName] = useState('');
@@ -71,7 +74,7 @@ export function CardPaymentDialog({
     if (paymentAmount > maxAmount) {
       setResult({
         success: false,
-        message: `Montant maximum: ${fc(maxAmount)}`
+        message: `Montant maximum: ${gnf(maxAmount)}`
       });
       return;
     }
@@ -87,7 +90,7 @@ export function CardPaymentDialog({
     if (paymentResult.success) {
       setResult({
         success: true,
-        message: `Paiement de ${fc(paymentAmount)} effectué !`
+        message: `Paiement de ${gnf(paymentAmount)} effectué !`
       });
 
       // Reset et fermer après succès
@@ -118,7 +121,7 @@ export function CardPaymentDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-white/10 text-white sm:max-w-[450px]">
+      <DialogContent className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border-white/10 text-white sm:max-w-[450px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CreditCard className="w-5 h-5 text-[#04439e]" />
@@ -149,24 +152,24 @@ export function CardPaymentDialog({
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Limites info */}
-            <div className="grid grid-cols-3 gap-2 p-3 bg-white/5 rounded-lg text-center text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-3 bg-white/5 rounded-lg text-center text-xs">
               <div>
-                <p className="text-white/50">Solde</p>
-                <p className="text-white font-medium">{walletBalance.toLocaleString('fr-FR')}</p>
+                <p className="text-white/50">{t('cardPaymentDialog.solde')}</p>
+                <p className="text-white font-medium">{gnf(walletBalance)}</p>
               </div>
               <div>
                 <p className="text-white/50">Limite jour</p>
-                <p className="text-white font-medium">{dailyRemaining.toLocaleString('fr-FR')}</p>
+                <p className="text-white font-medium">{gnf(dailyRemaining)}</p>
               </div>
               <div>
                 <p className="text-white/50">Limite mois</p>
-                <p className="text-white font-medium">{monthlyRemaining.toLocaleString('fr-FR')}</p>
+                <p className="text-white font-medium">{gnf(monthlyRemaining)}</p>
               </div>
             </div>
 
             {/* Montant */}
             <div className="space-y-2">
-              <Label className="text-white/80">Montant (GNF) *</Label>
+              <Label className="text-white/80">{t('cardPaymentDialog.montantGnf')}</Label>
               <Input
                 type="number"
                 value={amount}
@@ -178,17 +181,17 @@ export function CardPaymentDialog({
                 required
               />
               <p className="text-xs text-white/50">
-                Maximum: {fc(maxAmount)}
+                Maximum: {gnf(maxAmount)}
               </p>
             </div>
 
             {/* Marchand */}
             <div className="space-y-2">
-              <Label className="text-white/80">Nom du marchand *</Label>
+              <Label className="text-white/80">{t('cardPaymentDialog.nomDuMarchand')}</Label>
               <Input
                 value={merchantName}
                 onChange={(e) => setMerchantName(e.target.value)}
-                placeholder="Ex: Supermarché ABC"
+                placeholder={t('cardPaymentDialog.exSupermarcheAbc')}
                 className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
                 required
               />
@@ -196,7 +199,7 @@ export function CardPaymentDialog({
 
             {/* Catégorie */}
             <div className="space-y-2">
-              <Label className="text-white/80">Catégorie</Label>
+              <Label className="text-white/80">{t('cardPaymentDialog.categorie')}</Label>
               <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger className="bg-white/10 border-white/20 text-white">
                   <SelectValue />

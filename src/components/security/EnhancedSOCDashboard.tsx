@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ interface Investigation {
 }
 
 export function EnhancedSOCDashboard() {
+  const { t } = useTranslation();
   const { incidents, alerts, stats, loading, loadSecurityData } = useSecurityOps(true);
   const [analysts, setAnalysts] = useState<SOCAnalyst[]>([]);
   const [investigations, setInvestigations] = useState<Investigation[]>([]);
@@ -88,7 +90,7 @@ export function EnhancedSOCDashboard() {
     loadSecurityData();
     loadAnalysts();
     loadInvestigations();
-    toast.success('Dashboard SOC actualisé');
+    toast.success(t('enhancedSOCDashboard.dashboardSocActualise'));
   };
 
   const getStatusColor = (status: string) => {
@@ -187,7 +189,7 @@ export function EnhancedSOCDashboard() {
               <Eye className="w-8 h-8 text-blue-500" />
               <div>
                 <div className="text-2xl font-bold">{investigations.filter(i => i.status === 'in_progress').length}</div>
-                <div className="text-xs text-muted-foreground">Enquêtes en cours</div>
+                <div className="text-xs text-muted-foreground">{t('enhancedSOCDashboard.enquetesEnCours')}</div>
               </div>
             </div>
           </CardContent>
@@ -209,7 +211,7 @@ export function EnhancedSOCDashboard() {
               <Clock className="w-8 h-8 text-[#04439e]" />
               <div>
                 <div className="text-2xl font-bold">&lt; 2 min</div>
-                <div className="text-xs text-muted-foreground">Temps de réponse</div>
+                <div className="text-xs text-muted-foreground">{t('enhancedSOCDashboard.tempsDeReponse')}</div>
               </div>
             </div>
           </CardContent>
@@ -262,7 +264,7 @@ export function EnhancedSOCDashboard() {
 
                 <div className="space-y-1">
                   <div className="flex justify-between text-sm">
-                    <span>Charge de travail</span>
+                    <span>{t('enhancedSOCDashboard.chargeDeTravail')}</span>
                     <span>{analyst.current_cases}/{analyst.max_cases} cas</span>
                   </div>
                   <Progress
@@ -296,7 +298,7 @@ export function EnhancedSOCDashboard() {
           {investigations.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <CheckCircle className="w-12 h-12 mx-auto mb-2 text-[#ff4000]" />
-              <p>Aucune enquête active</p>
+              <p>{t('enhancedSOCDashboard.aucuneEnqueteActive')}</p>
             </div>
           ) : (
             <div className="space-y-3">

@@ -4,6 +4,7 @@
  */
 
 import { DriverSubscriptionBanner } from '@/components/driver/DriverSubscriptionBanner';
+import { useTranslation } from "@/hooks/useTranslation";
 import { GoOnlineButton } from './GoOnlineButton';
 import { DriverStatsRow } from './DriverStatsRow';
 import { MiniMap } from './MiniMap';
@@ -86,6 +87,7 @@ export function DriverMainDashboard({
   onStatClick,
   onGoToMarketplace
 }: DriverMainDashboardProps) {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-gray-950 pb-24 overflow-x-hidden w-full max-w-full">
       {/* Background gradient */}
@@ -227,7 +229,7 @@ export function DriverMainDashboard({
                         <Zap className="w-5 h-5 text-[#ff4000] animate-pulse" />
                       </div>
                       <div>
-                        <p className="text-white font-medium text-xs">En attente de courses</p>
+                        <p className="text-white font-medium text-xs">{t('driverMainDashboard.enAttenteDeCourses')}</p>
                         <p className="text-gray-500 text-[10px]">Notification automatique</p>
                       </div>
                     </div>

@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Dialog,
@@ -69,6 +70,7 @@ export default function ProductPaymentModal({
   customerId,
   currency = 'GNF'
 }: ProductPaymentModalProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const fc = useFormatCurrency();
@@ -330,7 +332,7 @@ export default function ProductPaymentModal({
       if (existingCustomer) { effectiveCustomerId = existingCustomer.id; }
       else {
         const { data: newCustomer, error: createError } = await supabase.from('customers').insert({ user_id: userId }).select('id').single();
-        if (createError || !newCustomer) { toast.error('Impossible de créer le compte client'); return; }
+        if (createError || !newCustomer) { toast.error(t('productPaymentModal.impossibleDeCreerLeCompte')); return; }
         effectiveCustomerId = newCustomer.id;
       }
     }
@@ -422,7 +424,7 @@ export default function ProductPaymentModal({
 
       if (vendorEntries.length === 0) {
         console.error('[ProductPayment] No vendor entries found! cartItems:', JSON.stringify(cartItems));
-        toast.error('Erreur: aucun vendeur identifié pour cette commande');
+        toast.error(t('productPaymentModal.erreurAucunVendeurIdentifiePour'));
         setPaymentStep('select_method');
         return;
       }
@@ -485,7 +487,7 @@ export default function ProductPaymentModal({
 
       if (createdOrders.length === 0) {
         console.error('[ProductPayment] NO orders created! Errors:', errors);
-        toast.error('Le paiement a été effectué mais la commande n\'a pas pu être créée. Contactez le support.', {
+        toast.error(t('productPaymentModal.lePaiementAEteEffectue'), {
           description: errors[0] || 'Erreur inconnue',
           duration: 10000,
         });
@@ -494,13 +496,13 @@ export default function ProductPaymentModal({
       }
 
       setPaymentStep('success');
-      toast.success('Paiement sécurisé par escrow !', {
+      toast.success(t('productPaymentModal.paiementSecuriseParEscrow'), {
         description: `${fc(effectiveGrandTotal, cur)} bloqués — libérés après confirmation de réception`
       });
       setTimeout(() => { finalizeSuccessfulCheckout(); }, 2000);
     } catch (err) {
       console.error('[ProductPayment] Order creation after escrow payment failed:', err);
-      toast.error('Paiement réussi mais erreur lors de la commande. Contactez le support.', {
+      toast.error(t('productPaymentModal.paiementReussiMaisErreurLors'), {
         description: err instanceof Error ? err.message : 'Erreur inconnue',
         duration: 10000,
       });
@@ -511,7 +513,7 @@ export default function ProductPaymentModal({
   // Handle Mobile Money PULL
   const handleMobileMoneyPay = async () => {
     if (!mobilePhone.trim() || mobilePhone.trim().length < 8) {
-      toast.error('Veuillez saisir un numéro de téléphone valide');
+      toast.error(t('productPaymentModal.veuillezSaisirUnNumeroDe'));
       return;
     }
     setMobileProcessing(true);
@@ -536,27 +538,27 @@ export default function ProductPaymentModal({
       }
 
       if (result.transactionId) {
-        toast.info('Confirmez le paiement sur votre téléphone...');
+        toast.info(t('productPaymentModal.confirmezLePaiementSurVotre'));
         const finalStatus = await pollStatus(result.transactionId);
 
         if (finalStatus.status === 'completed') {
           await createOrderAfterPayment(result.transactionId, paymentMethod);
           setPaymentStep('success');
-          toast.success('Paiement mobile réussi !', { description: `${fc(effectiveGrandTotal, cur)} débité de votre compte` });
+          toast.success(t('productPaymentModal.paiementMobileReussi'), { description: `${fc(effectiveGrandTotal, cur)} débité de votre compte` });
           setTimeout(() => { finalizeSuccessfulCheckout(); }, 2000);
         } else {
-          toast.error('Paiement non confirmé', { description: 'Veuillez réessayer' });
+          toast.error(t('productPaymentModal.paiementNonConfirme'), { description: 'Veuillez réessayer' });
           setPaymentStep('mobile_money_form');
         }
       } else {
         await createOrderAfterPayment(`mobile-${Date.now()}`, paymentMethod);
         setPaymentStep('success');
-        toast.success('Paiement initié avec succès !');
+        toast.success(t('productPaymentModal.paiementInitieAvecSucces'));
         setTimeout(() => { finalizeSuccessfulCheckout(); }, 2000);
       }
     } catch (err) {
       console.error('Mobile money payment failed:', err);
-      toast.error('Erreur lors du paiement mobile');
+      toast.error(t('productPaymentModal.erreurLorsDuPaiementMobile'));
       setPaymentStep('mobile_money_form');
     } finally {
       setMobileProcessing(false);
@@ -571,7 +573,7 @@ export default function ProductPaymentModal({
     if (paymentMethod === 'orange_money' || paymentMethod === 'mtn_money') { setPaymentStep('mobile_money_form'); return; }
 
     const isCODMethod = paymentMethod === 'cash' || paymentMethod === 'cash_on_delivery';
-    if (isCODMethod && (!codPhone.trim() || !codCity.trim())) { toast.error('Veuillez remplir le numéro de téléphone et la ville'); throw new Error('COD info missing'); }
+    if (isCODMethod && (!codPhone.trim() || !codCity.trim())) { toast.error(t('productPaymentModal.veuillezRemplirLeNumeroDe')); throw new Error('COD info missing'); }
 
     let effectiveCustomerId = customerId;
     if (!effectiveCustomerId) {
@@ -579,7 +581,7 @@ export default function ProductPaymentModal({
       if (existingCustomer) { effectiveCustomerId = existingCustomer.id; }
       else {
         const { data: newCustomer, error: createError } = await supabase.from('customers').insert({ user_id: userId }).select('id').single();
-        if (createError || !newCustomer) { toast.error('Impossible de créer le compte client'); throw new Error('Customer creation failed'); }
+        if (createError || !newCustomer) { toast.error(t('productPaymentModal.impossibleDeCreerLeCompte')); throw new Error('Customer creation failed'); }
         effectiveCustomerId = newCustomer.id;
       }
     }
@@ -604,7 +606,7 @@ export default function ProductPaymentModal({
 
       if (paymentMethod === 'wallet') {
         if (walletBalance !== null && walletBalance < effectiveGrandTotalInWallet) {
-          toast.error('Solde insuffisant', { description: `Vous avez besoin de ${fc(effectiveGrandTotal, cur)}` });
+          toast.error(t('productPaymentModal.soldeInsuffisant'), { description: `Vous avez besoin de ${fc(effectiveGrandTotal, cur)}` });
           setProcessing(false);
           return;
         }
@@ -655,7 +657,7 @@ export default function ProductPaymentModal({
         // gardent leur log frontend dédié plus haut.
       } catch (error: any) {
         errors.push(error?.message || 'Erreur inconnue');
-        toast.error('Erreur création commande', { description: error?.message });
+        toast.error(t('productPaymentModal.erreurCreationCommande'), { description: error?.message });
         continue;
       }
     }
@@ -665,9 +667,9 @@ export default function ProductPaymentModal({
     }
 
     if (paymentMethod === 'wallet') {
-      toast.success('Paiement sécurisé effectué !', { description: `${fc(effectiveGrandTotal, cur)} bloqués en escrow. Redirection vers vos achats...` });
+      toast.success(t('productPaymentModal.paiementSecuriseEffectue'), { description: `${fc(effectiveGrandTotal, cur)} bloqués en escrow. Redirection vers vos achats...` });
     } else if (isCODMethod) {
-      toast.success('Commande créée !', { description: `Total à payer à la livraison: ${fc(effectiveGrandTotal, cur)}. Redirection...` });
+      toast.success(t('productPaymentModal.commandeCreee'), { description: `Total à payer à la livraison: ${fc(effectiveGrandTotal, cur)}. Redirection...` });
     }
 
     finalizeSuccessfulCheckout();
@@ -688,14 +690,14 @@ export default function ProductPaymentModal({
   if (paymentStep === 'success') {
     return (
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <div className="flex flex-col items-center justify-center py-8 space-y-4">
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
               <CheckCircle2 className="w-10 h-10 text-primary" />
             </div>
-            <h3 className="text-xl font-bold text-primary">Paiement réussi !</h3>
+            <h3 className="text-xl font-bold text-primary">{t('productPaymentModal.paiementReussi')}</h3>
             <p className="text-muted-foreground text-center">{fc(effectiveGrandTotal, cur)} — Votre commande a été créée</p>
-            <p className="text-sm text-muted-foreground animate-pulse">Redirection vers vos achats...</p>
+            <p className="text-sm text-muted-foreground animate-pulse">{t('productPaymentModal.redirectionVersVosAchats')}</p>
           </div>
         </DialogContent>
       </Dialog>
@@ -706,7 +708,7 @@ export default function ProductPaymentModal({
   if (paymentStep === 'processing') {
     return (
       <Dialog open={open} onOpenChange={() => { }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <div className="flex flex-col items-center justify-center py-8 space-y-4">
             <Loader2 className="w-12 h-12 animate-spin text-primary" />
             <h3 className="text-lg font-semibold">Traitement en cours...</h3>
@@ -730,7 +732,7 @@ export default function ProductPaymentModal({
 
     return (
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon" onClick={() => setPaymentStep('select_method')}>
@@ -750,7 +752,7 @@ export default function ProductPaymentModal({
             <div className={`p-4 rounded-lg border ${providerBg}`}>
               <div className="text-center space-y-1">
                 <p className="text-2xl font-bold">{fc(effectiveGrandTotal, cur)}</p>
-                <p className="text-sm text-muted-foreground">Montant à débiter</p>
+                <p className="text-sm text-muted-foreground">{t('productPaymentModal.montantADebiter')}</p>
               </div>
             </div>
 
@@ -811,7 +813,7 @@ export default function ProductPaymentModal({
               <div className="space-y-3 mt-2">
                 <div className="bg-muted/50 rounded-lg p-3 space-y-2">
                   <div className="flex justify-between text-sm items-start">
-                    <span>Sous-total produits:</span>
+                    <span>{t('productPaymentModal.sousTotalProduits')}</span>
                     {renderPrice(totalAmount)}
                   </div>
                   {effectiveCommissionFee > 0 && (
@@ -829,7 +831,7 @@ export default function ProductPaymentModal({
                     </div>
                   )}
                   <div className="flex justify-between font-bold text-lg border-t pt-2 items-start">
-                    <span>Total à payer:</span>
+                    <span>{t('productPaymentModal.totalAPayer')}</span>
                     {renderPrice(effectiveGrandTotal, 'text-primary')}
                   </div>
                 </div>
@@ -858,7 +860,7 @@ export default function ProductPaymentModal({
                     {vendorCode && (
                       <div className="flex items-center gap-2 p-2 bg-primary/10 rounded-md">
                         <Wallet className="w-4 h-4 text-primary" />
-                        <span className="text-sm">ID Vendeur: <span className="font-bold text-primary">{vendorCode}</span></span>
+                        <span className="text-sm">{t('productPaymentModal.idVendeur')} <span className="font-bold text-primary">{vendorCode}</span></span>
                       </div>
                     )}
                   </>
@@ -898,7 +900,7 @@ export default function ProductPaymentModal({
                   <Phone className="h-4 w-4" /> Informations de contact
                 </h4>
                 <div className="space-y-2">
-                  <Label htmlFor="marketplace-cod-phone" className="text-sm">Numéro à contacter <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="marketplace-cod-phone" className="text-sm">{t('productPaymentModal.numeroAContacter')} <span className="text-red-500">*</span></Label>
                   <Input id="marketplace-cod-phone" type="tel" inputMode="tel" placeholder="Ex: 620 00 00 00" value={codPhone} onChange={(e) => setCodPhone(e.target.value)} className="bg-white" required />
                 </div>
                 <div className="space-y-2">
@@ -908,7 +910,7 @@ export default function ProductPaymentModal({
                 <Alert className="bg-emerald-50 border-emerald-200 mt-2">
                   <Truck className="h-4 w-4 text-emerald-600" />
                   <AlertDescription className="text-emerald-700">
-                    <strong>Paiement à la livraison confirmé</strong><br />
+                    <strong>{t('productPaymentModal.paiementALaLivraisonConfirme')}</strong><br />
                     Vous serez contacté par téléphone pour confirmer votre adresse exacte. Préparez {fc(effectiveGrandTotal, cur)} en espèces.
                   </AlertDescription>
                 </Alert>
@@ -927,7 +929,7 @@ export default function ProductPaymentModal({
               </div>
               <div className="flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-primary" />
-                <span className="font-semibold text-sm">Paiement sécurisé par carte (Escrow)</span>
+                <span className="font-semibold text-sm">{t('productPaymentModal.paiementSecuriseParCarteEscrow')}</span>
               </div>
               <Suspense fallback={
                 <div className="flex items-center justify-center p-4 gap-2">
@@ -953,7 +955,7 @@ export default function ProductPaymentModal({
           )}
 
           <div className="flex gap-3">
-            <Button variant="outline" onClick={onClose} className="flex-1" disabled={processing}>Annuler</Button>
+            <Button variant="outline" onClick={onClose} className="flex-1" disabled={processing}>{t('productPaymentModal.annuler')}</Button>
             <SecureButton
               onSecureClick={executePayment}
               className="flex-1"

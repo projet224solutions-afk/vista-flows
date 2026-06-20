@@ -4,6 +4,7 @@
  */
 
 import { Car, CreditCard, Hash, User } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from "@/lib/utils";
 
 interface DriverVehicleInfoProps {
@@ -21,6 +22,7 @@ export function DriverVehicleInfo({
   serialNumber,
   className
 }: DriverVehicleInfoProps) {
+  const { t } = useTranslation();
   // Afficher même avec juste l'ID du chauffeur
   const hasInfo = driverId || vehiclePlate || giletNumber || serialNumber;
 
@@ -97,7 +99,7 @@ export function DriverVehicleInfo({
           {serialNumber && (
             <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-800/30 border border-gray-700/30 col-span-2">
               <Hash className="w-3 h-3 text-[#04439e]" />
-              <span className="text-gray-400 text-[10px]">Série:</span>
+              <span className="text-gray-400 text-[10px]">{t('driverVehicleInfo.serie')}</span>
               <span className="text-white text-[10px] font-mono font-medium truncate" title={serialNumber}>
                 {serialNumber}
               </span>

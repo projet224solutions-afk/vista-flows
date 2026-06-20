@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,7 @@ interface UserSearchResult {
 }
 
 export default function BureauTransferMoney({ bureauWalletId, currentBalance, currency, onTransferComplete }: BureauTransferMoneyProps) {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(null);
@@ -44,7 +46,7 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
 
   const searchUsers = async () => {
     if (!searchQuery || searchQuery.length < 3) {
-      toast.error('Entrez au moins 3 caractères pour rechercher');
+      toast.error(t('bureauTransferMoney.entrezAuMoins3Caracteres'));
       return;
     }
 
@@ -174,11 +176,11 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
 
       setSearchResults(results);
       if (results.length === 0) {
-        toast.info('Aucun utilisateur trouvé');
+        toast.info(t('bureauTransferMoney.aucunUtilisateurTrouve'));
       }
     } catch (error: any) {
       console.error('Erreur recherche utilisateurs:', error);
-      toast.error('Erreur lors de la recherche');
+      toast.error(t('bureauTransferMoney.erreurLorsDeLaRecherche'));
     } finally {
       setSearching(false);
     }
@@ -186,18 +188,18 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
 
   const handleTransfer = async () => {
     if (!selectedUser || !selectedUser.wallet_id) {
-      toast.error('Sélectionnez un destinataire');
+      toast.error(t('bureauTransferMoney.selectionnezUnDestinataire'));
       return;
     }
 
     const transferAmount = parseFloat(amount);
     if (isNaN(transferAmount) || transferAmount <= 0) {
-      toast.error('Montant invalide');
+      toast.error(t('bureauTransferMoney.montantInvalide'));
       return;
     }
 
     if (transferAmount > currentBalance) {
-      toast.error('Solde insuffisant');
+      toast.error(t('bureauTransferMoney.soldeInsuffisant'));
       return;
     }
 
@@ -366,10 +368,10 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
       <CardContent className="space-y-4">
         {/* Recherche d'utilisateur */}
         <div className="space-y-2">
-          <Label>Rechercher un destinataire</Label>
+          <Label>{t('bureauTransferMoney.rechercherUnDestinataire')}</Label>
           <div className="flex gap-2">
             <Input
-              placeholder="Nom, code bureau, téléphone..."
+              placeholder={t('bureauTransferMoney.nomCodeBureauTelephone')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && searchUsers()}
@@ -383,7 +385,7 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
         {/* Résultats de recherche */}
         {searchResults.length > 0 && !selectedUser && (
           <div className="space-y-2">
-            <Label>Sélectionnez un destinataire</Label>
+            <Label>{t('bureauTransferMoney.selectionnezUnDestinataire')}</Label>
             <div className="max-h-48 overflow-y-auto space-y-1 border rounded-md p-2">
               {searchResults.map((user) => (
                 <button
@@ -454,7 +456,7 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
               <Label htmlFor="bureau-transfer-description">Description (optionnelle)</Label>
               <Input
                 id="bureau-transfer-description"
-                placeholder="Ex: Paiement chauffeur, aide financière..."
+                placeholder={t('bureauTransferMoney.exPaiementChauffeurAideFinanciere')}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
@@ -475,10 +477,10 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
         <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Confirmer le transfert</AlertDialogTitle>
+              <AlertDialogTitle>{t('bureauTransferMoney.confirmerLeTransfert')}</AlertDialogTitle>
               <AlertDialogDescription>
                 <div className="space-y-2 my-4">
-                  <p>Vous allez transférer:</p>
+                  <p>{t('bureauTransferMoney.vousAllezTransferer')}</p>
                   <p className="text-lg font-bold text-foreground">
                     {parseFloat(amount || '0').toLocaleString()} {currency}
                   </p>
@@ -499,7 +501,7 @@ export default function BureauTransferMoney({ bureauWalletId, currentBalance, cu
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={transferring}>Annuler</AlertDialogCancel>
+              <AlertDialogCancel disabled={transferring}>{t('bureauTransferMoney.annuler')}</AlertDialogCancel>
               <AlertDialogAction onClick={handleTransfer} disabled={transferring}>
                 {transferring ? 'Transfert en cours...' : 'Confirmer le transfert'}
               </AlertDialogAction>

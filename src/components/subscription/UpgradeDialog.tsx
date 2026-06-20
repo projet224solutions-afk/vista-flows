@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Crown, Lock, Zap, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -80,6 +81,7 @@ export function UpgradeDialog({
   feature,
   moduleName
 }: UpgradeDialogProps) {
+  const { t } = useTranslation();
   const { getPlanName, isActive } = useSubscriptionFeatures();
   const [showPlanSelector, setShowPlanSelector] = useState(false);
 
@@ -100,13 +102,13 @@ export function UpgradeDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <div className="p-2 rounded-full bg-gradient-to-br from-[#ff4000] to-orange-500">
                 <Crown className="w-5 h-5 text-white" />
               </div>
-              <span>Fonctionnalité Premium</span>
+              <span>{t('upgradeDialog.fonctionnalitePremium')}</span>
             </DialogTitle>
             <DialogDescription className="pt-2">
               {!isActive() ? (
@@ -134,7 +136,7 @@ export function UpgradeDialog({
           <div className="py-4 space-y-4">
             {/* Plan actuel */}
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <span className="text-sm text-muted-foreground">Votre plan actuel</span>
+              <span className="text-sm text-muted-foreground">{t('upgradeDialog.votrePlanActuel')}</span>
               <Badge variant="outline">{currentPlan}</Badge>
             </div>
 

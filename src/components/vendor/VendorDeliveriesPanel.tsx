@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useState, useMemo } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,7 @@ import { fr } from 'date-fns/locale';
 import { ShipmentManager } from './shipment/ShipmentManager';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import VendorDeliveryPricing from './settings/VendorDeliveryPricing';
+import { ClientDeliveryTracking } from '@/components/delivery/ClientDeliveryTracking';
 
 interface VendorDelivery {
   id: string;
@@ -39,12 +41,14 @@ interface VendorDelivery {
 }
 
 export function VendorDeliveriesPanel() {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const [deliveries, setDeliveries] = useState<VendorDelivery[]>([]);
   const [loading, setLoading] = useState(true);
   const [showShipmentManager, setShowShipmentManager] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedDelivery, setSelectedDelivery] = useState<VendorDelivery | null>(null);
+  const [trackingDeliveryId, setTrackingDeliveryId] = useState<string | null>(null);
   const { vendorId, user, loading: vendorLoading } = useCurrentVendor();
 
   useEffect(() => {
@@ -53,6 +57,22 @@ export function VendorDeliveriesPanel() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vendorId, user, vendorLoading]);
+
+  // ⚡ Temps réel : recharge la liste dès qu'une livraison du vendeur change (acceptée,
+  // récupérée, livrée…). Sans ça, le vendeur ne voyait rien bouger sans « Actualiser ».
+  useEffect(() => {
+    if (!vendorId) return;
+    const channel = supabase
+      .channel(`vendor-deliveries-${vendorId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'deliveries', filter: `vendor_id=eq.${vendorId}` },
+        () => { loadVendorDeliveries(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vendorId]);
 
   const loadVendorDeliveries = async () => {
     if (!vendorId || !user) return;
@@ -214,7 +234,7 @@ export function VendorDeliveriesPanel() {
               <div className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 text-[#ff4000] flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-medium">Livraison</p>
+                  <p className="font-medium">{t('vendorDeliveriesPanel.livraison')}</p>
                   <p className="text-muted-foreground">{deliveryAddr}</p>
                 </div>
               </div>
@@ -242,6 +262,19 @@ export function VendorDeliveriesPanel() {
               <span>Créé: {format(new Date(delivery.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}</span>
             </div>
 
+            {/* Suivi LIVE pour les livraisons en cours avec un livreur assigné */}
+            {delivery.driver_id && ['assigned', 'picked_up', 'in_transit'].includes(delivery.status) && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => setTrackingDeliveryId(delivery.id)}
+              >
+                <MapPin className="h-4 w-4 mr-2 text-[#04439e]" />
+                Suivre en direct
+              </Button>
+            )}
+
             {/* Bouton voir détails pour les livraisons complétées */}
             {showDetails && delivery.status === 'delivered' && (
               <Button
@@ -267,9 +300,9 @@ export function VendorDeliveriesPanel() {
         <div className="min-w-0">
           <h2 className="text-lg md:text-2xl font-bold flex items-center gap-2">
             <Truck className="h-5 w-5 md:h-6 md:w-6 text-orange-600 flex-shrink-0" />
-            <span className="truncate">Gestion Livraisons</span>
+            <span className="truncate">{t('vendorDeliveriesPanel.gestionLivraisons')}</span>
           </h2>
-          <p className="text-xs md:text-sm text-muted-foreground truncate">Suivez vos expéditions</p>
+          <p className="text-xs md:text-sm text-muted-foreground truncate">{t('vendorDeliveriesPanel.suivezVosExpeditions')}</p>
         </div>
         <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
           <Button variant="outline" size="sm" onClick={loadVendorDeliveries} className="flex-shrink-0 h-9 text-xs md:text-sm">
@@ -281,7 +314,7 @@ export function VendorDeliveriesPanel() {
             className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 flex-shrink-0 h-9 text-xs md:text-sm"
           >
             <Package className="mr-1.5 h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Nouvelle</span> Expédition
+            <span className="hidden sm:inline">{t('vendorDeliveriesPanel.nouvelle')}</span> Expédition
           </Button>
         </div>
       </div>
@@ -328,7 +361,7 @@ export function VendorDeliveriesPanel() {
           <CardContent className="p-2.5 md:p-4">
             <div className="flex items-center justify-between">
               <div className="min-w-0">
-                <p className="text-[10px] md:text-xs text-[#ff4000] dark:text-[#ff4000] font-medium">Livrées</p>
+                <p className="text-[10px] md:text-xs text-[#ff4000] dark:text-[#ff4000] font-medium">{t('vendorDeliveriesPanel.livrees')}</p>
                 <p className="text-xl md:text-2xl font-bold text-[#ff4000] dark:text-orange-300">{stats.completed}</p>
               </div>
               <CheckCircle className="h-6 w-6 md:h-8 md:w-8 text-[#ff4000]/50 flex-shrink-0" />
@@ -355,7 +388,7 @@ export function VendorDeliveriesPanel() {
           <CardContent className="p-2.5 md:p-4">
             <div className="flex items-center justify-between">
               <div className="min-w-0">
-                <p className="text-[10px] md:text-xs text-[#ff4000] dark:text-[#ff4000] font-medium">Taux réussite</p>
+                <p className="text-[10px] md:text-xs text-[#ff4000] dark:text-[#ff4000] font-medium">{t('vendorDeliveriesPanel.tauxReussite')}</p>
                 <p className="text-xl md:text-2xl font-bold text-[#ff4000] dark:text-orange-300">{stats.successRate}%</p>
               </div>
               <TrendingUp className="h-6 w-6 md:h-8 md:w-8 text-[#ff4000]/50 flex-shrink-0" />
@@ -378,7 +411,7 @@ export function VendorDeliveriesPanel() {
           </TabsTrigger>
           <TabsTrigger value="delivered" className="flex-shrink-0 gap-1.5 px-2 md:px-4 text-xs md:text-sm data-[state=active]:bg-orange-100 data-[state=active]:text-[#ff4000]">
             <CheckCircle className="h-3.5 w-3.5 md:h-4 md:w-4" />
-            <span className="hidden sm:inline">Livrées</span> ({completedDeliveries.length})
+            <span className="hidden sm:inline">{t('vendorDeliveriesPanel.livrees')}</span> ({completedDeliveries.length})
           </TabsTrigger>
           <TabsTrigger value="pricing" className="flex-shrink-0 gap-1.5 px-2 md:px-4 text-xs md:text-sm data-[state=active]:bg-blue-100 data-[state=active]:text-blue-700">
             <Settings className="h-3.5 w-3.5 md:h-4 md:w-4" />
@@ -401,7 +434,7 @@ export function VendorDeliveriesPanel() {
                 {pendingDeliveries.length === 0 ? (
                   <div className="text-center text-muted-foreground py-6">
                     <Package className="h-10 w-10 mx-auto mb-2 opacity-30" />
-                    <p className="text-sm">Aucune livraison en cours</p>
+                    <p className="text-sm">{t('vendorDeliveriesPanel.aucuneLivraisonEnCours')}</p>
                   </div>
                 ) : (
                   <div className="space-y-2 max-h-[300px] overflow-y-auto">
@@ -446,7 +479,7 @@ export function VendorDeliveriesPanel() {
                 {completedDeliveries.length === 0 ? (
                   <div className="text-center text-muted-foreground py-6">
                     <CheckCircle className="h-10 w-10 mx-auto mb-2 opacity-30" />
-                    <p className="text-sm">Aucune livraison complétée</p>
+                    <p className="text-sm">{t('vendorDeliveriesPanel.aucuneLivraisonCompletee')}</p>
                   </div>
                 ) : (
                   <div className="space-y-2 max-h-[300px] overflow-y-auto">
@@ -501,7 +534,7 @@ export function VendorDeliveriesPanel() {
                 {pendingDeliveries.length === 0 ? (
                   <div className="text-center text-muted-foreground py-8">
                     <Package className="h-12 w-12 mx-auto mb-2 opacity-30" />
-                    <p>Aucune livraison en cours</p>
+                    <p>{t('vendorDeliveriesPanel.aucuneLivraisonEnCours')}</p>
                     <Button
                       variant="outline"
                       className="mt-4"
@@ -534,7 +567,7 @@ export function VendorDeliveriesPanel() {
                 {completedDeliveries.length === 0 ? (
                   <div className="text-center text-muted-foreground py-8">
                     <CheckCircle className="h-12 w-12 mx-auto mb-2 opacity-30" />
-                    <p>Aucune livraison complétée</p>
+                    <p>{t('vendorDeliveriesPanel.aucuneLivraisonCompletee')}</p>
                   </div>
                 ) : (
                   completedDeliveries.map((delivery) => renderDeliveryCard(delivery, true))
@@ -549,9 +582,22 @@ export function VendorDeliveriesPanel() {
         </TabsContent>
       </Tabs>
 
+      {/* Dialog suivi LIVE (carte + position du livreur en temps réel) */}
+      <Dialog open={!!trackingDeliveryId} onOpenChange={() => setTrackingDeliveryId(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-[#04439e]" />
+              Suivi en direct
+            </DialogTitle>
+          </DialogHeader>
+          {trackingDeliveryId && <ClientDeliveryTracking deliveryId={trackingDeliveryId} />}
+        </DialogContent>
+      </Dialog>
+
       {/* Dialog détails de confirmation */}
       <Dialog open={!!selectedDelivery} onOpenChange={() => setSelectedDelivery(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-[#ff4000]" />
@@ -573,7 +619,7 @@ export function VendorDeliveriesPanel() {
               <div className="flex items-center gap-3 p-3 bg-orange-50 dark:bg-[#ff4000]/30 rounded-lg">
                 <Clock className="h-5 w-5 text-[#ff4000]" />
                 <div>
-                  <p className="text-sm font-medium">Livré le</p>
+                  <p className="text-sm font-medium">{t('vendorDeliveriesPanel.livreLe')}</p>
                   <p className="text-sm text-muted-foreground">
                     {selectedDelivery.completed_at
                       ? format(new Date(selectedDelivery.completed_at), "EEEE dd MMMM yyyy 'à' HH:mm", { locale: fr })
@@ -587,18 +633,18 @@ export function VendorDeliveriesPanel() {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Image className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm font-medium">Photo de preuve</span>
+                    <span className="text-sm font-medium">{t('vendorDeliveriesPanel.photoDePreuve')}</span>
                   </div>
                   <img
                     src={selectedDelivery.proof_photo_url}
-                    alt="Preuve de livraison"
+                    alt={t('vendorDeliveriesPanel.preuveDeLivraison')}
                     className="w-full rounded-lg border object-cover max-h-48"
                   />
                 </div>
               ) : (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 bg-muted rounded-lg">
                   <Image className="h-4 w-4" />
-                  <span>Aucune photo de preuve</span>
+                  <span>{t('vendorDeliveriesPanel.aucunePhotoDePreuve')}</span>
                 </div>
               )}
 
@@ -607,12 +653,12 @@ export function VendorDeliveriesPanel() {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <PenTool className="h-4 w-4 text-[#04439e]" />
-                    <span className="text-sm font-medium">Signature du client</span>
+                    <span className="text-sm font-medium">{t('vendorDeliveriesPanel.signatureDuClient')}</span>
                   </div>
                   <div className="border rounded-lg p-2 bg-white">
                     <img
                       src={selectedDelivery.client_signature}
-                      alt="Signature client"
+                      alt={t('vendorDeliveriesPanel.signatureClient')}
                       className="w-full h-24 object-contain"
                     />
                   </div>
@@ -620,13 +666,13 @@ export function VendorDeliveriesPanel() {
               ) : (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 bg-muted rounded-lg">
                   <PenTool className="h-4 w-4" />
-                  <span>Aucune signature</span>
+                  <span>{t('vendorDeliveriesPanel.aucuneSignature')}</span>
                 </div>
               )}
 
               {/* Montant */}
               <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950/30 rounded-lg">
-                <span className="font-medium">Frais de livraison</span>
+                <span className="font-medium">{t('vendorDeliveriesPanel.fraisDeLivraison')}</span>
                 <span className="font-bold text-orange-600">
                   {fc(selectedDelivery.delivery_fee || 0)}
                 </span>

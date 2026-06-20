@@ -4,6 +4,7 @@
  */
 
 import { Card, CardContent } from "@/components/ui/card";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Star, MapPin, Clock } from "lucide-react";
@@ -37,6 +38,7 @@ export function RideRequestNotification({
   index,
   isAccepting = false
 }: RideRequestNotificationProps) {
+  const { t } = useTranslation();
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -68,7 +70,7 @@ export function RideRequestNotification({
         <div className="flex items-center justify-between mb-3">
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-bold text-lg">🚗 Nouvelle course!</h3>
+              <h3 className="font-bold text-lg">{t('rideRequestNotification.nouvelleCourse')}</h3>
               <Badge variant="destructive" className="animate-pulse">
                 {timeDisplay}
               </Badge>
@@ -87,14 +89,14 @@ export function RideRequestNotification({
           <div className="flex items-start gap-2 bg-white/70 p-2 rounded">
             <MapPin className="w-4 h-4 text-[#ff4000] flex-shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-gray-700">Départ</p>
+              <p className="text-xs font-medium text-gray-700">{t('rideRequestNotification.depart')}</p>
               <p className="text-sm font-semibold truncate">{request.pickupAddress}</p>
             </div>
           </div>
           <div className="flex items-start gap-2 bg-white/70 p-2 rounded">
             <MapPin className="w-4 h-4 text-[#ff4000] flex-shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-gray-700">Arrivée</p>
+              <p className="text-xs font-medium text-gray-700">{t('rideRequestNotification.arrivee')}</p>
               <p className="text-sm font-semibold truncate">{request.destinationAddress}</p>
             </div>
           </div>

@@ -4,6 +4,7 @@
  */
 
 import { useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "@/hooks/useTranslation";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ interface UserAddress {
 }
 
 export default function UserPublicProfile() {
+  const { t } = useTranslation();
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -112,7 +114,7 @@ export default function UserPublicProfile() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
-          <p className="mt-2 text-muted-foreground">Chargement du profil...</p>
+          <p className="mt-2 text-muted-foreground">{t('userPublicProfile.chargementDuProfil')}</p>
         </div>
       </div>
     );
@@ -125,7 +127,7 @@ export default function UserPublicProfile() {
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="font-semibold">Profil</h1>
+          <h1 className="font-semibold">{t('userPublicProfile.profil')}</h1>
         </header>
         <div className="flex-1 flex items-center justify-center p-4">
           <Card className="max-w-md w-full">
@@ -150,7 +152,7 @@ export default function UserPublicProfile() {
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <h1 className="font-semibold">Profil</h1>
+        <h1 className="font-semibold">{t('userPublicProfile.profil')}</h1>
       </header>
 
       <div className="flex-1 p-4 max-w-2xl mx-auto w-full">
@@ -193,7 +195,7 @@ export default function UserPublicProfile() {
               <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                 <Phone className="w-5 h-5 text-muted-foreground" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Téléphone</p>
+                  <p className="text-xs text-muted-foreground">{t('userPublicProfile.telephone')}</p>
                   <p className="text-sm">{profile.phone}</p>
                 </div>
               </div>

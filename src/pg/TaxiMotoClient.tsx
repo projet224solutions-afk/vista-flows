@@ -4,8 +4,8 @@
  * 224Solutions - Taxi-Moto System
  */
 
-// @ts-nocheck
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -96,6 +96,7 @@ function mapTripStatus(dbStatus?: string): CurrentRide['status'] {
 }
 
 export default function TaxiMotoClient() {
+  const { t } = useTranslation();
   const { user, profile, signOut } = useAuth();
   const { location, getCurrentLocation } = useCurrentLocation();
   const responsive = useResponsive();
@@ -236,7 +237,7 @@ export default function TaxiMotoClient() {
         console.log('[TaxiMotoClient] ✓ Position GPS obtenue');
       } catch (error) {
         console.error('[TaxiMotoClient] ✕ Erreur GPS:', error);
-        toast.error('Activez votre GPS pour une meilleure expérience');
+        toast.error(t('taxiMotoClient.activezVotreGpsPourUne'));
       }
     };
 
@@ -278,7 +279,7 @@ export default function TaxiMotoClient() {
 
     // Course terminée
     if (status === 'completed') {
-      toast.success('Course terminée !');
+      toast.success(t('taxiMotoClient.courseTerminee'));
       setCurrentRide(null);
       setActiveTab('history');
       return;
@@ -286,7 +287,7 @@ export default function TaxiMotoClient() {
 
     // Course annulée (par le chauffeur ou le système) → libérer le client
     if (status?.includes('cancel')) {
-      toast.warning('Course annulée', {
+      toast.warning(t('taxiMotoClient.courseAnnulee'), {
         description: trip.cancel_reason || 'La course a été annulée.',
       });
       setCurrentRide(null);
@@ -296,11 +297,11 @@ export default function TaxiMotoClient() {
 
     // Notifications de progression
     if (status === 'accepted') {
-      toast.success('Chauffeur trouvé ! Il arrive vers vous.');
+      toast.success(t('taxiMotoClient.chauffeurTrouveIlArriveVers'));
     } else if (status === 'arriving' || status === 'driver_arriving') {
-      toast.info('Votre chauffeur arrive.');
+      toast.info(t('taxiMotoClient.votreChauffeurArrive'));
     } else if (status === 'started' || status === 'in_progress') {
-      toast.info('Course démarrée.');
+      toast.info(t('taxiMotoClient.courseDemarree'));
     }
 
     // Mise à jour du statut affiché (avec récupération du chauffeur si nécessaire)
@@ -418,7 +419,7 @@ export default function TaxiMotoClient() {
 
     setCurrentRide(newRide);
     setActiveTab('tracking');
-    toast.success('Course créée ! Recherche de conducteur en cours...');
+    toast.success(t('taxiMotoClient.courseCreeeRechercheDeConducteur'));
   };
 
   /**
@@ -426,7 +427,7 @@ export default function TaxiMotoClient() {
    */
   const handleSignOut = async () => {
     await signOut();
-    toast.success('Déconnexion réussie');
+    toast.success(t('taxiMotoClient.deconnexionReussie'));
   };
 
   return (
@@ -555,7 +556,7 @@ export default function TaxiMotoClient() {
             >
               <Navigation className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} ${responsive.isMobile ? '' : 'mr-1'}`} />
               {!responsive.isMobile && 'Réserver'}
-              {responsive.isMobile && <span className="ml-1">Réserver</span>}
+              {responsive.isMobile && <span className="ml-1">{t('taxiMotoClient.reserver')}</span>}
             </TabsTrigger>
             <TabsTrigger value="tracking" disabled={!currentRide} className={responsive.isMobile ? 'text-xs' : ''}>
               <Clock className={`${responsive.isMobile ? 'w-3 h-3' : 'w-4 h-4'} ${responsive.isMobile ? '' : 'mr-1'}`} />

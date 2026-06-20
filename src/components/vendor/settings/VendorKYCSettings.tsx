@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -33,6 +34,7 @@ interface KYCData {
 }
 
 export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { uploadFile } = useStorageUpload();
   const [kycEnabled, setKycEnabled] = useState<boolean>(false);
@@ -97,7 +99,7 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        toast.error('Le fichier ne doit pas dépasser 5 Mo');
+        toast.error(t('vendorKYCSettings.leFichierNeDoitPas'));
         return;
       }
       setDocumentFile(file);
@@ -113,18 +115,18 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
     e.preventDefault();
 
     if (!user) {
-      toast.error('Vous devez être connecté');
+      toast.error(t('vendorKYCSettings.vousDevezEtreConnecte'));
       return;
     }
 
     if (!phoneNumber || !documentType) {
-      toast.error('Veuillez remplir tous les champs obligatoires');
+      toast.error(t('vendorKYCSettings.veuillezRemplirTousLesChamps'));
       return;
     }
 
     // Si pas de nouveau fichier et pas d'ancien document
     if (!documentFile && !kycData?.id_document_url) {
-      toast.error('Veuillez télécharger un document d\'identité');
+      toast.error(t('vendorKYCSettings.veuillezTelechargerUnDocumentD'));
       return;
     }
 
@@ -166,7 +168,7 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
         throw kycError;
       }
 
-      toast.success('Documents KYC soumis pour vérification');
+      toast.success(t('vendorKYCSettings.documentsKycSoumisPourVerification'));
       await loadKYCSettings();
     } catch (error: any) {
       console.error('Erreur soumission KYC:', error);
@@ -236,7 +238,7 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
         <CardContent>
           <div className="text-center py-8 text-muted-foreground">
             <ShieldCheck className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-            <p className="font-medium">La vérification KYC n'est pas requise actuellement</p>
+            <p className="font-medium">{t('vendorKYCSettings.laVerificationKycNEst')}</p>
             <p className="text-sm mt-2">
               L'administrateur n'a pas activé la vérification KYC pour les vendeurs.
             </p>
@@ -262,7 +264,7 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
         <CardContent>
           <div className="text-center py-8">
             <CheckCircle className="w-16 h-16 mx-auto mb-4 text-[#ff4000]" />
-            <h3 className="text-lg font-semibold text-[#ff4000] dark:text-[#ff4000]">Compte vérifié</h3>
+            <h3 className="text-lg font-semibold text-[#ff4000] dark:text-[#ff4000]">{t('vendorKYCSettings.compteVerifie')}</h3>
             <p className="text-sm text-muted-foreground mt-2">
               Votre vérification d'identité a été approuvée le{' '}
               {kycData.verified_at ? new Date(kycData.verified_at).toLocaleDateString('fr-FR') : 'N/A'}
@@ -313,7 +315,7 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="phone">Numéro de téléphone *</Label>
+            <Label htmlFor="phone">{t('vendorKYCSettings.numeroDeTelephone')}</Label>
             <Input
               id="phone"
               type="tel"
@@ -326,32 +328,32 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="docType">Type de document *</Label>
+            <Label htmlFor="docType">{t('vendorKYCSettings.typeDeDocument')}</Label>
             <Select
               value={documentType}
               onValueChange={setDocumentType}
               disabled={kycData?.status === 'under_review'}
             >
               <SelectTrigger id="docType">
-                <SelectValue placeholder="Sélectionner un document" />
+                <SelectValue placeholder={t('vendorKYCSettings.selectionnerUnDocument')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="carte_identite">Carte d'identité nationale</SelectItem>
+                <SelectItem value="carte_identite">{t('vendorKYCSettings.carteDIdentiteNationale')}</SelectItem>
                 <SelectItem value="passeport">Passeport</SelectItem>
-                <SelectItem value="permis_conduire">Permis de conduire</SelectItem>
-                <SelectItem value="registre_commerce">Registre de commerce</SelectItem>
+                <SelectItem value="permis_conduire">{t('vendorKYCSettings.permisDeConduire')}</SelectItem>
+                <SelectItem value="registre_commerce">{t('vendorKYCSettings.registreDeCommerce')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="document">Document d'identité * (max 5 Mo)</Label>
+            <Label htmlFor="document">{t('vendorKYCSettings.documentDIdentiteMax5')}</Label>
             <div className="mt-2">
               {documentPreview ? (
                 <div className="relative">
                   <img
                     src={documentPreview}
-                    alt="Aperçu"
+                    alt={t('vendorKYCSettings.apercu')}
                     className="max-h-48 rounded-lg border"
                   />
                   {kycData?.status !== 'under_review' && (
@@ -372,7 +374,7 @@ export default function VendorKYCSettings({ vendorId }: VendorKYCSettingsProps) 
               ) : (
                 <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50">
                   <Upload className="h-8 w-8 mb-2 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Cliquez pour télécharger</span>
+                  <span className="text-sm text-muted-foreground">{t('vendorKYCSettings.cliquezPourTelecharger')}</span>
                   <input
                     id="document"
                     type="file"

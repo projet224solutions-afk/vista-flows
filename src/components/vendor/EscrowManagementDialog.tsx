@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
@@ -61,6 +62,7 @@ export default function EscrowManagementDialog({
   open,
   onOpenChange
 }: EscrowManagementDialogProps) {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const { transactions, loading, releaseEscrow, refundEscrow, requestRelease, refresh } = useEscrowTransactions();
   const [selectedTransaction, setSelectedTransaction] = useState<string | null>(null);
@@ -108,18 +110,18 @@ export default function EscrowManagementDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Gestion des Transactions Escrow</DialogTitle>
+            <DialogTitle>{t('escrowManagementDialog.gestionDesTransactionsEscrow')}</DialogTitle>
             <DialogDescription>
               Gérez les transactions sécurisées avec escrow
             </DialogDescription>
           </DialogHeader>
 
           {loading ? (
-            <div className="py-8 text-center">Chargement des transactions...</div>
+            <div className="py-8 text-center">{t('escrowManagementDialog.chargementDesTransactions')}</div>
           ) : transactions.length === 0 ? (
             <div className="py-8 text-center">
               <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Aucune transaction escrow</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('escrowManagementDialog.aucuneTransactionEscrow')}</h3>
               <p className="text-muted-foreground">
                 Les transactions escrow apparaîtront ici
               </p>
@@ -151,7 +153,7 @@ export default function EscrowManagementDialog({
 
                           <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
                             <div>
-                              <p>Montant: <span className="font-semibold text-foreground">
+                              <p>{t('escrowManagementDialog.montant')} <span className="font-semibold text-foreground">
                                 {transaction.amount.toLocaleString()} {transaction.currency}
                               </span></p>
                               <p>Commission: {transaction.commission_percent}%
@@ -246,7 +248,7 @@ export default function EscrowManagementDialog({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel>{t('escrowManagementDialog.annuler')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleAction}>
               Confirmer
             </AlertDialogAction>

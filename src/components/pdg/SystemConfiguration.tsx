@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +38,7 @@ interface ServiceStatus {
 }
 
 export default function SystemConfiguration() {
+  const { t } = useTranslation();
   const [services, setServices] = useState<ServiceStatus[]>([
     {
       name: 'Google Cloud APIs',
@@ -173,11 +175,11 @@ export default function SystemConfiguration() {
           const currentRequiredConfigured = services.filter(s => s.required && s.status === 'configured').length;
 
           if (currentRequiredConfigured === currentRequired) {
-            toast.success('Tous les services requis sont configurés !', {
+            toast.success(t('systemConfiguration.tousLesServicesRequisSont'), {
               description: `${currentConfigured}/${services.length} services configurés`
             });
           } else {
-            toast.warning('Configuration incomplète', {
+            toast.warning(t('systemConfiguration.configurationIncomplete'), {
               description: `${currentRequiredConfigured}/${currentRequired} services requis configurés`
             });
           }
@@ -185,7 +187,7 @@ export default function SystemConfiguration() {
       }
     } catch (error: any) {
       console.error('Error testing services:', error);
-      toast.error('Erreur lors du test des services', {
+      toast.error(t('systemConfiguration.erreurLorsDuTestDes'), {
         description: error.message
       });
 
@@ -221,9 +223,9 @@ export default function SystemConfiguration() {
   const getStatusBadge = (status: ServiceStatus['status']) => {
     switch (status) {
       case 'configured':
-        return <Badge className="bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20">Configuré</Badge>;
+        return <Badge className="bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20">{t('systemConfiguration.configure')}</Badge>;
       case 'not_configured':
-        return <Badge variant="outline" className="bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20">Non configuré</Badge>;
+        return <Badge variant="outline" className="bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20">{t('systemConfiguration.nonConfigure')}</Badge>;
       case 'testing':
         return <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/20">Test en cours</Badge>;
       case 'error':
@@ -238,7 +240,7 @@ export default function SystemConfiguration() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold mb-2">Configuration Système</h2>
+        <h2 className="text-2xl font-bold mb-2">{t('systemConfiguration.configurationSysteme')}</h2>
         <p className="text-muted-foreground">
           Gérez la configuration de tous les services externes utilisés par l'application
         </p>
@@ -248,7 +250,7 @@ export default function SystemConfiguration() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Services Totaux</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('systemConfiguration.servicesTotaux')}</CardTitle>
             <Settings className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -261,7 +263,7 @@ export default function SystemConfiguration() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Services Requis</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('systemConfiguration.servicesRequis')}</CardTitle>
             <Key className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -323,8 +325,8 @@ export default function SystemConfiguration() {
       {/* Liste des services */}
       <Card>
         <CardHeader>
-          <CardTitle>Services Externes</CardTitle>
-          <CardDescription>Configuration et statut de chaque service</CardDescription>
+          <CardTitle>{t('systemConfiguration.servicesExternes')}</CardTitle>
+          <CardDescription>{t('systemConfiguration.configurationEtStatutDeChaque')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -374,8 +376,8 @@ export default function SystemConfiguration() {
       {/* Guide de configuration */}
       <Card>
         <CardHeader>
-          <CardTitle>Guide de Configuration</CardTitle>
-          <CardDescription>Comment configurer chaque service</CardDescription>
+          <CardTitle>{t('systemConfiguration.guideDeConfiguration')}</CardTitle>
+          <CardDescription>{t('systemConfiguration.commentConfigurerChaqueService')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">

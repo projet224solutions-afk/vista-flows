@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,7 @@ interface SecurityLog {
 }
 
 export default function PDGStolenVehiclesSupervision() {
+    const { t } = useTranslation();
     const [stolenVehicles, setStolenVehicles] = useState<StolenVehicle[]>([]);
     const [fraudAlerts, setFraudAlerts] = useState<FraudAlert[]>([]);
     const [securityLogs, setSecurityLogs] = useState<SecurityLog[]>([]);
@@ -199,7 +201,7 @@ export default function PDGStolenVehiclesSupervision() {
 
         } catch (error) {
             console.error('Erreur chargement données:', error);
-            toast.error('Erreur lors du chargement des données');
+            toast.error(t('pDGStolenVehiclesSupervision.erreurLorsDuChargementDes'));
         } finally {
             setLoading(false);
         }
@@ -220,7 +222,7 @@ export default function PDGStolenVehiclesSupervision() {
                 console.log('🚨 Changement véhicule volé:', payload);
                 loadData();
                 if (payload.eventType === 'UPDATE' && (payload.new as any).stolen_status === 'stolen') {
-                    toast.error('🚨 Nouvelle moto déclarée volée!', {
+                    toast.error(t('pDGStolenVehiclesSupervision.nouvelleMotoDeclareeVolee'), {
                         description: 'Un bureau a signalé un vol de moto',
                         duration: 10000
                     });
@@ -231,7 +233,7 @@ export default function PDGStolenVehiclesSupervision() {
                 schema: 'public',
                 table: 'vehicle_fraud_alerts'
             }, (_payload) => {
-                toast.error('⚠️ Alerte de fraude détectée!', {
+                toast.error(t('pDGStolenVehiclesSupervision.alerteDeFraudeDetectee'), {
                     description: 'Activité suspecte sur un véhicule volé',
                     duration: 10000
                 });
@@ -258,11 +260,11 @@ export default function PDGStolenVehiclesSupervision() {
     const _getStatusBadge = (status: string) => {
         switch (status) {
             case 'stolen':
-                return <Badge className="bg-[#ff4000] text-white">🚨 VOLÉE</Badge>;
+                return <Badge className="bg-[#ff4000] text-white">{t('pDGStolenVehiclesSupervision.volee')}</Badge>;
             case 'recovered':
-                return <Badge className="bg-[#ff4000] text-white">✅ Retrouvée</Badge>;
+                return <Badge className="bg-[#ff4000] text-white">{t('pDGStolenVehiclesSupervision.retrouvee')}</Badge>;
             case 'blocked':
-                return <Badge className="bg-orange-600 text-white">🔒 Bloquée</Badge>;
+                return <Badge className="bg-orange-600 text-white">{t('pDGStolenVehiclesSupervision.bloquee')}</Badge>;
             default:
                 return <Badge className="bg-gray-500 text-white">Normal</Badge>;
         }
@@ -273,7 +275,7 @@ export default function PDGStolenVehiclesSupervision() {
             case 'critical':
                 return <Badge className="bg-[#ff4000] text-white">Critique</Badge>;
             case 'high':
-                return <Badge className="bg-orange-600 text-white">Élevée</Badge>;
+                return <Badge className="bg-orange-600 text-white">{t('pDGStolenVehiclesSupervision.elevee')}</Badge>;
             case 'medium':
                 return <Badge className="bg-[#ff4000] text-white">Moyenne</Badge>;
             default:
@@ -306,8 +308,8 @@ export default function PDGStolenVehiclesSupervision() {
                 <div className="flex items-center gap-3">
                     <ShieldAlert className="w-8 h-8 text-[#ff4000]" />
                     <div>
-                        <h2 className="text-2xl font-bold">Supervision Motos Volées</h2>
-                        <p className="text-muted-foreground">Vue centralisée de tous les bureaux</p>
+                        <h2 className="text-2xl font-bold">{t('pDGStolenVehiclesSupervision.supervisionMotosVolees')}</h2>
+                        <p className="text-muted-foreground">{t('pDGStolenVehiclesSupervision.vueCentraliseeDeTousLes')}</p>
                     </div>
                 </div>
                 <Button variant="outline" onClick={loadData}>
@@ -324,7 +326,7 @@ export default function PDGStolenVehiclesSupervision() {
                             <ShieldAlert className="w-8 h-8 text-[#ff4000]" />
                             <div>
                                 <p className="text-2xl font-bold text-[#ff4000]">{stats.totalStolen}</p>
-                                <p className="text-sm text-[#ff4000]">Motos volées</p>
+                                <p className="text-sm text-[#ff4000]">{t('pDGStolenVehiclesSupervision.motosVolees')}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -336,7 +338,7 @@ export default function PDGStolenVehiclesSupervision() {
                             <ShieldCheck className="w-8 h-8 text-[#ff4000]" />
                             <div>
                                 <p className="text-2xl font-bold text-[#ff4000]">{stats.totalRecovered}</p>
-                                <p className="text-sm text-[#ff4000]">Retrouvées</p>
+                                <p className="text-sm text-[#ff4000]">{t('pDGStolenVehiclesSupervision.retrouvees')}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -409,7 +411,7 @@ export default function PDGStolenVehiclesSupervision() {
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                     <Input
-                                        placeholder="Rechercher..."
+                                        placeholder={t('pDGStolenVehiclesSupervision.rechercher')}
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                         className="pl-9 w-64"
@@ -421,7 +423,7 @@ export default function PDGStolenVehiclesSupervision() {
                             {filteredVehicles.length === 0 ? (
                                 <div className="p-8 text-center text-muted-foreground">
                                     <ShieldCheck className="w-12 h-12 mx-auto mb-4 text-[#ff4000]" />
-                                    <p>Aucune moto déclarée volée</p>
+                                    <p>{t('pDGStolenVehiclesSupervision.aucuneMotoDeclareeVolee')}</p>
                                 </div>
                             ) : (
                                 <ScrollArea className="h-[500px]">
@@ -430,10 +432,10 @@ export default function PDGStolenVehiclesSupervision() {
                                             <TableRow>
                                                 <TableHead>Bureau</TableHead>
                                                 <TableHead>Plaque</TableHead>
-                                                <TableHead>Châssis</TableHead>
-                                                <TableHead>Véhicule</TableHead>
-                                                <TableHead>Propriétaire</TableHead>
-                                                <TableHead>Date déclaration</TableHead>
+                                                <TableHead>{t('pDGStolenVehiclesSupervision.chassis')}</TableHead>
+                                                <TableHead>{t('pDGStolenVehiclesSupervision.vehicule')}</TableHead>
+                                                <TableHead>{t('pDGStolenVehiclesSupervision.proprietaire')}</TableHead>
+                                                <TableHead>{t('pDGStolenVehiclesSupervision.dateDeclaration')}</TableHead>
                                                 <TableHead>Localisation</TableHead>
                                                 <TableHead>Actions</TableHead>
                                             </TableRow>
@@ -507,7 +509,7 @@ export default function PDGStolenVehiclesSupervision() {
                             {fraudAlerts.length === 0 ? (
                                 <div className="p-8 text-center text-muted-foreground">
                                     <ShieldCheck className="w-12 h-12 mx-auto mb-4 text-[#ff4000]" />
-                                    <p>Aucune alerte de fraude active</p>
+                                    <p>{t('pDGStolenVehiclesSupervision.aucuneAlerteDeFraudeActive')}</p>
                                 </div>
                             ) : (
                                 <ScrollArea className="h-[400px]">

@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -60,6 +61,7 @@ interface DeliveryStatusTrackerProps {
 }
 
 export function DeliveryStatusTracker({ deliveryId, userRole }: DeliveryStatusTrackerProps) {
+  const { t } = useTranslation();
   const [delivery, setDelivery] = useState<DeliveryStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -153,7 +155,7 @@ export function DeliveryStatusTracker({ deliveryId, userRole }: DeliveryStatusTr
       <Card className="border-2 border-orange-500 bg-gradient-to-br from-orange-50 to-orange-50 dark:from-orange-950/20 dark:to-[#ff4000]/20">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Suivi de livraison</CardTitle>
+            <CardTitle className="text-lg">{t('deliveryStatusTracker.suiviDeLivraison')}</CardTitle>
             <Badge variant="outline" className="animate-pulse">
               <Bell className="h-3 w-3 mr-1" />
               En temps réel
@@ -187,7 +189,7 @@ export function DeliveryStatusTracker({ deliveryId, userRole }: DeliveryStatusTr
                 </div>
                 <div>
                   <p className="font-medium">{delivery.driver_name}</p>
-                  <p className="text-sm text-muted-foreground">Votre livreur</p>
+                  <p className="text-sm text-muted-foreground">{t('deliveryStatusTracker.votreLivreur')}</p>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -261,7 +263,7 @@ export function DeliveryStatusTracker({ deliveryId, userRole }: DeliveryStatusTr
           <div className="flex items-start gap-3">
             <Store className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm text-muted-foreground">Point de retrait</p>
+              <p className="text-sm text-muted-foreground">{t('deliveryStatusTracker.pointDeRetrait')}</p>
               <p className="font-medium">{delivery.vendor_name || 'Vendeur'}</p>
               <p className="text-sm">{delivery.vendor_address}</p>
             </div>

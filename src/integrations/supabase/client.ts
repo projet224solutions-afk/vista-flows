@@ -30,8 +30,20 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_KEY, {
       'X-Client-Info': '224solutions-web',
     },
     fetch: (url, options = {}) => {
-      // Enable keepalive for all requests to reuse TCP connections
-      return fetch(url, { ...options, keepalive: true });
+      // ⚠️ L'option fetch `keepalive` a une limite de corps de 64 Ko : toute requête
+      // avec un body plus gros est REJETÉE par le navigateur ("Failed to fetch").
+      // Cela cassait les UPLOADS (images, fichiers) vers le storage.
+      // → on n'active keepalive que pour les petites requêtes sans corps binaire.
+      const body = (options as any)?.body;
+      const isBinaryOrLarge =
+        (typeof Blob !== 'undefined' && body instanceof Blob) ||
+        (typeof File !== 'undefined' && body instanceof File) ||
+        (typeof FormData !== 'undefined' && body instanceof FormData) ||
+        (typeof ArrayBuffer !== 'undefined' && body instanceof ArrayBuffer) ||
+        (body && typeof body === 'object' && typeof (body as any).byteLength === 'number') ||
+        (typeof body === 'string' && body.length > 50_000);
+
+      return fetch(url, { ...options, keepalive: isBinaryOrLarge ? false : true });
     },
   },
   db: {
@@ -59,6 +71,7 @@ const NODE_BACKEND_EDGE_EXACT = new Set([
   'geocode-address',
   'google-places-autocomplete',
   'gcs-signed-url',
+  'translate-message',
 ]);
 
 const NODE_BACKEND_EDGE_PREFIXES = [

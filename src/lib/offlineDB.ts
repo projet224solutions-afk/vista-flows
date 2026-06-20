@@ -232,6 +232,41 @@ async function markEventAsFailed(clientEventId: string, errorMessage: string): P
 }
 
 /**
+ * Marque un événement à RÉESSAYER après un échec TRANSITOIRE (réseau, 5xx, timeout, auth).
+ * IMPORTANT : NE PAS incrémenter retry_count → un incident temporaire ne doit jamais pousser
+ * une VRAIE vente vers l'abandon. L'événement reste synchronisable indéfiniment (en silence).
+ */
+async function markEventForRetry(clientEventId: string, errorMessage: string): Promise<void> {
+  const database = await initDB();
+  const event = await database.get('events', clientEventId);
+
+  if (event) {
+    event.status = 'failed';
+    event.error_message = errorMessage;
+    // retry_count INCHANGÉ volontairement.
+    await database.put('events', event);
+  }
+}
+
+/**
+ * Abandonne définitivement un événement (échec NON récupérable, ex : données corrompues).
+ * On le marque 'failed' avec un retry_count terminal (>= MAX_SYNC_ATTEMPTS) pour qu'il soit
+ * exclu des resynchronisations automatiques et du compteur "en attente" → plus de spam.
+ */
+async function abandonEvent(clientEventId: string, errorMessage: string): Promise<void> {
+  const database = await initDB();
+  const event = await database.get('events', clientEventId);
+
+  if (event) {
+    event.status = 'failed';
+    event.error_message = errorMessage;
+    event.retry_count = 999; // terminal : ne sera plus jamais retenté
+    await database.put('events', event);
+    console.warn('🛑 Événement abandonné (non récupérable):', clientEventId, errorMessage);
+  }
+}
+
+/**
  * Réinitialise un événement échoué pour nouvelle tentative
  */
 async function retryEvent(clientEventId: string): Promise<void> {
@@ -493,6 +528,8 @@ export {
   getFailedEvents,
   markEventAsSynced,
   markEventAsFailed,
+  markEventForRetry,
+  abandonEvent,
   retryEvent,
   cleanupSyncedEvents,
   getEventStats,
@@ -516,6 +553,8 @@ export default {
   getFailedEvents,
   markEventAsSynced,
   markEventAsFailed,
+  markEventForRetry,
+  abandonEvent,
   retryEvent,
   cleanupSyncedEvents,
   getEventStats,

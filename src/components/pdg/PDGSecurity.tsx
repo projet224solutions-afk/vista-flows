@@ -1,5 +1,5 @@
-// @ts-nocheck
 import {} from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { Shield, AlertTriangle, Activity, Eye, CheckCircle, RefreshCw, Clock, _T
 import { useSecurityData } from '@/hooks/useSecurityData';
 
 export default function PDGSecurity() {
+  const { t } = useTranslation();
   const { auditLogs, fraudLogs, stats, loading, refetch, markFraudAsReviewed } = useSecurityData(true);
 
   const getRiskColor = (level: string) => {
@@ -41,8 +42,8 @@ export default function PDGSecurity() {
       {/* Header with Actions */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Sécurité & Audit</h2>
-          <p className="text-muted-foreground">Surveillance et détection des menaces en temps réel</p>
+          <h2 className="text-2xl font-bold">{t('pDGSecurity.securiteAudit')}</h2>
+          <p className="text-muted-foreground">{t('pDGSecurity.surveillanceEtDetectionDesMenaces')}</p>
         </div>
         <Button onClick={refetch} variant="outline" className="gap-2">
           <RefreshCw className="w-4 h-4" />
@@ -106,7 +107,7 @@ export default function PDGSecurity() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.reviewed_alerts}</p>
-                <p className="text-sm text-muted-foreground">Alertes Traitées</p>
+                <p className="text-sm text-muted-foreground">{t('pDGSecurity.alertesTraitees')}</p>
               </div>
             </div>
           </CardContent>
@@ -122,7 +123,7 @@ export default function PDGSecurity() {
                 <AlertTriangle className="w-5 h-5 text-[#ff4000]" />
                 Détection de Fraude
               </CardTitle>
-              <CardDescription>Alertes de sécurité et transactions suspectes</CardDescription>
+              <CardDescription>{t('pDGSecurity.alertesDeSecuriteEtTransactions')}</CardDescription>
             </div>
             {stats.pending_alerts > 0 && (
               <Badge variant="outline" className="bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20">
@@ -225,7 +226,7 @@ export default function PDGSecurity() {
             <Eye className="w-5 h-5 text-primary" />
             Journal d'Audit
           </CardTitle>
-          <CardDescription>Historique complet des actions administratives</CardDescription>
+          <CardDescription>{t('pDGSecurity.historiqueCompletDesActionsAdministrativ')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3 max-h-[600px] overflow-y-auto">

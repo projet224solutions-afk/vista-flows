@@ -1,4 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -40,6 +41,7 @@ const typeIcons: Record<string, string> = {
 };
 
 export function PropertyCard({ property, onStatusChange, onDelete, onClick }: PropertyCardProps) {
+  const { t } = useTranslation();
   const formatPrice = useFormatCurrency();
   const coverImage = property.images?.find(img => img.is_cover)?.image_url || property.images?.[0]?.image_url;
   const statusInfo = statusConfig[property.status] || statusConfig.disponible;
@@ -54,7 +56,7 @@ export function PropertyCard({ property, onStatusChange, onDelete, onClick }: Pr
           ) : (
             <div className="flex flex-col items-center gap-2 text-muted-foreground">
               <span className="text-4xl">{typeIcons[property.property_type] || '🏠'}</span>
-              <span className="text-xs">Pas de photo</span>
+              <span className="text-xs">{t('propertyCard.pasDePhoto')}</span>
             </div>
           )}
           <Badge variant={statusInfo.variant} className="absolute top-2 left-2 text-xs">

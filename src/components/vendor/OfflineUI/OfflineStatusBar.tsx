@@ -8,6 +8,7 @@
 import React from 'react';
 import { Wifi, WifiOff, RefreshCw, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { useTranslation } from '@/hooks/useTranslation';
 import { cn } from '@/lib/utils';
 
 interface OfflineStatusBarProps {
@@ -23,6 +24,7 @@ export function OfflineStatusBar({
   pendingSyncCount = 0,
   lastSyncTime
 }: OfflineStatusBarProps) {
+  const { t } = useTranslation();
   const { isOnline, wasOffline, lastOnline, offlineDuration } = useOnlineStatus();
 
   // Afficher brièvement la notification de reconnexion
@@ -40,10 +42,10 @@ export function OfflineStatusBar({
           <div className="flex items-center gap-2">
             <CheckCircle className="w-5 h-5" />
             <div>
-              <p className="font-semibold text-sm">Connexion rétablie</p>
+              <p className="font-semibold text-sm">{t('offlineSync.connectionRestored')}</p>
               {offlineDuration > 0 && (
                 <p className="text-xs opacity-90">
-                  Hors ligne pendant {formatDuration(offlineDuration)}
+                  {t('offlineSync.offlineFor')} {formatDuration(offlineDuration)}
                 </p>
               )}
             </div>
@@ -51,7 +53,7 @@ export function OfflineStatusBar({
           {pendingSyncCount > 0 && (
             <div className="flex items-center gap-2 text-xs">
               <RefreshCw className="w-4 h-4 animate-spin" />
-              <span>Sync en cours ({pendingSyncCount})</span>
+              <span>{t('offlineSync.syncInProgress')} ({pendingSyncCount})</span>
             </div>
           )}
         </div>
@@ -76,10 +78,10 @@ export function OfflineStatusBar({
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-white rounded-full animate-pulse" />
             </div>
             <div>
-              <p className="font-semibold text-sm">Mode hors ligne</p>
+              <p className="font-semibold text-sm">{t('offlineSync.offlineMode')}</p>
               {showDetails && (
                 <p className="text-xs opacity-90">
-                  Fonctionnalités limitées - Vos données seront synchronisées automatiquement
+                  {t('offlineSync.limitedFeatures')}
                 </p>
               )}
             </div>
@@ -88,7 +90,7 @@ export function OfflineStatusBar({
           {showDetails && pendingSyncCount > 0 && (
             <div className="flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full">
               <Clock className="w-4 h-4" />
-              <span className="text-xs font-medium">{pendingSyncCount} en attente</span>
+              <span className="text-xs font-medium">{pendingSyncCount} {t('offlineSync.pending')}</span>
             </div>
           )}
         </div>
@@ -110,13 +112,13 @@ export function OfflineStatusBar({
       <div className="flex items-center justify-between gap-4 text-xs">
         <div className="flex items-center gap-2">
           <Wifi className="w-4 h-4 text-[#ff4000]" />
-          <span>En ligne</span>
+          <span>{t('offlineSync.online')}</span>
         </div>
 
         {lastSyncTime && (
           <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
             <CheckCircle className="w-3 h-3" />
-            <span>Dernière sync: {formatSyncTime(lastSyncTime)}</span>
+            <span>{t('offlineSync.lastSync')} {formatSyncTime(lastSyncTime, t)}</span>
           </div>
         )}
       </div>
@@ -128,6 +130,7 @@ export function OfflineStatusBar({
  * Badge de statut compact
  */
 export function OfflineStatusBadge({ className }: { className?: string }) {
+  const { t } = useTranslation();
   const { isOnline } = useOnlineStatus();
 
   return (
@@ -143,12 +146,12 @@ export function OfflineStatusBadge({ className }: { className?: string }) {
       {isOnline ? (
         <>
           <Wifi className="w-3 h-3" />
-          <span>En ligne</span>
+          <span>{t('offlineSync.online')}</span>
         </>
       ) : (
         <>
           <WifiOff className="w-3 h-3" />
-          <span>Hors ligne</span>
+          <span>{t('offlineSync.offline')}</span>
         </>
       )}
     </div>
@@ -167,6 +170,7 @@ export function SyncIndicator({
   count?: number;
   className?: string;
 }) {
+  const { t } = useTranslation();
   if (!syncing) return null;
 
   return (
@@ -179,7 +183,7 @@ export function SyncIndicator({
       )}
     >
       <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-      <span>Synchronisation{count ? ` (${count})` : '...'}</span>
+      <span>{t('offlineSync.syncingWord')}{count ? ` (${count})` : '...'}</span>
     </div>
   );
 }
@@ -198,16 +202,16 @@ function formatDuration(seconds: number): string {
 /**
  * Formater l'heure de sync
  */
-function formatSyncTime(date: Date): string {
+function formatSyncTime(date: Date, t: (k: string) => string): string {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMinutes = Math.floor(diffMs / 60000);
 
-  if (diffMinutes < 1) return 'à l\'instant';
-  if (diffMinutes < 60) return `il y a ${diffMinutes}min`;
+  if (diffMinutes < 1) return t('offlineSync.instant');
+  if (diffMinutes < 60) return `${t('offlineSync.agoPrefix')} ${diffMinutes}min`;
 
   const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) return `il y a ${diffHours}h`;
+  if (diffHours < 24) return `${t('offlineSync.agoPrefix')} ${diffHours}h`;
 
   return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 }

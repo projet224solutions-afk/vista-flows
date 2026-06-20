@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -82,6 +83,7 @@ const STATUS_CONFIG = {
 };
 
 export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchasesSheetProps) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -145,7 +147,7 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
 
       if (error) throw error;
 
-      toast.success('Achat supprimé avec succès');
+      toast.success(t('draftPurchasesSheet.achatSupprimeAvecSucces'));
       refetch();
       queryClient.invalidateQueries({ queryKey: ['supplier-purchase-stats', vendorId] });
     } catch (error: any) {
@@ -185,7 +187,7 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
 
       if (!resp.success) throw new Error(resp.error || 'Erreur de validation');
 
-      toast.success('Achat validé avec succès! Stock mis à jour.');
+      toast.success(t('draftPurchasesSheet.achatValideAvecSuccesStock'));
       refetch();
       queryClient.invalidateQueries({ queryKey: ['supplier-purchase-stats', vendorId] });
       queryClient.invalidateQueries({ queryKey: ['stock-purchases-validated', vendorId] });
@@ -201,7 +203,7 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
   if (isEditorOpen && selectedPurchase) {
     return (
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent className="w-full sm:max-w-4xl p-0">
+        <SheetContent className="w-full sm:max-w-4xl p-0 max-h-[90vh] overflow-y-auto">
           <PurchaseEditor
             purchase={selectedPurchase}
             vendorId={vendorId}
@@ -214,7 +216,7 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-xl">
+      <SheetContent className="w-full sm:max-w-xl max-h-[90vh] overflow-y-auto">
         <SheetHeader className="pb-4">
           <SheetTitle className="flex items-center gap-2">
             <Package className="h-5 w-5 text-orange-500" />
@@ -227,7 +229,7 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
 
         <div className="space-y-4">
           {/* Stats résumé */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             <Card className="bg-orange-500/10 border-orange-500/20">
               <CardContent className="p-3 text-center">
                 <p className="text-2xl font-bold text-orange-600">{draftCount}</p>
@@ -237,7 +239,7 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
             <Card className="bg-blue-500/10 border-blue-500/20">
               <CardContent className="p-3 text-center">
                 <p className="text-2xl font-bold text-blue-600">{documentGeneratedCount}</p>
-                <p className="text-xs text-muted-foreground">Docs générés</p>
+                <p className="text-xs text-muted-foreground">{t('draftPurchasesSheet.docsGeneres')}</p>
               </CardContent>
             </Card>
             <Card className="bg-muted/50">
@@ -265,8 +267,8 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
             ) : purchases.length === 0 ? (
               <div className="text-center py-12">
                 <Package className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-                <p className="text-muted-foreground">Aucun achat en attente</p>
-                <p className="text-xs text-muted-foreground mt-1">Tous vos achats ont été validés</p>
+                <p className="text-muted-foreground">{t('draftPurchasesSheet.aucunAchatEnAttente')}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t('draftPurchasesSheet.tousVosAchatsOntEte')}</p>
               </div>
             ) : (
               <div className="space-y-3 pr-4">
@@ -342,14 +344,14 @@ export function DraftPurchasesSheet({ vendorId, isOpen, onClose }: DraftPurchase
         <AlertDialog open={!!purchaseToDelete} onOpenChange={() => setPurchaseToDelete(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Supprimer cet achat ?</AlertDialogTitle>
+              <AlertDialogTitle>{t('draftPurchasesSheet.supprimerCetAchat')}</AlertDialogTitle>
               <AlertDialogDescription>
                 Êtes-vous sûr de vouloir supprimer l'achat <strong>{purchaseToDelete?.purchase_number}</strong> ?
                 Cette action est irréversible.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogCancel>{t('draftPurchasesSheet.annuler')}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeletePurchase}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

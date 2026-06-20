@@ -5,14 +5,18 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, UtensilsCrossed, Bike, Clock, RefreshCw, ChefHat, Package, CheckCircle2, XCircle, MapPin, Phone } from 'lucide-react';
+import { ArrowLeft, UtensilsCrossed, Bike, Clock, RefreshCw, ChefHat, Package, CheckCircle2, XCircle, MapPin, Phone, RotateCcw, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Money } from '@/components/Money';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
+import { ClientDeliveryTracking } from '@/components/delivery/ClientDeliveryTracking';
 import QuickFooter from '@/components/QuickFooter';
 
 // Status configs
@@ -124,9 +128,58 @@ function StatusStepper({ steps, currentStep, isCancelled }: { steps: string[]; c
 }
 
 function RestaurantOrderCard({ order }: { order: RestaurantOrderTracking }) {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const config = restaurantStatusConfig[order.status || 'pending'] || restaurantStatusConfig.pending;
   const StatusIcon = config.icon;
   const isCancelled = order.status === 'cancelled';
+  const isHistorical = ['completed', 'delivered', 'cancelled'].includes(order.status || '');
+  const canRate = ['completed', 'delivered'].includes(order.status || '');
+
+  const [rateOpen, setRateOpen] = useState(false);
+  const [stars, setStars] = useState(0);
+  const [comment, setComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [rated, setRated] = useState(false);
+  const [trackOpen, setTrackOpen] = useState(false);
+  const [trackDeliveryId, setTrackDeliveryId] = useState<string | null>(null);
+
+  // SUIVI LIVRAISON : pour une commande en livraison acceptée, on retrouve la course (deliveries)
+  // créée par le backend et on ouvre la carte temps réel (livreur en mouvement via Ably).
+  const isDelivery = order.order_type === 'delivery';
+  const canTrack = isDelivery && ['confirmed', 'preparing', 'ready', 'delivered'].includes(order.status || '');
+  const openTracking = async () => {
+    const { data } = await supabase.from('deliveries').select('id').eq('restaurant_order_id', order.id).maybeSingle();
+    if (!data?.id) { toast.info('Le livreur n\'a pas encore été assigné. Réessayez dans un instant.'); return; }
+    setTrackDeliveryId(data.id); setTrackOpen(true);
+  };
+
+  // RECOMMANDER : rouvre le restaurant en re-chargeant exactement les mêmes plats dans le panier.
+  const reorder = () => navigate(`/restaurant/${order.professional_service_id}/menu?reorder=${order.id}`);
+
+  // NOTER : avis VÉRIFIÉ via la RPC submit_restaurant_review (le serveur exige une commande
+  // terminée/livrée pour ce restaurant + 1 seul avis par client = upsert). Actif après clôture.
+  const submitReview = async () => {
+    if (!user?.id || stars < 1) { toast.error('Choisissez une note'); return; }
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.rpc('submit_restaurant_review', {
+        p_service_id: order.professional_service_id,
+        p_rating: stars,
+        p_comment: comment.trim() || null,
+      });
+      if (error) throw error;
+      toast.success('Merci pour votre avis !');
+      setRated(true); setRateOpen(false);
+    } catch (e: any) {
+      const msg = String(e?.message || '');
+      toast.error(
+        /AUCUNE_COMMANDE/.test(msg) ? 'Vous devez avoir une commande terminée pour noter ce restaurant.'
+        : /NOTE_INVALIDE/.test(msg) ? 'Note invalide.'
+        : 'Impossible d\'enregistrer l\'avis'
+      );
+    } finally { setSubmitting(false); }
+  };
 
   const orderTypeLabels: Record<string, string> = {
     dine_in: '🍽️ Sur place',
@@ -179,7 +232,54 @@ function RestaurantOrderCard({ order }: { order: RestaurantOrderTracking }) {
         {isCancelled && order.cancelled_reason && (
           <p className="text-xs text-destructive mt-2 italic">Raison: {order.cancelled_reason}</p>
         )}
+
+        {/* Suivi de la livraison (carte temps réel) pour les commandes en livraison en cours */}
+        {canTrack && (
+          <Button size="sm" className="mt-3 w-full gap-1.5 bg-[#04439e] hover:bg-[#04439e]/90" onClick={openTracking}>
+            <MapPin className="h-4 w-4" /> Suivre la livraison
+          </Button>
+        )}
+
+        {/* Actions historique : RECOMMANDER (1 clic) + NOTER (après livraison) */}
+        {isHistorical && (
+          <div className="mt-3 flex gap-2 border-t border-border pt-3">
+            <Button size="sm" variant="outline" className="flex-1 gap-1.5" onClick={reorder}>
+              <RotateCcw className="h-4 w-4" /> Recommander
+            </Button>
+            {canRate && (
+              <Button size="sm" variant={rated ? 'ghost' : 'default'} className="flex-1 gap-1.5" disabled={rated} onClick={() => setRateOpen(true)}>
+                <Star className={`h-4 w-4 ${rated ? 'fill-amber-400 text-amber-400' : ''}`} /> {rated ? 'Noté' : 'Noter'}
+              </Button>
+            )}
+          </div>
+        )}
       </CardContent>
+
+      {/* Carte de suivi livreur temps réel */}
+      <Dialog open={trackOpen} onOpenChange={setTrackOpen}>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Suivi de la livraison</DialogTitle></DialogHeader>
+          {trackDeliveryId && <ClientDeliveryTracking deliveryId={trackDeliveryId} />}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialogue de notation */}
+      <Dialog open={rateOpen} onOpenChange={setRateOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader><DialogTitle>Noter votre commande</DialogTitle></DialogHeader>
+          <div className="flex justify-center gap-1.5 py-2">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button key={n} type="button" onClick={() => setStars(n)} aria-label={`${n} étoile${n > 1 ? 's' : ''}`}>
+                <Star className={`h-8 w-8 transition-colors ${n <= stars ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground'}`} />
+              </button>
+            ))}
+          </div>
+          <Textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Votre avis (optionnel)…" rows={3} />
+          <Button onClick={submitReview} disabled={submitting || stars < 1} className="w-full">
+            {submitting ? 'Envoi…' : 'Envoyer mon avis'}
+          </Button>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

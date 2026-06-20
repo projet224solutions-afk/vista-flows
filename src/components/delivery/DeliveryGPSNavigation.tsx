@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ interface DeliveryGPSNavigationProps {
 }
 
 export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onContactCustomer }: DeliveryGPSNavigationProps) {
+  const { t } = useTranslation();
   const [distance, setDistance] = useState<number | null>(null);
   const [duration, setDuration] = useState<number | null>(null);
 
@@ -123,7 +125,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
 
   const openGoogleMaps = () => {
     if (!activeDelivery) {
-      toast.error("Aucune livraison active");
+      toast.error(t('deliveryGPSNavigation.aucuneLivraisonActive'));
       return;
     }
 
@@ -157,12 +159,12 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
     }
     // Aucune donnée disponible
     else {
-      toast.error("Adresse non disponible pour la navigation");
+      toast.error(t('deliveryGPSNavigation.adresseNonDisponiblePourLa'));
       return;
     }
 
     window.open(mapsUrl, '_blank');
-    toast.success("Navigation ouverte dans Google Maps");
+    toast.success(t('deliveryGPSNavigation.navigationOuverteDansGoogleMaps'));
   };
 
   if (!activeDelivery) {
@@ -320,7 +322,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
               <div className="bg-card rounded-lg p-3 border border-orange-200 dark:border-orange-800 text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <Clock className="w-3 h-3 text-muted-foreground" />
-                  <p className="text-xs text-muted-foreground">Temps estimé</p>
+                  <p className="text-xs text-muted-foreground">{t('deliveryGPSNavigation.tempsEstime')}</p>
                 </div>
                 <p className="text-2xl font-bold text-orange-600">
                   {Math.round(duration)} <span className="text-sm">min</span>
@@ -357,13 +359,13 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
         <CardContent className="pt-4">
           <div className="grid grid-cols-2 gap-3 text-center">
             <div>
-              <p className="text-xs text-muted-foreground mb-1">💰 Rémunération</p>
+              <p className="text-xs text-muted-foreground mb-1">{t('deliveryGPSNavigation.remuneration')}</p>
               <p className="text-lg font-bold text-[#ff4000]">
                 <Money amount={activeDelivery.delivery_fee || activeDelivery.driver_earning || 0} from="GNF" />
               </p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground mb-1">💳 Paiement</p>
+              <p className="text-xs text-muted-foreground mb-1">{t('deliveryGPSNavigation.paiement')}</p>
               <p className="text-lg font-bold text-orange-600 capitalize">
                 {activeDelivery.payment_method || 'Non défini'}
               </p>
@@ -371,7 +373,7 @@ export function DeliveryGPSNavigation({ activeDelivery, currentLocation, onConta
           </div>
           {activeDelivery.package_type && (
             <div className="mt-3 text-center">
-              <p className="text-xs text-muted-foreground mb-1">📦 Type de colis</p>
+              <p className="text-xs text-muted-foreground mb-1">{t('deliveryGPSNavigation.typeDeColis')}</p>
               <Badge variant="outline" className="capitalize">
                 {activeDelivery.package_type}
               </Badge>

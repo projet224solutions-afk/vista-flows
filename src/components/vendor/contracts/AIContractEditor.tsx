@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -50,6 +51,7 @@ interface AIContractEditorProps {
 }
 
 export default function AIContractEditor({ contract, onSaved, onClose }: AIContractEditorProps) {
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [clientName, setClientName] = useState(contract.client_name);
   const [clientPhone, setClientPhone] = useState(contract.client_phone || '');
@@ -183,19 +185,52 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
     try {
       setLoading(true);
 
-      const methods = {
-        whatsapp: 'WhatsApp',
-        sms: 'SMS',
-        email: 'E-mail',
-        link: 'lien sécurisé'
-      };
+      // Persiste l'envoi (statut 'sent') et récupère le jeton de partage public.
+      const { data: row, error } = await supabase
+        .from('contracts')
+        .update({ status: 'sent', sent_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+        .eq('id', contract.id)
+        .neq('status', 'signed')
+        .select('share_token')
+        .maybeSingle();
+      if (error) throw error;
+
+      // Déjà signé (aucune ligne mise à jour) → on relit le jeton pour pouvoir repartager.
+      let token = (row as any)?.share_token as string | undefined;
+      if (!token) {
+        const { data: t } = await supabase
+          .from('contracts').select('share_token').eq('id', contract.id).maybeSingle();
+        token = (t as any)?.share_token;
+      }
+      if (!token) throw new Error('Lien de signature indisponible');
+
+      const signUrl = `${window.location.origin}/contrat/${token}`;
+      const phoneDigits = (clientPhone || '').replace(/\D/g, '');
+      const msg = `Bonjour ${clientName}, votre contrat est prêt à être signé : ${signUrl}`;
+
+      if (method === 'whatsapp') {
+        window.open(
+          phoneDigits ? `https://wa.me/${phoneDigits}?text=${encodeURIComponent(msg)}`
+                      : `https://wa.me/?text=${encodeURIComponent(msg)}`,
+          '_blank',
+        );
+      } else if (method === 'sms') {
+        window.open(`sms:${clientPhone || ''}?&body=${encodeURIComponent(msg)}`, '_blank');
+      } else if (method === 'email') {
+        window.open(`mailto:?subject=${encodeURIComponent('Votre contrat à signer')}&body=${encodeURIComponent(msg)}`, '_blank');
+      } else {
+        try { await navigator.clipboard.writeText(signUrl); } catch { /* presse-papier indisponible */ }
+      }
 
       toast({
         title: 'Contrat envoyé',
-        description: `Le contrat a été envoyé via ${methods[method]}`,
+        description: method === 'link'
+          ? 'Lien de signature copié dans le presse-papier'
+          : 'Lien de signature généré — message prêt à envoyer au client.',
       });
 
       setShowSendDialog(false);
+      onSaved();
     } catch (error: any) {
       toast({
         title: 'Erreur',
@@ -221,7 +256,7 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-primary" />
-                <CardTitle>Contrat de vente généré par IA</CardTitle>
+                <CardTitle>{t('aIContractEditor.contratDeVenteGenerePar')}</CardTitle>
               </div>
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
@@ -251,7 +286,7 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
       {summary && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Résumé du contrat</CardTitle>
+            <CardTitle className="text-lg">{t('aIContractEditor.resumeDuContrat')}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">{summary}</p>
@@ -263,7 +298,7 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Informations du client</CardTitle>
+            <CardTitle className="text-lg">{t('aIContractEditor.informationsDuClient')}</CardTitle>
             {!isFinalized && (
               <Button
                 variant="ghost"
@@ -289,7 +324,7 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
           {isEditing ? (
             <>
               <div className="space-y-2">
-                <Label>Nom du client</Label>
+                <Label>{t('aIContractEditor.nomDuClient')}</Label>
                 <Input
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
@@ -297,7 +332,7 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
                 />
               </div>
               <div className="space-y-2">
-                <Label>Téléphone</Label>
+                <Label>{t('aIContractEditor.telephone')}</Label>
                 <Input
                   value={clientPhone}
                   onChange={(e) => setClientPhone(e.target.value)}
@@ -309,7 +344,7 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
                 <Input
                   value={clientAddress}
                   onChange={(e) => setClientAddress(e.target.value)}
-                  placeholder="Adresse complète"
+                  placeholder={t('aIContractEditor.adresseComplete')}
                 />
               </div>
             </>
@@ -320,7 +355,7 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
                 <p className="font-medium">{clientName}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Téléphone</p>
+                <p className="text-sm text-muted-foreground">{t('aIContractEditor.telephone')}</p>
                 <p className="font-medium">{clientPhone || 'Non renseigné'}</p>
               </div>
               <div>
@@ -344,7 +379,7 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
       {/* Contract Content */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Contenu du contrat</CardTitle>
+          <CardTitle className="text-lg">{t('aIContractEditor.contenuDuContrat')}</CardTitle>
         </CardHeader>
         <CardContent>
           {isEditing ? (
@@ -352,7 +387,7 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
               value={contractContent}
               onChange={(e) => setContractContent(e.target.value)}
               className="min-h-[500px] font-mono text-sm"
-              placeholder="Contenu du contrat..."
+              placeholder={t('aIContractEditor.contenuDuContrat2')}
             />
           ) : (
             <div className="prose max-w-none">
@@ -446,7 +481,7 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
       <Dialog open={showSignDialog} onOpenChange={setShowSignDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Signatures électroniques</DialogTitle>
+            <DialogTitle>{t('aIContractEditor.signaturesElectroniques')}</DialogTitle>
             <DialogDescription>
               Gérer les signatures du contrat
             </DialogDescription>
@@ -477,7 +512,7 @@ export default function AIContractEditor({ contract, onSaved, onClose }: AIContr
       <Dialog open={showSendDialog} onOpenChange={setShowSendDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Envoyer le contrat</DialogTitle>
+            <DialogTitle>{t('aIContractEditor.envoyerLeContrat')}</DialogTitle>
             <DialogDescription>
               Choisissez le mode d'envoi
             </DialogDescription>

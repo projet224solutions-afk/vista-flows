@@ -6,6 +6,7 @@
  */
 
 import {} from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Plane, Hotel, Search, Users, Briefcase,
   ArrowRight, Check, Settings, Globe
@@ -71,6 +72,7 @@ const modes = [
 ];
 
 export function TravelModeSelector({ currentMode, onModeSelect }: TravelModeSelectorProps) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
       <div className="text-center mb-6">
@@ -78,7 +80,7 @@ export function TravelModeSelector({ currentMode, onModeSelect }: TravelModeSele
           <Settings className="w-4 h-4 text-primary" />
           <span className="text-xs font-medium text-primary">Configuration</span>
         </div>
-        <h2 className="text-xl font-bold text-foreground">Choisissez votre mode</h2>
+        <h2 className="text-xl font-bold text-foreground">{t('travelModeSelector.choisissezVotreMode')}</h2>
         <p className="text-sm text-muted-foreground mt-1">
           Sélectionnez le type de fonctionnement pour Vol/Hôtel
         </p>

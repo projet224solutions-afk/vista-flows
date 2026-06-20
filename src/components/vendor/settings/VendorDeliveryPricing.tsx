@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -45,6 +46,7 @@ const DEFAULT_CONFIG: DeliveryConfig = {
 };
 
 export default function VendorDeliveryPricing({ vendorId, onSave }: VendorDeliveryPricingProps) {
+  const { t } = useTranslation();
   const [config, setConfig] = useState<DeliveryConfig>(DEFAULT_CONFIG);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -97,11 +99,11 @@ export default function VendorDeliveryPricing({ vendorId, onSave }: VendorDelive
 
       if (error) throw error;
 
-      toast.success('✅ Tarification de livraison mise à jour');
+      toast.success(t('vendorDeliveryPricing.tarificationDeLivraisonMiseA'));
       onSave?.();
     } catch (error) {
       console.error('Error saving config:', error);
-      toast.error('Erreur lors de la sauvegarde');
+      toast.error(t('vendorDeliveryPricing.erreurLorsDeLaSauvegarde'));
     } finally {
       setSaving(false);
     }
@@ -142,7 +144,7 @@ export default function VendorDeliveryPricing({ vendorId, onSave }: VendorDelive
             <div className="flex items-center gap-3">
               <MapPin className="h-5 w-5 text-[#ff4000]" />
               <div>
-                <p className="font-medium">Livraison activée</p>
+                <p className="font-medium">{t('vendorDeliveryPricing.livraisonActivee')}</p>
                 <p className="text-sm text-muted-foreground">
                   Permettre aux clients de commander des livraisons
                 </p>
@@ -268,7 +270,7 @@ export default function VendorDeliveryPricing({ vendorId, onSave }: VendorDelive
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="text-center p-3 bg-orange-50 dark:bg-[#ff4000]/20 rounded-lg">
                 <p className="text-xs text-muted-foreground">2 km</p>
                 <p className="font-bold text-[#ff4000]">{formatCurrency(calculateExample(2))}</p>

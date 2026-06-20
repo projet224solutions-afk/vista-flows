@@ -1,5 +1,6 @@
 ﻿import { useEffect, useState, lazy, Suspense, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Shield, LogOut, Lock, Brain, Mail, Activity, AlertTriangle } from 'lucide-react';
@@ -11,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { toast } from 'sonner';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { ErrorBanner } from '@/components/ui/ErrorBanner';
+import { AdminMfaStepUpGate } from '@/components/security/AdminMfaStepUpGate';
 import { usePDGAIAssistant } from '@/hooks/usePDGAIAssistant';
 import { usePDGErrorBoundary } from '@/hooks/usePDGErrorBoundary';
 import PDGNavigation, { NAV_TAB_PERMISSIONS } from '@/components/pdg/PDGNavigation';
@@ -27,6 +29,8 @@ const WalletProvenancePanel = lazy(() => import('@/components/pdg/WalletProvenan
 const PDGUsers = lazy(() => import('@/components/pdg/PDGUsers'));
 const SecurityOpsPanel = lazy(() => import('@/components/pdg/SecurityOpsPanel'));
 const PDGCopilot = lazy(() => import('@/components/pdg/PDGCopilot'));
+// Copilot 224 unifié en mode PDG (supervision + auto-correction) — remplace l'ancien PDGCopilot (Edge Function).
+const Copilot224 = lazy(() => import('@/components/service-common/Copilot224'));
 const PDGSystemMaintenance = lazy(() => import('@/components/pdg/PDGSystemMaintenance'));
 const PDGProductsManagement = lazy(() => import('@/components/pdg/PDGProductsManagement'));
 const PDGReportsAnalytics = lazy(() => import('@/components/pdg/PDGReportsAnalytics'));
@@ -61,6 +65,7 @@ const BroadcastMessageCenter = lazy(() => import('@/components/pdg/BroadcastMess
 const PDGCampaignSupervision = lazy(() => import('@/components/pdg/PDGCampaignSupervision'));
 const DeletedUsersRestore = lazy(() => import('@/components/pdg/DeletedUsersRestore'));
 const PDGSupportTechnique = lazy(() => import('@/components/pdg/PDGSupportTechnique'));
+const PdgDocumentation = lazy(() => import('@/components/pdg/PdgDocumentation'));
 const PDGShareholderManagement = lazy(() => import('@/components/pdg/PDGShareholderManagement'));
 
 // Tabs that redirect to dedicated pages instead of inline content
@@ -74,6 +79,7 @@ const EXTERNAL_TABS: Record<string, string> = {
 const PDG_TAB_STORAGE_KEY = 'pdg_active_tab';
 
 export default function PDG224Solutions() {
+  const { t } = useTranslation();
   const { user, profile, profileLoading, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -172,7 +178,7 @@ export default function PDG224Solutions() {
     const currentRole = (profile.role || '').toString().toLowerCase();
     // PDG/CEO/Admin : accès total. Agent : accès filtré par permissions (nav + contenu gatés).
     if (!['admin', 'pdg', 'ceo', 'agent'].includes(currentRole)) {
-      toast.error('Accès refusé');
+      toast.error(t('pDG224Solutions.accesRefuse'));
       navigate('/home');
       return;
     }
@@ -224,7 +230,7 @@ export default function PDG224Solutions() {
         }
       } else {
         if (data?.error_code === 'RESEND_TEST_MODE_RECIPIENT_RESTRICTED') {
-          toast.error('Envoi email bloqué par Resend (mode test)');
+          toast.error(t('pDG224Solutions.envoiEmailBloqueParResend'));
           toast.info(`Destinataire demandé: ${data?.recipient_email || user.email}`);
         } else {
           toast.error(data?.error || 'Erreur envoi MFA');
@@ -247,7 +253,7 @@ export default function PDG224Solutions() {
   // Server-side MFA: verify code
   const handleVerifyMfa = useCallback(async () => {
     if (!mfaCode || mfaCode.length !== 6) {
-      toast.error('Entrez le code à 6 chiffres');
+      toast.error(t('pDG224Solutions.entrezLeCodeA6'));
       return;
     }
 
@@ -264,7 +270,7 @@ export default function PDG224Solutions() {
         sessionStorage.setItem('mfa_verified_admin', 'true');
         setShowMfaDialog(false);
         setMfaCode('');
-        toast.success('MFA vérifiée, accès PDG autorisé');
+        toast.success(t('pDG224Solutions.mfaVerifieeAccesPdgAutorise'));
       } else {
         toast.error(data?.error || 'Code MFA invalide');
       }
@@ -279,7 +285,7 @@ export default function PDG224Solutions() {
 
   const handleUpdateEmail = useCallback(async () => {
     if (!newEmail || !newEmail.includes('@')) {
-      toast.error('Veuillez entrer une adresse email valide');
+      toast.error(t('pDG224Solutions.veuillezEntrerUneAdresseEmail'));
       return;
     }
 
@@ -288,7 +294,7 @@ export default function PDG224Solutions() {
       const { error: updateError } = await supabase.auth.updateUser({ email: newEmail });
       if (updateError) throw updateError;
 
-      toast.success('Email mis à jour. Vérifiez votre nouvelle adresse.');
+      toast.success(t('pDG224Solutions.emailMisAJourVerifiez'));
       setShowEmailDialog(false);
       setNewEmail('');
     } catch (err: unknown) {
@@ -305,7 +311,7 @@ export default function PDG224Solutions() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted">
         <div className="flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          <p className="text-muted-foreground">Chargement du profil...</p>
+          <p className="text-muted-foreground">{t('pDG224Solutions.chargementDuProfil')}</p>
         </div>
       </div>
     );
@@ -315,8 +321,8 @@ export default function PDG224Solutions() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted">
         <div className="flex flex-col items-center gap-4">
-          <p className="text-destructive">Impossible de charger le profil</p>
-          <Button onClick={() => navigate('/auth')}>Retour à la connexion</Button>
+          <p className="text-destructive">{t('pDG224Solutions.impossibleDeChargerLeProfil')}</p>
+          <Button onClick={() => navigate('/auth')}>{t('pDG224Solutions.retourALaConnexion')}</Button>
         </div>
       </div>
     );
@@ -324,6 +330,8 @@ export default function PDG224Solutions() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
+      {/* Porte step-up 2FA : prompt automatique sur les opérations financières sensibles. */}
+      <AdminMfaStepUpGate />
       {/* MFA Dialog */}
       {isAdmin && !mfaVerified && (
         <Dialog open={showMfaDialog}>
@@ -348,7 +356,7 @@ export default function PDG224Solutions() {
                 {sendingMfa ? 'Envoi en cours...' : 'Envoyer le code par email'}
               </Button>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Code de vérification</label>
+                <label className="text-sm font-medium">{t('pDG224Solutions.codeDeVerification')}</label>
                 <Input
                   placeholder="000000"
                   value={mfaCode}
@@ -413,7 +421,7 @@ export default function PDG224Solutions() {
                   className="bg-blue-600 hover:bg-blue-700 text-white gap-1 sm:gap-2 shadow-lg shadow-blue-600/40 hover:shadow-xl transition-all text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                 >
                   <Activity className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Centre de</span> Commande
+                  <span className="hidden sm:inline">{t('pDG224Solutions.centreDe')}</span> Commande
                 </Button>
                 <Button
                   variant="default"
@@ -445,7 +453,7 @@ export default function PDG224Solutions() {
                 )}
                 <Badge className="bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20 hover:bg-[#ff4000]/20 gap-1 text-xs flex-shrink-0">
                   <div className="w-1.5 h-1.5 rounded-full bg-[#ff4000] animate-pulse" />
-                  <span className="hidden sm:inline">Système</span> Actif
+                  <span className="hidden sm:inline">{t('pDG224Solutions.systeme')}</span> Actif
                 </Badge>
                 {fxCriticalAlerts > 0 && (
                   <Button
@@ -472,7 +480,7 @@ export default function PDG224Solutions() {
                   className="gap-1 text-xs sm:text-sm whitespace-nowrap flex-shrink-0 hidden sm:flex"
                 >
                   <Mail className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Modifier</span> Email
+                  <span className="hidden sm:inline">{t('pDG224Solutions.modifier')}</span> Email
                 </Button>
                 <Button
                   variant="outline"
@@ -481,7 +489,7 @@ export default function PDG224Solutions() {
                   className="gap-1 text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                 >
                   <LogOut className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Déconnexion</span>
+                  <span className="hidden sm:inline">{t('pDG224Solutions.deconnexion')}</span>
                 </Button>
               </div>
             </div>
@@ -529,7 +537,7 @@ export default function PDG224Solutions() {
               ) : (
                 <div className="max-w-lg mx-auto mt-8 rounded-xl border bg-card p-6 text-center space-y-2">
                   <Shield className="w-10 h-10 text-muted-foreground mx-auto" />
-                  <p className="font-semibold">Accès non autorisé</p>
+                  <p className="font-semibold">{t('pDG224Solutions.accesNonAutorise')}</p>
                   <p className="text-sm text-muted-foreground">
                     Vous n'avez pas la permission d'accéder à cette section. Contactez le PDG.
                   </p>
@@ -595,7 +603,11 @@ export default function PDG224Solutions() {
                 <ErrorBoundary><PDGAIAssistant mfaVerified={mfaVerified} /></ErrorBoundary>
               )}
               {activeTab === 'copilot' && (
-                <ErrorBoundary><PDGCopilot mfaVerified={mfaVerified} /></ErrorBoundary>
+                <ErrorBoundary>
+                  <Suspense fallback={<div className="p-6 text-sm text-muted-foreground">{t('pDG224Solutions.chargementDuCopilot')}</div>}>
+                    <Copilot224 variant="embedded" service="pdg" title="Copilote PDG — supervision & auto-correction" height="calc(100vh - 160px)" />
+                  </Suspense>
+                </ErrorBoundary>
               )}
               {activeTab === 'communication' && (
                 <ErrorBoundary><UniversalCommunicationHub /></ErrorBoundary>
@@ -675,6 +687,9 @@ export default function PDG224Solutions() {
               {activeTab === 'support-technique' && (
                 <ErrorBoundary><PDGSupportTechnique /></ErrorBoundary>
               )}
+              {activeTab === 'documentation' && (
+                <ErrorBoundary><PdgDocumentation /></ErrorBoundary>
+              )}
             </Suspense>
             )}
           </div>
@@ -683,7 +698,7 @@ export default function PDG224Solutions() {
 
       {/* Email Update Dialog */}
       <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Mail className="w-5 h-5 text-primary" />
@@ -702,7 +717,7 @@ export default function PDG224Solutions() {
               <label className="text-sm font-medium">Nouvel email</label>
               <Input
                 type="email"
-                placeholder="nouveau@email.com"
+                placeholder={t('pDG224Solutions.nouveauEmailCom')}
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
                 disabled={updatingEmail}

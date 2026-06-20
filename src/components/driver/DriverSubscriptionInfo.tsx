@@ -1,10 +1,12 @@
 import { Calendar } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDriverSubscription } from "@/hooks/useDriverSubscription";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
 export function DriverSubscriptionInfo() {
+  const { t } = useTranslation();
   const { subscription, loading } = useDriverSubscription();
 
   if (loading) {
@@ -33,7 +35,7 @@ export function DriverSubscriptionInfo() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">Aucun abonnement trouvé.</p>
+          <p className="text-sm text-muted-foreground">{t('driverSubscriptionInfo.aucunAbonnementTrouve')}</p>
         </CardContent>
       </Card>
     );

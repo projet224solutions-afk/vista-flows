@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -68,6 +69,7 @@ export function ChapChapPayForm({
   onCancel,
   className,
 }: ChapChapPayFormProps) {
+  const { t } = useTranslation();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('orange_money');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [payerName, setPayerName] = useState('');
@@ -94,7 +96,7 @@ export function ChapChapPayForm({
     e.preventDefault();
 
     if (!validatePhone(phoneNumber)) {
-      toast.error('Numéro de téléphone invalide');
+      toast.error(t('chapChapPayForm.numeroDeTelephoneInvalide'));
       return;
     }
 
@@ -126,7 +128,7 @@ export function ChapChapPayForm({
           transactionId: data.transactionId,
         });
 
-        toast.success('Paiement initié avec succès');
+        toast.success(t('chapChapPayForm.paiementInitieAvecSucces'));
         onSuccess?.(data.transactionId);
       } else {
         throw new Error(data?.error || 'Erreur inconnue');
@@ -161,8 +163,8 @@ export function ChapChapPayForm({
               </p>
             </div>
             <div className="bg-muted rounded-lg p-4 space-y-2">
-              <p className="text-sm"><strong>Montant :</strong> {formatAmount(amount)}</p>
-              <p className="text-sm"><strong>Méthode :</strong> {PAYMENT_METHODS.find(m => m.id === paymentMethod)?.name}</p>
+              <p className="text-sm"><strong>{t('chapChapPayForm.montant')}</strong> {formatAmount(amount)}</p>
+              <p className="text-sm"><strong>{t('chapChapPayForm.methode')}</strong> {PAYMENT_METHODS.find(m => m.id === paymentMethod)?.name}</p>
               {status.transactionId && (
                 <p className="text-xs text-muted-foreground font-mono">
                   Réf: {status.transactionId.slice(0, 8)}...
@@ -171,7 +173,7 @@ export function ChapChapPayForm({
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <AlertCircle className="w-4 h-4" />
-              <span>Vous recevrez une notification une fois le paiement confirmé</span>
+              <span>{t('chapChapPayForm.vousRecevrezUneNotificationUne')}</span>
             </div>
           </div>
         </CardContent>
@@ -233,7 +235,7 @@ export function ChapChapPayForm({
         <CardContent className="space-y-6">
           {/* Montant */}
           <div className="bg-primary/10 rounded-lg p-4 text-center">
-            <p className="text-sm text-muted-foreground">Montant à payer</p>
+            <p className="text-sm text-muted-foreground">{t('chapChapPayForm.montantAPayer')}</p>
             <p className="text-3xl font-bold text-primary mt-1">
               {formatAmount(amount)}
             </p>
@@ -241,7 +243,7 @@ export function ChapChapPayForm({
 
           {/* Choix du moyen de paiement */}
           <div className="space-y-3">
-            <Label>Moyen de paiement</Label>
+            <Label>{t('chapChapPayForm.moyenDePaiement')}</Label>
             <RadioGroup
               value={paymentMethod}
               onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}
@@ -273,7 +275,7 @@ export function ChapChapPayForm({
 
           {/* Numéro de téléphone */}
           <div className="space-y-2">
-            <Label htmlFor="phone">Numéro de téléphone</Label>
+            <Label htmlFor="phone">{t('chapChapPayForm.numeroDeTelephone')}</Label>
             <Input
               id="phone"
               type="tel"
@@ -290,7 +292,7 @@ export function ChapChapPayForm({
 
           {/* Nom du payeur (optionnel) */}
           <div className="space-y-2">
-            <Label htmlFor="name">Votre nom (optionnel)</Label>
+            <Label htmlFor="name">{t('chapChapPayForm.votreNomOptionnel')}</Label>
             <Input
               id="name"
               type="text"

@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
@@ -62,6 +63,7 @@ export default function TaxiMotoBooking({
     nearbyDrivers,
     onRideCreated
 }: TaxiMotoBookingProps) {
+    const { t } = useTranslation();
     const { user } = useAuth();
 
     // États du formulaire - GPS ultra-précis
@@ -170,7 +172,7 @@ export default function TaxiMotoBooking({
 
         } catch (error) {
             console.error('Erreur calcul itinéraire/prix:', error);
-            toast.error('Impossible de calculer l\'itinéraire');
+            toast.error(t('taxiMotoBookingV2.impossibleDeCalculerLItineraire'));
             setPriceEstimate(null);
         } finally {
             setLoadingRoute(false);
@@ -191,12 +193,12 @@ export default function TaxiMotoBooking({
      */
     const handleProceedToPayment = () => {
         if (!user) {
-            toast.error('Veuillez vous connecter pour réserver');
+            toast.error(t('taxiMotoBookingV2.veuillezVousConnecterPourReserver'));
             return;
         }
 
         if (!pickupAddress || !destinationAddress || !priceEstimate) {
-            toast.error('Veuillez compléter tous les champs avec des adresses validées');
+            toast.error(t('taxiMotoBookingV2.veuillezCompleterTousLesChamps'));
             return;
         }
 
@@ -244,7 +246,7 @@ export default function TaxiMotoBooking({
 
             console.log('[TaxiMotoBooking] Ride created:', ride);
             onRideCreated(ride);
-            toast.success('🚀 Réservation confirmée ! Recherche d\'un conducteur...');
+            toast.success(t('taxiMotoBookingV2.reservationConfirmeeRechercheDUn'));
 
             // Réinitialiser le formulaire
             setPickupAddress(null);
@@ -255,7 +257,7 @@ export default function TaxiMotoBooking({
 
         } catch (error) {
             console.error('[TaxiMotoBooking] Booking error:', error);
-            toast.error('Erreur lors de la réservation');
+            toast.error(t('taxiMotoBookingV2.erreurLorsDeLaReservation'));
         } finally {
             setBookingInProgress(false);
         }
@@ -287,8 +289,8 @@ export default function TaxiMotoBooking({
                 <CardContent className="space-y-4">
                     {/* Point de départ - GPS Ultra-Précis */}
                     <GooglePlacesAddressInput
-                        label="Point de départ"
-                        placeholder="Rechercher votre adresse de départ..."
+                        label={t('taxiMotoBookingV2.pointDeDepart')}
+                        placeholder={t('taxiMotoBookingV2.rechercherVotreAdresseDeDepart')}
                         userLocation={userLocation}
                         showCurrentLocationButton={true}
                         required={true}
@@ -305,7 +307,7 @@ export default function TaxiMotoBooking({
                     {/* Destination - GPS Ultra-Précis */}
                     <GooglePlacesAddressInput
                         label="Destination"
-                        placeholder="Rechercher votre destination..."
+                        placeholder={t('taxiMotoBookingV2.rechercherVotreDestination')}
                         userLocation={userLocation}
                         showCurrentLocationButton={false}
                         required={true}
@@ -346,7 +348,7 @@ export default function TaxiMotoBooking({
                                 onChange={(e) => setIsScheduled(e.target.checked)}
                                 className="rounded"
                             />
-                            <span className="text-sm">Réservation planifiée</span>
+                            <span className="text-sm">{t('taxiMotoBookingV2.reservationPlanifiee')}</span>
                         </label>
 
                         {isScheduled && (
@@ -391,13 +393,13 @@ export default function TaxiMotoBooking({
                                     <div className="text-lg font-bold text-primary">
                                         {routeInfo.distanceText}
                                     </div>
-                                    <div className="text-xs text-muted-foreground">Distance réelle</div>
+                                    <div className="text-xs text-muted-foreground">{t('taxiMotoBookingV2.distanceReelle')}</div>
                                 </div>
                                 <div className="text-center">
                                     <div className="text-lg font-bold text-[#ff4000]">
                                         {routeInfo.durationText}
                                     </div>
-                                    <div className="text-xs text-muted-foreground">Temps estimé</div>
+                                    <div className="text-xs text-muted-foreground">{t('taxiMotoBookingV2.tempsEstime')}</div>
                                 </div>
                             </div>
 
@@ -425,7 +427,7 @@ export default function TaxiMotoBooking({
                     </CardHeader>
                     <CardContent className="space-y-3">
                         <div className="flex justify-between text-sm">
-                            <span>Prix de base</span>
+                            <span>{t('taxiMotoBookingV2.prixDeBase')}</span>
                             <span><Money amount={priceEstimate.basePrice || 0} from="GNF" /></span>
                         </div>
                         <div className="flex justify-between text-sm">

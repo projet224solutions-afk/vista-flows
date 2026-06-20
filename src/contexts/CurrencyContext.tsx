@@ -202,6 +202,20 @@ export function CurrencySync() {
   // ⚠️ NE PAS court-circuiter sur detected_currency='GNF' : une valeur GNF périmée bloquait la
   //    conversion alors que le wallet est en XOF/EUR. ⚠️ PAS de .maybeSingle() : plusieurs lignes
   //    wallet (changements de devise répétés) la faisaient planter → repli erroné sur la géo.
+  // Devise du PAYS VERROUILLÉ de l'utilisateur (profiles.country_code → countries.currency_code).
+  // C'est la devise par défaut du système pour cet utilisateur : déterministe, indépendante de la
+  // géolocalisation. Renvoie null si pas de pays / pas de table.
+  const resolveCountryCurrency = useCallback(async (): Promise<string | null> => {
+    if (!user?.id) return null;
+    try {
+      const { data: prof } = await supabase.from('profiles').select('country_code').eq('id', user.id).maybeSingle();
+      const cc = prof?.country_code ? String(prof.country_code) : null;
+      if (!cc) return null;
+      const { data: ctry } = await supabase.from('countries').select('currency_code').eq('country_code', cc).maybeSingle();
+      return ctry?.currency_code ? String(ctry.currency_code).toUpperCase() : null;
+    } catch { return null; }
+  }, [user?.id]);
+
   const applyCurrency = useCallback(async () => {
     const detected = profile?.detected_currency
       ? String(profile.detected_currency).toUpperCase()
@@ -222,12 +236,16 @@ export function CurrencySync() {
         ? String(explicit.currency).toUpperCase()
         : (rows[0]?.currency ? String(rows[0].currency).toUpperCase() : null);
       if (walletCurrency && walletCurrency !== 'GNF') { setProfileCurrency(walletCurrency); return; }
-      // Wallet en GNF (ou introuvable) → detected_currency explicite, sinon géo.
-      setProfileCurrency(detected && detected !== 'GNF' ? detected : null);
+      if (detected && detected !== 'GNF') { setProfileCurrency(detected); return; }
+      // Wallet GNF + pas de detected → DEVISE DU PAYS VERROUILLÉ (prime sur la géo).
+      // Un Sénégalais voit XOF, un Guinéen GNF — même en voyage. On pose même 'GNF' explicitement
+      // pour bloquer le repli sur la géolocalisation.
+      const countryCurrency = await resolveCountryCurrency();
+      setProfileCurrency(countryCurrency || (detected && detected !== 'GNF' ? detected : null));
     } catch {
       setProfileCurrency(detected && detected !== 'GNF' ? detected : null);
     }
-  }, [user?.id, profile?.detected_currency, setProfileCurrency]);
+  }, [user?.id, profile?.detected_currency, setProfileCurrency, resolveCountryCurrency]);
 
   useEffect(() => { applyCurrency(); }, [applyCurrency]);
 

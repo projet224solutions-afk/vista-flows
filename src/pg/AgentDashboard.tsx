@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,14 +34,16 @@ import { AgentVendorsModule } from '@/components/agent/modules/AgentVendorsModul
 import { AgentOrdersModule } from '@/components/agent/modules/AgentOrdersModule';
 import { AgentServiceSubscriptionsModule } from '@/components/agent/modules/AgentServiceSubscriptionsModule';
 import { AgentPermissionsDisplay } from '@/components/agent/AgentPermissionsDisplay';
+import { Copilot224 } from '@/components/service-common/Copilot224';
 
 export default function AgentDashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { t } = useTranslation();
   const [agent, setAgent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
   const [_pdgUserId, setPdgUserId] = useState<string | null>(null);
   const [walletBalance, setWalletBalance] = useState(0);
   const { stats, refetch: refetchStats } = useAgentStats(agent?.id);
@@ -145,7 +147,7 @@ export default function AgentDashboard() {
       setPdgUserId(user?.id || null);
     } catch (error: any) {
       console.error('Erreur chargement agent:', error);
-      toast.error('Erreur lors du chargement des données');
+      toast.error(t('agentDashboard.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -178,17 +180,17 @@ export default function AgentDashboard() {
     e.preventDefault();
 
     if (!agent) {
-      toast.error('Agent non trouvé');
+      toast.error(t('agentDashboard.agentNonTrouve'));
       return;
     }
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error('Les mots de passe ne correspondent pas');
+      toast.error(t('agentDashboard.lesMotsDePasseNe'));
       return;
     }
 
     if (passwordData.newPassword.length < 8) {
-      toast.error('Le nouveau mot de passe doit contenir au moins 8 caractères');
+      toast.error(t('agentDashboard.leNouveauMotDePasse'));
       return;
     }
 
@@ -205,7 +207,7 @@ export default function AgentDashboard() {
       });
 
       if (resp.success) {
-        toast.success('Mot de passe modifié avec succès');
+        toast.success(t('agentDashboard.motDePasseModifieAvec'));
         setIsPasswordDialogOpen(false);
         setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       } else {
@@ -213,7 +215,7 @@ export default function AgentDashboard() {
       }
     } catch (error) {
       console.error('Erreur changement mot de passe:', error);
-      toast.error('Erreur lors du changement de mot de passe');
+      toast.error(t('agentDashboard.erreurLorsDuChangementDe'));
     } finally {
       setIsChangingPassword(false);
     }
@@ -223,12 +225,12 @@ export default function AgentDashboard() {
     e.preventDefault();
 
     if (!agent) {
-      toast.error('Agent non trouvé');
+      toast.error(t('agentDashboard.agentNonTrouve'));
       return;
     }
 
     if (!emailData.newEmail || !emailData.currentPassword) {
-      toast.error('Veuillez remplir tous les champs');
+      toast.error(t('agentDashboard.veuillezRemplirTousLesChamps'));
       return;
     }
 
@@ -252,7 +254,7 @@ export default function AgentDashboard() {
       });
 
       if (resp.success) {
-        toast.success('Email modifié avec succès');
+        toast.success(t('agentDashboard.emailModifieAvecSucces'));
         setIsEmailDialogOpen(false);
         setEmailData({ newEmail: '', currentPassword: '' });
         // Reload agent data to reflect new email
@@ -262,7 +264,7 @@ export default function AgentDashboard() {
       }
     } catch (error) {
       console.error('Erreur changement email:', error);
-      toast.error('Erreur lors du changement d\'email');
+      toast.error(t('agentDashboard.erreurLorsDuChangementD'));
     } finally {
       setIsChangingEmail(false);
     }
@@ -447,18 +449,18 @@ export default function AgentDashboard() {
                           required
                           value={emailData.newEmail}
                           onChange={(e) => setEmailData({ ...emailData, newEmail: e.target.value })}
-                          placeholder="nouveau@email.com"
+                          placeholder={t('agentDashboard.nouveauEmailCom')}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="emailCurrentPassword">Mot de passe actuel</Label>
+                        <Label htmlFor="emailCurrentPassword">{t('agentDashboard.motDePasseActuel')}</Label>
                         <Input
                           id="emailCurrentPassword"
                           type="password"
                           required
                           value={emailData.currentPassword}
                           onChange={(e) => setEmailData({ ...emailData, currentPassword: e.target.value })}
-                          placeholder="Pour confirmer votre identité"
+                          placeholder={t('agentDashboard.pourConfirmerVotreIdentite')}
                         />
                       </div>
                       <div className="flex gap-3 pt-2">
@@ -512,18 +514,18 @@ export default function AgentDashboard() {
                     </DialogHeader>
                     <form onSubmit={handleChangePassword} className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="currentPassword">Mot de passe actuel</Label>
+                        <Label htmlFor="currentPassword">{t('agentDashboard.motDePasseActuel')}</Label>
                         <Input
                           id="currentPassword"
                           type="password"
                           required
                           value={passwordData.currentPassword}
                           onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                          placeholder="Entrez votre mot de passe actuel"
+                          placeholder={t('agentDashboard.entrezVotreMotDePasse')}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="newPassword">Nouveau mot de passe</Label>
+                        <Label htmlFor="newPassword">{t('agentDashboard.nouveauMotDePasse')}</Label>
                         <Input
                           id="newPassword"
                           type="password"
@@ -531,18 +533,18 @@ export default function AgentDashboard() {
                           minLength={8}
                           value={passwordData.newPassword}
                           onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                          placeholder="Minimum 8 caractères"
+                          placeholder={t('agentDashboard.minimum8Caracteres')}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+                        <Label htmlFor="confirmPassword">{t('agentDashboard.confirmerLeMotDePasse')}</Label>
                         <Input
                           id="confirmPassword"
                           type="password"
                           required
                           value={passwordData.confirmPassword}
                           onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                          placeholder="Confirmez le nouveau mot de passe"
+                          placeholder={t('agentDashboard.confirmezLeNouveauMotDe')}
                         />
                       </div>
                       <div className="flex gap-3 pt-2">
@@ -590,6 +592,7 @@ export default function AgentDashboard() {
       </AgentLayoutProfessional>
 
       <CommunicationWidget position="bottom-right" showNotifications={true} />
+      <Copilot224 service="agent" title="Copilot Agent" />
     </>
   );
 }

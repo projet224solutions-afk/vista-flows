@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ interface FraudPattern {
 }
 
 export function AdvancedMLFraudDetection() {
+  const { t } = useTranslation();
   const [models, setModels] = useState<MLModel[]>([]);
   const [patterns, setPatterns] = useState<FraudPattern[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,7 +62,7 @@ export function AdvancedMLFraudDetection() {
       if (patternsRes.data) setPatterns(patternsRes.data);
     } catch (error) {
       console.error('Error loading ML data:', error);
-      toast.error('Erreur chargement données ML');
+      toast.error(t('advancedMLFraudDetection.erreurChargementDonneesMl'));
     } finally {
       setLoading(false);
     }
@@ -72,7 +74,7 @@ export function AdvancedMLFraudDetection() {
 
   const handleRefresh = () => {
     loadMLData();
-    toast.success('Données ML actualisées');
+    toast.success(t('advancedMLFraudDetection.donneesMlActualisees'));
   };
 
   const getModelTypeIcon = (type: string) => {
@@ -138,7 +140,7 @@ export function AdvancedMLFraudDetection() {
           <div className="p-4 rounded-lg border bg-blue-50 dark:bg-[#04439e] border-blue-200 dark:border-[#04439e]">
             <div className="flex items-center gap-2 mb-2">
               <Zap className="w-5 h-5 text-[#04439e]" />
-              <span className="font-semibold">Système ML Actif - Analyse en temps réel</span>
+              <span className="font-semibold">{t('advancedMLFraudDetection.systemeMlActifAnalyseEn')}</span>
             </div>
             <p className="text-sm text-muted-foreground">
               {models.filter(m => m.status === 'active').length} modèles actifs •
@@ -157,7 +159,7 @@ export function AdvancedMLFraudDetection() {
               <Activity className="w-8 h-8 text-blue-500" />
               <div>
                 <div className="text-2xl font-bold">{totalPredictions.toLocaleString()}</div>
-                <div className="text-xs text-muted-foreground">Transactions analysées</div>
+                <div className="text-xs text-muted-foreground">{t('advancedMLFraudDetection.transactionsAnalysees')}</div>
               </div>
             </div>
           </CardContent>
@@ -168,7 +170,7 @@ export function AdvancedMLFraudDetection() {
               <Target className="w-8 h-8 text-[#ff4000]" />
               <div>
                 <div className="text-2xl font-bold">{avgAccuracy.toFixed(1)}%</div>
-                <div className="text-xs text-muted-foreground">Précision moyenne</div>
+                <div className="text-xs text-muted-foreground">{t('advancedMLFraudDetection.precisionMoyenne')}</div>
               </div>
             </div>
           </CardContent>
@@ -179,7 +181,7 @@ export function AdvancedMLFraudDetection() {
               <AlertTriangle className="w-8 h-8 text-[#ff4000]" />
               <div>
                 <div className="text-2xl font-bold">{highRiskPatterns}</div>
-                <div className="text-xs text-muted-foreground">Patterns à haut risque</div>
+                <div className="text-xs text-muted-foreground">{t('advancedMLFraudDetection.patternsAHautRisque')}</div>
               </div>
             </div>
           </CardContent>
@@ -227,10 +229,10 @@ export function AdvancedMLFraudDetection() {
                   </Badge>
                 </div>
 
-                <div className="grid grid-cols-4 gap-4 text-center">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
                   <div className="p-2 bg-muted rounded">
                     <div className="text-lg font-bold text-[#ff4000]">{model.accuracy}%</div>
-                    <div className="text-xs text-muted-foreground">Précision</div>
+                    <div className="text-xs text-muted-foreground">{t('advancedMLFraudDetection.precision')}</div>
                   </div>
                   <div className="p-2 bg-muted rounded">
                     <div className="text-lg font-bold text-blue-600">{model.precision_score}%</div>
@@ -247,7 +249,7 @@ export function AdvancedMLFraudDetection() {
                 </div>
 
                 <div>
-                  <div className="text-xs text-muted-foreground mb-2">Features utilisées:</div>
+                  <div className="text-xs text-muted-foreground mb-2">{t('advancedMLFraudDetection.featuresUtilisees')}</div>
                   <div className="flex flex-wrap gap-1">
                     {model.features_used?.slice(0, 5).map((feature, i) => (
                       <Badge key={i} variant="outline" className="text-xs">
@@ -307,7 +309,7 @@ export function AdvancedMLFraudDetection() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <div className="flex justify-between text-sm mb-1">
-                      <span>Confiance du modèle</span>
+                      <span>{t('advancedMLFraudDetection.confianceDuModele')}</span>
                       <span className="font-medium">{pattern.confidence}%</span>
                     </div>
                     <Progress value={pattern.confidence} className="h-2" />

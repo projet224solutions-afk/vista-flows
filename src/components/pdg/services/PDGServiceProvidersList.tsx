@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Badge } from '@/components/ui/badge';
@@ -90,6 +91,7 @@ const statusConfig: Record<string, { label: string; icon: any; className: string
 };
 
 export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGServiceProvidersListProps) {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(true);
@@ -274,7 +276,7 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
           <CardContent className="p-4 text-center">
             <ShoppingBag className="w-5 h-5 text-primary mx-auto mb-1" />
             <div className="text-2xl font-bold">{stats.totalOrders}</div>
-            <p className="text-xs text-muted-foreground">Commandes</p>
+            <p className="text-xs text-muted-foreground">{t('pDGServiceProvidersList.commandes')}</p>
           </CardContent>
         </Card>
         <Card className="border-border/50">
@@ -302,7 +304,7 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
               <div className="relative flex-1 sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Rechercher..."
+                  placeholder={t('pDGServiceProvidersList.rechercher')}
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   className="pl-9"
@@ -319,14 +321,14 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Service</TableHead>
+                  <TableHead>{t('pDGServiceProvidersList.service')}</TableHead>
                   {activeServiceTab === 'all' && <TableHead>Type</TableHead>}
                   <TableHead>Statut</TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>Note</TableHead>
-                  <TableHead>Commandes</TableHead>
+                  <TableHead>{t('pDGServiceProvidersList.commandes')}</TableHead>
                   <TableHead>CA</TableHead>
-                  <TableHead>Inscription</TableHead>
+                  <TableHead>{t('pDGServiceProvidersList.inscription')}</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
@@ -409,7 +411,7 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
 
       {/* ── Dialog : Offrir un abonnement ─────────────────────────────────────── */}
       <Dialog open={offerDialog.open} onOpenChange={open => setOfferDialog(d => ({ ...d, open }))}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Gift className="w-5 h-5 text-[#ff4000]" />
@@ -458,7 +460,7 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
                   onValueChange={v => setOfferDialog(d => ({ ...d, selectedPlanId: v, error: null }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Choisir un plan..." />
+                    <SelectValue placeholder={t('pDGServiceProvidersList.choisirUnPlan')} />
                   </SelectTrigger>
                   <SelectContent>
                     {offerDialog.plans.map(plan => (
@@ -562,7 +564,7 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
 
       {/* Dialog changement de devise service de proximité */}
       <Dialog open={currencyDialog.open} onOpenChange={open => setCurrencyDialog(d => ({ ...d, open }))}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Globe className="w-5 h-5" />
@@ -570,11 +572,11 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <p className="text-sm text-muted-foreground">Service : <strong>{currencyDialog.provider?.business_name}</strong></p>
+            <p className="text-sm text-muted-foreground">{t('pDGServiceProvidersList.service2')} <strong>{currencyDialog.provider?.business_name}</strong></p>
             <div className="space-y-2">
-              <Label>Pays de résidence</Label>
+              <Label>{t('pDGServiceProvidersList.paysDeResidence')}</Label>
               <Select value={currencyDialog.selectedCountry} onValueChange={v => setCurrencyDialog(d => ({ ...d, selectedCountry: v, error: null }))}>
-                <SelectTrigger><SelectValue placeholder="Sélectionner un pays..." /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('pDGServiceProvidersList.selectionnerUnPays')} /></SelectTrigger>
                 <SelectContent>
                   {COUNTRY_OPTIONS.map(c => (
                     <SelectItem key={c.code} value={c.code}>{c.flag} {c.name} — {c.currency}</SelectItem>
@@ -587,7 +589,7 @@ export function PDGServiceProvidersList({ activeServiceTab, serviceTypes }: PDGS
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCurrencyDialog(d => ({ ...d, open: false }))}>Annuler</Button>
+            <Button variant="outline" onClick={() => setCurrencyDialog(d => ({ ...d, open: false }))}>{t('pDGServiceProvidersList.annuler')}</Button>
             <Button onClick={handleServiceCurrencyChange} disabled={!currencyDialog.selectedCountry || currencyDialog.saving}>
               {currencyDialog.saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />En cours...</> : 'Confirmer'}
             </Button>

@@ -1,5 +1,4 @@
-﻿// @ts-nocheck
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { User, Settings, ShoppingBag, History, LogOut, Edit, Camera, ArrowLeft, Save, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +16,7 @@ import LanguageSelector from "@/components/LanguageSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useStorageUpload } from "@/hooks/useStorageUpload";
+import { useTranslation } from "@/hooks/useTranslation";
 
 const userTypes = {
   client: {
@@ -100,6 +100,7 @@ const menuItems = [
 type ActivityItem = { id: string | number; type?: string; title: string; description?: string; timestamp: string; status?: string };
 
 export default function Profil() {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
@@ -211,14 +212,14 @@ export default function Profil() {
 
       if (error) {
         console.error('Error loading orders:', error);
-        toast.error('Erreur lors du chargement des commandes');
+        toast.error(t('profile.errorLoadingOrders'));
         setOrders([]);
       } else {
         setOrders(data || []);
       }
     } catch (error) {
       console.error('Error loading orders:', error);
-      toast.error('Erreur lors du chargement des commandes');
+      toast.error(t('profile.errorLoadingOrders'));
       setOrders([]);
     } finally {
       setLoadingData(false);
@@ -247,14 +248,14 @@ export default function Profil() {
 
       if (error) {
         console.error('Error loading transactions:', error);
-        toast.error('Erreur lors du chargement des transactions');
+        toast.error(t('profile.errorLoadingTransactions'));
         setTransactions([]);
       } else {
         setTransactions(data || []);
       }
     } catch (error) {
       console.error('Error loading transactions:', error);
-      toast.error('Erreur lors du chargement des transactions');
+      toast.error(t('profile.errorLoadingTransactions'));
       setTransactions([]);
     } finally {
       setLoadingData(false);
@@ -286,7 +287,7 @@ export default function Profil() {
           email: editEmail
         });
         if (emailError) throw emailError;
-        toast.success('Email mis à jour. Vérifiez votre boëte mail pour confirmer.');
+        toast.success(t('profile.emailUpdated'));
       }
 
       // Mise à jour du téléphone dans le profil
@@ -297,7 +298,7 @@ export default function Profil() {
           .eq('id', user.id);
 
         if (profileError) throw profileError;
-        toast.success('Numéro de téléphone mis à jour');
+        toast.success(t('profile.phoneUpdated'));
       }
 
       setEditMode(false);
@@ -371,7 +372,7 @@ export default function Profil() {
 
         const { error: updErr } = await supabase.from('profiles').update({ avatar_url: result.publicUrl }).eq('id', user.id);
         if (updErr) throw updErr;
-        toast.success('Avatar mis à jour');
+        toast.success(t('profile.avatarUpdated'));
         window.location.reload();
       } catch (e: any) {
         toast.error(e?.message || 'Erreur upload avatar');
@@ -419,7 +420,7 @@ export default function Profil() {
       <div className="min-h-screen bg-background pb-24">
         <header className="bg-card border-b border-border">
           <div className="px-4 py-6">
-            <h1 className="text-2xl font-bold text-foreground">Profil</h1>
+            <h1 className="text-2xl font-bold text-foreground">{t('nav.profile')}</h1>
           </div>
         </header>
 
@@ -427,15 +428,15 @@ export default function Profil() {
           <Card>
             <CardContent className="text-center py-12">
               <User className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <h2 className="text-xl font-semibold mb-2">Connectez-vous</h2>
+              <h2 className="text-xl font-semibold mb-2">{t('profile.pleaseLogin')}</h2>
               <p className="text-muted-foreground mb-6">
-                Vous devez vous connecter pour accéder à votre profil
+                {t('profile.loginRequired')}
               </p>
               <Button
                 onClick={() => navigate('/auth')}
                 className="bg-vendeur-primary hover:bg-vendeur-primary/90"
               >
-                Se connecter
+                {t('auth.login')}
               </Button>
             </CardContent>
           </Card>
@@ -450,7 +451,7 @@ export default function Profil() {
       <header className="bg-card border-b border-border">
         <div className="px-4 py-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-foreground">Mon Profil</h1>
+            <h1 className="text-2xl font-bold text-foreground">{t('profile.title')}</h1>
             <Button
               variant="outline"
               size="sm"
@@ -458,7 +459,7 @@ export default function Profil() {
               className="ml-auto gap-2 px-4 py-2 rounded-lg border-border hover:bg-accent hover:text-accent-foreground transition-all duration-200 shadow-sm"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span className="font-medium">Retour</span>
+              <span className="font-medium">{t('common.back')}</span>
             </Button>
           </div>
         </div>
@@ -528,17 +529,17 @@ export default function Profil() {
           <CardContent className="p-3 sm:p-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <label className="text-xs sm:text-sm font-medium text-muted-foreground">Votre ID utilisateur</label>
+                <label className="text-xs sm:text-sm font-medium text-muted-foreground">{t('profile.yourUserId')}</label>
                 <Button
                   size="sm"
                   variant="outline"
                   className="shrink-0 h-8 text-xs sm:text-sm"
                   onClick={() => {
                     navigator.clipboard.writeText(user.id);
-                    toast.success("ID copié dans le presse-papiers");
+                    toast.success(t('profile.idCopied'));
                   }}
                 >
-                  Copier
+                  {t('common.copy')}
                 </Button>
               </div>
               <div className="p-2 sm:p-3 bg-muted rounded-md font-mono text-[10px] sm:text-xs break-all leading-relaxed">
@@ -580,14 +581,14 @@ export default function Profil() {
       <Dialog open={openDialog === 'orders'} onOpenChange={(open) => !open && setOpenDialog(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Mes Commandes</DialogTitle>
+            <DialogTitle>{t('profile.myOrders')}</DialogTitle>
           </DialogHeader>
           {loadingData ? (
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : orders.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">Aucune commande trouvée</p>
+            <p className="text-center text-muted-foreground py-8">{t('profile.noOrders')}</p>
           ) : (
             <div className="space-y-3">
               {orders.map((order) => (
@@ -623,14 +624,14 @@ export default function Profil() {
       <Dialog open={openDialog === 'history'} onOpenChange={(open) => !open && setOpenDialog(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Historique des Transactions</DialogTitle>
+            <DialogTitle>{t('profile.transactionHistory')}</DialogTitle>
           </DialogHeader>
           {loadingData ? (
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : transactions.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">Aucune transaction trouvée</p>
+            <p className="text-center text-muted-foreground py-8">{t('profile.noTransactions')}</p>
           ) : (
             <div className="space-y-3">
               {transactions.map((tx) => (
@@ -672,11 +673,11 @@ export default function Profil() {
       }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Paramètres du compte</DialogTitle>
+            <DialogTitle>{t('profile.accountSettings')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+              <Label htmlFor="email" className="text-sm font-medium">{t('auth.email')}</Label>
               {editMode ? (
                 <Input
                   id="email"
@@ -690,7 +691,7 @@ export default function Profil() {
               )}
             </div>
             <div>
-              <Label htmlFor="phone" className="text-sm font-medium">Téléphone</Label>
+              <Label htmlFor="phone" className="text-sm font-medium">{t('auth.phone')}</Label>
               {editMode ? (
                 <Input
                   id="phone"
@@ -701,11 +702,11 @@ export default function Profil() {
                   className="mt-1"
                 />
               ) : (
-                <p className="text-muted-foreground mt-1">{profile?.phone || 'Non renseigné'}</p>
+                <p className="text-muted-foreground mt-1">{profile?.phone || t('profile.notProvided')}</p>
               )}
             </div>
             <div>
-              <label className="text-sm font-medium">Rôle</label>
+              <label className="text-sm font-medium">{t('profile.role')}</label>
               <p className="text-muted-foreground mt-1">{profile?.role || 'client'}</p>
             </div>
 
@@ -718,18 +719,18 @@ export default function Profil() {
             {editMode ? (
               <>
                 <Button variant="outline" onClick={() => setEditMode(false)} disabled={saving}>
-                  Annuler
+                  {t('common.cancel')}
                 </Button>
                 <Button onClick={handleSaveSettings} disabled={saving}>
                   {saving ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Enregistrement...
+                      {t('profile.saving')}
                     </>
                   ) : (
                     <>
                       <Save className="w-4 h-4 mr-2" />
-                      Enregistrer
+                      {t('common.save')}
                     </>
                   )}
                 </Button>
@@ -737,7 +738,7 @@ export default function Profil() {
             ) : (
               <Button onClick={() => setEditMode(true)}>
                 <Edit className="w-4 h-4 mr-2" />
-                Modifier
+                {t('common.edit')}
               </Button>
             )}
           </DialogFooter>
@@ -748,12 +749,12 @@ export default function Profil() {
       <section className="px-4 py-6">
         <Card>
           <CardHeader>
-            <CardTitle>Activité récente</CardTitle>
+            <CardTitle>{t('profile.recentActivity')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {activities.length === 0 && (
-                <div className="text-sm text-muted-foreground">Aucune activité récente.</div>
+                <div className="text-sm text-muted-foreground">{t('profile.noRecentActivity')}</div>
               )}
               {activities.map((activity) => (
                 <div key={activity.id} className="flex items-start gap-3 p-3 bg-accent rounded-lg">

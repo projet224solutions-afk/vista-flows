@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
@@ -71,6 +72,7 @@ interface ManageProductsSectionProps {
 }
 
 export default function ManageProductsSection({ agentId }: ManageProductsSectionProps) {
+  const { t } = useTranslation();
   const [products, setProducts] = useState<Product[]>([]);
   const [vendors, setVendors] = useState<VendorInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -116,7 +118,7 @@ export default function ManageProductsSection({ agentId }: ManageProductsSection
       }
     } catch (error) {
       console.error('Erreur chargement produits:', error);
-      toast.error('Erreur lors du chargement des produits');
+      toast.error(t('manageProductsSection.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -133,7 +135,7 @@ export default function ManageProductsSection({ agentId }: ManageProductsSection
       await loadProducts();
     } catch (error) {
       console.error('Erreur modification statut:', error);
-      toast.error('Erreur lors de la modification du statut');
+      toast.error(t('manageProductsSection.erreurLorsDeLaModification'));
     }
   };
 
@@ -144,12 +146,12 @@ export default function ManageProductsSection({ agentId }: ManageProductsSection
 
       if (!resp.success) throw new Error(resp.error || 'Erreur');
 
-      toast.success('Produit supprimé avec succès');
+      toast.success(t('manageProductsSection.produitSupprimeAvecSucces'));
       setShowDeleteConfirm(null);
       await loadProducts();
     } catch (error) {
       console.error('Erreur suppression produit:', error);
-      toast.error('Erreur lors de la suppression du produit');
+      toast.error(t('manageProductsSection.erreurLorsDeLaSuppression'));
     }
   };
 
@@ -174,12 +176,12 @@ export default function ManageProductsSection({ agentId }: ManageProductsSection
 
       if (!resp.success) throw new Error(resp.error || 'Erreur');
 
-      toast.success('Produit mis à jour avec succès');
+      toast.success(t('manageProductsSection.produitMisAJourAvec'));
       setEditingProduct(null);
       await loadProducts();
     } catch (error) {
       console.error('Erreur mise à jour produit:', error);
-      toast.error('Erreur lors de la mise à jour du produit');
+      toast.error(t('manageProductsSection.erreurLorsDeLaMise'));
     }
   };
 
@@ -206,8 +208,8 @@ export default function ManageProductsSection({ agentId }: ManageProductsSection
       {/* En-tête */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold">Gestion des Produits</h2>
-          <p className="text-muted-foreground mt-1">Administration des produits de la plateforme</p>
+          <h2 className="text-3xl font-bold">{t('manageProductsSection.gestionDesProduits')}</h2>
+          <p className="text-muted-foreground mt-1">{t('manageProductsSection.administrationDesProduitsDeLa')}</p>
         </div>
       </div>
 
@@ -215,12 +217,12 @@ export default function ManageProductsSection({ agentId }: ManageProductsSection
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Produits</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('manageProductsSection.totalProduits')}</CardTitle>
             <Package className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.total}</div>
-            <p className="text-xs text-muted-foreground mt-1">produits enregistrés</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('manageProductsSection.produitsEnregistres')}</p>
           </CardContent>
         </Card>
 
@@ -259,7 +261,7 @@ export default function ManageProductsSection({ agentId }: ManageProductsSection
             <div className="text-2xl font-bold text-[#04439e]">
               {stats.totalStock.toLocaleString()}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">unités en stock</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('manageProductsSection.unitesEnStock')}</p>
           </CardContent>
         </Card>
 
@@ -272,7 +274,7 @@ export default function ManageProductsSection({ agentId }: ManageProductsSection
             <div className="text-2xl font-bold text-orange-500">
               {stats.lowStock}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">produits concernés</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('manageProductsSection.produitsConcernes')}</p>
           </CardContent>
         </Card>
 
@@ -293,13 +295,13 @@ export default function ManageProductsSection({ agentId }: ManageProductsSection
       {/* Recherche */}
       <Card>
         <CardHeader>
-          <CardTitle>Rechercher un produit</CardTitle>
+          <CardTitle>{t('manageProductsSection.rechercherUnProduit')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="relative">
             <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Rechercher par nom ou SKU..."
+              placeholder={t('manageProductsSection.rechercherParNomOuSku')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -389,7 +391,7 @@ export default function ManageProductsSection({ agentId }: ManageProductsSection
             {filteredProducts.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
                 <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Aucun produit trouvé</p>
+                <p>{t('manageProductsSection.aucunProduitTrouve')}</p>
               </div>
             )}
           </div>
@@ -398,9 +400,9 @@ export default function ManageProductsSection({ agentId }: ManageProductsSection
 
       {/* Dialog Détails Produit */}
       <Dialog open={!!viewProduct} onOpenChange={() => setViewProduct(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Détails du Produit</DialogTitle>
+            <DialogTitle>{t('manageProductsSection.detailsDuProduit')}</DialogTitle>
           </DialogHeader>
           {viewProduct && (
             <div className="space-y-4">
@@ -422,7 +424,7 @@ export default function ManageProductsSection({ agentId }: ManageProductsSection
                   <p className="font-medium">{viewProduct.total_stock || 0} unités</p>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">Vendeur</Label>
+                  <Label className="text-muted-foreground">{t('manageProductsSection.vendeur')}</Label>
                   <p className="font-medium">{getVendorInfo(viewProduct.vendor_id)}</p>
                 </div>
                 <div>
@@ -432,7 +434,7 @@ export default function ManageProductsSection({ agentId }: ManageProductsSection
                   </Badge>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">Date de création</Label>
+                  <Label className="text-muted-foreground">{t('manageProductsSection.dateDeCreation')}</Label>
                   <p className="font-medium">
                     {new Date(viewProduct.created_at).toLocaleDateString('fr-FR')}
                   </p>
@@ -451,9 +453,9 @@ export default function ManageProductsSection({ agentId }: ManageProductsSection
 
       {/* Dialog Édition Produit */}
       <Dialog open={!!editingProduct} onOpenChange={() => setEditingProduct(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Modifier le Produit</DialogTitle>
+            <DialogTitle>{t('manageProductsSection.modifierLeProduit')}</DialogTitle>
           </DialogHeader>
           {editingProduct && (
             <div className="space-y-4">
@@ -488,7 +490,7 @@ export default function ManageProductsSection({ agentId }: ManageProductsSection
                     onChange={(e) => setEditingProduct({ ...editingProduct, is_active: e.target.checked })}
                     className="w-4 h-4"
                   />
-                  <Label htmlFor="is_active" className="cursor-pointer">Produit actif</Label>
+                  <Label htmlFor="is_active" className="cursor-pointer">{t('manageProductsSection.produitActif')}</Label>
                 </div>
               </div>
               <div>
@@ -516,13 +518,13 @@ export default function ManageProductsSection({ agentId }: ManageProductsSection
       <AlertDialog open={!!showDeleteConfirm} onOpenChange={() => setShowDeleteConfirm(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogTitle>{t('manageProductsSection.confirmerLaSuppression')}</AlertDialogTitle>
             <AlertDialogDescription>
               Êtes-vous sûr de vouloir supprimer ce produit ? Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel>{t('manageProductsSection.annuler')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => showDeleteConfirm && deleteProduct(showDeleteConfirm)}
               className="bg-[#ff4000] hover:bg-[#ff4000]"

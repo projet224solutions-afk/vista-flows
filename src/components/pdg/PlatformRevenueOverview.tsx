@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,7 @@ interface ServiceRevenue {
 }
 
 export default function PlatformRevenueOverview() {
+  const { t } = useTranslation();
   const [revenues, setRevenues] = useState<{
     services: ServiceRevenue[];
     total_revenue: number;
@@ -46,7 +48,7 @@ export default function PlatformRevenueOverview() {
       setRevenues(data);
     } catch (error: any) {
       console.error('❌ [PlatformRevenue] Erreur chargement revenus:', error);
-      toast.error('Erreur lors du chargement des revenus');
+      toast.error(t('platformRevenueOverview.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -56,7 +58,7 @@ export default function PlatformRevenueOverview() {
     setRefreshing(true);
     await fetchRevenueData();
     setRefreshing(false);
-    toast.success('Données actualisées');
+    toast.success(t('platformRevenueOverview.donneesActualisees'));
   };
 
   useEffect(() => {
@@ -165,11 +167,11 @@ export default function PlatformRevenueOverview() {
         <TabsList className="inline-flex w-max sm:w-full sm:max-w-md sm:grid sm:grid-cols-2 gap-1 bg-muted/50 p-1 rounded-xl">
           <TabsTrigger value="summary" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
             <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            <span>Résumé</span>
+            <span>{t('platformRevenueOverview.resume')}</span>
           </TabsTrigger>
           <TabsTrigger value="details" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
             <List className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            <span>Transactions Détaillées</span>
+            <span>{t('platformRevenueOverview.transactionsDetaillees')}</span>
           </TabsTrigger>
         </TabsList>
       </div>
@@ -229,7 +231,7 @@ export default function PlatformRevenueOverview() {
                 <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#04439e]/10 flex items-center justify-center flex-shrink-0">
                   <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#04439e]" />
                 </div>
-                <span className="truncate">Taux de Commission Moyen</span>
+                <span className="truncate">{t('platformRevenueOverview.tauxDeCommissionMoyen')}</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
@@ -254,9 +256,9 @@ export default function PlatformRevenueOverview() {
               <div className="min-w-0">
                 <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                   <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
-                  <span className="truncate">Revenus par Service</span>
+                  <span className="truncate">{t('platformRevenueOverview.revenusParService')}</span>
                 </CardTitle>
-                <CardDescription className="text-xs sm:text-sm mt-1">Détail par type de service</CardDescription>
+                <CardDescription className="text-xs sm:text-sm mt-1">{t('platformRevenueOverview.detailParTypeDeService')}</CardDescription>
               </div>
               <Button
                 variant="outline"
@@ -327,11 +329,11 @@ export default function PlatformRevenueOverview() {
                   💡 Fonctionnement des Commissions
                 </h4>
                 <ul className="text-xs sm:text-sm space-y-1 text-blue-800 dark:text-blue-200 list-disc list-inside">
-                  <li>Les commissions sont calculées automatiquement</li>
-                  <li>Chaque service a sa propre configuration</li>
-                  <li className="hidden sm:list-item">Les frais sont automatiquement appliqués lors des transactions</li>
-                  <li className="hidden sm:list-item">Les revenus sont trackés en temps réel par service</li>
-                  <li className="hidden sm:list-item">Les configurations peuvent être modifiées dans l'onglet "Configuration"</li>
+                  <li>{t('platformRevenueOverview.lesCommissionsSontCalculeesAutomatiqueme')}</li>
+                  <li>{t('platformRevenueOverview.chaqueServiceASaPropre')}</li>
+                  <li className="hidden sm:list-item">{t('platformRevenueOverview.lesFraisSontAutomatiquementAppliques')}</li>
+                  <li className="hidden sm:list-item">{t('platformRevenueOverview.lesRevenusSontTrackesEn')}</li>
+                  <li className="hidden sm:list-item">{t('platformRevenueOverview.lesConfigurationsPeuventEtreModifiees')}</li>
                 </ul>
               </div>
             </div>

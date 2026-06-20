@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent } from '@/components/ui/card';
 import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,7 @@ interface TaxiFormData {
 }
 
 export default function TaxiMotoRequestForm() {
+  const { t } = useTranslation();
   // Utiliser la persistence pour les données du formulaire
   const { values, updateField, resetForm, isRestored } = useFormPersistence<TaxiFormData>(
     'taxi_moto_request',
@@ -30,7 +32,7 @@ export default function TaxiMotoRequestForm() {
       maxAge: 30 * 60 * 1000, // 30 minutes
       onRestore: (data) => {
         if (data.pickupLat || data.dropLat) {
-          toast.success('🚖 Formulaire taxi restauré', { duration: 2000 });
+          toast.success(t('taxiMotoRequestForm.formulaireTaxiRestaure'), { duration: 2000 });
         }
       }
     }
@@ -87,22 +89,22 @@ export default function TaxiMotoRequestForm() {
   return (
     <Card>
       <CardContent className="p-4 space-y-3">
-        <h3 className="font-semibold flex items-center gap-2"><MapPin className="w-4 h-4"/> Demande de Taxi‑Moto</h3>
+        <h3 className="font-semibold flex items-center gap-2"><MapPin className="w-4 h-4"/> {t('taxiMotoRequestForm.demandeDeTaxiMoto')}</h3>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
-            <label className="text-xs">Départ lat</label>
+            <label className="text-xs">{t('taxiMotoRequestForm.departLat')}</label>
             <Input value={values.pickupLat} onChange={e => updateField('pickupLat', e.target.value)} placeholder="9.5" />
           </div>
           <div className="space-y-2">
-            <label className="text-xs">Départ lng</label>
+            <label className="text-xs">{t('taxiMotoRequestForm.departLng')}</label>
             <Input value={values.pickupLng} onChange={e => updateField('pickupLng', e.target.value)} placeholder="-13.7" />
           </div>
           <div className="space-y-2">
-            <label className="text-xs">Arrivée lat</label>
+            <label className="text-xs">{t('taxiMotoRequestForm.arriveeLat')}</label>
             <Input value={values.dropLat} onChange={e => updateField('dropLat', e.target.value)} placeholder="9.52" />
           </div>
           <div className="space-y-2">
-            <label className="text-xs">Arrivée lng</label>
+            <label className="text-xs">{t('taxiMotoRequestForm.arriveeLng')}</label>
             <Input value={values.dropLng} onChange={e => updateField('dropLng', e.target.value)} placeholder="-13.69" />
           </div>
         </div>
@@ -111,7 +113,7 @@ export default function TaxiMotoRequestForm() {
           {estimatedPrice !== null && <Badge variant="outline"><Money amount={estimatedPrice} from="GNF" /></Badge>}
         </div>
         <div>
-          <Button onClick={createRide} disabled={loading || estimatedPrice===null} className="gap-2"><Send className="w-4 h-4"/> Créer la course</Button>
+          <Button onClick={createRide} disabled={loading || estimatedPrice===null} className="gap-2"><Send className="w-4 h-4"/> {t('taxiMotoRequestForm.creerLaCourse')}</Button>
         </div>
         {lastRideId && <div className="text-xs text-muted-foreground">Course créée: {lastRideId.substring(0,8)}…</div>}
       </CardContent>

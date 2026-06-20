@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
@@ -37,6 +38,7 @@ interface BureauOverviewContentProps {
 }
 
 export function BureauOverviewContent({ bureau, stats, walletBalance = 0 }: BureauOverviewContentProps) {
+  const { t } = useTranslation();
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Non disponible';
     return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -98,7 +100,7 @@ export function BureauOverviewContent({ bureau, stats, walletBalance = 0 }: Bure
                     <Phone className="w-4 h-4 text-[#ff4000]" />
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500 uppercase tracking-wide">Téléphone</p>
+                    <p className="text-xs text-slate-500 uppercase tracking-wide">{t('bureauOverviewContent.telephone')}</p>
                     <p className="font-medium text-slate-800">{bureau.president_phone || 'Non renseigné'}</p>
                   </div>
                 </div>
@@ -115,14 +117,14 @@ export function BureauOverviewContent({ bureau, stats, walletBalance = 0 }: Bure
                     <Calendar className="w-4 h-4 text-[#04439e]" />
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500 uppercase tracking-wide">Date de création</p>
+                    <p className="text-xs text-slate-500 uppercase tracking-wide">{t('bureauOverviewContent.dateDeCreation')}</p>
                     <p className="font-medium text-slate-800">{formatDate(bureau.created_at)}</p>
                   </div>
                 </div>
 
                 {bureau.president_name && (
                   <div>
-                    <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Président</p>
+                    <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">{t('bureauOverviewContent.president')}</p>
                     <Badge className="bg-gradient-to-r from-[#ff4000] to-[#ff4000] text-white">
                       {bureau.president_name}
                     </Badge>
@@ -145,7 +147,7 @@ export function BureauOverviewContent({ bureau, stats, walletBalance = 0 }: Bure
             {/* Monthly Progress */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-slate-600">Objectif Adhérents</span>
+                <span className="text-sm font-medium text-slate-600">{t('bureauOverviewContent.objectifAdherents')}</span>
                 <span className="text-sm font-bold text-[#ff4000]">
                   {stats.membersCount}/{monthlyGoal}
                 </span>
@@ -171,7 +173,7 @@ export function BureauOverviewContent({ bureau, stats, walletBalance = 0 }: Bure
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Users className="w-4 h-4 text-blue-500" />
-                  <span className="text-sm text-slate-600">Total Adhérents</span>
+                  <span className="text-sm text-slate-600">{t('bureauOverviewContent.totalAdherents')}</span>
                 </div>
                 <span className="font-bold text-slate-800">{stats.membersCount}</span>
               </div>
@@ -179,7 +181,7 @@ export function BureauOverviewContent({ bureau, stats, walletBalance = 0 }: Bure
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Bike className="w-4 h-4 text-[#04439e]" />
-                  <span className="text-sm text-slate-600">Véhicules</span>
+                  <span className="text-sm text-slate-600">{t('bureauOverviewContent.vehicules')}</span>
                 </div>
                 <span className="font-bold text-slate-800">{stats.motosCount}</span>
               </div>

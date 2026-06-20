@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RefreshCw, Database, Server, HardDrive, AlertTriangle, CheckCircle, Activity, Clock, FileText, Shield } from 'lucide-react';
@@ -6,6 +7,7 @@ import { usePDGMaintenanceData } from '@/hooks/usePDGMaintenanceData';
 import { IdAuditManager } from './IdAuditManager';
 
 export default function PDGSystemMaintenance() {
+  const { t } = useTranslation();
   const {
     services,
     dbStats,
@@ -34,9 +36,9 @@ export default function PDGSystemMaintenance() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'operational':
-        return <Badge className="bg-[#ff4000]">Opérationnel</Badge>;
+        return <Badge className="bg-[#ff4000]">{t('pDGSystemMaintenance.operationnel')}</Badge>;
       case 'degraded':
-        return <Badge className="bg-[#ff4000]">Dégradé</Badge>;
+        return <Badge className="bg-[#ff4000]">{t('pDGSystemMaintenance.degrade')}</Badge>;
       case 'down':
         return <Badge className="bg-[#ff4000]">Hors ligne</Badge>;
       default:
@@ -49,8 +51,8 @@ export default function PDGSystemMaintenance() {
       {/* En-tête */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold">Maintenance Système</h2>
-          <p className="text-muted-foreground mt-1">Surveillance et gestion de l'infrastructure</p>
+          <h2 className="text-3xl font-bold">{t('pDGSystemMaintenance.maintenanceSysteme')}</h2>
+          <p className="text-muted-foreground mt-1">{t('pDGSystemMaintenance.surveillanceEtGestionDeL')}</p>
         </div>
         <Button onClick={checkServicesStatus} disabled={loading}>
           <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
@@ -89,7 +91,7 @@ export default function PDGSystemMaintenance() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{dbStats.storageUsed}</div>
-            <p className="text-xs text-muted-foreground mt-1">espace utilisé</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('pDGSystemMaintenance.espaceUtilise')}</p>
           </CardContent>
         </Card>
 
@@ -100,7 +102,7 @@ export default function PDGSystemMaintenance() {
           </CardHeader>
           <CardContent>
             <div className="text-sm font-bold">{dbStats.lastBackup || 'Jamais'}</div>
-            <p className="text-xs text-muted-foreground mt-1">sauvegarde système</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('pDGSystemMaintenance.sauvegardeSysteme')}</p>
           </CardContent>
         </Card>
       </div>
@@ -136,7 +138,7 @@ export default function PDGSystemMaintenance() {
             {services.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
                 <Server className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Aucun service surveillé</p>
+                <p>{t('pDGSystemMaintenance.aucunServiceSurveille')}</p>
               </div>
             )}
           </div>
@@ -275,7 +277,7 @@ export default function PDGSystemMaintenance() {
                       <p className="text-xs text-muted-foreground">{log.timestamp}</p>
                     </div>
                   </div>
-                  <Badge className="bg-[#ff4000]">Succès</Badge>
+                  <Badge className="bg-[#ff4000]">{t('pDGSystemMaintenance.succes')}</Badge>
                 </div>
               ))}
             </div>

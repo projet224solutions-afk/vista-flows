@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { supabase } from '@/integrations/supabase/client';
+import { readSectionCache, writeSectionCache, isBrowserOffline } from '@/lib/offline/sectionCache';
 import { useToast } from '@/hooks/use-toast';
 import {
   Package, AlertTriangle, Trash2, RefreshCw,
@@ -46,6 +48,7 @@ const adjustmentTypes = [
 ];
 
 export default function StockAdjustmentForm() {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const { vendorId } = useCurrentVendor();
   const { toast } = useToast();
@@ -66,6 +69,17 @@ export default function StockAdjustmentForm() {
   const loadData = async () => {
     if (!vendorId) return;
     setLoading(true);
+
+    // 📴 Hors ligne : afficher produits + derniers ajustements connus (cache).
+    if (isBrowserOffline()) {
+      const cachedProducts = readSectionCache<Product>('stock_adj_products', vendorId);
+      const cachedAdj = readSectionCache<StockAdjustment>('stock_adjustments', vendorId);
+      if (cachedProducts) setProducts(cachedProducts);
+      if (cachedAdj) setAdjustments(cachedAdj);
+      setLoading(false);
+      return;
+    }
+
     try {
       // Charger les ajustements
       const { data: adjustmentsData, error: adjError } = await supabase
@@ -80,6 +94,7 @@ export default function StockAdjustmentForm() {
 
       if (adjError) throw adjError;
       setAdjustments(adjustmentsData || []);
+      writeSectionCache('stock_adjustments', vendorId, adjustmentsData || []);
 
       // Charger les produits
       const { data: productsData, error: prodError } = await supabase
@@ -90,9 +105,15 @@ export default function StockAdjustmentForm() {
         .order('name');
 
       if (prodError) throw prodError;
-      setProducts(productsData || []);
+      setProducts((productsData || []) as Product[]);
+      writeSectionCache('stock_adj_products', vendorId, (productsData || []) as Product[]);
     } catch (error) {
       console.error('Error loading data:', error);
+      // Repli sur le cache si le réseau échoue malgré navigator.onLine.
+      const cachedProducts = readSectionCache<Product>('stock_adj_products', vendorId);
+      const cachedAdj = readSectionCache<StockAdjustment>('stock_adjustments', vendorId);
+      if (cachedProducts) setProducts(cachedProducts);
+      if (cachedAdj) setAdjustments(cachedAdj);
     } finally {
       setLoading(false);
     }
@@ -198,20 +219,20 @@ export default function StockAdjustmentForm() {
               Nouvel ajustement
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Enregistrer un ajustement de stock</DialogTitle>
+              <DialogTitle>{t('stockAdjustmentForm.enregistrerUnAjustementDeStock')}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               {/* Sélection produit */}
               <div>
-                <label className="text-sm font-medium">Produit *</label>
+                <label className="text-sm font-medium">{t('stockAdjustmentForm.produit')}</label>
                 <select
                   className="w-full px-3 py-2 border rounded-md bg-background"
                   value={formData.product_id}
                   onChange={(e) => setFormData({ ...formData, product_id: e.target.value })}
                 >
-                  <option value="">Sélectionner un produit</option>
+                  <option value="">{t('stockAdjustmentForm.selectionnerUnProduit')}</option>
                   {products.map(p => (
                     <option key={p.id} value={p.id}>
                       {p.name} {p.sku ? `(${p.sku})` : ''} - Stock: {p.stock_quantity}
@@ -245,7 +266,7 @@ export default function StockAdjustmentForm() {
 
               {/* Quantité */}
               <div>
-                <label className="text-sm font-medium">Quantité à retirer *</label>
+                <label className="text-sm font-medium">{t('stockAdjustmentForm.quantiteARetirer')}</label>
                 <Input
                   type="number"
                   placeholder="0"
@@ -264,15 +285,15 @@ export default function StockAdjustmentForm() {
 
               {/* Méthode de valorisation */}
               <div>
-                <label className="text-sm font-medium">Méthode de valorisation</label>
+                <label className="text-sm font-medium">{t('stockAdjustmentForm.methodeDeValorisation')}</label>
                 <select
                   className="w-full px-3 py-2 border rounded-md bg-background"
                   value={formData.valuation_method}
                   onChange={(e) => setFormData({ ...formData, valuation_method: e.target.value })}
                 >
-                  <option value="fifo">FIFO (Premier entré, premier sorti)</option>
-                  <option value="lifo">LIFO (Dernier entré, premier sorti)</option>
-                  <option value="average">Coût moyen pondéré</option>
+                  <option value="fifo">{t('stockAdjustmentForm.fifoPremierEntrePremierSorti')}</option>
+                  <option value="lifo">{t('stockAdjustmentForm.lifoDernierEntrePremierSorti')}</option>
+                  <option value="average">{t('stockAdjustmentForm.coutMoyenPondere')}</option>
                 </select>
               </div>
 
@@ -280,7 +301,7 @@ export default function StockAdjustmentForm() {
               <div>
                 <label className="text-sm font-medium">Raison / Détails *</label>
                 <Input
-                  placeholder="Ex: Produit tombé et cassé lors du rangement"
+                  placeholder={t('stockAdjustmentForm.exProduitTombeEtCasse')}
                   value={formData.reason}
                   onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
                 />
@@ -296,8 +317,8 @@ export default function StockAdjustmentForm() {
               )}
 
               <div className="flex gap-2 justify-end pt-4">
-                <Button variant="outline" onClick={() => setIsOpen(false)}>Annuler</Button>
-                <Button onClick={handleSubmit}>Enregistrer</Button>
+                <Button variant="outline" onClick={() => setIsOpen(false)}>{t('stockAdjustmentForm.annuler')}</Button>
+                <Button onClick={handleSubmit}>{t('stockAdjustmentForm.enregistrer')}</Button>
               </div>
             </div>
           </DialogContent>
@@ -326,7 +347,7 @@ export default function StockAdjustmentForm() {
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Péremptions</p>
+            <p className="text-xs text-muted-foreground">{t('stockAdjustmentForm.peremptions')}</p>
             <p className="text-2xl font-bold">{adjustments.filter(a => a.adjustment_type === 'expiration').length}</p>
           </CardContent>
         </Card>
@@ -336,7 +357,7 @@ export default function StockAdjustmentForm() {
       <div className="relative">
         <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
         <Input
-          placeholder="Rechercher un ajustement..."
+          placeholder={t('stockAdjustmentForm.rechercherUnAjustement')}
           className="pl-10"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -389,7 +410,7 @@ export default function StockAdjustmentForm() {
           <Card>
             <CardContent className="p-12 text-center">
               <Package className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-              <p className="text-muted-foreground">Aucun ajustement enregistré</p>
+              <p className="text-muted-foreground">{t('stockAdjustmentForm.aucunAjustementEnregistre')}</p>
             </CardContent>
           </Card>
         )}

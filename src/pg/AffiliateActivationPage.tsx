@@ -29,7 +29,7 @@ export default function AffiliateActivationPage() {
     setActivating(true);
     try {
       await activateWithExistingSubscription();
-      toast.success('Module affilié activé avec succès !');
+      toast.success(t('affiliateActivationPage.moduleAffilieActiveAvecSucces'));
       navigate('/affiliate/dashboard');
     } catch (error: any) {
       toast.error(error.message || "Impossible d'activer le module affilié");
@@ -70,8 +70,8 @@ export default function AffiliateActivationPage() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">Devenir Affilié</h1>
-            <p className="text-muted-foreground text-sm">Gagnez de l'argent en recommandant nos services</p>
+            <h1 className="text-2xl font-bold">{t('affiliateActivationPage.devenirAffilie')}</h1>
+            <p className="text-muted-foreground text-sm">{t('affiliateActivationPage.gagnezDeLArgentEn')}</p>
           </div>
         </div>
 
@@ -95,29 +95,29 @@ export default function AffiliateActivationPage() {
               <div className="flex items-start gap-3 p-3 rounded-lg bg-background/60 border">
                 <CheckCircle2 className="h-5 w-5 text-[#ff4000] mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-sm font-medium">Commissions sur chaque vente</p>
-                  <p className="text-xs text-muted-foreground">Gagnez un pourcentage sur les transactions de vos filleuls</p>
+                  <p className="text-sm font-medium">{t('affiliateActivationPage.commissionsSurChaqueVente')}</p>
+                  <p className="text-xs text-muted-foreground">{t('affiliateActivationPage.gagnezUnPourcentageSurLes')}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-3 rounded-lg bg-background/60 border">
                 <CheckCircle2 className="h-5 w-5 text-[#ff4000] mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-sm font-medium">Tableau de bord dédié</p>
-                  <p className="text-xs text-muted-foreground">Suivez vos performances, liens et paiements en temps réel</p>
+                  <p className="text-sm font-medium">{t('affiliateActivationPage.tableauDeBordDedie')}</p>
+                  <p className="text-xs text-muted-foreground">{t('affiliateActivationPage.suivezVosPerformancesLiensEt')}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-3 rounded-lg bg-background/60 border">
                 <CheckCircle2 className="h-5 w-5 text-[#ff4000] mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-sm font-medium">Liens de parrainage illimités</p>
-                  <p className="text-xs text-muted-foreground">Créez autant de liens que nécessaire pour vos campagnes</p>
+                  <p className="text-sm font-medium">{t('affiliateActivationPage.liensDeParrainageIllimites')}</p>
+                  <p className="text-xs text-muted-foreground">{t('affiliateActivationPage.creezAutantDeLiensQue')}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 p-3 rounded-lg bg-background/60 border">
                 <CheckCircle2 className="h-5 w-5 text-[#ff4000] mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-sm font-medium">Paiement direct au wallet</p>
-                  <p className="text-xs text-muted-foreground">Commissions créditées automatiquement sur votre portefeuille</p>
+                  <p className="text-sm font-medium">{t('affiliateActivationPage.paiementDirectAuWallet')}</p>
+                  <p className="text-xs text-muted-foreground">{t('affiliateActivationPage.commissionsCrediteesAutomatiquementSurVo')}</p>
                 </div>
               </div>
             </div>
@@ -160,7 +160,7 @@ export default function AffiliateActivationPage() {
             <div className="flex items-start gap-3">
               <Shield className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
               <div>
-                <p className="font-medium text-sm">Votre compte client reste intact</p>
+                <p className="font-medium text-sm">{t('affiliateActivationPage.votreCompteClientResteIntact')}</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   L'activation de l'affiliation est un module complémentaire. Vous conservez toutes vos fonctionnalités :
                   commandes, wallet, favoris, historique, paramètres et notifications.
@@ -179,7 +179,7 @@ export default function AffiliateActivationPage() {
         ) : (
           <Card className="border-primary/30">
             <CardHeader>
-              <CardTitle>Prêt à commencer ?</CardTitle>
+              <CardTitle>{t('affiliateActivationPage.pretACommencer')}</CardTitle>
               <CardDescription>
                 Activez gratuitement votre module affilié en un clic et commencez à gagner des commissions dès maintenant.
               </CardDescription>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from 'react-router-dom';
 import { Clock, Laptop, Package, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -25,6 +26,7 @@ export default function RecentlyViewedProducts({
   maxItems = 8,
   className = '',
 }: RecentlyViewedProductsProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { convert, loading: priceLoading } = usePriceConverter();
@@ -109,7 +111,7 @@ export default function RecentlyViewedProducts({
                     {item.type === 'digital' ? (
                       <span className="inline-flex items-center gap-1"><Laptop className="w-3 h-3" />Digital</span>
                     ) : (
-                      <span className="inline-flex items-center gap-1"><Package className="w-3 h-3" />Produit</span>
+                      <span className="inline-flex items-center gap-1"><Package className="w-3 h-3" />{t('recentlyViewedProducts.produit')}</span>
                     )}
                   </Badge>
                 </div>

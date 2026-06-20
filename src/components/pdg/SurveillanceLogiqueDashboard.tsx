@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Card,
   CardContent,
@@ -56,6 +57,7 @@ interface AnomalyDetails {
 }
 
 export default function SurveillanceLogiqueDashboard() {
+  const { t } = useTranslation();
   const {
     anomalies,
     anomaliesByDomain,
@@ -97,7 +99,7 @@ export default function SurveillanceLogiqueDashboard() {
       <div className="flex items-center justify-center min-h-screen bg-orange-50">
         <Alert variant="destructive" className="max-w-md">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Accès Refusé</AlertTitle>
+          <AlertTitle>{t('surveillanceLogiqueDashboard.accesRefuse')}</AlertTitle>
           <AlertDescription>
             Seul le PDG peut accéder au système de surveillance logique.
           </AlertDescription>
@@ -117,7 +119,7 @@ export default function SurveillanceLogiqueDashboard() {
       );
 
       if (correctionId) {
-        toast.success('✅ Correction auto appliquée');
+        toast.success(t('surveillanceLogiqueDashboard.correctionAutoAppliquee'));
         setShowCorrectionModal(false);
         setSelectedAnomaly(null);
       }
@@ -128,7 +130,7 @@ export default function SurveillanceLogiqueDashboard() {
 
   const handleApplyManualCorrection = async (anomalyId: string) => {
     if (!correctionReason.trim()) {
-      toast.error('Veuillez entrer une raison');
+      toast.error(t('surveillanceLogiqueDashboard.veuillezEntrerUneRaison'));
       return;
     }
 
@@ -142,7 +144,7 @@ export default function SurveillanceLogiqueDashboard() {
       );
 
       if (correctionId) {
-        toast.success('✅ Correction manuelle appliquée');
+        toast.success(t('surveillanceLogiqueDashboard.correctionManuelleAppliquee'));
         setShowCorrectionModal(false);
         setSelectedAnomaly(null);
         setCorrectionReason('');
@@ -171,7 +173,7 @@ export default function SurveillanceLogiqueDashboard() {
       link.download = `surveillance-analysis-${new Date().toISOString()}.json`;
       link.click();
 
-      toast.success('📊 Analyse exportée');
+      toast.success(t('surveillanceLogiqueDashboard.analyseExportee'));
     } catch (_error) {
       toast.error('Erreur export');
     }
@@ -246,9 +248,9 @@ export default function SurveillanceLogiqueDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
               <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <p className="text-sm text-blue-600 font-medium">Règles actives</p>
+                <p className="text-sm text-blue-600 font-medium">{t('surveillanceLogiqueDashboard.reglesActives')}</p>
                 <p className="text-2xl font-bold text-blue-900">
                   {systemHealth.total_rules}
                 </p>
@@ -266,13 +268,13 @@ export default function SurveillanceLogiqueDashboard() {
                 </p>
               </div>
               <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
-                <p className="text-sm text-[#ff4000] font-medium">24h dernières</p>
+                <p className="text-sm text-[#ff4000] font-medium">{t('surveillanceLogiqueDashboard.t24hDernieres')}</p>
                 <p className="text-2xl font-bold text-[#ff4000]">
                   {systemHealth.recent_anomalies_24h}
                 </p>
               </div>
               <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
-                <p className="text-sm text-[#ff4000] font-medium">Taux résolution</p>
+                <p className="text-sm text-[#ff4000] font-medium">{t('surveillanceLogiqueDashboard.tauxResolution')}</p>
                 <p className="text-2xl font-bold text-[#ff4000]">
                   {systemHealth.resolution_rate.toFixed(1)}%
                 </p>
@@ -346,7 +348,7 @@ export default function SurveillanceLogiqueDashboard() {
 
         {/* Overview */}
         <TabsContent value="overview" className="space-y-4">
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <Card className="bg-orange-50 border-orange-200">
               <CardContent className="pt-6">
                 <div className="text-center">
@@ -397,7 +399,7 @@ export default function SurveillanceLogiqueDashboard() {
           {stats.critical > 0 && (
             <Alert variant="destructive">
               <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Anomalies critiques détectées!</AlertTitle>
+              <AlertTitle>{t('surveillanceLogiqueDashboard.anomaliesCritiquesDetectees')}</AlertTitle>
               <AlertDescription>
                 {stats.critical} anomalie(s) critique(s) nécessitent une attention
                 immédiate.
@@ -446,7 +448,7 @@ export default function SurveillanceLogiqueDashboard() {
                           </Button>
                         )}
                         {anomaly.resolved_at && (
-                          <Badge className="bg-[#ff4000]">✓ Résolue</Badge>
+                          <Badge className="bg-[#ff4000]">{t('surveillanceLogiqueDashboard.resolue')}</Badge>
                         )}
                       </div>
                     </div>
@@ -531,12 +533,12 @@ export default function SurveillanceLogiqueDashboard() {
         <TabsContent value="audit" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Historique des corrections</CardTitle>
+              <CardTitle>{t('surveillanceLogiqueDashboard.historiqueDesCorrections')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-center text-slate-600 py-8">
                 <LogOut className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p>Historique audit sera affiché ici</p>
+                <p>{t('surveillanceLogiqueDashboard.historiqueAuditSeraAfficheIci')}</p>
               </div>
             </CardContent>
           </Card>
@@ -547,7 +549,7 @@ export default function SurveillanceLogiqueDashboard() {
       <Dialog open={showCorrectionModal} onOpenChange={setShowCorrectionModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Appliquer une correction</DialogTitle>
+            <DialogTitle>{t('surveillanceLogiqueDashboard.appliquerUneCorrection')}</DialogTitle>
             <DialogDescription>
               {selectedAnomaly?.rule_id} - {selectedAnomaly?.domain}
             </DialogDescription>
@@ -559,7 +561,7 @@ export default function SurveillanceLogiqueDashboard() {
               <Input
                 value={correctionReason}
                 onChange={(e) => setCorrectionReason(e.target.value)}
-                placeholder="Expliquez pourquoi cette correction est nécessaire"
+                placeholder={t('surveillanceLogiqueDashboard.expliquezPourquoiCetteCorrectionEst')}
                 className="w-full"
               />
             </div>

@@ -3,6 +3,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -38,6 +39,7 @@ export default function EditBadgeDialog({
   bureauCommune = '',
   onUpdate
 }: EditBadgeDialogProps) {
+  const { t } = useTranslation();
   // Séparer le nom complet en prénom et nom
   const nameParts = vehicleData.member_name.split(' ');
   const initialFirstName = nameParts.slice(0, -1).join(' ') || '';
@@ -63,19 +65,19 @@ export default function EditBadgeDialog({
 
     // Vérifier le type de fichier
     if (!file.type.startsWith('image/')) {
-      toast.error('Veuillez sélectionner une image');
+      toast.error(t('editBadgeDialog.veuillezSelectionnerUneImage'));
       return;
     }
 
     // Vérifier la taille (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('L\'image ne doit pas dépasser 5MB');
+      toast.error(t('editBadgeDialog.lImageNeDoitPas'));
       return;
     }
 
     try {
       setUploading(true);
-      toast.info('Upload de la photo en cours...');
+      toast.info(t('editBadgeDialog.uploadDeLaPhotoEn'));
 
       // Créer un nom de fichier unique
       const fileExt = file.name.split('.').pop();
@@ -98,10 +100,10 @@ export default function EditBadgeDialog({
         .getPublicUrl(filePath);
 
       setPhotoUrl(publicUrl);
-      toast.success('Photo uploadée avec succès');
+      toast.success(t('editBadgeDialog.photoUploadeeAvecSucces'));
     } catch (error) {
       console.error('Error uploading photo:', error);
-      toast.error('Erreur lors de l\'upload de la photo');
+      toast.error(t('editBadgeDialog.erreurLorsDeLUpload'));
     } finally {
       setUploading(false);
     }
@@ -110,7 +112,7 @@ export default function EditBadgeDialog({
   const handleSave = async () => {
     try {
       setSaving(true);
-      toast.info('Enregistrement des modifications...');
+      toast.info(t('editBadgeDialog.enregistrementDesModifications'));
 
       // Combiner prénom et nom
       const fullName = `${firstName} ${lastName}`.trim();
@@ -146,7 +148,7 @@ export default function EditBadgeDialog({
         }
       }
 
-      toast.success('Informations mises à jour avec succès');
+      toast.success(t('editBadgeDialog.informationsMisesAJourAvec'));
       onUpdate();
       onOpenChange(false);
     } catch (error: any) {
@@ -163,7 +165,7 @@ export default function EditBadgeDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
-              <span>Modifier les informations du badge</span>
+              <span>{t('editBadgeDialog.modifierLesInformationsDuBadge')}</span>
               <div className="text-sm font-normal text-muted-foreground space-y-0.5">
                 <div className="text-xs">224Solutions - Dashboard Bureau Syndicat</div>
                 <div className="font-medium">
@@ -187,7 +189,7 @@ export default function EditBadgeDialog({
         <div className="space-y-6">
           {/* Titre du badge */}
           <div className="space-y-2">
-            <Label htmlFor="badge-title">Titre du badge</Label>
+            <Label htmlFor="badge-title">{t('editBadgeDialog.titreDuBadge')}</Label>
             <Input
               id="badge-title"
               type="text"
@@ -204,13 +206,13 @@ export default function EditBadgeDialog({
           {/* Nom et Prénom */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="first-name">Prénom(s)</Label>
+              <Label htmlFor="first-name">{t('editBadgeDialog.prenomS')}</Label>
               <Input
                 id="first-name"
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                placeholder="Prénom du conducteur"
+                placeholder={t('editBadgeDialog.prenomDuConducteur')}
               />
             </div>
             <div className="space-y-2">
@@ -220,19 +222,19 @@ export default function EditBadgeDialog({
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                placeholder="Nom du conducteur"
+                placeholder={t('editBadgeDialog.nomDuConducteur')}
               />
             </div>
           </div>
 
           {/* Photo du conducteur */}
           <div className="space-y-2">
-            <Label>Photo du conducteur</Label>
+            <Label>{t('editBadgeDialog.photoDuConducteur')}</Label>
             {photoUrl && (
               <div className="flex justify-center mb-4">
                 <img
                   src={photoUrl}
-                  alt="Photo du conducteur"
+                  alt={t('editBadgeDialog.photoDuConducteur')}
                   className="w-32 h-32 object-cover rounded-lg border-2 border-border"
                 />
               </div>
@@ -261,7 +263,7 @@ export default function EditBadgeDialog({
 
           {/* Date de naissance */}
           <div className="space-y-2">
-            <Label htmlFor="date-of-birth">Date de naissance du conducteur</Label>
+            <Label htmlFor="date-of-birth">{t('editBadgeDialog.dateDeNaissanceDuConducteur')}</Label>
             <Input
               id="date-of-birth"
               type="date"

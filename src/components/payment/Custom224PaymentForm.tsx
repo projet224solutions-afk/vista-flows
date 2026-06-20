@@ -5,6 +5,7 @@
  */
 
 import React, { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   PaymentElement,
   useStripe,
@@ -59,6 +60,7 @@ export function Custom224PaymentForm({
   onSuccess,
   onError
 }: Custom224PaymentFormProps) {
+  const { t } = useTranslation();
   const stripe = useStripe();
   const elements = useElements();
 
@@ -120,10 +122,10 @@ export function Custom224PaymentForm({
 
       if (paymentIntent && paymentIntent.status === 'succeeded') {
         setSucceeded(true);
-        toast.success('Paiement réussi !');
+        toast.success(t('custom224PaymentForm.paiementReussi'));
         onSuccess(paymentIntent.id);
       } else if (paymentIntent && paymentIntent.status === 'processing') {
-        toast.info('Votre paiement est en cours de traitement...');
+        toast.info(t('custom224PaymentForm.votrePaiementEstEnCours'));
       } else {
         throw new Error('Statut de paiement inattendu');
       }
@@ -149,7 +151,7 @@ export function Custom224PaymentForm({
               </div>
             </div>
             <div>
-              <h3 className="text-2xl font-bold text-[#ff4000]">Paiement réussi !</h3>
+              <h3 className="text-2xl font-bold text-[#ff4000]">{t('custom224PaymentForm.paiementReussi')}</h3>
               <p className="text-gray-600 mt-2 text-lg">
                 <strong>{formatAmount(amount, currency)}</strong>
               </p>
@@ -173,8 +175,8 @@ export function Custom224PaymentForm({
               <span className="text-2xl font-bold text-primary">224</span>
             </div>
             <div>
-              <h2 className="text-xl font-bold">224Solutions Paiement</h2>
-              <p className="text-sm text-white/90">Paiement sécurisé par Stripe</p>
+              <h2 className="text-xl font-bold">{t('custom224PaymentForm.t224solutionsPaiement')}</h2>
+              <p className="text-sm text-white/90">{t('custom224PaymentForm.paiementSecuriseParStripe')}</p>
             </div>
           </div>
           <Shield className="w-8 h-8 text-white/90" />
@@ -186,7 +188,7 @@ export function Custom224PaymentForm({
         <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl p-5 border-2 border-primary/30">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 font-medium">Montant à payer</p>
+              <p className="text-sm text-gray-600 font-medium">{t('custom224PaymentForm.montantAPayer')}</p>
               <p className="text-xs text-gray-500 mt-1">à {sellerName}</p>
               {orderDescription && (
                 <p className="text-xs text-gray-500">{orderDescription}</p>
@@ -205,7 +207,7 @@ export function Custom224PaymentForm({
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-3">
               <CreditCard className="w-5 h-5 text-primary" />
-              <span className="font-semibold text-gray-700">Informations de carte</span>
+              <span className="font-semibold text-gray-700">{t('custom224PaymentForm.informationsDeCarte')}</span>
             </div>
 
             {/* Numéro de carte */}
@@ -281,7 +283,7 @@ export function Custom224PaymentForm({
           {/* Sécurité */}
           <div className="flex items-center justify-center gap-2 text-xs text-gray-500 mt-4">
             <Shield className="w-4 h-4" />
-            <span>Paiement sécurisé par Stripe • Cryptage SSL • PCI-DSS</span>
+            <span>{t('custom224PaymentForm.paiementSecuriseParStripeCryptage')}</span>
           </div>
 
           {/* Logo 224Solutions */}

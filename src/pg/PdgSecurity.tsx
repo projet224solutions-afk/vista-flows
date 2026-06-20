@@ -1,5 +1,6 @@
 ﻿import { useState } from 'react';
 import { Shield, AlertTriangle, Lock, Activity, Eye, Ban, FileText, Key, Bug, Brain, Database, Award } from 'lucide-react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,13 +11,15 @@ import { useResponsive } from '@/hooks/useResponsive';
 import { ResponsiveGrid } from '@/components/responsive/ResponsiveContainer';
 import { SecurityCertifications } from '@/components/security/SecurityCertifications';
 import { BugBountyProgram } from '@/components/security/BugBountyProgram';
-import { AdvancedMFA } from '@/components/security/AdvancedMFA';
+import { AdminMfaCard } from '@/components/security/AdminMfaCard';
+import Guard224Dashboard from '@/components/pdg/guard224/Guard224Dashboard';
 import { MLFraudDetection } from '@/components/security/MLFraudDetection';
 import { SIEMDashboard } from '@/components/security/SIEMDashboard';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 import { useSecurityOps } from '@/hooks/useSecurityOps';
 
 export default function PdgSecurity() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { isMobile } = useResponsive();
   const [selectedTab, setSelectedTab] = useState('overview');
@@ -88,7 +91,7 @@ export default function PdgSecurity() {
 
         {/* Main Content Tabs */}
         <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
-          <TabsList className={`grid w-full ${isMobile ? 'grid-cols-2' : 'grid-cols-4 lg:grid-cols-9'} gap-1`}>
+          <TabsList className={`grid w-full ${isMobile ? 'grid-cols-2' : 'grid-cols-4 lg:grid-cols-10'} gap-1`}>
             <TabsTrigger value="overview" className="gap-1 text-xs md:text-sm">
               <Shield className="w-3 h-3 md:w-4 md:h-4" />
               {!isMobile && 'Vue'}
@@ -125,7 +128,16 @@ export default function PdgSecurity() {
               <Ban className="w-3 h-3 md:w-4 md:h-4" />
               {!isMobile && 'Bloqués'}
             </TabsTrigger>
+            <TabsTrigger value="guard224" className="gap-1 text-xs md:text-sm">
+              <Shield className="w-3 h-3 md:w-4 md:h-4" />
+              {!isMobile && '224Guard'}
+            </TabsTrigger>
           </TabsList>
+
+          {/* 224Guard — monitoring d'exposition des secrets (temps réel) */}
+          <TabsContent value="guard224" className="space-y-4">
+            <Guard224Dashboard />
+          </TabsContent>
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-4">
@@ -193,7 +205,7 @@ export default function PdgSecurity() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Systèmes de Protection</CardTitle>
+                <CardTitle>{t('pdgSecurity.systemesDeProtection')}</CardTitle>
                 <CardDescription>
                   État des différents systèmes de sécurité
                 </CardDescription>
@@ -203,8 +215,8 @@ export default function PdgSecurity() {
                   <div className="flex items-center gap-3">
                     <Shield className="w-5 h-5 text-[#ff4000]" />
                     <div>
-                      <p className="font-medium">Détection d'anomalies IA</p>
-                      <p className="text-sm text-muted-foreground">Surveillance en temps réel</p>
+                      <p className="font-medium">{t('pdgSecurity.detectionDAnomaliesIa')}</p>
+                      <p className="text-sm text-muted-foreground">{t('pdgSecurity.surveillanceEnTempsReel')}</p>
                     </div>
                   </div>
                   <Badge className="bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20">
@@ -217,7 +229,7 @@ export default function PdgSecurity() {
                     <Lock className="w-5 h-5 text-[#ff4000]" />
                     <div>
                       <p className="font-medium">RLS (Row Level Security)</p>
-                      <p className="text-sm text-muted-foreground">Protection des données</p>
+                      <p className="text-sm text-muted-foreground">{t('pdgSecurity.protectionDesDonnees')}</p>
                     </div>
                   </div>
                   <Badge className="bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20">
@@ -264,9 +276,9 @@ export default function PdgSecurity() {
             <BugBountyProgram />
           </TabsContent>
 
-          {/* Advanced MFA Tab */}
+          {/* MFA Tab — 2FA RÉELLE (vérifiée serveur) sur les opérations financières sensibles. */}
           <TabsContent value="mfa" className="space-y-4">
-            <AdvancedMFA />
+            <AdminMfaCard />
           </TabsContent>
 
           {/* ML Fraud Detection Tab */}
@@ -283,7 +295,7 @@ export default function PdgSecurity() {
           <TabsContent value="threats" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Menaces Détectées</CardTitle>
+                <CardTitle>{t('pdgSecurity.menacesDetectees')}</CardTitle>
                 <CardDescription>
                   {openIncidents.length > 0
                     ? `${openIncidents.length} incident(s) actif(s) sur ${incidents?.length || 0} enregistré(s)`
@@ -294,7 +306,7 @@ export default function PdgSecurity() {
                 {!incidents || incidents.length === 0 ? (
                   <div className="text-center py-12">
                     <Shield className="w-16 h-16 text-[#ff4000] mx-auto mb-4 opacity-50" />
-                    <p className="text-muted-foreground">Tous les systèmes sont sécurisés</p>
+                    <p className="text-muted-foreground">{t('pdgSecurity.tousLesSystemesSontSecurises')}</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -323,7 +335,7 @@ export default function PdgSecurity() {
           <TabsContent value="monitoring" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Surveillance en Temps Réel</CardTitle>
+                <CardTitle>{t('pdgSecurity.surveillanceEnTempsReel2')}</CardTitle>
                 <CardDescription>
                   {alerts && alerts.length > 0
                     ? `${stats.pending_alerts || 0} alerte(s) en attente sur ${alerts.length} récente(s)`
@@ -334,7 +346,7 @@ export default function PdgSecurity() {
                 {!alerts || alerts.length === 0 ? (
                   <div className="text-center py-12">
                     <Eye className="w-16 h-16 text-blue-500 mx-auto mb-4 opacity-50" />
-                    <p className="text-muted-foreground">Surveillance active - Aucune anomalie</p>
+                    <p className="text-muted-foreground">{t('pdgSecurity.surveillanceActiveAucuneAnomalie')}</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -345,7 +357,7 @@ export default function PdgSecurity() {
                             <span className="font-medium truncate">{al.message || al.alert_type}</span>
                             <Badge variant="outline" className={severityClass(al.severity)}>{al.severity}</Badge>
                             {al.acknowledged
-                              ? <Badge variant="outline" className="text-xs">acquittée</Badge>
+                              ? <Badge variant="outline" className="text-xs">{t('pdgSecurity.acquittee')}</Badge>
                               : <Badge variant="outline" className="text-xs bg-orange-500/10 text-orange-600 border-orange-500/20">en attente</Badge>}
                           </div>
                           <p className="text-xs text-muted-foreground mt-1">
@@ -364,7 +376,7 @@ export default function PdgSecurity() {
           <TabsContent value="blocked" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Entités Bloquées</CardTitle>
+                <CardTitle>{t('pdgSecurity.entitesBloquees')}</CardTitle>
                 <CardDescription>
                   {activeBlockedIPs.length > 0
                     ? `${activeBlockedIPs.length} IP(s) actuellement bloquée(s)`
@@ -375,7 +387,7 @@ export default function PdgSecurity() {
                 {activeBlockedIPs.length === 0 ? (
                   <div className="text-center py-12">
                     <Ban className="w-16 h-16 text-[#ff4000] mx-auto mb-4 opacity-50" />
-                    <p className="text-muted-foreground">Aucune entité bloquée actuellement</p>
+                    <p className="text-muted-foreground">{t('pdgSecurity.aucuneEntiteBloqueeActuellement')}</p>
                   </div>
                 ) : (
                   <div className="space-y-2">

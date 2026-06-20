@@ -3,7 +3,8 @@
  * Utilise serviceId pour afficher les données spécifiques au restaurant
  */
 
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,8 +15,10 @@ import {
   UtensilsCrossed, ClipboardList, Users, Calendar,
   TrendingUp, RefreshCw, Clock, CheckCircle, XCircle,
   DollarSign, ShoppingBag, Package, Truck, MapPin, Eye,
-  Sparkles, Settings, Plus, LayoutGrid, CalendarCheck, ShoppingCart
+  Sparkles, Settings, Plus, LayoutGrid, CalendarCheck, ShoppingCart, Tag, Images,
+  UserCog, CreditCard
 } from 'lucide-react';
+import { ServiceMediaManager } from '@/components/professional-services/ServiceMediaManager';
 import { useServiceRestaurantStats } from '@/hooks/useServiceRestaurantStats';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -25,12 +28,37 @@ import { RestaurantTableManager } from '@/components/restaurant/RestaurantTableM
 import { RestaurantSettings } from '@/components/restaurant/RestaurantSettings';
 import { RestaurantReservationsManager } from '@/components/restaurant/RestaurantReservationsManager';
 import { RestaurantOrdersPanel } from '@/components/restaurant/RestaurantOrdersPanel';
+import { RestaurantOrdersKanban } from '@/components/professional-services/modules/restaurant/RestaurantOrdersKanban';
+import { RestaurantAnalytics } from '@/components/professional-services/modules/restaurant/RestaurantAnalytics';
+import { RestaurantPromotions } from '@/components/professional-services/modules/restaurant/RestaurantPromotions';
 import { RestaurantPOS } from '@/components/restaurant/RestaurantPOS';
+import { RestaurantAgentsManagement } from '@/components/restaurant/RestaurantAgentsManagement';
+import { Copilot224 } from '@/components/service-common/Copilot224';
+const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchasesOrdersList'));
+const PaymentLinksManager = lazy(() => import('@/components/vendor/PaymentLinksManager'));
 
 interface RestaurantModuleProps {
   serviceId: string;
   businessName?: string;
+  /** Mode AGENT : si fourni, on filtre les onglets selon les permissions accordées par le restaurateur.
+   *  null/undefined = mode PROPRIÉTAIRE (accès complet). */
+  agentPermissions?: Record<string, boolean> | null;
 }
+
+// Onglet → permission requise (mode agent). Les onglets sans entrée sont réservés au propriétaire.
+const TAB_PERMISSION: Record<string, string> = {
+  orders: 'manage_orders',
+  pos: 'access_pos',
+  menu: 'manage_menu',
+  tables: 'manage_tables',
+  reservations: 'manage_reservations',
+  promotions: 'manage_promotions',
+  analytics: 'view_analytics',
+  overview: 'view_analytics',
+  media: 'manage_media',
+  settings: 'manage_settings',
+  // 'agents' n'est jamais accessible à un agent (gestion réservée au propriétaire).
+};
 
 // formatCurrency importé depuis @/lib/formatters
 
@@ -70,9 +98,24 @@ const _orderTypeLabels: Record<string, string> = {
   emporter: 'À emporter',
 };
 
-export function RestaurantModule({ serviceId, businessName }: RestaurantModuleProps) {
+export function RestaurantModule({ serviceId, businessName, agentPermissions }: RestaurantModuleProps) {
+  const isAgent = !!agentPermissions;
+  // En mode agent : un onglet est visible si l'agent a la permission associée. Le propriétaire voit tout.
+  const canSee = (tab: string): boolean => {
+    if (!isAgent) return true;
+    if (tab === 'agents') return false; // jamais pour un agent
+    const perm = TAB_PERMISSION[tab];
+    return perm ? agentPermissions![perm] === true : false;
+  };
+  const { t } = useTranslation();
   const { stats, recentOrders, loading, error, refresh } = useServiceRestaurantStats(serviceId);
-  const [activeTab, setActiveTab] = useState('overview');
+  // ÉCRAN 1 = tableau de bord des commandes (Kanban temps réel) : c'est l'écran d'accueil du restaurant.
+  const [activeTab, setActiveTab] = useState(() => {
+    const order = ['orders', 'overview', 'pos', 'reservations', 'menu', 'analytics', 'promotions', 'tables', 'media', 'settings'];
+    return order.find(canSee) || 'orders';
+  });
+  const [showPurchases, setShowPurchases] = useState(false);
+  const [showLinks, setShowLinks] = useState(false);
   const _navigate = useNavigate();
 
   if (loading) {
@@ -123,7 +166,7 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
             <Sparkles className="w-6 h-6 text-orange-600" />
           </div>
           <div className="flex-1">
-            <h3 className="font-semibold text-lg mb-2">Bienvenue dans votre espace Restaurant !</h3>
+            <h3 className="font-semibold text-lg mb-2">{t('restaurantModule.bienvenueDansVotreEspaceRestaurant')}</h3>
             <p className="text-sm text-muted-foreground mb-4">
               Configurez votre menu, gérez vos commandes et suivez vos performances en temps réel.
             </p>
@@ -168,7 +211,7 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
             <UtensilsCrossed className="w-7 h-7 text-primary" />
             {businessName || 'Restaurant'}
           </h2>
-          <p className="text-muted-foreground">Gérez vos commandes et votre menu</p>
+          <p className="text-muted-foreground">{t('restaurantModule.gerezVosCommandesEtVotre')}</p>
         </div>
         <Button onClick={refresh} variant="outline" size="sm">
           <RefreshCw className="w-4 h-4 mr-2" />
@@ -180,7 +223,7 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <Card className="hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-transparent hover:border-l-orange-500">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Commandes</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('restaurantModule.commandes')}</CardTitle>
             <ClipboardList className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -209,7 +252,7 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
 
         <Card className="hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-transparent hover:border-l-purple-500">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Réservations</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('restaurantModule.reservations')}</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -234,42 +277,93 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
         </Card>
       </div>
 
+      {/* Actions rapides (PROPRIÉTAIRE uniquement) : liens de paiement + mes achats personnels */}
+      {!isAgent && (
+        <>
+          <div className="flex flex-wrap gap-2">
+            <Button variant={showLinks ? 'default' : 'outline'} size="sm" className="gap-2" onClick={() => setShowLinks(v => !v)}>
+              <CreditCard className="w-4 h-4" /> Liens de paiement
+            </Button>
+            <Button variant={showPurchases ? 'default' : 'outline'} size="sm" className="gap-2" onClick={() => setShowPurchases(v => !v)}>
+              <ShoppingBag className="w-4 h-4" /> Mes Achats
+            </Button>
+          </div>
+          {showLinks && (
+            <Card><CardContent className="p-0 sm:p-2">
+              <Suspense fallback={<div className="flex items-center justify-center py-8"><RefreshCw className="w-6 h-6 animate-spin text-primary" /></div>}>
+                <PaymentLinksManager />
+              </Suspense>
+            </CardContent></Card>
+          )}
+          {showPurchases && (
+            <Suspense fallback={<div className="flex items-center justify-center py-8"><RefreshCw className="w-6 h-6 animate-spin text-primary" /></div>}>
+              <MyPurchasesOrdersList title="Mes Achats Personnels" emptyMessage="Vous n'avez pas encore effectué d'achats sur le marketplace" />
+            </Suspense>
+          )}
+        </>
+      )}
+
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-1">
-          <TabsList className="inline-flex w-max sm:w-auto sm:grid sm:grid-cols-7 gap-0.5">
-            <TabsTrigger value="overview" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
-              <DollarSign className="w-3.5 h-3.5 hidden sm:block" />
-              Aperçu
-            </TabsTrigger>
-            <TabsTrigger value="pos" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1 bg-primary/10 font-semibold">
-              <ShoppingCart className="w-3.5 h-3.5 hidden sm:block" />
-              POS
-            </TabsTrigger>
-            <TabsTrigger value="reservations" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
-              <CalendarCheck className="w-3.5 h-3.5 hidden sm:block" />
-              Réserv.
-            </TabsTrigger>
-            <TabsTrigger value="orders" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
-              <ShoppingBag className="w-3.5 h-3.5 hidden sm:block" />
-              Commandes
-            </TabsTrigger>
-            <TabsTrigger value="menu" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
-              <UtensilsCrossed className="w-3.5 h-3.5 hidden sm:block" />
-              Menu
-            </TabsTrigger>
-            <TabsTrigger value="tables" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
-              <LayoutGrid className="w-3.5 h-3.5 hidden sm:block" />
-              Tables
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="text-xs sm:text-sm px-2.5 sm:px-3 gap-1">
-              <Settings className="w-3.5 h-3.5 hidden sm:block" />
-              Config
-            </TabsTrigger>
-          </TabsList>
-        </div>
+        <TabsList className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 h-auto w-full p-1.5 bg-muted/60">
+          {canSee('orders') && (
+          <TabsTrigger value="orders" className="flex-col sm:flex-row gap-1.5 py-3 sm:py-2.5 text-sm sm:text-base font-semibold bg-[#ff4000]/10 data-[state=active]:bg-[#ff4000] data-[state=active]:text-white">
+            <ShoppingBag className="w-5 h-5 sm:w-4 sm:h-4" />
+            Commandes
+          </TabsTrigger>)}
+          {canSee('overview') && (
+          <TabsTrigger value="overview" className="flex-col sm:flex-row gap-1.5 py-3 sm:py-2.5 text-sm sm:text-base">
+            <DollarSign className="w-5 h-5 sm:w-4 sm:h-4" />
+            Aperçu
+          </TabsTrigger>)}
+          {canSee('pos') && (
+          <TabsTrigger value="pos" className="flex-col sm:flex-row gap-1.5 py-3 sm:py-2.5 text-sm sm:text-base font-semibold bg-primary/10">
+            <ShoppingCart className="w-5 h-5 sm:w-4 sm:h-4" />
+            POS
+          </TabsTrigger>)}
+          {canSee('reservations') && (
+          <TabsTrigger value="reservations" className="flex-col sm:flex-row gap-1.5 py-3 sm:py-2.5 text-sm sm:text-base">
+            <CalendarCheck className="w-5 h-5 sm:w-4 sm:h-4" />
+            Réserv.
+          </TabsTrigger>)}
+          {canSee('menu') && (
+          <TabsTrigger value="menu" className="flex-col sm:flex-row gap-1.5 py-3 sm:py-2.5 text-sm sm:text-base">
+            <UtensilsCrossed className="w-5 h-5 sm:w-4 sm:h-4" />
+            Menu
+          </TabsTrigger>)}
+          {canSee('analytics') && (
+          <TabsTrigger value="analytics" className="flex-col sm:flex-row gap-1.5 py-3 sm:py-2.5 text-sm sm:text-base">
+            <TrendingUp className="w-5 h-5 sm:w-4 sm:h-4" />
+            Analytics
+          </TabsTrigger>)}
+          {canSee('promotions') && (
+          <TabsTrigger value="promotions" className="flex-col sm:flex-row gap-1.5 py-3 sm:py-2.5 text-sm sm:text-base">
+            <Tag className="w-5 h-5 sm:w-4 sm:h-4" />
+            Promos
+          </TabsTrigger>)}
+          {canSee('tables') && (
+          <TabsTrigger value="tables" className="flex-col sm:flex-row gap-1.5 py-3 sm:py-2.5 text-sm sm:text-base">
+            <LayoutGrid className="w-5 h-5 sm:w-4 sm:h-4" />
+            Tables
+          </TabsTrigger>)}
+          {canSee('media') && (
+          <TabsTrigger value="media" className="flex-col sm:flex-row gap-1.5 py-3 sm:py-2.5 text-sm sm:text-base">
+            <Images className="w-5 h-5 sm:w-4 sm:h-4" />
+            Médias
+          </TabsTrigger>)}
+          {canSee('settings') && (
+          <TabsTrigger value="settings" className="flex-col sm:flex-row gap-1.5 py-3 sm:py-2.5 text-sm sm:text-base">
+            <Settings className="w-5 h-5 sm:w-4 sm:h-4" />
+            Config
+          </TabsTrigger>)}
+          {canSee('agents') && (
+          <TabsTrigger value="agents" className="flex-col sm:flex-row gap-1.5 py-3 sm:py-2.5 text-sm sm:text-base">
+            <UserCog className="w-5 h-5 sm:w-4 sm:h-4" />
+            Agents
+          </TabsTrigger>)}
+        </TabsList>
 
-        <TabsContent value="overview" className="mt-4">
+        <TabsContent value="overview" className="mt-4 space-y-6">
           {/* Onboarding card if no data */}
           {!stats?.hasData && <OnboardingCard />}
 
@@ -289,20 +383,20 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
                 </div>
 
                 {/* Par type */}
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   <div className="p-3 bg-orange-50 dark:bg-[#ff4000]/20 border border-orange-200 dark:border-[#ff4000] rounded-lg text-center">
                     <MapPin className="w-4 h-4 text-[#ff4000] mx-auto mb-1" />
-                    <div className="text-xs font-medium text-[#ff4000]">Sur place</div>
+                    <div className="text-xs font-medium text-[#ff4000]">{t('restaurantModule.surPlace')}</div>
                     <div className="text-lg font-bold text-[#ff4000]">{formatCurrency(stats?.salesDineIn.totalRevenue || 0)}</div>
                   </div>
                   <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-center">
                     <Truck className="w-4 h-4 text-blue-600 mx-auto mb-1" />
-                    <div className="text-xs font-medium text-blue-700">Livraison</div>
+                    <div className="text-xs font-medium text-blue-700">{t('restaurantModule.livraison')}</div>
                     <div className="text-lg font-bold text-blue-600">{formatCurrency(stats?.salesDelivery.totalRevenue || 0)}</div>
                   </div>
                   <div className="p-3 bg-blue-50 dark:bg-[#04439e]/20 border border-blue-200 dark:border-[#04439e] rounded-lg text-center">
                     <ShoppingBag className="w-4 h-4 text-[#04439e] mx-auto mb-1" />
-                    <div className="text-xs font-medium text-[#04439e]">À emporter</div>
+                    <div className="text-xs font-medium text-[#04439e]">{t('restaurantModule.aEmporter')}</div>
                     <div className="text-lg font-bold text-[#04439e]">{formatCurrency(stats?.salesTakeaway.totalRevenue || 0)}</div>
                   </div>
                 </div>
@@ -327,20 +421,20 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   <div className="p-3 bg-orange-50 dark:bg-[#ff4000]/20 border border-orange-200 rounded-lg text-center">
                     <MapPin className="w-4 h-4 text-[#ff4000] mx-auto mb-1" />
-                    <div className="text-xs font-medium text-[#ff4000]">Sur place</div>
+                    <div className="text-xs font-medium text-[#ff4000]">{t('restaurantModule.surPlace')}</div>
                     <div className="text-xl font-bold text-[#ff4000]">{stats?.ordersDineIn.total || 0}</div>
                   </div>
                   <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 rounded-lg text-center">
                     <Truck className="w-4 h-4 text-blue-600 mx-auto mb-1" />
-                    <div className="text-xs font-medium text-blue-700">Livraison</div>
+                    <div className="text-xs font-medium text-blue-700">{t('restaurantModule.livraison')}</div>
                     <div className="text-xl font-bold text-blue-600">{stats?.ordersDelivery.total || 0}</div>
                   </div>
                   <div className="p-3 bg-blue-50 dark:bg-[#04439e]/20 border border-blue-200 rounded-lg text-center">
                     <ShoppingBag className="w-4 h-4 text-[#04439e] mx-auto mb-1" />
-                    <div className="text-xs font-medium text-[#04439e]">À emporter</div>
+                    <div className="text-xs font-medium text-[#04439e]">{t('restaurantModule.aEmporter')}</div>
                     <div className="text-xl font-bold text-[#04439e]">{stats?.ordersTakeaway.total || 0}</div>
                   </div>
                 </div>
@@ -377,12 +471,22 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
           </div>
         </TabsContent>
 
-        <TabsContent value="pos" className="mt-4">
-          <RestaurantPOS serviceId={serviceId} />
+        <TabsContent value="analytics" className="mt-4">
+          <RestaurantAnalytics serviceId={serviceId} rating={(stats as any)?.reviews?.rating} reviewsCount={(stats as any)?.reviews?.count} />
         </TabsContent>
 
-        <TabsContent value="orders" className="mt-4">
-          <RestaurantOrdersPanel serviceId={serviceId} />
+        <TabsContent value="pos" className="mt-4">
+          <RestaurantPOS serviceId={serviceId} businessName={businessName} />
+        </TabsContent>
+
+        <TabsContent value="orders" className="mt-4 space-y-6">
+          {/* Écran signature : Kanban temps réel (Meituan-like) */}
+          <RestaurantOrdersKanban serviceId={serviceId} />
+          {/* Gestion détaillée (filtres, historique) */}
+          <details className="rounded-lg border">
+            <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-muted-foreground">Vue détaillée / historique</summary>
+            <div className="p-2"><RestaurantOrdersPanel serviceId={serviceId} /></div>
+          </details>
         </TabsContent>
 
         <TabsContent value="reservations" className="mt-4">
@@ -393,14 +497,31 @@ export function RestaurantModule({ serviceId, businessName }: RestaurantModulePr
           <RestaurantMenuManager serviceId={serviceId} />
         </TabsContent>
 
+        <TabsContent value="promotions" className="mt-4">
+          <RestaurantPromotions serviceId={serviceId} />
+        </TabsContent>
+
         <TabsContent value="tables" className="mt-4">
           <RestaurantTableManager serviceId={serviceId} />
+        </TabsContent>
+
+        <TabsContent value="media" className="mt-4">
+          {/* Galerie (photos + vidéos Premium) — RÉSERVÉE au restaurateur (ici, son dashboard). */}
+          <ServiceMediaManager serviceId={serviceId} readonly={false} />
         </TabsContent>
 
         <TabsContent value="settings" className="mt-4">
           <RestaurantSettings serviceId={serviceId} />
         </TabsContent>
+
+        <TabsContent value="agents" className="mt-4">
+          <RestaurantAgentsManagement serviceId={serviceId} />
+        </TabsContent>
       </Tabs>
+
+      {/* Copilot IA contextuel au restaurant (bulle flottante). En mode agent, on masque l'alerte
+          « solde bas » : le wallet du compte agent n'est pas pertinent (il gère le resto de son employeur). */}
+      <Copilot224 service="restaurant" title="Copilot Restaurant" hideWalletAlert={isAgent} />
     </div>
   );
 }

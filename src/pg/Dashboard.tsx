@@ -1,5 +1,6 @@
 ﻿import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
@@ -9,6 +10,7 @@ import { Loader2 } from "lucide-react";
  * IMPORTANT: Utilise TOUJOURS profile.role comme source de vérité
  */
 const Dashboard = () => {
+  const { t } = useTranslation();
   const { user, profile, loading, profileLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -103,7 +105,7 @@ const Dashboard = () => {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="text-center space-y-4">
         <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-        <p className="text-muted-foreground">Redirection vers votre dashboard...</p>
+        <p className="text-muted-foreground">{t('dashboard.redirectionVersVotreDashboard')}</p>
       </div>
     </div>
   );

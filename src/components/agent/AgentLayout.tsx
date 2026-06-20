@@ -1,4 +1,5 @@
 import { ReactNode, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -55,6 +56,7 @@ export function AgentLayout({
   pdgUserId,
   onSignOut
 }: AgentLayoutProps) {
+  const { t } = useTranslation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -286,7 +288,7 @@ export function AgentLayout({
                 onClick={onSignOut}
               >
                 <LogOut className="w-5 h-5" />
-                {!sidebarCollapsed && <span>Déconnexion</span>}
+                {!sidebarCollapsed && <span>{t('agentLayout.deconnexion')}</span>}
               </Button>
             </div>
           </div>

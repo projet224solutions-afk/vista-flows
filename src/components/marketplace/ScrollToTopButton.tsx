@@ -3,10 +3,12 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { ArrowUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function ScrollToTopButton() {
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -28,7 +30,7 @@ export function ScrollToTopButton() {
         'hover:scale-110 active:scale-95 transition-all duration-200',
         'animate-in fade-in slide-in-from-bottom-4'
       )}
-      aria-label="Retour en haut"
+      aria-label={t('scrollToTopButton.retourEnHaut')}
     >
       <ArrowUp className="w-5 h-5" />
     </button>

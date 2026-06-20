@@ -97,7 +97,7 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
       setServiceTypes(typesWithCount);
     } catch (error) {
       console.error('Error fetching service types:', error);
-      toast.error('Erreur lors du chargement des types de services');
+      toast.error(t('availableServicesModal.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -146,7 +146,7 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
         sessionStorage.setItem('selected_service_type_name', selectedServiceType.name);
       }
 
-      toast.success('Email enregistré ! Vous allez être redirigé vers la création de service.');
+      toast.success(t('availableServicesModal.emailEnregistreVousAllezEtre'));
       onOpenChange(false);
 
       // Navigate to service selection with the pre-selected service type
@@ -159,7 +159,7 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
       });
     } catch (error) {
       console.error('Error:', error);
-      toast.error('Une erreur est survenue');
+      toast.error(t('availableServicesModal.uneErreurEstSurvenue'));
     } finally {
       setIsSubmitting(false);
     }
@@ -237,11 +237,11 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="service-email">Email pour votre service professionnel</Label>
+        <Label htmlFor="service-email">{t('availableServicesModal.emailPourVotreServiceProfessionnel')}</Label>
         <Input
           id="service-email"
           type="email"
-          placeholder="votre-service@exemple.com"
+          placeholder={t('availableServicesModal.votreServiceExempleCom')}
           value={newEmail}
           onChange={(e) => {
             setNewEmail(e.target.value);
@@ -290,7 +290,7 @@ export function AvailableServicesModal({ open, onOpenChange }: AvailableServices
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
-          placeholder="Rechercher un type de service..."
+          placeholder={t('availableServicesModal.rechercherUnTypeDeService')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10 h-10 text-sm"

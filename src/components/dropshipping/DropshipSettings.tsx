@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +20,7 @@ interface DropshipSettingsProps {
 }
 
 export function DropshipSettings({ settings, loading, onSave }: DropshipSettingsProps) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     is_enabled: true,
     default_margin_percent: 20,
@@ -104,7 +106,7 @@ export function DropshipSettings({ settings, loading, onSave }: DropshipSettings
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="default_margin">Marge par défaut (%)</Label>
+              <Label htmlFor="default_margin">{t('dropshipSettings.margeParDefaut')}</Label>
               <Input
                 id="default_margin"
                 type="number"
@@ -137,7 +139,7 @@ export function DropshipSettings({ settings, loading, onSave }: DropshipSettings
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="hold_days">Rétention paiement (jours)</Label>
+              <Label htmlFor="hold_days">{t('dropshipSettings.retentionPaiementJours')}</Label>
               <p className="text-xs text-muted-foreground">
                 Nombre de jours avant libération du paiement au vendeur
               </p>
@@ -156,7 +158,7 @@ export function DropshipSettings({ settings, loading, onSave }: DropshipSettings
 
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="auto_release">Libération auto à la livraison</Label>
+                <Label htmlFor="auto_release">{t('dropshipSettings.liberationAutoALaLivraison')}</Label>
                 <p className="text-sm text-muted-foreground">
                   Libérer automatiquement les fonds quand le client confirme réception
                 </p>
@@ -205,7 +207,7 @@ export function DropshipSettings({ settings, loading, onSave }: DropshipSettings
 
           {formData.auto_sync_enabled && (
             <div className="space-y-2">
-              <Label htmlFor="sync_freq">Fréquence (heures)</Label>
+              <Label htmlFor="sync_freq">{t('dropshipSettings.frequenceHeures')}</Label>
               <Input
                 id="sync_freq"
                 type="number"
@@ -252,7 +254,7 @@ export function DropshipSettings({ settings, loading, onSave }: DropshipSettings
 
           {formData.notify_low_stock && (
             <div className="space-y-2 pl-4 border-l-2">
-              <Label htmlFor="threshold">Seuil d'alerte (unités)</Label>
+              <Label htmlFor="threshold">{t('dropshipSettings.seuilDAlerteUnites')}</Label>
               <Input
                 id="threshold"
                 type="number"
@@ -271,7 +273,7 @@ export function DropshipSettings({ settings, loading, onSave }: DropshipSettings
 
           <div className="flex items-center justify-between">
             <div>
-              <Label>Changements de prix</Label>
+              <Label>{t('dropshipSettings.changementsDePrix')}</Label>
               <p className="text-sm text-muted-foreground">
                 Notifier des variations de prix fournisseur
               </p>
@@ -287,7 +289,7 @@ export function DropshipSettings({ settings, loading, onSave }: DropshipSettings
 
           <div className="flex items-center justify-between">
             <div>
-              <Label>Problèmes fournisseur</Label>
+              <Label>{t('dropshipSettings.problemesFournisseur')}</Label>
               <p className="text-sm text-muted-foreground">
                 Alerter en cas d'incident avec un fournisseur
               </p>
@@ -306,7 +308,7 @@ export function DropshipSettings({ settings, loading, onSave }: DropshipSettings
       {/* Affichage client */}
       <Card>
         <CardHeader>
-          <CardTitle>Affichage Client</CardTitle>
+          <CardTitle>{t('dropshipSettings.affichageClient')}</CardTitle>
           <CardDescription>
             Configurez ce que vos clients voient
           </CardDescription>
@@ -314,7 +316,7 @@ export function DropshipSettings({ settings, loading, onSave }: DropshipSettings
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <Label>Afficher le nom du fournisseur</Label>
+              <Label>{t('dropshipSettings.afficherLeNomDuFournisseur')}</Label>
               <p className="text-sm text-muted-foreground">
                 Montrer d'où vient le produit
               </p>
@@ -330,7 +332,7 @@ export function DropshipSettings({ settings, loading, onSave }: DropshipSettings
 
           <div className="flex items-center justify-between">
             <div>
-              <Label>Afficher délais de livraison</Label>
+              <Label>{t('dropshipSettings.afficherDelaisDeLivraison')}</Label>
               <p className="text-sm text-muted-foreground">
                 Montrer l'estimation de livraison
               </p>

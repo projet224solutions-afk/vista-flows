@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
@@ -104,6 +105,7 @@ export function ProductImportDialog({
   vendorId,
   onProductImported
 }: ProductImportDialogProps) {
+  const { t } = useTranslation();
   const {
     importing,
     activeConnectors,
@@ -250,7 +252,7 @@ export function ProductImportDialog({
 
               <TabsContent value="url" className="space-y-4 mt-4">
                 <div className="space-y-2">
-                  <Label htmlFor="productUrl">URL du produit</Label>
+                  <Label htmlFor="productUrl">{t('productImportDialog.urlDuProduit')}</Label>
                   <div className="flex gap-2">
                     <Input
                       id="productUrl"
@@ -287,13 +289,13 @@ export function ProductImportDialog({
 
               <TabsContent value="id" className="space-y-4 mt-4">
                 <div className="space-y-2">
-                  <Label htmlFor="connector">Sélectionner le connecteur</Label>
+                  <Label htmlFor="connector">{t('productImportDialog.selectionnerLeConnecteur')}</Label>
                   <Select
                     value={selectedConnector || ''}
                     onValueChange={(value) => setSelectedConnector(value as ConnectorType)}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Choisir un connecteur..." />
+                      <SelectValue placeholder={t('productImportDialog.choisirUnConnecteur')} />
                     </SelectTrigger>
                     <SelectContent>
                       {activeConnectors.map(connector => (
@@ -306,7 +308,7 @@ export function ProductImportDialog({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="productId">ID du produit</Label>
+                  <Label htmlFor="productId">{t('productImportDialog.idDuProduit')}</Label>
                   <div className="flex gap-2">
                     <Input
                       id="productId"
@@ -459,7 +461,7 @@ export function ProductImportDialog({
                   </div>
                   <BarChart className="w-8 h-8 text-muted-foreground" />
                   <div className="text-right">
-                    <p className="text-sm font-medium">Prix de vente</p>
+                    <p className="text-sm font-medium">{t('productImportDialog.prixDeVente')}</p>
                     <p className="text-2xl font-bold text-[#ff4000]">
                       {formatCurrency(calculateSellingPrice(productCost, priceConfig), 'GNF')}
                     </p>
@@ -498,7 +500,7 @@ export function ProductImportDialog({
 
                   {/* Arrondi */}
                   <div className="space-y-2">
-                    <Label htmlFor="roundTo">Arrondir au multiple de</Label>
+                    <Label htmlFor="roundTo">{t('productImportDialog.arrondirAuMultipleDe')}</Label>
                     <Select
                       value={String(priceConfig.roundToNearest)}
                       onValueChange={(value) => setPriceConfig(prev => ({
@@ -538,7 +540,7 @@ export function ProductImportDialog({
             {/* Options */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label htmlFor="publish">Publier immédiatement</Label>
+                <Label htmlFor="publish">{t('productImportDialog.publierImmediatement')}</Label>
                 <Switch
                   id="publish"
                   checked={productOptions.publishImmediately}
@@ -550,7 +552,7 @@ export function ProductImportDialog({
               </div>
 
               <div className="flex items-center justify-between">
-                <Label htmlFor="syncPrices">Synchroniser les prix automatiquement</Label>
+                <Label htmlFor="syncPrices">{t('productImportDialog.synchroniserLesPrixAutomatiquement')}</Label>
                 <Switch
                   id="syncPrices"
                   checked={productOptions.syncPrices}
@@ -562,7 +564,7 @@ export function ProductImportDialog({
               </div>
 
               <div className="flex items-center justify-between">
-                <Label htmlFor="syncStock">Synchroniser le stock automatiquement</Label>
+                <Label htmlFor="syncStock">{t('productImportDialog.synchroniserLeStockAutomatiquement')}</Label>
                 <Switch
                   id="syncStock"
                   checked={productOptions.syncStock}
@@ -586,7 +588,7 @@ export function ProductImportDialog({
                 {importing ? (
                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Enregistrement...</>
                 ) : (
-                  <><Check className="w-4 h-4 mr-2" /> Importer le produit</>
+                  <><Check className="w-4 h-4 mr-2" /> {t('productImportDialog.importerLeProduit')}</>
                 )}
               </Button>
             </DialogFooter>

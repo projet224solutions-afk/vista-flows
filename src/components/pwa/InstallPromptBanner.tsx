@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import { X, Download, Share, Smartphone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -28,6 +29,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export function InstallPromptBanner() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showBanner, setShowBanner] = useState(false);
@@ -150,7 +152,7 @@ export function InstallPromptBanner() {
           <button
             onClick={handleDismiss}
             className="absolute -top-2 -right-2 bg-white text-gray-800 rounded-full p-1 shadow-lg hover:bg-gray-100 transition-colors"
-            aria-label="Fermer"
+            aria-label={t('installPromptBanner.fermer')}
           >
             <X className="w-4 h-4" />
           </button>

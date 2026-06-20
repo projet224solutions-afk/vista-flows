@@ -1,10 +1,12 @@
 import { ReactNode, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { NotificationBellButton } from '@/components/shared/NotificationBellButton';
 import {
   LayoutDashboard,
   Wallet,
@@ -63,6 +65,7 @@ export function BureauLayout({
   alertsCount = 0,
   onLogout
 }: BureauLayoutProps) {
+  const { t } = useTranslation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -171,14 +174,7 @@ export function BureauLayout({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="w-5 h-5" />
-              {alertsCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#ff4000] rounded-full text-white text-xs flex items-center justify-center">
-                  {alertsCount}
-                </span>
-              )}
-            </Button>
+            <NotificationBellButton />
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white text-xs">
                 {getInitials(bureau.president_name)}
@@ -310,7 +306,7 @@ export function BureauLayout({
             <Separator className="mb-3" />
             {!sidebarCollapsed && (
               <div className="px-2 py-1.5 bg-slate-50 rounded-lg mb-2">
-                <p className="text-xs text-slate-500">Préfecture</p>
+                <p className="text-xs text-slate-500">{t('bureauLayout.prefecture')}</p>
                 <p className="text-sm font-medium text-slate-800">{bureau.prefecture}</p>
               </div>
             )}
@@ -323,7 +319,7 @@ export function BureauLayout({
               onClick={onLogout}
             >
               <LogOut className="w-5 h-5" />
-              {!sidebarCollapsed && <span>Déconnexion</span>}
+              {!sidebarCollapsed && <span>{t('bureauLayout.deconnexion')}</span>}
             </Button>
           </div>
         </div>

@@ -16,6 +16,7 @@ import { Routes, Route, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { SectionLoader } from '@/components/ui/GlobalLoader';
+import { useTranslation } from '@/hooks/useTranslation';
 import type { RecentOrder } from '@/types/vendor-dashboard';
 
 // ============================================================================
@@ -26,12 +27,14 @@ import type { RecentOrder } from '@/types/vendor-dashboard';
 const VendorDashboardHome = lazy(() => import('./VendorDashboardHome'));
 const ProductManagement = lazy(() => import('@/components/vendor/ProductManagement'));
 const OrderManagement = lazy(() => import('@/components/vendor/OrderManagement'));
+const VendorReturnsManager = lazy(() => import('@/components/vendor/returns/VendorReturnsManager'));
 
 // === FINANCE ===
 const UniversalWalletTransactions = lazy(() => import('@/components/wallet/UniversalWalletTransactions'));
 const ProfessionalVirtualCard = lazy(() => import('@/components/virtual-card').then(m => ({ default: m.ProfessionalVirtualCard })));
 const VendorQuotesInvoices = lazy(() => import('@/pg/VendorQuotesInvoices'));
 const PaymentManagement = lazy(() => import('@/components/vendor/PaymentManagement'));
+const VendorEscrowPage = lazy(() => import('@/components/vendor/VendorEscrowPage'));
 const PaymentLinksManager = lazy(() => import('@/components/vendor/PaymentLinksManager'));
 const ExpenseManagementDashboard = lazy(() => import('@/components/vendor/ExpenseManagementDashboard'));
 const VendorDebtManagement = lazy(() => import('@/components/vendor/debts/VendorDebtManagement').then(m => ({ default: m.VendorDebtManagement })));
@@ -73,7 +76,8 @@ const VendorReportsManager = lazy(() => import('@/components/vendor/reports/Vend
 
 // === SYSTEM ===
 const VendorSettings = lazy(() => import('@/pg/vendor/Settings'));
-const CopiloteChat = lazy(() => import('@/components/copilot/CopiloteChat'));
+// Copilot 224 unifié (mode intégré) — remplace l'ancien CopiloteChat.
+const Copilot224 = lazy(() => import('@/components/service-common/Copilot224'));
 const OfflineSyncPanel = lazy(() => import('@/components/vendor/OfflineSyncPanel'));
 const PWADiagnostic = lazy(() => import('@/components/pwa/PWADiagnostic'));
 
@@ -154,7 +158,7 @@ const CopilotePage = memo(function CopilotePage() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <CopiloteChat userRole="vendeur" height="500px" />
+        <Copilot224 variant="embedded" service="ecommerce" title="Copilot 224" height="500px" />
       </CardContent>
     </Card>
   );
@@ -171,8 +175,9 @@ const VendorRoutes = memo(function VendorRoutes({
   canAccessPOS,
   vendorId,
 }: VendorRoutesProps) {
+  const { t } = useTranslation();
   return (
-    <Suspense fallback={<SectionLoader text="Chargement..." />}>
+    <Suspense fallback={<SectionLoader text={t('vendorRoutes.loading')} />}>
       <Routes>
         {/* ═══════════════════════════════════════════════════════════════════ */}
         {/* CORE ROUTES - Toujours accessibles */}
@@ -317,6 +322,10 @@ const VendorRoutes = memo(function VendorRoutes({
             <PaymentManagement />
           </ProtectedRoute>
         } />
+
+        <Route path="escrow" element={<VendorEscrowPage />} />
+
+        <Route path="returns" element={<VendorReturnsManager />} />
 
         <Route path="payment-links" element={
           <ProtectedRoute feature="payment_links">

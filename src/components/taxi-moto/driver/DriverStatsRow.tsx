@@ -78,7 +78,7 @@ export function DriverStatsRow({
 
   return (
     <div className="px-2 py-3 w-full overflow-x-auto scrollbar-hide">
-      <div className="grid grid-cols-5 gap-1 min-w-[320px]">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-1 min-w-[320px]">
         {stats.map((stat) => (
           <button
             key={stat.id}

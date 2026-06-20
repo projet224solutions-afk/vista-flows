@@ -519,7 +519,8 @@ router.post("/agent/invite", validateBearerToken, async (req: any, res: any) => 
 
     if (error) throw error;
 
-    console.log(`Invitation sent to ${email}: ${token}`);
+    // Ne jamais logguer le token d'invitation (secret) — uniquement l'email destinataire.
+    console.log(`Invitation sent to ${email}`);
 
     return res.json({ success: true, invitation });
   } catch (err: any) {

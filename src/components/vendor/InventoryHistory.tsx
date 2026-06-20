@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowUp,
@@ -16,6 +17,7 @@ interface InventoryHistoryProps {
 }
 
 export default function InventoryHistory({ history }: InventoryHistoryProps) {
+  const { t } = useTranslation();
   const getMovementIcon = (type: string) => {
     switch (type) {
       case 'sale': return <ShoppingCart className="w-4 h-4" />;
@@ -55,7 +57,7 @@ export default function InventoryHistory({ history }: InventoryHistoryProps) {
       <Card>
         <CardContent className="p-8 text-center">
           <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Aucun mouvement enregistré</h3>
+          <h3 className="text-lg font-semibold mb-2">{t('inventoryHistory.aucunMouvementEnregistre')}</h3>
           <p className="text-muted-foreground">
             Les mouvements de stock apparaîtront ici
           </p>
@@ -67,7 +69,7 @@ export default function InventoryHistory({ history }: InventoryHistoryProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Historique des mouvements</CardTitle>
+        <CardTitle>{t('inventoryHistory.historiqueDesMouvements')}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">

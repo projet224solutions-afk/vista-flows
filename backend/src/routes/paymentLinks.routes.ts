@@ -264,6 +264,7 @@ router.post('/resolve', async (req: Request, res: Response) => {
         ownerType: link.owner_type,
         remise: link.remise,
         typeRemise: link.type_remise,
+        items: (rawLink.metadata && (rawLink.metadata as any).items) || [],
       },
       owner: ownerInfo,
       product: productInfo,
@@ -351,99 +352,52 @@ router.post('/process', optionalJWT, async (req: AuthenticatedRequest, res: Resp
         return;
       }
 
-      // Buyer wallet
-      const { data: buyerWallet } = await supabaseAdmin
-        .from('wallets')
-        .select('id, balance, currency')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (!buyerWallet) {
-        res.status(400).json({ success: false, error: 'Wallet introuvable' });
+      if (!ownerUserId) {
+        res.status(400).json({ success: false, error: 'Ce lien n\'a pas de bénéficiaire wallet' });
         return;
       }
 
-      if (buyerWallet.balance < payAmount) {
-        res.status(400).json({
-          success: false,
-          error: 'Solde insuffisant',
-          currentBalance: buyerWallet.balance,
-          required: payAmount,
-        });
+      // Règlement ATOMIQUE + IDEMPOTENT (un seul RPC tout-ou-rien) : débite l'acheteur du
+      // brut, crédite le NET au vendeur, la plateforme garde les frais. Anti double-paiement
+      // via la clé d'idempotence (plk:<id>). Remplace l'ancien débit/crédit non transactionnel
+      // qui pouvait perdre de l'argent en cas d'échec partiel.
+      const { data: settle, error: settleErr } = await supabaseAdmin.rpc('settle_payment_link_atomic', {
+        p_buyer_id: userId,
+        p_seller_id: ownerUserId,
+        p_gross: payAmount,
+        p_fee: platformFee,
+        p_currency: link.devise || 'GNF',
+        p_reference: link.payment_id || link.id,
+        p_idempotency_key: `plk:${link.id}`,
+        p_description: `Paiement lien: ${link.title || link.produit}`,
+      });
+
+      if (settleErr || !settle) {
+        const m = String(settleErr?.message || '');
+        const friendly =
+          /INSUFFICIENT_FUNDS/.test(m) ? 'Solde insuffisant' :
+          /WALLET_BLOCKED/.test(m) ? 'Wallet bloqué' :
+          /OWN_LINK/.test(m) ? 'Vous ne pouvez pas payer votre propre lien de paiement' :
+          /BUYER_WALLET_NOT_FOUND/.test(m) ? 'Wallet introuvable' :
+          /SELLER_WALLET_NOT_FOUND/.test(m) ? 'Le bénéficiaire n\'a pas de wallet' :
+          /BAD_AMOUNT|BAD_FEE/.test(m) ? 'Montant invalide' :
+          'Paiement échoué';
+        const code = /INSUFFICIENT_FUNDS|BAD_AMOUNT|BAD_FEE|BUYER_WALLET_NOT_FOUND|SELLER_WALLET_NOT_FOUND|OWN_LINK/.test(m) ? 400
+          : /WALLET_BLOCKED/.test(m) ? 403 : 400;
+        logger.warn(`[PaymentLinks] settle échec link=${link.id}: ${m}`);
+        res.status(code).json({ success: false, error: friendly });
         return;
       }
 
-      // Debit buyer (optimistic lock)
-      const { data: debitResult, error: debitError } = await supabaseAdmin
-        .from('wallets')
-        .update({ balance: buyerWallet.balance - payAmount, updated_at: new Date().toISOString() })
-        .eq('id', buyerWallet.id)
-        .eq('balance', buyerWallet.balance)
-        .select('balance')
-        .single();
+      const walletTxId: string | null = (settle as any).transaction_id || null;
 
-      if (debitError || !debitResult) {
-        res.status(409).json({ success: false, error: 'Solde modifié pendant la transaction. Réessayez.' });
-        return;
-      }
-
-      // Credit seller
-      let walletTxId: string | null = null;
-      if (ownerUserId) {
-        const { data: sellerWallet } = await supabaseAdmin
-          .from('wallets')
-          .select('id, balance')
-          .eq('user_id', ownerUserId)
-          .maybeSingle();
-
-        if (sellerWallet) {
-          await supabaseAdmin
-            .from('wallets')
-            .update({ balance: sellerWallet.balance + netAmount, updated_at: new Date().toISOString() })
-            .eq('id', sellerWallet.id);
-
-          const txId = `PLK-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
-          walletTxId = txId;
-
-          await supabaseAdmin.from('wallet_transactions').insert({
-            transaction_id: txId,
-            sender_wallet_id: buyerWallet.id,
-            receiver_wallet_id: sellerWallet.id,
-            sender_user_id: userId,
-            receiver_user_id: ownerUserId,
-            amount: payAmount,
-            fee: platformFee,
-            net_amount: netAmount,
-            currency: link.devise || 'GNF',
-            transaction_type: 'payment' as any,
-            status: 'completed' as any,
-            description: `Paiement lien: ${link.title || link.produit}`,
-            reference_id: link.payment_id,
-            metadata: {
-              payment_link_id: link.id,
-              link_type: link.link_type,
-              commission_rate: commissionRate,
-              source: 'backend-node',
-            },
-          });
-        }
-      }
-
-      // Update link
+      // Le RPC a déjà, dans UNE transaction : déplacé l'argent + marqué le lien « success »
+      // + décrémenté le stock. Ici on enregistre seulement le contact client (non critique,
+      // hors transaction argent — ne touche ni au statut ni à use_count).
       await supabaseAdmin.from('payment_links').update({
-        status: 'success',
-        paid_at: new Date().toISOString(),
-        payment_method: 'wallet',
-        transaction_id: walletTxId,
         customer_name: customerName || null,
         customer_email: customerEmail || null,
         customer_phone: customerPhone || null,
-        use_count: (link.use_count || 0) + 1,
-        platform_fee: platformFee,
-        net_amount: netAmount,
-        gross_amount: payAmount,
-        wallet_credit_status: 'credited',
-        wallet_transaction_id: walletTxId,
       }).eq('id', link.id);
 
       // Trigger affiliate commissions
@@ -506,6 +460,8 @@ router.post('/process', optionalJWT, async (req: AuthenticatedRequest, res: Resp
           gross_amount: payAmount,
           wallet_credit_status: 'pending_settlement',
         }).eq('id', link.id);
+        // Décrément stock (lien multi-produits) — idempotent.
+        await supabaseAdmin.rpc('consume_payment_link_stock', { p_link_id: link.id }).then(() => {}, (e) => logger.warn(`[PaymentLinks] consume_stock: ${e?.message}`));
         logger.info(`[PaymentLinks] Card payment finalized: intentId=${paymentIntentId}, linkId=${link.id}`);
         res.json({ success: true, paymentMethod: 'card', confirmed: true, paymentIntentId, amount: payAmount });
         return;

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -63,6 +64,7 @@ export function DjomyPaymentForm({
   onCancel,
   className,
 }: DjomyPaymentFormProps) {
+  const { t } = useTranslation();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('OM');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [payerName, setPayerName] = useState('');
@@ -89,7 +91,7 @@ export function DjomyPaymentForm({
     e.preventDefault();
 
     if (!validatePhone(phoneNumber)) {
-      toast.error('Numéro de téléphone invalide');
+      toast.error(t('djomyPaymentForm.numeroDeTelephoneInvalide'));
       return;
     }
 
@@ -120,7 +122,7 @@ export function DjomyPaymentForm({
           transactionId: data.transactionId,
         });
 
-        toast.success('Paiement initié avec succès');
+        toast.success(t('djomyPaymentForm.paiementInitieAvecSucces'));
         onSuccess?.(data.transactionId);
       } else {
         throw new Error(data?.error || 'Erreur inconnue');
@@ -155,8 +157,8 @@ export function DjomyPaymentForm({
               </p>
             </div>
             <div className="bg-muted rounded-lg p-4 space-y-2">
-              <p className="text-sm"><strong>Montant :</strong> {formatAmount(amount)}</p>
-              <p className="text-sm"><strong>Méthode :</strong> {PAYMENT_METHODS.find(m => m.id === paymentMethod)?.name}</p>
+              <p className="text-sm"><strong>{t('djomyPaymentForm.montant')}</strong> {formatAmount(amount)}</p>
+              <p className="text-sm"><strong>{t('djomyPaymentForm.methode')}</strong> {PAYMENT_METHODS.find(m => m.id === paymentMethod)?.name}</p>
               {status.transactionId && (
                 <p className="text-xs text-muted-foreground font-mono">
                   Réf: {status.transactionId.slice(0, 8)}...
@@ -165,7 +167,7 @@ export function DjomyPaymentForm({
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <AlertCircle className="w-4 h-4" />
-              <span>Vous recevrez une notification une fois le paiement confirmé</span>
+              <span>{t('djomyPaymentForm.vousRecevrezUneNotificationUne')}</span>
             </div>
           </div>
         </CardContent>
@@ -204,7 +206,7 @@ export function DjomyPaymentForm({
         <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2">
           <CreditCard className="w-6 h-6 text-primary" />
         </div>
-        <CardTitle>Paiement sécurisé</CardTitle>
+        <CardTitle>{t('djomyPaymentForm.paiementSecurise')}</CardTitle>
         <CardDescription>
           Payez {formatAmount(amount)} via Mobile Money
         </CardDescription>
@@ -214,11 +216,11 @@ export function DjomyPaymentForm({
         <CardContent className="space-y-6">
           {/* Payment Method Selection */}
           <div className="space-y-3">
-            <Label className="text-sm font-medium">Méthode de paiement</Label>
+            <Label className="text-sm font-medium">{t('djomyPaymentForm.methodeDePaiement')}</Label>
             <RadioGroup
               value={paymentMethod}
               onValueChange={(v) => setPaymentMethod(v as PaymentMethod)}
-              className="grid grid-cols-3 gap-3"
+              className="grid grid-cols-2 sm:grid-cols-3 gap-3"
             >
               {PAYMENT_METHODS.map((method) => (
                 <div key={method.id}>
@@ -271,7 +273,7 @@ export function DjomyPaymentForm({
             <Input
               id="name"
               type="text"
-              placeholder="Votre nom"
+              placeholder={t('djomyPaymentForm.votreNom')}
               value={payerName}
               onChange={(e) => setPayerName(e.target.value)}
             />
@@ -280,7 +282,7 @@ export function DjomyPaymentForm({
           {/* Amount Summary */}
           <div className="bg-muted rounded-lg p-4 space-y-2">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Montant</span>
+              <span className="text-sm text-muted-foreground">{t('djomyPaymentForm.montant2')}</span>
               <span className="font-semibold">{formatAmount(amount)}</span>
             </div>
             {description && (

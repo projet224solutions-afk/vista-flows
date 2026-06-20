@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card } from "@/components/ui/card";
 import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Activity, DollarSign, Users, TrendingUp, AlertTriangle } from 'lucide-react';
 
 export function TaxiMotoAdminPanel() {
+  const { t } = useTranslation();
   const [stats, setStats] = useState({
     activeRides: 0,
     totalRides: 0,
@@ -134,7 +136,7 @@ export function TaxiMotoAdminPanel() {
 
       {/* Courses récentes */}
       <Card className="p-6">
-        <h2 className="text-xl font-semibold mb-4">Courses récentes</h2>
+        <h2 className="text-xl font-semibold mb-4">{t('taxiMotoAdminPanel.coursesRecentes')}</h2>
         <div className="space-y-2">
           {recentRides.map((ride) => (
             <div key={ride.id} className="flex justify-between items-center p-3 bg-muted rounded-lg">

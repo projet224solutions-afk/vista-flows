@@ -1,6 +1,7 @@
 // PWAInstallPrompt v2 - Avec protection contre les erreurs React HMR
 
 import { useEffect, useState, memo } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Download, X, Smartphone, Monitor, Chrome } from 'lucide-react';
@@ -8,6 +9,7 @@ import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { toast } from 'sonner';
 
 function PWAInstallPromptInner() {
+  const { t } = useTranslation();
   const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
   const [isVisible, setIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
@@ -46,12 +48,12 @@ function PWAInstallPromptInner() {
     const installed = await promptInstall();
 
     if (installed) {
-      toast.success('🎉 Application installée avec succès!', {
+      toast.success(t('pWAInstallPrompt.applicationInstalleeAvecSucces'), {
         description: 'Vous pouvez maintenant utiliser 224Solutions depuis votre écran d\'accueil'
       });
       setIsVisible(false);
     } else {
-      toast.error('Installation annulée', {
+      toast.error(t('pWAInstallPrompt.installationAnnulee'), {
         description: 'Vous pourrez installer l\'application plus tard'
       });
     }
@@ -62,7 +64,7 @@ function PWAInstallPromptInner() {
     setIsDismissed(true);
     localStorage.setItem('pwa-install-dismissed', String(Date.now()));
 
-    toast.info('Invitation masquée', {
+    toast.info(t('pWAInstallPrompt.invitationMasquee'), {
       description: 'Vous pourrez installer l\'application depuis les paramètres de votre navigateur'
     });
   };
@@ -106,7 +108,7 @@ function PWAInstallPromptInner() {
               <div className="space-y-1 text-xs text-gray-500 mt-2">
                 <div className="flex items-center gap-2">
                   <Smartphone className="w-3 h-3 text-blue-600" />
-                  <span>Accès instantané sans ouvrir le navigateur</span>
+                  <span>{t('pWAInstallPrompt.accesInstantaneSansOuvrirLe')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Monitor className="w-3 h-3 text-[#04439e]" />
@@ -114,7 +116,7 @@ function PWAInstallPromptInner() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Chrome className="w-3 h-3 text-[#ff4000]" />
-                  <span>0 Mo d'espace, léger et rapide</span>
+                  <span>{t('pWAInstallPrompt.t0MoDEspaceLeger')}</span>
                 </div>
               </div>
 

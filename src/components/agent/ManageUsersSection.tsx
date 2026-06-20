@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,6 +45,7 @@ interface ManageUsersSectionProps {
 }
 
 export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
+  const { t } = useTranslation();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -112,7 +114,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
       toast.success(`${users.length} utilisateurs chargés`);
     } catch (error) {
       console.error('Erreur chargement utilisateurs:', error);
-      toast.error('Erreur lors du chargement des utilisateurs');
+      toast.error(t('manageUsersSection.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -153,7 +155,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
       loadUsers();
     } catch (error) {
       console.error('Erreur:', error);
-      toast.error('Erreur lors de la modification du statut');
+      toast.error(t('manageUsersSection.erreurLorsDeLaModification'));
     }
   };
 
@@ -168,7 +170,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
       loadUsers();
     } catch (error) {
       console.error('Erreur:', error);
-      toast.error('Erreur lors de la suppression de l\'utilisateur');
+      toast.error(t('manageUsersSection.erreurLorsDeLaSuppression'));
     }
   };
 
@@ -248,8 +250,8 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
       {/* Filters */}
       <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle>Gestion des Utilisateurs</CardTitle>
-          <CardDescription>Recherche et filtrage</CardDescription>
+          <CardTitle>{t('manageUsersSection.gestionDesUtilisateurs')}</CardTitle>
+          <CardDescription>{t('manageUsersSection.rechercheEtFiltrage')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex gap-4">
@@ -257,7 +259,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Rechercher par email, nom..."
+                  placeholder={t('manageUsersSection.rechercherParEmailNom')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 bg-background"
@@ -266,13 +268,13 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
             </div>
             <Select value={roleFilter} onValueChange={setRoleFilter}>
               <SelectTrigger className="w-48 bg-background">
-                <SelectValue placeholder="Filtrer par rôle" />
+                <SelectValue placeholder={t('manageUsersSection.filtrerParRole')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous les rôles</SelectItem>
+                <SelectItem value="all">{t('manageUsersSection.tousLesRoles')}</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="vendeur">Vendeur</SelectItem>
-                <SelectItem value="client">Client</SelectItem>
+                <SelectItem value="vendeur">{t('manageUsersSection.vendeur')}</SelectItem>
+                <SelectItem value="client">{t('manageUsersSection.client')}</SelectItem>
                 <SelectItem value="livreur">Livreur</SelectItem>
                 <SelectItem value="taxi">Taxi</SelectItem>
                 <SelectItem value="transitaire">Transitaire</SelectItem>
@@ -352,14 +354,14 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+                          <AlertDialogTitle>{t('manageUsersSection.confirmerLaSuppression')}</AlertDialogTitle>
                           <AlertDialogDescription>
                             Êtes-vous sûr de vouloir supprimer l'utilisateur <strong>{user.email}</strong> ?
                             Cette action est irréversible et supprimera toutes les données associées.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Annuler</AlertDialogCancel>
+                          <AlertDialogCancel>{t('manageUsersSection.annuler')}</AlertDialogCancel>
                           <AlertDialogAction
                             onClick={() => deleteUser(user.id, user.email)}
                             className="bg-[#ff4000] hover:bg-[#ff4000]"
@@ -387,7 +389,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
                       <div className="flex items-center gap-2 text-sm">
                         <Phone className="w-4 h-4 text-muted-foreground" />
                         <div>
-                          <p className="text-xs text-muted-foreground">Téléphone</p>
+                          <p className="text-xs text-muted-foreground">{t('manageUsersSection.telephone')}</p>
                           <p className="font-medium">{user.phone}</p>
                         </div>
                       </div>
@@ -396,7 +398,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
                     <div className="flex items-center gap-2 text-sm">
                       <Calendar className="w-4 h-4 text-muted-foreground" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Créé le</p>
+                        <p className="text-xs text-muted-foreground">{t('manageUsersSection.creeLe')}</p>
                         <p className="font-medium">
                           {new Date(user.created_at).toLocaleDateString('fr-FR', {
                             day: '2-digit',
@@ -439,7 +441,7 @@ export function ManageUsersSection({ agentId }: ManageUsersSectionProps) {
       {filteredUsers.length === 0 && (
         <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
           <CardContent className="p-12 text-center">
-            <p className="text-muted-foreground">Aucun utilisateur trouvé</p>
+            <p className="text-muted-foreground">{t('manageUsersSection.aucunUtilisateurTrouve')}</p>
           </CardContent>
         </Card>
       )}

@@ -9,6 +9,7 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -218,6 +219,7 @@ const getRiskBadgeColor = (level: string): string => {
 
 
 export const ChinaDropshipDashboard: React.FC = () => {
+  const { t } = useTranslation();
 
   // State
   const [loading, setLoading] = useState(true);
@@ -407,7 +409,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
       toast.success(verify ? 'Fournisseur vérifié' : 'Vérification retirée');
       await loadSuppliers();
     } catch (_error) {
-      toast.error('Erreur lors de la vérification');
+      toast.error(t('chinaDropshipDashboard.erreurLorsDeLaVerification'));
     } finally {
       setActionLoading(false);
       setVerifyDialogOpen(false);
@@ -428,10 +430,10 @@ export const ChinaDropshipDashboard: React.FC = () => {
 
       if (error) throw error;
 
-      toast.success('Fournisseur blacklisté');
+      toast.success(t('chinaDropshipDashboard.fournisseurBlackliste'));
       await loadSuppliers();
     } catch (_error) {
-      toast.error('Erreur lors du blacklist');
+      toast.error(t('chinaDropshipDashboard.erreurLorsDuBlacklist'));
     } finally {
       setActionLoading(false);
     }
@@ -441,7 +443,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
     toast.info('Export en cours...');
     // Implementation for CSV/Excel export
     setTimeout(() => {
-      toast.success('Rapport exporté');
+      toast.success(t('chinaDropshipDashboard.rapportExporte'));
     }, 1500);
   };
 
@@ -615,7 +617,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4 lg:w-[600px]">
+        <TabsList className="grid w-full grid-cols-4 lg:w-full max-w-[600px]">
           <TabsTrigger value="overview">
             <BarChart3 className="h-4 w-4 mr-2" />
             Vue d'ensemble
@@ -722,14 +724,14 @@ export const ChinaDropshipDashboard: React.FC = () => {
           {/* Transport Methods Breakdown */}
           <Card>
             <CardHeader>
-              <CardTitle>Répartition méthodes de transport</CardTitle>
+              <CardTitle>{t('chinaDropshipDashboard.repartitionMethodesDeTransport')}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="text-center p-4 border rounded">
                   <Plane className="h-8 w-8 mx-auto text-blue-500 mb-2" />
                   <div className="text-xl font-bold">45%</div>
-                  <div className="text-sm text-muted-foreground">Aérien</div>
+                  <div className="text-sm text-muted-foreground">{t('chinaDropshipDashboard.aerien')}</div>
                 </div>
                 <div className="text-center p-4 border rounded">
                   <Ship className="h-8 w-8 mx-auto text-[#ff4000] mb-2" />
@@ -761,7 +763,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="Rechercher fournisseur..."
+                      placeholder={t('chinaDropshipDashboard.rechercherFournisseur')}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-10"
@@ -773,11 +775,11 @@ export const ChinaDropshipDashboard: React.FC = () => {
                     <SelectValue placeholder="Plateforme" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Toutes</SelectItem>
+                    <SelectItem value="all">{t('chinaDropshipDashboard.toutes')}</SelectItem>
                     <SelectItem value="ALIBABA">Alibaba</SelectItem>
                     <SelectItem value="ALIEXPRESS">AliExpress</SelectItem>
                     <SelectItem value="1688">1688</SelectItem>
-                    <SelectItem value="PRIVATE">Privé</SelectItem>
+                    <SelectItem value="PRIVATE">{t('chinaDropshipDashboard.prive')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -795,8 +797,8 @@ export const ChinaDropshipDashboard: React.FC = () => {
                     <TableHead>Score</TableHead>
                     <TableHead>Livraisons</TableHead>
                     <TableHead>MOQ</TableHead>
-                    <TableHead>Délai</TableHead>
-                    <TableHead>Vérifié</TableHead>
+                    <TableHead>{t('chinaDropshipDashboard.delai')}</TableHead>
+                    <TableHead>{t('chinaDropshipDashboard.verifie')}</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -903,7 +905,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                                  <AlertDialogCancel>{t('chinaDropshipDashboard.annuler')}</AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={() => handleBlacklistSupplier(supplier.id)}
                                     className="bg-[#ff4000] hover:bg-[#ff4000]"
@@ -934,7 +936,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="Rechercher commande..."
+                      placeholder={t('chinaDropshipDashboard.rechercherCommande')}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-10"
@@ -946,13 +948,13 @@ export const ChinaDropshipDashboard: React.FC = () => {
                     <SelectValue placeholder="Statut" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tous</SelectItem>
+                    <SelectItem value="all">{t('chinaDropshipDashboard.tous')}</SelectItem>
                     <SelectItem value="pending_supplier_confirm">En attente</SelectItem>
                     <SelectItem value="in_production">En production</SelectItem>
-                    <SelectItem value="shipped_domestic_china">Expédié Chine</SelectItem>
-                    <SelectItem value="shipped_international">Expédié Intl</SelectItem>
+                    <SelectItem value="shipped_domestic_china">{t('chinaDropshipDashboard.expedieChine')}</SelectItem>
+                    <SelectItem value="shipped_international">{t('chinaDropshipDashboard.expedieIntl')}</SelectItem>
                     <SelectItem value="customs_clearance">Douane</SelectItem>
-                    <SelectItem value="delivered">Livré</SelectItem>
+                    <SelectItem value="delivered">{t('chinaDropshipDashboard.livre')}</SelectItem>
                     <SelectItem value="disputed">Litige</SelectItem>
                   </SelectContent>
                 </Select>
@@ -966,9 +968,9 @@ export const ChinaDropshipDashboard: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>ID Commande</TableHead>
-                    <TableHead>Vendeur</TableHead>
-                    <TableHead>Montant</TableHead>
+                    <TableHead>{t('chinaDropshipDashboard.idCommande')}</TableHead>
+                    <TableHead>{t('chinaDropshipDashboard.vendeur')}</TableHead>
+                    <TableHead>{t('chinaDropshipDashboard.montant')}</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead>Transport</TableHead>
                     <TableHead>Tracking</TableHead>
@@ -1031,7 +1033,7 @@ export const ChinaDropshipDashboard: React.FC = () => {
             <Card>
               <CardContent className="py-12 text-center">
                 <CheckCircle2 className="h-12 w-12 mx-auto text-[#ff4000] mb-4" />
-                <h3 className="text-lg font-semibold">Aucun risque détecté</h3>
+                <h3 className="text-lg font-semibold">{t('chinaDropshipDashboard.aucunRisqueDetecte')}</h3>
                 <p className="text-muted-foreground mt-2">
                   Tous les produits et fournisseurs fonctionnent normalement.
                 </p>
@@ -1052,12 +1054,12 @@ export const ChinaDropshipDashboard: React.FC = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Type de risque</TableHead>
+                      <TableHead>{t('chinaDropshipDashboard.typeDeRisque')}</TableHead>
                       <TableHead>Niveau</TableHead>
-                      <TableHead>Produit</TableHead>
+                      <TableHead>{t('chinaDropshipDashboard.produit')}</TableHead>
                       <TableHead>Fournisseur</TableHead>
-                      <TableHead>Détails</TableHead>
-                      <TableHead>Détecté</TableHead>
+                      <TableHead>{t('chinaDropshipDashboard.details')}</TableHead>
+                      <TableHead>{t('chinaDropshipDashboard.detecte')}</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>

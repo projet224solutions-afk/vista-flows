@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,7 @@ interface AgentWalletTransactionsProps {
 }
 
 export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTransactionsProps) {
+  const { t } = useTranslation();
   const [wallet, setWallet] = useState<AgentWalletInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -89,7 +91,7 @@ export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTrans
       setWallet(walletData ? { id: String(walletData.id), agent_id: agentId, balance: walletData.balance || 0, currency: walletData.currency || 'GNF' } : null);
     } catch (error) {
       console.error('Erreur chargement wallet agent:', error);
-      toast.error('Impossible de charger le wallet');
+      toast.error(t('agentWalletTransactions.impossibleDeChargerLeWallet'));
     } finally {
       setLoading(false);
     }
@@ -183,7 +185,7 @@ export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTrans
   const handleRefresh = () => {
     loadWalletData();
     loadTransactions();
-    toast.success('Données actualisées');
+    toast.success(t('agentWalletTransactions.donneesActualisees'));
   };
 
   if (loading) {
@@ -192,7 +194,7 @@ export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTrans
         <CardContent className="py-8">
           <div className="flex items-center justify-center gap-2">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-            <span className="text-sm text-muted-foreground">Chargement du wallet...</span>
+            <span className="text-sm text-muted-foreground">{t('agentWalletTransactions.chargementDuWallet')}</span>
           </div>
         </CardContent>
       </Card>
@@ -206,7 +208,7 @@ export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTrans
           <div className="flex flex-col items-center justify-center gap-3">
             <Wallet className="w-12 h-12 text-blue-600" />
             <div className="text-center">
-              <h3 className="font-semibold text-blue-900">Initialisation du wallet...</h3>
+              <h3 className="font-semibold text-blue-900">{t('agentWalletTransactions.initialisationDuWallet')}</h3>
               <p className="text-sm text-blue-700 mt-1">
                 Votre wallet agent est en cours de création. Veuillez patienter.
               </p>
@@ -269,12 +271,12 @@ export function AgentWalletTransactions({ agentId, agentCode }: AgentWalletTrans
         <TabsContent value="transactions" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Dernières transactions</CardTitle>
+              <CardTitle className="text-lg">{t('agentWalletTransactions.dernieresTransactions')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-center py-12 text-muted-foreground">
                 <History className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium mb-2">Historique des transactions à venir</p>
+                <p className="text-lg font-medium mb-2">{t('agentWalletTransactions.historiqueDesTransactionsAVenir')}</p>
                 <p className="text-sm">
                   Le système de transactions pour les wallets agents sera bientôt disponible.
                 </p>

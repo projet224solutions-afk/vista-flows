@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -48,6 +49,7 @@ export function ShareButton({
   price,
   currency,
 }: ShareButtonProps) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -99,11 +101,11 @@ export function ShareButton({
       const urlToShare = await getShareUrl();
       await navigator.clipboard.writeText(urlToShare);
       setCopied(true);
-      toast.success("Lien copié dans le presse-papier !");
+      toast.success(t('shareButton.lienCopieDansLePresse'));
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error("Erreur lors de la copie:", error);
-      toast.error("Impossible de copier le lien");
+      toast.error(t('shareButton.impossibleDeCopierLeLien'));
     }
   };
 
@@ -114,14 +116,14 @@ export function ShareButton({
       const shareResult = await tryNativeShare({ title, text: shareText, url: urlToShare });
 
       if (shareResult === "shared") {
-        toast.success("Partage réussi !");
+        toast.success(t('shareButton.partageReussi'));
         return;
       }
 
       if (shareResult === "fallback") {
         await navigator.clipboard.writeText(urlToShare);
         setCopied(true);
-        toast.success("Lien copié dans le presse-papier !");
+        toast.success(t('shareButton.lienCopieDansLePresse'));
         setTimeout(() => setCopied(false), 2000);
       }
     } catch (error) {
@@ -134,13 +136,13 @@ export function ShareButton({
   const handleWhatsAppShare = async () => {
     const urlToShare = await getShareUrl();
     window.open(`https://wa.me/?text=${encodeURIComponent(`${shareText}\n${urlToShare}`)}`, "_blank");
-    toast.success("Ouverture de WhatsApp...");
+    toast.success(t('shareButton.ouvertureDeWhatsapp'));
   };
 
   const handleFacebookShare = async () => {
     const urlToShare = await getShareUrl();
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(urlToShare)}`, "_blank", "width=600,height=400");
-    toast.success("Ouverture de Facebook...");
+    toast.success(t('shareButton.ouvertureDeFacebook'));
   };
 
   const handleTwitterShare = async () => {

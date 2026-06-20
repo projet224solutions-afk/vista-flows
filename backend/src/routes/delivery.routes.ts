@@ -30,14 +30,6 @@ const DRIVER_EARNING_RATE = 0.985;
 // Méthodes de paiement déclenchant un crédit wallet (le cash est encaissé en main propre).
 const ELECTRONIC_METHODS = new Set(['wallet', 'mobile_money', 'prepaid', 'card', 'bank']);
 
-// Encaissement en espèces : le livreur reçoit le cash directement, pas de crédit wallet.
-const CASH_METHODS = new Set(['cash', 'cod', 'especes', 'espèces']);
-
-/** Le gain est-il crédité sur le wallet ? Oui sauf paiement en espèces. */
-function shouldCreditWallet(method: string | null | undefined): boolean {
-  return !CASH_METHODS.has(String(method || '').toLowerCase());
-}
-
 /** Gain livreur pour une livraison (driver_earning si présent, sinon 98,5 % des frais). */
 function resolveDriverEarning(delivery: { driver_earning?: number | null; delivery_fee?: number | null }): number {
   const stored = Number(delivery.driver_earning);
@@ -117,92 +109,48 @@ router.post('/complete', verifyJWT, async (req: AuthenticatedRequest, res: Respo
       return;
     }
 
-    const { data: delivery, error: fetchError } = await supabaseAdmin
-      .from('deliveries')
-      .select('id, status, driver_id, delivery_fee, driver_earning, payment_method, driver_payment_method')
-      .eq('id', delivery_id)
-      .eq('driver_id', userId)
-      .maybeSingle();
+    // 1) Transition ATOMIQUE en base : livraison 'delivered' + gain + totaux livreur dans
+    //    UNE seule transaction (RPC FOR UPDATE + autorisation + idempotence). Plus d'état partiel.
+    const { data: rpcRes, error: rpcError } = await supabaseAdmin.rpc('complete_delivery', {
+      p_delivery_id: delivery_id,
+      p_driver_id: userId,
+      p_proof: proof_photo_url || null,
+      p_signature: signature || null,
+    });
+    if (rpcError) throw rpcError;
+    const r = (rpcRes || {}) as any;
 
-    if (fetchError) throw fetchError;
-    if (!delivery) {
+    if (!r.success) {
       res.status(404).json({ success: false, error: 'Livraison introuvable ou non assignée à ce livreur' });
       return;
     }
 
-    const earning = resolveDriverEarning(delivery);
-
-    const alreadyDelivered = delivery.status === 'delivered';
-
-    // 1) Marquer livrée + écrire le gain + incrémenter les totaux (une seule fois)
-    if (!alreadyDelivered) {
-      const { error: updateError } = await supabaseAdmin
-        .from('deliveries')
-        .update({
-          status: 'delivered',
-          completed_at: new Date().toISOString(),
-          driver_earning: earning,
-          proof_photo_url: proof_photo_url || null,
-          client_signature: signature || null,
-        })
-        .eq('id', delivery_id)
-        .eq('driver_id', userId);
-
-      if (updateError) throw updateError;
-
-      // Incrémenter les totaux du driver (best-effort, ne bloque pas la livraison)
-      try {
-        const { data: driverRow } = await supabaseAdmin
-          .from('drivers')
-          .select('id, earnings_total, total_deliveries')
-          .eq('user_id', userId)
-          .maybeSingle();
-
-        if (driverRow) {
-          await supabaseAdmin
-            .from('drivers')
-            .update({
-              earnings_total: (Number(driverRow.earnings_total) || 0) + earning,
-              total_deliveries: (Number(driverRow.total_deliveries) || 0) + 1,
-              status: 'online',
-            })
-            .eq('id', driverRow.id);
-        }
-      } catch (statErr: any) {
-        logger.warn(`[Delivery] driver totals update failed: ${statErr.message}`);
-      }
-    }
-
-    // 2) Règlement du gain — idempotent ET ré-essayable.
-    //    On ne marque "réglé" (driver_payment_method) QUE si cash ou crédit RÉUSSI ;
-    //    si le crédit échoue on laisse null pour qu'un futur appel puisse recréditer.
-    //    La clé d'idempotence `delivery-earning:<id>` empêche tout double crédit.
-    const method = String(delivery.payment_method || 'prepaid').toLowerCase();
-    const isCash = !shouldCreditWallet(method);
+    const earning = Number(r.driver_earning) || 0;
+    const isCash = !!r.is_cash;
+    const alreadyDelivered = !!r.already_completed;
     let credited = false;
 
-    if (!delivery.driver_payment_method) {
-      if (!isCash) {
-        const creditResult = await creditWallet(
-          userId,
-          earning,
-          `Gain livraison #${String(delivery_id).slice(0, 8)}`,
-          `delivery_${delivery_id}`,
-          'delivery_earning',
-          `delivery-earning:${delivery_id}`,
-        );
-        credited = creditResult.success;
-        if (!creditResult.success) {
-          logger.warn(`[Delivery] wallet credit failed for delivery=${delivery_id}: ${creditResult.error}`);
-        }
-      }
-
-      if (isCash || credited) {
+    // 2) Règlement du gain — idempotent ET ré-essayable (clé `delivery-earning:<id>`).
+    //    Le RPC marque déjà le cash comme réglé ; ici on traite l'électronique.
+    if (!isCash && !r.already_paid) {
+      const creditResult = await creditWallet(
+        userId,
+        earning,
+        `Gain livraison #${String(delivery_id).slice(0, 8)}`,
+        `delivery_${delivery_id}`,
+        'delivery_earning',
+        `delivery-earning:${delivery_id}`,
+      );
+      credited = creditResult.success;
+      if (credited) {
+        // Marquer réglé seulement après crédit RÉUSSI (sinon un futur appel pourra recréditer).
         await supabaseAdmin
           .from('deliveries')
-          .update({ driver_payment_method: method })
+          .update({ driver_payment_method: String(r.payment_method || 'wallet') })
           .eq('id', delivery_id)
           .eq('driver_id', userId);
+      } else {
+        logger.warn(`[Delivery] wallet credit failed for delivery=${delivery_id}: ${creditResult.error}`);
       }
     }
 
@@ -341,6 +289,197 @@ router.post('/payment', verifyJWT, async (req: AuthenticatedRequest, res: Respon
       payload: { error: error.message },
     });
     res.status(500).json({ success: false, error: 'Erreur lors de l\'encaissement' });
+  }
+});
+
+/** Statuts considérés comme « en cours » pour une livraison assignée à un livreur. */
+const ACTIVE_DRIVER_STATUSES = new Set(['assigned', 'picked_up', 'in_transit']);
+
+/**
+ * POST /api/v2/delivery/accept
+ * Le livreur réclame une livraison DISPONIBLE. Claim ATOMIQUE : l'update conditionnel
+ * (status='pending' AND driver_id IS NULL) garantit qu'un seul livreur l'obtient même en
+ * cas de course (anti double-affectation). Idempotent si le même livreur réessaie.
+ *
+ * Body : { delivery_id }
+ */
+router.post('/accept', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const { delivery_id } = req.body || {};
+    if (!delivery_id || typeof delivery_id !== 'string') {
+      res.status(400).json({ success: false, error: 'delivery_id requis' });
+      return;
+    }
+
+    // Claim ATOMIQUE en base (FOR UPDATE + autorisation + idempotence dans le RPC).
+    const { data: rpcRes, error: rpcError } = await supabaseAdmin
+      .rpc('accept_delivery', { p_delivery_id: delivery_id, p_driver_id: userId });
+    if (rpcError) throw rpcError;
+    const r = (rpcRes || {}) as any;
+
+    if (!r.success) {
+      const status = r.error === 'not_found' ? 404 : 409;
+      res.status(status).json({
+        success: false,
+        error: r.error === 'not_found' ? 'Livraison introuvable' : 'Cette livraison n\'est plus disponible',
+      });
+      return;
+    }
+
+    // Charger la ligne (le frontend en a besoin pour afficher la course courante).
+    const { data: row } = await supabaseAdmin.from('deliveries').select('*').eq('id', delivery_id).maybeSingle();
+
+    if (!r.already_assigned) {
+      await emitCoreFeatureEvent({
+        featureKey: 'delivery.accept', coreEngine: 'commerce', ownerModule: 'delivery',
+        criticality: 'high', status: 'success', userId, payload: { delivery_id },
+      });
+    }
+    res.json({ success: true, data: row, already_assigned: !!r.already_assigned });
+  } catch (error: any) {
+    logger.error(`[Delivery] accept error: ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors de l\'acceptation de la livraison' });
+  }
+});
+
+/**
+ * POST /api/v2/delivery/start
+ * Démarre une livraison (colis récupéré). Transition autorisée seulement si la livraison
+ * est ASSIGNÉE à CE livreur (update conditionnel).
+ *
+ * Body : { delivery_id }
+ */
+router.post('/start', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const { delivery_id } = req.body || {};
+    if (!delivery_id || typeof delivery_id !== 'string') {
+      res.status(400).json({ success: false, error: 'delivery_id requis' });
+      return;
+    }
+
+    const { data: rpcRes, error: rpcError } = await supabaseAdmin
+      .rpc('start_delivery', { p_delivery_id: delivery_id, p_driver_id: userId });
+    if (rpcError) throw rpcError;
+    const r = (rpcRes || {}) as any;
+
+    if (!r.success) {
+      const msg = r.error === 'not_owner'
+        ? 'Livraison non assignée à ce livreur'
+        : 'État invalide pour le démarrage';
+      res.status(400).json({ success: false, error: msg });
+      return;
+    }
+
+    const { data: row } = await supabaseAdmin.from('deliveries').select('*').eq('id', delivery_id).maybeSingle();
+    res.json({ success: true, data: row, already_started: !!r.already_started });
+  } catch (error: any) {
+    logger.error(`[Delivery] start error: ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors du démarrage de la livraison' });
+  }
+});
+
+/**
+ * POST /api/v2/delivery/cancel
+ * Annule une livraison assignée à CE livreur (tant qu'elle n'est pas livrée). On NE remet
+ * PAS driver_id à null (trace d'audit) ; le statut 'cancelled' la sort des files actives.
+ *
+ * Body : { delivery_id, reason }
+ */
+router.post('/cancel', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const { delivery_id, reason } = req.body || {};
+    if (!delivery_id || typeof delivery_id !== 'string') {
+      res.status(400).json({ success: false, error: 'delivery_id requis' });
+      return;
+    }
+
+    const { data: rpcRes, error: rpcError } = await supabaseAdmin
+      .rpc('cancel_delivery', { p_delivery_id: delivery_id, p_driver_id: userId, p_reason: reason || null });
+    if (rpcError) throw rpcError;
+    const r = (rpcRes || {}) as any;
+
+    if (!r.success) {
+      if (r.error === 'not_owner') {
+        res.status(404).json({ success: false, error: 'Livraison introuvable ou non assignée à ce livreur' });
+      } else if (r.error === 'already_delivered') {
+        res.status(400).json({ success: false, error: 'Une livraison terminée ne peut pas être annulée' });
+      } else {
+        res.status(400).json({ success: false, error: 'Annulation impossible' });
+      }
+      return;
+    }
+
+    if (!r.already_cancelled) {
+      await emitCoreFeatureEvent({
+        featureKey: 'delivery.cancel', coreEngine: 'commerce', ownerModule: 'delivery',
+        criticality: 'medium', status: 'success', userId, payload: { delivery_id, reason: reason || null },
+      });
+    }
+    res.json({ success: true, already_cancelled: !!r.already_cancelled });
+  } catch (error: any) {
+    logger.error(`[Delivery] cancel error: ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors de l\'annulation de la livraison' });
+  }
+});
+
+/**
+ * POST /api/v2/delivery/track
+ * Enregistre un point GPS du livreur (source de vérité = backend, validé). Le client garde
+ * la diffusion broadcast pour la basse latence ; ICI on sécurise l'écriture en base : seul le
+ * livreur ASSIGNÉ peut tracer SA livraison active. Best-effort, non bloquant côté client.
+ *
+ * Body : { delivery_id, latitude, longitude, speed?, heading?, accuracy? }
+ */
+router.post('/track', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const { delivery_id, latitude, longitude, speed, heading, accuracy } = req.body || {};
+
+    if (!delivery_id || typeof delivery_id !== 'string') {
+      res.status(400).json({ success: false, error: 'delivery_id requis' });
+      return;
+    }
+    const lat = Number(latitude), lng = Number(longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+      res.status(400).json({ success: false, error: 'Coordonnées invalides' });
+      return;
+    }
+
+    // Autorisation : la livraison doit appartenir à ce livreur ET être active.
+    const { data: delivery, error: fetchError } = await supabaseAdmin
+      .from('deliveries')
+      .select('id, status, driver_id')
+      .eq('id', delivery_id)
+      .eq('driver_id', userId)
+      .maybeSingle();
+
+    if (fetchError) throw fetchError;
+    if (!delivery || !ACTIVE_DRIVER_STATUSES.has(delivery.status)) {
+      res.status(403).json({ success: false, error: 'Suivi non autorisé pour cette livraison' });
+      return;
+    }
+
+    const { error: insertError } = await supabaseAdmin
+      .from('delivery_tracking')
+      .insert({
+        delivery_id,
+        driver_id: userId,
+        latitude: lat,
+        longitude: lng,
+        speed: Number.isFinite(Number(speed)) ? Number(speed) : null,
+        heading: Number.isFinite(Number(heading)) ? Number(heading) : null,
+        accuracy: Number.isFinite(Number(accuracy)) ? Number(accuracy) : null,
+        recorded_at: new Date().toISOString(),
+      });
+
+    if (insertError) throw insertError;
+    res.json({ success: true });
+  } catch (error: any) {
+    logger.error(`[Delivery] track error: ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors de l\'enregistrement de la position' });
   }
 });
 

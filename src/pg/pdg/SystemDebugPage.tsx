@@ -1,5 +1,6 @@
 ﻿import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +33,7 @@ interface SystemStatus {
 }
 
 export default function SystemDebugPage() {
+  const { t } = useTranslation();
   const [status, setStatus] = React.useState<SystemStatus | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [_applying, setApplying] = React.useState(false);
@@ -141,7 +143,7 @@ export default function SystemDebugPage() {
       const migrationUrl = '/supabase/migrations/20240130_security_services_infrastructure.sql';
 
       console.log('Migration à appliquer :', migrationUrl);
-      alert('Migration à appliquer manuellement via Supabase Dashboard ou via la CLI : supabase db push');
+      alert(t('systemDebugPage.migrationAAppliquerManuellementVia'));
 
     } catch (error) {
       console.error('Error applying migration:', error);
@@ -186,7 +188,7 @@ export default function SystemDebugPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p>Vérification du système...</p>
+          <p>{t('systemDebugPage.verificationDuSysteme')}</p>
         </div>
       </div>
     );
@@ -213,7 +215,7 @@ export default function SystemDebugPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Diagnostic système</h1>
+          <h1 className="text-3xl font-bold">{t('systemDebugPage.diagnosticSysteme')}</h1>
           <p className="text-gray-600 mt-1">
             Vérification de l'état du système de monitoring et des services de sécurité
           </p>
@@ -256,11 +258,11 @@ export default function SystemDebugPage() {
               Le système de monitoring est dégradé car ces tables sont nécessaires.
             </p>
             <div className="space-y-2">
-              <p className="font-semibold">Pour corriger:</p>
+              <p className="font-semibold">{t('systemDebugPage.pourCorriger')}</p>
               <ol className="list-decimal list-inside space-y-1 text-sm">
-                <li>Ouvrir un terminal dans le projet</li>
-                <li>Exécuter : <code className="bg-orange-200 px-2 py-1 rounded">supabase db push</code></li>
-                <li>Ou appliquer manuellement la migration dans Supabase Dashboard</li>
+                <li>{t('systemDebugPage.ouvrirUnTerminalDansLe')}</li>
+                <li>{t('systemDebugPage.executer')} <code className="bg-orange-200 px-2 py-1 rounded">supabase db push</code></li>
+                <li>{t('systemDebugPage.ouAppliquerManuellementLaMigration')}</li>
               </ol>
               <p className="text-sm mt-3">
                 Fichier : <code className="bg-orange-200 px-2 py-1 rounded">
@@ -329,7 +331,7 @@ export default function SystemDebugPage() {
       {/* Tables de sécurité */}
       <Card>
         <CardHeader>
-          <CardTitle>Tables des services de sécurité</CardTitle>
+          <CardTitle>{t('systemDebugPage.tablesDesServicesDeSecurite')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
@@ -369,25 +371,25 @@ export default function SystemDebugPage() {
       {/* Instructions de Correction */}
       <Card>
         <CardHeader>
-          <CardTitle>Instructions de correction</CardTitle>
+          <CardTitle>{t('systemDebugPage.instructionsDeCorrection')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <h3 className="font-semibold mb-2">Étape 1 : Vérifier Supabase CLI</h3>
+            <h3 className="font-semibold mb-2">{t('systemDebugPage.etape1VerifierSupabaseCli')}</h3>
             <code className="block bg-gray-100 p-3 rounded text-sm">
               supabase --version
             </code>
           </div>
 
           <div>
-            <h3 className="font-semibold mb-2">Étape 2 : Appliquer la migration</h3>
+            <h3 className="font-semibold mb-2">{t('systemDebugPage.etape2AppliquerLaMigration')}</h3>
             <code className="block bg-gray-100 p-3 rounded text-sm">
               supabase db push
             </code>
           </div>
 
           <div>
-            <h3 className="font-semibold mb-2">Étape 3 : Vérifier le résultat</h3>
+            <h3 className="font-semibold mb-2">{t('systemDebugPage.etape3VerifierLeResultat')}</h3>
             <p className="text-sm text-gray-600">
               Rafraîchir cette page après l'application de la migration.
               Toutes les tables doivent être marquées comme "OK" en vert.
@@ -401,9 +403,9 @@ export default function SystemDebugPage() {
               Si vous n'avez pas Supabase CLI, vous pouvez:
               <ol className="list-decimal list-inside mt-2 space-y-1 text-sm">
                 <li>Ouvrir Supabase Dashboard</li>
-                <li>Aller dans "SQL Editor"</li>
-                <li>Copier le contenu de <code>supabase/migrations/20240130_security_services_infrastructure.sql</code></li>
-                <li>Coller et exécuter le SQL</li>
+                <li>{t('systemDebugPage.allerDansSqlEditor')}</li>
+                <li>{t('systemDebugPage.copierLeContenuDe')} <code>supabase/migrations/20240130_security_services_infrastructure.sql</code></li>
+                <li>{t('systemDebugPage.collerEtExecuterLeSql')}</li>
               </ol>
             </AlertDescription>
           </Alert>
@@ -421,7 +423,7 @@ export default function SystemDebugPage() {
             <ul className="list-disc list-inside space-y-1 text-gray-600">
               <li><code>QUICK_START_SECURITY.md</code> - Installation rapide (30 min)</li>
               <li><code>SECURITY_SERVICES_GUIDE.md</code> - Guide complet utilisation</li>
-              <li><code>SECURITY_IMPLEMENTATION_REPORT.md</code> - Rapport d'implémentation</li>
+              <li><code>SECURITY_IMPLEMENTATION_REPORT.md</code> {t('systemDebugPage.rapportDImplementation')}</li>
               <li><code>SECURITY_AUDIT_REPORT.md</code> - Rapport audit initial</li>
             </ul>
           </div>

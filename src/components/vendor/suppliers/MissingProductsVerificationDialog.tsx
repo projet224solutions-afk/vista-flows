@@ -3,6 +3,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -51,6 +52,7 @@ export function MissingProductsVerificationDialog({
   onConfirm,
   purchaseNumber,
 }: MissingProductsVerificationDialogProps) {
+  const { t } = useTranslation();
   const [hasVerified, setHasVerified] = useState<'yes' | 'no' | null>(null);
   const [hasMissing, setHasMissing] = useState<'yes' | 'no' | null>(null);
   const [missingEntries, setMissingEntries] = useState<MissingProductEntry[]>([]);
@@ -235,13 +237,13 @@ export function MissingProductsVerificationDialog({
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
-                      <Label className="text-xs">Fournisseur concerné *</Label>
+                      <Label className="text-xs">{t('missingProductsVerificationDialog.fournisseurConcerne')}</Label>
                       <Select
                         value={currentEntry.supplier_id}
                         onValueChange={(v) => setCurrentEntry({ ...currentEntry, supplier_id: v })}
                       >
                         <SelectTrigger className="h-9">
-                          <SelectValue placeholder="Sélectionner..." />
+                          <SelectValue placeholder={t('missingProductsVerificationDialog.selectionner')} />
                         </SelectTrigger>
                         <SelectContent>
                           {suppliers.map((s) => (
@@ -257,13 +259,13 @@ export function MissingProductsVerificationDialog({
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-xs">Catégorie du produit *</Label>
+                      <Label className="text-xs">{t('missingProductsVerificationDialog.categorieDuProduit')}</Label>
                       <Select
                         value={currentEntry.category_id}
                         onValueChange={(v) => setCurrentEntry({ ...currentEntry, category_id: v })}
                       >
                         <SelectTrigger className="h-9">
-                          <SelectValue placeholder="Sélectionner..." />
+                          <SelectValue placeholder={t('missingProductsVerificationDialog.selectionner')} />
                         </SelectTrigger>
                         <SelectContent>
                           {categories.map((c) => (
@@ -328,7 +330,7 @@ export function MissingProductsVerificationDialog({
                     <Textarea
                       value={currentEntry.notes}
                       onChange={(e) => setCurrentEntry({ ...currentEntry, notes: e.target.value })}
-                      placeholder="Détails supplémentaires..."
+                      placeholder={t('missingProductsVerificationDialog.detailsSupplementaires')}
                       rows={2}
                       className="text-sm"
                     />
@@ -394,7 +396,7 @@ export function MissingProductsVerificationDialog({
               <CardContent className="p-4">
                 <p className="text-sm text-[#ff4000] dark:text-orange-200 flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4" />
-                  <span>Parfait ! Tous les produits ont été vérifiés et sont complets.</span>
+                  <span>{t('missingProductsVerificationDialog.parfaitTousLesProduitsOnt')}</span>
                 </p>
               </CardContent>
             </Card>

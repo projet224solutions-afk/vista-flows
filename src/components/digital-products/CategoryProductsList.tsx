@@ -3,6 +3,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, ExternalLink, ShoppingCart, Star, Eye, Search, PlayCircle } from 'lucide-react';
@@ -34,6 +35,7 @@ export function CategoryProductsList({
   gradient,
   onBack
 }: CategoryProductsListProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { products, loading } = useDigitalProducts({ category });
@@ -58,14 +60,14 @@ export function CategoryProductsList({
     console.log('[CategoryProductsList] handleAddProduct called', { user: !!user, isMerchant, role: profile?.role });
 
     if (!user) {
-      toast.info('Connexion requise pour ajouter un produit');
+      toast.info(t('categoryProductsList.connexionRequisePourAjouterUn'));
       navigate('/auth', { state: { redirectTo: '/digital-products' } });
       return;
     }
 
     // Attendre le chargement du profil
     if (!profile) {
-      toast.info('Chargement de votre profil en cours...');
+      toast.info(t('categoryProductsList.chargementDeVotreProfilEn'));
       return;
     }
 
@@ -86,7 +88,7 @@ export function CategoryProductsList({
 
   const handleProductCreated = () => {
     setShowProductForm(false);
-    toast.success('Produit créé et publié!');
+    toast.success(t('categoryProductsList.produitCreeEtPublie'));
   };
 
   const openExternalSafely = (url: string) => {
@@ -286,7 +288,7 @@ export function CategoryProductsList({
                   </div>
 
                     <div className="mt-2 flex items-center justify-between rounded-lg bg-slate-50 px-2.5 py-2 text-[11px] font-medium text-slate-600 transition-colors group-hover:bg-slate-100 group-hover:text-[#04439e]">
-                      <span>Appuyer pour ouvrir</span>
+                      <span>{t('categoryProductsList.appuyerPourOuvrir')}</span>
                       <ExternalLink className="h-3.5 w-3.5" />
                     </div>
                 </CardContent>

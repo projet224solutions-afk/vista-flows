@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -43,6 +44,7 @@ interface PendingService {
 }
 
 export function PDGServiceValidation({ activeServiceTab, serviceTypes, onRefresh }: PDGServiceValidationProps) {
+  const { t } = useTranslation();
   const [services, setServices] = useState<PendingService[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionService, setActionService] = useState<PendingService | null>(null);
@@ -172,7 +174,7 @@ export function PDGServiceValidation({ activeServiceTab, serviceTypes, onRefresh
             <Shield className="w-5 h-5 text-[#ff4000]" />
           </div>
           <div>
-            <h3 className="font-semibold">Services en attente de validation</h3>
+            <h3 className="font-semibold">{t('pDGServiceValidation.servicesEnAttenteDeValidation')}</h3>
             <p className="text-sm text-muted-foreground">{filtered.length} service(s) à valider</p>
           </div>
         </div>
@@ -185,8 +187,8 @@ export function PDGServiceValidation({ activeServiceTab, serviceTypes, onRefresh
         <Card>
           <CardContent className="py-16 text-center">
             <CheckCircle className="w-12 h-12 text-[#ff4000] mx-auto mb-4" />
-            <h3 className="font-semibold text-lg mb-1">Tout est à jour !</h3>
-            <p className="text-muted-foreground">Aucun service en attente de validation</p>
+            <h3 className="font-semibold text-lg mb-1">{t('pDGServiceValidation.toutEstAJour')}</h3>
+            <p className="text-muted-foreground">{t('pDGServiceValidation.aucunServiceEnAttenteDe')}</p>
           </CardContent>
         </Card>
       ) : (
@@ -271,7 +273,7 @@ export function PDGServiceValidation({ activeServiceTab, serviceTypes, onRefresh
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setActionService(null)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setActionService(null)}>{t('pDGServiceValidation.annuler')}</Button>
             <Button
               onClick={handleAction}
               disabled={submitting}

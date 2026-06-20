@@ -6,6 +6,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,6 +29,7 @@ interface ShipmentFormProps {
 }
 
 export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProps) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const { wallet } = useWallet();
   const [formData, setFormData] = useState({
@@ -72,7 +74,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
   // Calculer le prix de livraison
   const handleCalculatePrice = async () => {
     if (!formData.senderAddress || !formData.receiverAddress) {
-      toast.error('Veuillez remplir les adresses avant de calculer le prix');
+      toast.error(t('shipmentForm.veuillezRemplirLesAdressesAvant'));
       return;
     }
     await calculateDistance(formData.senderAddress, formData.receiverAddress);
@@ -86,17 +88,17 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
 
     // Validation
     if (!formData.senderName || !formData.senderPhone || !formData.senderAddress) {
-      toast.error('Veuillez remplir toutes les informations de l\'expéditeur');
+      toast.error(t('shipmentForm.veuillezRemplirToutesLesInformations'));
       return;
     }
 
     if (!formData.receiverName || !formData.receiverPhone || !formData.receiverAddress) {
-      toast.error('Veuillez remplir toutes les informations du destinataire');
+      toast.error(t('shipmentForm.veuillezRemplirToutesLesInformations2'));
       return;
     }
 
     if (!formData.weight || parseFloat(formData.weight) <= 0) {
-      toast.error('Veuillez indiquer un poids valide');
+      toast.error(t('shipmentForm.veuillezIndiquerUnPoidsValide'));
       return;
     }
 
@@ -241,7 +243,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
 
       if (deliveryError) {
         console.error('❌ Error creating delivery:', deliveryError);
-        toast.error('Expédition créée mais erreur pour la livraison: ' + deliveryError.message);
+        toast.error(t('shipmentForm.expeditionCreeeMaisErreurPour') + deliveryError.message);
       } else {
         console.log('✅ Livraison créée avec succès:', delivery?.id);
       }
@@ -252,7 +254,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
 
         // Vérifier le solde
         if ((wallet?.balance || 0) < deliveryFee) {
-          toast.error('Solde insuffisant pour payer la livraison');
+          toast.error(t('shipmentForm.soldeInsuffisantPourPayerLa'));
           // Supprimer la livraison créée
           await supabase.from('deliveries').delete().eq('id', delivery.id);
           setLoading(false);
@@ -281,21 +283,21 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
 
         if (!escrowResult.success) {
           console.error('❌ Escrow creation failed:', escrowResult.error);
-          toast.error('Erreur lors du blocage des fonds');
+          toast.error(t('shipmentForm.erreurLorsDuBlocageDes'));
           await supabase.from('deliveries').delete().eq('id', delivery.id);
           setLoading(false);
           return;
         }
 
         console.log('✅ Escrow créé:', escrowResult.escrow_id);
-        toast.success('💰 Fonds bloqués en escrow - libérés à la confirmation du livreur');
+        toast.success(t('shipmentForm.fondsBloquesEnEscrowLiberes'));
       }
 
-      toast.success('✅ Expédition créée avec succès !');
+      toast.success(t('shipmentForm.expeditionCreeeAvecSucces'));
       onSuccess(shipment.id, shipment.tracking_number);
     } catch (error) {
       console.error('Error creating shipment:', error);
-      toast.error('Erreur lors de la création de l\'expédition');
+      toast.error(t('shipmentForm.erreurLorsDeLaCreation'));
     } finally {
       setLoading(false);
     }
@@ -319,12 +321,12 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
                 id="senderName"
                 value={formData.senderName}
                 onChange={(e) => handleInputChange('senderName', e.target.value)}
-                placeholder="Nom de l'expéditeur"
+                placeholder={t('shipmentForm.nomDeLExpediteur')}
                 required
               />
             </div>
             <div>
-              <Label htmlFor="senderPhone">Téléphone *</Label>
+              <Label htmlFor="senderPhone">{t('shipmentForm.telephone')}</Label>
               <Input
                 id="senderPhone"
                 value={formData.senderPhone}
@@ -335,12 +337,12 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
             </div>
           </div>
           <div>
-            <Label htmlFor="senderAddress">Adresse complète *</Label>
+            <Label htmlFor="senderAddress">{t('shipmentForm.adresseComplete')}</Label>
             <Textarea
               id="senderAddress"
               value={formData.senderAddress}
               onChange={(e) => handleInputChange('senderAddress', e.target.value)}
-              placeholder="Adresse de retrait du colis"
+              placeholder={t('shipmentForm.adresseDeRetraitDuColis')}
               rows={2}
               required
             />
@@ -364,12 +366,12 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
                 id="receiverName"
                 value={formData.receiverName}
                 onChange={(e) => handleInputChange('receiverName', e.target.value)}
-                placeholder="Nom du destinataire"
+                placeholder={t('shipmentForm.nomDuDestinataire')}
                 required
               />
             </div>
             <div>
-              <Label htmlFor="receiverPhone">Téléphone *</Label>
+              <Label htmlFor="receiverPhone">{t('shipmentForm.telephone')}</Label>
               <Input
                 id="receiverPhone"
                 value={formData.receiverPhone}
@@ -380,12 +382,12 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
             </div>
           </div>
           <div>
-            <Label htmlFor="receiverAddress">Adresse complète *</Label>
+            <Label htmlFor="receiverAddress">{t('shipmentForm.adresseComplete')}</Label>
             <Textarea
               id="receiverAddress"
               value={formData.receiverAddress}
               onChange={(e) => handleInputChange('receiverAddress', e.target.value)}
-              placeholder="Adresse de livraison"
+              placeholder={t('shipmentForm.adresseDeLivraison')}
               rows={2}
               required
             />
@@ -421,20 +423,20 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
                 <Route className="h-4 w-4" />
                 Estimation de livraison
               </h4>
-              <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-center">
                 <div className="p-2 bg-white/60 dark:bg-black/20 rounded">
                   <p className="text-xs text-muted-foreground">Distance</p>
                   <p className="font-bold text-[#ff4000] dark:text-[#ff4000]">{priceResult.distance} km</p>
                 </div>
                 <div className="p-2 bg-white/60 dark:bg-black/20 rounded">
-                  <p className="text-xs text-muted-foreground">Temps estimé</p>
+                  <p className="text-xs text-muted-foreground">{t('shipmentForm.tempsEstime')}</p>
                   <p className="font-bold text-blue-700 dark:text-blue-400 flex items-center justify-center gap-1">
                     <Clock className="h-3 w-3" />
                     {priceResult.estimatedTime} min
                   </p>
                 </div>
                 <div className="p-2 bg-white/60 dark:bg-black/20 rounded">
-                  <p className="text-xs text-muted-foreground">Prix livraison</p>
+                  <p className="text-xs text-muted-foreground">{t('shipmentForm.prixLivraison')}</p>
                   <p className="font-bold text-orange-600">{formatCurrency(priceResult.totalPrice)}</p>
                 </div>
               </div>
@@ -470,7 +472,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
               />
             </div>
             <div>
-              <Label htmlFor="piecesCount">Nombre de pièces</Label>
+              <Label htmlFor="piecesCount">{t('shipmentForm.nombreDePieces')}</Label>
               <Input
                 id="piecesCount"
                 type="number"
@@ -486,17 +488,17 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
                 id="itemType"
                 value={formData.itemType}
                 onChange={(e) => handleInputChange('itemType', e.target.value)}
-                placeholder="Ex: 日用品, Vêtements"
+                placeholder={t('shipmentForm.exVetements')}
               />
             </div>
           </div>
           <div>
-            <Label htmlFor="packageDescription">Description du contenu</Label>
+            <Label htmlFor="packageDescription">{t('shipmentForm.descriptionDuContenu')}</Label>
             <Textarea
               id="packageDescription"
               value={formData.packageDescription}
               onChange={(e) => handleInputChange('packageDescription', e.target.value)}
-              placeholder="Description détaillée du contenu du colis"
+              placeholder={t('shipmentForm.descriptionDetailleeDuContenuDu')}
               rows={2}
             />
           </div>
@@ -506,14 +508,14 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
       {/* Options */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Options d'expédition</CardTitle>
+          <CardTitle className="text-lg">{t('shipmentForm.optionsDExpedition')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Contre-remboursement */}
           <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
             <div className="flex-1">
               <Label htmlFor="cashOnDelivery" className="font-medium">Contre-remboursement</Label>
-              <p className="text-sm text-muted-foreground">Le destinataire paie à la livraison</p>
+              <p className="text-sm text-muted-foreground">{t('shipmentForm.leDestinatairePaieALa')}</p>
             </div>
             <Switch
               id="cashOnDelivery"
@@ -524,7 +526,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
 
           {formData.cashOnDelivery && (
             <div className="ml-4">
-              <Label htmlFor="codAmount">Montant à collecter (GNF)</Label>
+              <Label htmlFor="codAmount">{t('shipmentForm.montantACollecterGnf')}</Label>
               <Input
                 id="codAmount"
                 type="number"
@@ -540,7 +542,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
           <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
             <div className="flex-1">
               <Label htmlFor="insurance" className="font-medium">Assurance</Label>
-              <p className="text-sm text-muted-foreground">Protégez votre envoi contre les dommages</p>
+              <p className="text-sm text-muted-foreground">{t('shipmentForm.protegezVotreEnvoiContreLes')}</p>
             </div>
             <Switch
               id="insurance"
@@ -551,7 +553,7 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
 
           {formData.insurance && (
             <div className="ml-4">
-              <Label htmlFor="insuranceAmount">Valeur déclarée (GNF)</Label>
+              <Label htmlFor="insuranceAmount">{t('shipmentForm.valeurDeclareeGnf')}</Label>
               <Input
                 id="insuranceAmount"
                 type="number"
@@ -566,8 +568,8 @@ export function ShipmentForm({ vendorId, onSuccess, onCancel }: ShipmentFormProp
           {/* Option de retour */}
           <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
             <div className="flex-1">
-              <Label htmlFor="returnOption" className="font-medium">Option de retour</Label>
-              <p className="text-sm text-muted-foreground">Retour gratuit en cas de refus</p>
+              <Label htmlFor="returnOption" className="font-medium">{t('shipmentForm.optionDeRetour')}</Label>
+              <p className="text-sm text-muted-foreground">{t('shipmentForm.retourGratuitEnCasDe')}</p>
             </div>
             <Switch
               id="returnOption"

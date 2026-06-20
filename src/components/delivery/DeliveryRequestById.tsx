@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ interface DeliveryRequestByIdProps {
 }
 
 export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdProps) {
+  const { t } = useTranslation();
   const [vendorId, setVendorId] = useState('');
   const [clientId, setClientId] = useState('');
   const [packageDescription, setPackageDescription] = useState('');
@@ -34,7 +36,7 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
 
   const handleGeolocate = async (): Promise<boolean> => {
     if (!vendorId || !clientId) {
-      toast.error('Veuillez saisir le fournisseur et le client');
+      toast.error(t('deliveryRequestById.veuillezSaisirLeFournisseurEt'));
       return false;
     }
 
@@ -44,7 +46,7 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
       console.log('[DeliveryRequest] Geolocating vendor:', vendorId);
       const vendorLoc = await UserGeolocService.getVendorInfo(vendorId);
       if (!vendorLoc) {
-        toast.error('Fournisseur introuvable. Vérifiez le nom ou téléphone.');
+        toast.error(t('deliveryRequestById.fournisseurIntrouvableVerifiezLeNom'));
         setGeolocating(false);
         return false;
       }
@@ -55,7 +57,7 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
       console.log('[DeliveryRequest] Geolocating client:', clientId);
       const clientLoc = await UserGeolocService.getUserLocation(clientId);
       if (!clientLoc) {
-        toast.error('Client introuvable. Vérifiez le nom ou téléphone.');
+        toast.error(t('deliveryRequestById.clientIntrouvableVerifiezLeNom'));
         setGeolocating(false);
         return false;
       }
@@ -72,11 +74,11 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
       console.log('[DeliveryRequest] Price estimate:', estimate);
       setEstimatedPrice(estimate.totalPrice);
 
-      toast.success('Géolocalisation réussie !');
+      toast.success(t('deliveryRequestById.geolocalisationReussie'));
       return true;
     } catch (error) {
       console.error('[DeliveryRequest] Error geolocating:', error);
-      toast.error('Erreur lors de la géolocalisation');
+      toast.error(t('deliveryRequestById.erreurLorsDeLaGeolocalisation'));
       return false;
     } finally {
       setGeolocating(false);
@@ -85,7 +87,7 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
 
   const handleCreateDelivery = async () => {
     if (!vendorId || !clientId) {
-      toast.error('Veuillez saisir le fournisseur et le client');
+      toast.error(t('deliveryRequestById.veuillezSaisirLeFournisseurEt'));
       return;
     }
 
@@ -95,7 +97,7 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
     let price = estimatedPrice;
 
     if (!vLoc || !cLoc || price === null) {
-      toast.info('Géolocalisation en cours...');
+      toast.info(t('deliveryRequestById.geolocalisationEnCours'));
       const success = await handleGeolocate();
       if (!success) return;
 
@@ -121,7 +123,7 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
     try {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) {
-        toast.error('Vous devez être connecté');
+        toast.error(t('deliveryRequestById.vousDevezEtreConnecte'));
         return;
       }
 
@@ -166,11 +168,11 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
         throw error;
       }
 
-      toast.success('Livraison créée avec succès !');
+      toast.success(t('deliveryRequestById.livraisonCreeeAvecSucces'));
       onDeliveryCreated(data.id);
     } catch (error) {
       console.error('[DeliveryRequest] Error creating delivery:', error);
-      toast.error('Erreur lors de la création de la livraison');
+      toast.error(t('deliveryRequestById.erreurLorsDeLaCreation'));
     } finally {
       setLoading(false);
     }
@@ -193,7 +195,7 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
               Fournisseur (retrait du colis)
             </Label>
             <Input
-              placeholder="Nom boutique, téléphone ou ID..."
+              placeholder={t('deliveryRequestById.nomBoutiqueTelephoneOuId')}
               value={vendorId}
               onChange={(e) => setVendorId(e.target.value)}
             />
@@ -215,7 +217,7 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
               Client (livraison)
             </Label>
             <Input
-              placeholder="Nom, téléphone ou ID..."
+              placeholder={t('deliveryRequestById.nomTelephoneOuId')}
               value={clientId}
               onChange={(e) => setClientId(e.target.value)}
             />
@@ -261,9 +263,9 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
 
           {/* Description du colis */}
           <div className="space-y-2">
-            <Label>Description du colis</Label>
+            <Label>{t('deliveryRequestById.descriptionDuColis')}</Label>
             <Input
-              placeholder="Ex: Documents, vêtements..."
+              placeholder={t('deliveryRequestById.exDocumentsVetements')}
               value={packageDescription}
               onChange={(e) => setPackageDescription(e.target.value)}
             />
@@ -271,9 +273,9 @@ export function DeliveryRequestById({ onDeliveryCreated }: DeliveryRequestByIdPr
 
           {/* Instructions spéciales */}
           <div className="space-y-2">
-            <Label>Instructions spéciales (optionnel)</Label>
+            <Label>{t('deliveryRequestById.instructionsSpecialesOptionnel')}</Label>
             <Textarea
-              placeholder="Instructions pour la livraison..."
+              placeholder={t('deliveryRequestById.instructionsPourLaLivraison')}
               value={specialInstructions}
               onChange={(e) => setSpecialInstructions(e.target.value)}
               rows={3}

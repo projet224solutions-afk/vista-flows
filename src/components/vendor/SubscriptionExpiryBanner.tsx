@@ -1,10 +1,12 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Clock, CreditCard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useVendorRestrictions } from "@/hooks/useVendorRestrictions";
 
 export function SubscriptionExpiryBanner() {
+  const { t } = useTranslation();
   const { restrictions, loading } = useVendorRestrictions();
   const navigate = useNavigate();
 
@@ -35,13 +37,13 @@ export function SubscriptionExpiryBanner() {
               Votre abonnement a expiré. Les fonctionnalités suivantes sont temporairement désactivées :
             </p>
             <ul className="list-disc list-inside space-y-1 text-sm ml-2">
-              {!restrictions.canSendMessages && <li>Messagerie et réponses</li>}
+              {!restrictions.canSendMessages && <li>{t('subscriptionExpiryBanner.messagerieEtReponses')}</li>}
               {!restrictions.canMakeCalls && <li>Appels sortants</li>}
               {!restrictions.canTransfer && <li>Transferts wallet</li>}
-              {!restrictions.canReceivePayments && <li>Réception de nouveaux paiements</li>}
+              {!restrictions.canReceivePayments && <li>{t('subscriptionExpiryBanner.receptionDeNouveauxPaiements')}</li>}
               {!restrictions.canUseVirtualCard && <li>Carte virtuelle</li>}
               {!restrictions.canCreateProducts && !restrictions.isInGracePeriod && (
-                <li>Ajout de nouveaux produits</li>
+                <li>{t('subscriptionExpiryBanner.ajoutDeNouveauxProduits')}</li>
               )}
             </ul>
             {restrictions.isInGracePeriod && (

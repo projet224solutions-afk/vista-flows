@@ -1,51 +1,34 @@
-# ==================== STAGE 1: Build ====================
-FROM node:18-alpine AS builder
+# ==================================================================
+# Backend 224SOLUTIONS — image conteneur pour AWS ECS Fargate
+# Stateless : la MÊME image sert de service WEB (N instances derrière l'ALB)
+# et de service WORKER (1 instance). Le rôle est piloté par l'env RUN_BACKGROUND_JOBS.
+# L'app tourne en TypeScript via tsx (comme `npm start`) — pas d'étape de build JS.
+# ==================================================================
+FROM node:20-alpine
 
 WORKDIR /app
 
-# Copier uniquement les fichiers de dépendances
-COPY package*.json ./
-
-# Installer toutes les dépendances
-RUN npm ci
-
-# Copier le code source
-COPY . .
-
-# ==================== STAGE 2: Production ====================
-FROM node:18-alpine
-
-WORKDIR /app
-
-# Variables d'environnement de base
 ENV NODE_ENV=production
 ENV PORT=3001
 
-# Créer un utilisateur non-root pour la sécurité
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
+# Utilisateur non-root (sécurité)
+RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
 
-# Copier les dépendances et le code depuis le builder
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/src ./src
+# Dépendances d'abord (cache Docker) — tsx est en dependencies
+COPY package*.json ./
+RUN npm ci && npm cache clean --force
 
-# Installer toutes les dépendances (dev + production)
-RUN npm ci && \
-    npm cache clean --force
+# Code source
+COPY . .
 
-# Créer les dossiers nécessaires avec les bonnes permissions
-RUN mkdir -p logs uploads && \
-    chown -R nodejs:nodejs /app
-
-# Changer vers l'utilisateur non-root
+RUN mkdir -p logs uploads && chown -R nodejs:nodejs /app
 USER nodejs
 
-# Exposer le port
 EXPOSE 3001
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+# Health-check (l'ALB utilise /healthz ; Docker vérifie le process localement)
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:'+(process.env.PORT||3001)+'/healthz',(r)=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
 
-# Démarrer le serveur
-CMD ["node", "src/server.js"]
+# Démarrage : exécute le serveur TypeScript via tsx (binaire local, pas de téléchargement)
+CMD ["npx", "tsx", "src/server.ts"]

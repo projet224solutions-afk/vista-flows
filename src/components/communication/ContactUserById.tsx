@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ export default function ContactUserById({
   onUserSelected,
   showNavigation = true
 }: ContactUserByIdProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { searchById, validateIdFormat, loading } = useSearchUserId();
   const [searchInput, setSearchInput] = useState("");
@@ -34,7 +36,7 @@ export default function ContactUserById({
 
   const handleSearch = async () => {
     if (!searchInput.trim()) {
-      toast.error("Veuillez entrer un email, ID ou telephone");
+      toast.error(t('contactUserById.veuillezEntrerUnEmailId'));
       return;
     }
 
@@ -51,7 +53,7 @@ export default function ContactUserById({
     if (user) {
       // Vérifier qu'on ne contacte pas soi-même
       if (user.id === currentUserId) {
-        toast.error("Vous ne pouvez pas vous contacter vous-même");
+        toast.error(t('contactUserById.vousNePouvezPasVous'));
         setFoundUser(null);
         return;
       }
@@ -98,7 +100,7 @@ export default function ContactUserById({
             </label>
             <div className="flex gap-2">
               <Input
-                placeholder="email@exemple.com, USR0001, UUID ou +224..."
+                placeholder={t('contactUserById.emailExempleComUsr0001Uuid')}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
@@ -163,7 +165,7 @@ export default function ContactUserById({
 
           {/* Aide */}
           <div className="text-xs text-muted-foreground space-y-1">
-            <p className="font-medium">💡 Formats acceptés:</p>
+            <p className="font-medium">{t('contactUserById.formatsAcceptes')}</p>
             <ul className="list-disc list-inside space-y-0.5 pl-2">
               <li><code className="bg-gray-100 px-1 py-0.5 rounded">USR0001</code> - Format standard (3 lettres + 4 chiffres)</li>
               <li><code className="bg-gray-100 px-1 py-0.5 rounded">224-123-456</code> - Format Guinea (224 + 6 chiffres)</li>

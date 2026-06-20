@@ -4,6 +4,7 @@
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -45,6 +46,7 @@ export function ActiveRideCard({
   onNavigate,
   onCancelRide
 }: ActiveRideCardProps) {
+  const { t } = useTranslation();
   const getStatusInfo = () => {
     switch (ride.status) {
       case 'accepted':
@@ -140,7 +142,7 @@ export function ActiveRideCard({
               <MapPin className="w-4 h-4 text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-xs font-semibold text-[#ff4000] uppercase">Départ</p>
+              <p className="text-xs font-semibold text-[#ff4000] uppercase">{t('activeRideCard.depart')}</p>
               <p className="text-sm font-medium text-gray-900 mt-1">{ride.pickup.address}</p>
             </div>
           </div>
@@ -160,7 +162,7 @@ export function ActiveRideCard({
         <div className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-orange-50 rounded-lg border border-orange-200">
           <div className="flex items-center gap-2">
             <DollarSign className="w-5 h-5 text-[#ff4000]" />
-            <span className="text-sm text-gray-600">Gain estimé</span>
+            <span className="text-sm text-gray-600">{t('activeRideCard.gainEstime')}</span>
           </div>
           <span className="text-2xl font-bold text-[#ff4000]">
             <Money amount={ride?.estimatedEarnings || 0} from="GNF" />

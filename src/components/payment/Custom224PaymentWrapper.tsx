@@ -4,6 +4,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { PayPalButtons, PayPalScriptProvider, FUNDING } from '@paypal/react-paypal-js';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -50,6 +51,7 @@ export function Custom224PaymentWrapper({
   onSuccess,
   onError,
 }: Custom224PaymentWrapperProps) {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const { convert, userCurrency } = usePriceConverter();
 
@@ -148,7 +150,7 @@ export function Custom224PaymentWrapper({
       }
 
       setSucceeded(true);
-      toast.success('Paiement réussi !');
+      toast.success(t('custom224PaymentWrapper.paiementReussi'));
       onSuccess(data.orderID);
     } catch (err) {
       console.error('Error capturing PayPal order:', err);
@@ -164,7 +166,7 @@ export function Custom224PaymentWrapper({
       <div className="py-8">
         <div className="flex flex-col items-center justify-center space-y-4">
           <Loader2 className="w-10 h-10 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Initialisation du paiement sécurisé…</p>
+          <p className="text-sm text-muted-foreground">{t('custom224PaymentWrapper.initialisationDuPaiementSecurise')}</p>
         </div>
       </div>
     );
@@ -175,7 +177,7 @@ export function Custom224PaymentWrapper({
       <div className="py-6 text-center space-y-4">
         <div className="text-destructive text-3xl">❌</div>
         <p className="text-muted-foreground">{error}</p>
-        <Button variant="outline" onClick={fetchPayPalClientId}>Réessayer</Button>
+        <Button variant="outline" onClick={fetchPayPalClientId}>{t('custom224PaymentWrapper.reessayer')}</Button>
       </div>
     );
   }
@@ -188,7 +190,7 @@ export function Custom224PaymentWrapper({
             <CheckCircle2 className="w-14 h-14 text-primary" />
           </div>
         </div>
-        <h3 className="text-xl font-bold text-primary">Paiement réussi !</h3>
+        <h3 className="text-xl font-bold text-primary">{t('custom224PaymentWrapper.paiementReussi')}</h3>
         <p className="text-foreground text-lg font-semibold">{localAmount.formatted}</p>
       </div>
     );
@@ -201,7 +203,7 @@ export function Custom224PaymentWrapper({
       <div className="bg-muted/40 rounded-xl p-4 border border-border">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground font-medium">Montant à payer</p>
+            <p className="text-sm text-muted-foreground font-medium">{t('custom224PaymentWrapper.montantAPayer')}</p>
             <p className="text-xs text-muted-foreground mt-0.5">à {sellerName}</p>
           </div>
           <div className="text-right">
@@ -253,18 +255,18 @@ export function Custom224PaymentWrapper({
             setError(message);
             onError(message);
           }}
-          onCancel={() => toast.info('Paiement annulé')}
+          onCancel={() => toast.info(t('custom224PaymentWrapper.paiementAnnule'))}
         />
       </PayPalScriptProvider>
 
       <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-2">
         <Lock className="w-3.5 h-3.5" />
-        <span>Paiement sécurisé • SSL • PCI-DSS</span>
+        <span>{t('custom224PaymentWrapper.paiementSecuriseSslPciDss')}</span>
       </div>
 
       <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
         <Shield className="w-3.5 h-3.5" />
-        <span>Vos fonds sont protégés par notre système Escrow jusqu'à la confirmation de la livraison</span>
+        <span>{t('custom224PaymentWrapper.vosFondsSontProtegesPar')}</span>
       </div>
     </div>
   );

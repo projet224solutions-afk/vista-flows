@@ -4,6 +4,7 @@
  */
 
 import React, { useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +20,7 @@ interface CommunicationNotificationCenterProps {
 export default function CommunicationNotificationCenter({
   className
 }: CommunicationNotificationCenterProps) {
+  const { t } = useTranslation();
   const { notifications, markNotificationAsRead, loadNotifications } = useUniversalCommunication();
   const { user } = useAuth();
 
@@ -68,7 +70,7 @@ export default function CommunicationNotificationCenter({
       <Card className={className}>
         <CardContent className="p-6 text-center">
           <Bell className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-50" />
-          <p className="text-muted-foreground">Aucune notification</p>
+          <p className="text-muted-foreground">{t('communicationNotificationCenter.aucuneNotification')}</p>
         </CardContent>
       </Card>
     );

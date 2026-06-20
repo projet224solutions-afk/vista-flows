@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -23,6 +24,7 @@ interface CommunicationPreviewProps {
 }
 
 export default function CommunicationPreview({ className }: CommunicationPreviewProps) {
+  const { t } = useTranslation();
   // Données d'aperçu
   const previewStats = {
     totalMessages: 1247,
@@ -144,7 +146,7 @@ export default function CommunicationPreview({ className }: CommunicationPreview
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <MessageSquare className="w-5 h-5" />
-              <span>Messages récents</span>
+              <span>{t('communicationPreview.messagesRecents')}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -186,7 +188,7 @@ export default function CommunicationPreview({ className }: CommunicationPreview
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Phone className="w-5 h-5" />
-              <span>Appels récents</span>
+              <span>{t('communicationPreview.appelsRecents')}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -229,14 +231,14 @@ export default function CommunicationPreview({ className }: CommunicationPreview
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <TrendingUp className="w-5 h-5" />
-            <span>Fonctionnalités de Communication</span>
+            <span>{t('communicationPreview.fonctionnalitesDeCommunication')}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="p-4 border rounded-lg text-center">
               <MessageSquare className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-              <h3 className="font-medium text-sm">Chat Temps Réel</h3>
+              <h3 className="font-medium text-sm">{t('communicationPreview.chatTempsReel')}</h3>
               <p className="text-xs text-muted-foreground mt-1">
                 Messages, fichiers, localisation
               </p>
@@ -252,7 +254,7 @@ export default function CommunicationPreview({ className }: CommunicationPreview
 
             <div className="p-4 border rounded-lg text-center">
               <Video className="w-8 h-8 text-[#04439e] mx-auto mb-2" />
-              <h3 className="font-medium text-sm">Appels Vidéo</h3>
+              <h3 className="font-medium text-sm">{t('communicationPreview.appelsVideo')}</h3>
               <p className="text-xs text-muted-foreground mt-1">
                 1:1 et conférences
               </p>
@@ -276,17 +278,17 @@ export default function CommunicationPreview({ className }: CommunicationPreview
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-[#ff4000] rounded-full animate-pulse"></div>
-                <span className="text-sm text-muted-foreground">Système actif</span>
+                <span className="text-sm text-muted-foreground">{t('communicationPreview.systemeActif')}</span>
               </div>
 
               <div className="flex items-center space-x-2">
                 <Bell className="w-4 h-4 text-blue-500" />
-                <span className="text-sm text-muted-foreground">Notifications activées</span>
+                <span className="text-sm text-muted-foreground">{t('communicationPreview.notificationsActivees')}</span>
               </div>
 
               <div className="flex items-center space-x-2">
                 <Activity className="w-4 h-4 text-[#04439e]" />
-                <span className="text-sm text-muted-foreground">Temps réel</span>
+                <span className="text-sm text-muted-foreground">{t('communicationPreview.tempsReel')}</span>
               </div>
             </div>
 

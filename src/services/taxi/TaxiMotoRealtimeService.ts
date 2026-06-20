@@ -5,6 +5,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+import { publishLivePosition, driverPositionTopic } from "@/lib/realtime/livePositions";
 
 export interface DriverLocation {
   driver_id: string;
@@ -252,6 +253,12 @@ export class TaxiMotoRealtimeService {
       if (error) {
         console.error('[Realtime] Error publishing location:', error);
       }
+
+      // 📡 DUAL-MODE scalabilité : diffuse aussi la position en broadcast (hors WAL),
+      // À CÔTÉ de l'update ci-dessus. Best-effort → n'impacte jamais l'écriture en base.
+      publishLivePosition(driverPositionTopic(driverId), {
+        lat: latitude, lng: longitude, heading, speed, at: new Date().toISOString(),
+      });
     } catch (err) {
       console.error('[Realtime] Error publishing location:', err);
     }

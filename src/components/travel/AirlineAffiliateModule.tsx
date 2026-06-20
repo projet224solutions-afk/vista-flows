@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Plane, Plus, ExternalLink,
@@ -26,6 +27,7 @@ interface AirlineAffiliateModuleProps {
 }
 
 export function AirlineAffiliateModule({ onBack }: AirlineAffiliateModuleProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
 
@@ -63,14 +65,14 @@ export function AirlineAffiliateModule({ onBack }: AirlineAffiliateModuleProps) 
 
   const handleAddProduct = () => {
     if (!user) {
-      toast.info('Connexion requise pour ajouter un produit');
+      toast.info(t('airlineAffiliateModule.connexionRequisePourAjouterUn'));
       navigate('/auth', { state: { redirectTo: '/digital-products' } });
       return;
     }
 
     // Attendre le chargement du profil
     if (!profile) {
-      toast.info('Chargement de votre profil en cours...');
+      toast.info(t('airlineAffiliateModule.chargementDeVotreProfilEn'));
       return;
     }
 
@@ -90,7 +92,7 @@ export function AirlineAffiliateModule({ onBack }: AirlineAffiliateModuleProps) 
   const handleProductCreated = () => {
     setShowProductForm(false);
     loadProducts();
-    toast.success('Affiliation aérienne créée avec succès!');
+    toast.success(t('airlineAffiliateModule.affiliationAerienneCreeeAvecSucces'));
   };
 
   const handleProductClick = (product: any) => {
@@ -125,8 +127,8 @@ export function AirlineAffiliateModule({ onBack }: AirlineAffiliateModuleProps) 
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex-1">
-              <h1 className="text-lg font-bold text-foreground">Affiliation Aérienne</h1>
-              <p className="text-xs text-muted-foreground">Compagnies aériennes et vols</p>
+              <h1 className="text-lg font-bold text-foreground">{t('airlineAffiliateModule.affiliationAerienne')}</h1>
+              <p className="text-xs text-muted-foreground">{t('airlineAffiliateModule.compagniesAeriennesEtVols')}</p>
             </div>
             {user && (
               <Button
@@ -157,7 +159,7 @@ export function AirlineAffiliateModule({ onBack }: AirlineAffiliateModuleProps) 
             )}>
               <Plane className="w-8 h-8" />
             </div>
-            <h3 className="font-semibold text-foreground mb-2">Aucune affiliation aérienne</h3>
+            <h3 className="font-semibold text-foreground mb-2">{t('airlineAffiliateModule.aucuneAffiliationAerienne')}</h3>
             <p className="text-sm text-muted-foreground mb-4">
               {isMerchant
                 ? 'Soyez le premier à ajouter une affiliation compagnie aérienne!'
@@ -232,7 +234,7 @@ export function AirlineAffiliateModule({ onBack }: AirlineAffiliateModuleProps) 
                         className="font-bold text-primary"
                       />
                     ) : (
-                      <span className="text-xs text-muted-foreground">Voir le prix</span>
+                      <span className="text-xs text-muted-foreground">{t('airlineAffiliateModule.voirLePrix')}</span>
                     )}
                     <div className="flex items-center gap-1 text-muted-foreground">
                       <Eye className="w-3 h-3" />

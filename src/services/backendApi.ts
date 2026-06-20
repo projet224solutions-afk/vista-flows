@@ -14,6 +14,12 @@ interface BackendRequestOptions extends Omit<RequestInit, 'body'> {
   body?: unknown;
   idempotencyKey?: string;
   signal?: AbortSignal;
+  /**
+   * Endpoint PUBLIC (accessible sans compte : marketplace, commande en personne via QR, etc.).
+   * → on N'EXIGE PAS de token et on n'envoie l'en-tête Authorization que si une session existe.
+   * Sans ce flag, une requête sans token est refusée d'office (« Non authentifié »).
+   */
+  allowAnonymous?: boolean;
 }
 
 export interface BackendResponse<T = unknown> {
@@ -21,8 +27,21 @@ export interface BackendResponse<T = unknown> {
   data?: T;
   error?: string;
   error_code?: string;
+  /** Code métier alternatif (ex. défis 2FA admin : MFA_REQUIRED, MFA_INVALID…). */
+  code?: string;
   details?: unknown;
   meta?: { limit: number; offset: number; total: number };
+}
+
+// ── Step-up 2FA admin : handler global enregistré par l'UI (modal de saisie du code) ──
+// Quand une op sensible renvoie un défi MFA, on déclenche ce handler (prompt + /mfa/step-up).
+// S'il réussit (grant Redis posé côté serveur), la requête d'origine est REJOUÉE une fois.
+const MFA_CHALLENGE_CODES = new Set(['MFA_REQUIRED', 'MFA_INVALID']);
+let mfaStepUpHandler: (() => Promise<boolean>) | null = null;
+
+/** Enregistre la modal de step-up 2FA (appelé une fois par l'app admin). */
+export function registerMfaStepUpHandler(handler: (() => Promise<boolean>) | null): void {
+  mfaStepUpHandler = handler;
 }
 
 /** Error codes métier retournés par le backend */
@@ -80,7 +99,7 @@ export async function backendFetch<T = unknown>(
   path: string,
   options: BackendRequestOptions = {}
 ): Promise<BackendResponse<T>> {
-  const { body, idempotencyKey, signal: externalSignal, ...rest } = options;
+  const { body, idempotencyKey, signal: externalSignal, allowAnonymous, ...rest } = options;
 
   if (
     !backendConfig.baseUrl &&
@@ -95,7 +114,8 @@ export async function backendFetch<T = unknown>(
   }
 
   const token = await getAuthToken();
-  if (!token) {
+  // Endpoints protégés : on refuse vite sans token. Endpoints publics (allowAnonymous) : on continue.
+  if (!token && !allowAnonymous) {
     return { success: false, error: 'Non authentifié', error_code: undefined };
   }
 
@@ -108,10 +128,9 @@ export async function backendFetch<T = unknown>(
     body instanceof URLSearchParams ||
     body instanceof Blob;
 
-  const headers: Record<string, string> = {
-    Authorization: `Bearer ${token}`,
-    ...rawHeaders,
-  };
+  // Authorization uniquement si une session existe (les routes publiques l'ignorent côté backend).
+  const headers: Record<string, string> = { ...rawHeaders };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
 
   if (!headers['Content-Type'] && (!isRawBody || typeof body === 'string')) {
     headers['Content-Type'] = 'application/json';
@@ -139,6 +158,10 @@ export async function backendFetch<T = unknown>(
       try {
         const response = await fetch(requestUrl, {
           ...rest,
+          // Défaut défensif : un body sans method partirait en GET (invalide, lève une
+          // TypeError). On force POST quand un corps est présent et qu'aucune méthode
+          // n'est précisée → évite cette classe de bug (PDF devis/facture, etc.).
+          method: rest.method ?? (requestBody != null ? 'POST' : undefined),
           headers,
           body: requestBody,
           signal: controller.signal,
@@ -154,6 +177,7 @@ export async function backendFetch<T = unknown>(
               success: false,
               error: json.error || `Erreur ${response.status}`,
               error_code: json.error_code,
+              code: json.code,
               details: json.details,
             };
           }
@@ -186,7 +210,17 @@ export async function backendFetch<T = unknown>(
     return { success: false, error: 'Échec après plusieurs tentatives' };
   }
 
-  const primaryResult = await executeRequest(url);
+  let primaryResult = await executeRequest(url);
+
+  // Défi 2FA admin : si l'op sensible exige un step-up, on prompte le code via le handler
+  // global, puis on REJOUE la requête une seule fois (le grant Redis ouvre la fenêtre 5 min).
+  if (primaryResult.code && MFA_CHALLENGE_CODES.has(primaryResult.code) && mfaStepUpHandler) {
+    const verified = await mfaStepUpHandler();
+    if (verified) {
+      primaryResult = await executeRequest(url);
+    }
+  }
+
   const isLocalApiRequest = import.meta.env.DEV && (backendConfig.baseUrl === '' || /https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(backendConfig.baseUrl));
   const shouldTryPublicFallback =
     isLocalApiRequest &&

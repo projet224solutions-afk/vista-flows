@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { translationService, SupportedLanguage, SUPPORTED_LANGUAGES } from '@/services/translationService';
 import { Message } from '@/types/communication.types';
 import { getLanguageForCountry } from '@/data/countryMappings';
-import { useLanguage } from '@/i18n/LanguageContext';
+import { useChatLanguage } from '@/hooks/useChatLanguage';
 
 interface UseAutoTranslationOptions {
   autoTranslate?: boolean;
@@ -23,8 +23,8 @@ interface TranslatedMessage extends Message {
 export function useAutoTranslation(options: UseAutoTranslationOptions = {}) {
   const { autoTranslate = true, context = 'general' } = options;
 
-  // Utiliser le contexte global de langue comme source de vérité
-  const { language: globalLanguage } = useLanguage();
+  // Source de vérité = la langue CONVERSATIONNELLE choisie (dédiée, indépendante de l'UI).
+  const { chatLanguage: globalLanguage } = useChatLanguage();
 
   const [userLanguage, setUserLanguage] = useState<SupportedLanguage>(() => {
     // Initialiser avec la langue globale si supportée
@@ -51,46 +51,8 @@ export function useAutoTranslation(options: UseAutoTranslationOptions = {}) {
     }
   }, [globalLanguage, userLanguage]);
 
-  // Charger la langue préférée de l'utilisateur au démarrage (fallback si pas de contexte)
-  useEffect(() => {
-    const loadUserLanguage = async () => {
-      // Si la langue globale est déjà définie et différente de 'fr', l'utiliser
-      if (globalLanguage && globalLanguage in SUPPORTED_LANGUAGES && globalLanguage !== 'fr') {
-        setUserLanguage(globalLanguage as SupportedLanguage);
-        return;
-      }
-
-      try {
-        // Essayer depuis le profil Supabase
-        const lang = await translationService.getUserPreferredLanguage();
-        if (lang !== 'fr') {
-          setUserLanguage(lang);
-          return;
-        }
-
-        // Fallback: utiliser localStorage (geo-cache ou user-language)
-        const geoCache = localStorage.getItem('geo_detection_cache');
-        if (geoCache) {
-          try {
-            const parsed = JSON.parse(geoCache);
-            if (parsed?.data?.language && parsed.data.language in SUPPORTED_LANGUAGES) {
-              console.log(`🌍 [AutoTranslation] Langue depuis geo-cache: ${parsed.data.language}`);
-              setUserLanguage(parsed.data.language as SupportedLanguage);
-              return;
-            }
-          } catch {}
-        }
-
-        const storedLang = localStorage.getItem('user-language') || localStorage.getItem('app_language');
-        if (storedLang && storedLang in SUPPORTED_LANGUAGES) {
-          setUserLanguage(storedLang as SupportedLanguage);
-        }
-      } catch (error) {
-        console.error('[AutoTranslation] Erreur chargement langue:', error);
-      }
-    };
-    loadUserLanguage();
-  }, [globalLanguage]);
+  // (Le repli profil / localStorage / géo est désormais résolu en amont par useChatLanguage —
+  //  on évite ainsi de recoupler la traduction du chat à la langue de l'interface.)
 
   /**
    * Générer une clé de cache unique

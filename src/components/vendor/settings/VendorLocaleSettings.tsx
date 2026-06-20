@@ -13,8 +13,10 @@ import LanguageSelector from '@/components/LanguageSelector';
 import { CurrencySelect } from '@/components/ui/currency-select';
 import { useToast } from '@/hooks/use-toast';
 import { useWallet } from '@/hooks/useWallet';
+import { useTranslation } from '@/hooks/useTranslation';
 
 export default function VendorLocaleSettings() {
+  const { t } = useTranslation();
   const { language, currency, setCurrency, country, loading, refreshGeo } = useLocale();
   const { toast } = useToast();
   const { wallet } = useWallet();
@@ -30,16 +32,16 @@ export default function VendorLocaleSettings() {
     await refreshGeo();
 
     toast({
-      title: "Position actualisée",
-      description: "La langue et la devise d'affichage ont été mises à jour selon votre position.",
+      title: t('vendorLocale.positionUpdated'),
+      description: t('vendorLocale.positionUpdatedDesc'),
     });
   };
 
   const handleCurrencyChange = (newCurrency: string) => {
     setCurrency(newCurrency);
     toast({
-      title: "Devise d'affichage mise à jour",
-      description: `La devise d'affichage a été changée en ${newCurrency}. La devise de votre wallet reste ${wallet?.currency || '—'}.`,
+      title: t('vendorLocale.currencyUpdated'),
+      description: `${t('vendorLocale.currencyChangedTo')} ${newCurrency}. ${t('vendorLocale.walletCurrencyStays')} ${wallet?.currency || '—'}.`,
     });
   };
 
@@ -48,13 +50,13 @@ export default function VendorLocaleSettings() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Globe className="w-5 h-5" />
-          Langue et Devise d'affichage
+          {t('vendorLocale.title')}
         </CardTitle>
         <CardDescription>
-          Configurez vos préférences de langue et de devise pour l'affichage des prix
+          {t('vendorLocale.subtitle')}
           {country && (
             <span className="block mt-1 text-xs">
-              Pays détecté: <strong>{country}</strong>
+              {t('vendorLocale.detectedCountry')} <strong>{country}</strong>
             </span>
           )}
         </CardDescription>
@@ -65,10 +67,9 @@ export default function VendorLocaleSettings() {
           <div className="flex items-center gap-3 rounded-lg border border-orange-200 bg-orange-50 p-3 text-sm">
             <Lock className="w-4 h-4 flex-shrink-0 text-[#ff4000]" />
             <div>
-              <p className="font-medium text-[#ff4000]">Devise wallet verrouillée : {wallet.currency}</p>
+              <p className="font-medium text-[#ff4000]">{t('vendorLocale.walletLocked')} {wallet.currency}</p>
               <p className="text-xs text-[#ff4000] mt-0.5">
-                La devise de votre wallet est assignée selon votre pays de résidence.
-                Pour la modifier, contactez le support.
+                {t('vendorLocale.walletLockedDesc')}
               </p>
             </div>
           </div>
@@ -82,7 +83,7 @@ export default function VendorLocaleSettings() {
         {/* Sélecteur de devise d'affichage */}
         <div className="space-y-2">
           <label className="flex items-center gap-2 text-sm font-medium text-foreground">
-            Devise d'affichage des prix
+            {t('vendorLocale.displayCurrency')}
           </label>
           <CurrencySelect
             value={currency}
@@ -92,7 +93,7 @@ export default function VendorLocaleSettings() {
             className="w-full"
           />
           <p className="text-xs text-muted-foreground">
-            Change uniquement comment les prix sont affichés, pas la devise de votre wallet.
+            {t('vendorLocale.displayCurrencyHint')}
           </p>
         </div>
 
@@ -105,10 +106,10 @@ export default function VendorLocaleSettings() {
             className="w-full gap-2"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Détecter automatiquement ma position
+            {t('vendorLocale.detectPosition')}
           </Button>
           <p className="text-xs text-muted-foreground mt-2 text-center">
-            Réinitialise la langue et la devise d'affichage selon votre localisation actuelle
+            {t('vendorLocale.detectPositionHint')}
           </p>
         </div>
       </CardContent>

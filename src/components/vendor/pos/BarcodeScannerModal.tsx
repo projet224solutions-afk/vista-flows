@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { BrowserMultiFormatReader } from '@zxing/browser';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -56,6 +57,7 @@ export function BarcodeScannerModal({
   onAddToCart,
   onAddToCartByCarton
 }: BarcodeScannerModalProps) {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const [scanMode, setScanMode] = useState<ScanMode>('select');
   const [barcodeInput, setBarcodeInput] = useState('');
@@ -138,7 +140,7 @@ export function BarcodeScannerModal({
           setVerificationState('confirmed');
         }
       } else {
-        toast.error('Produit non trouvé', {
+        toast.error(t('barcodeScannerModal.produitNonTrouve'), {
           description: `Aucun produit avec le code-barres "${barcode}" n'a été trouvé.`
         });
         setVerificationState('idle');
@@ -151,12 +153,12 @@ export function BarcodeScannerModal({
   // Confirmation visuelle du produit
   const confirmVisualMatch = () => {
     setVerificationState('confirmed');
-    toast.success('Produit vérifié visuellement');
+    toast.success(t('barcodeScannerModal.produitVerifieVisuellement'));
   };
 
   const reportVisualMismatch = () => {
     setVerificationState('mismatch');
-    toast.warning('Discordance visuelle détectée', {
+    toast.warning(t('barcodeScannerModal.discordanceVisuelleDetectee'), {
       description: 'Veuillez vérifier le produit manuellement.'
     });
   };
@@ -277,14 +279,14 @@ export function BarcodeScannerModal({
       // Éviter les toasts dupliqués
       if (!cameraToastShown) {
         setCameraToastShown(true);
-        toast.info('Caméra activée', {
+        toast.info(t('barcodeScannerModal.cameraActivee'), {
           description: 'Pointez vers le code-barres du produit',
           id: 'camera-activated' // ID unique pour éviter les doublons
         });
       }
     } catch (error) {
       console.error('Erreur accès caméra:', error);
-      toast.error('Impossible d\'accéder à la caméra');
+      toast.error(t('barcodeScannerModal.impossibleDAccederALa'));
       setScanMode('select');
     }
   }, [cameraToastShown, startBarcodeDetection]);
@@ -378,7 +380,7 @@ export function BarcodeScannerModal({
                 <Camera className="h-8 w-8 text-primary" />
                 <div className="text-center">
                   <div className="font-semibold">Caméra téléphone / tablette</div>
-                  <div className="text-xs text-muted-foreground">Scan avec la caméra</div>
+                  <div className="text-xs text-muted-foreground">{t('barcodeScannerModal.scanAvecLaCamera')}</div>
                 </div>
               </Button>
             </div>
@@ -421,7 +423,7 @@ export function BarcodeScannerModal({
 
                 <Input
                   ref={externalInputRef}
-                  placeholder="Le code-barres apparaîtra ici..."
+                  placeholder={t('barcodeScannerModal.leCodeBarresApparaitraIci')}
                   value={barcodeInput}
                   onChange={(e) => setBarcodeInput(e.target.value)}
                   onKeyDown={handleInputKeyDown}
@@ -494,7 +496,7 @@ export function BarcodeScannerModal({
 
               <div className="flex gap-2 justify-center items-center">
                 <Input
-                  placeholder="Ou saisissez le code"
+                  placeholder={t('barcodeScannerModal.ouSaisissezLeCode')}
                   value={barcodeInput}
                   onChange={(e) => setBarcodeInput(e.target.value)}
                   onKeyDown={handleInputKeyDown}
@@ -671,7 +673,7 @@ export function BarcodeScannerModal({
 
                 {/* Type de vente */}
                 <div className="space-y-3">
-                  <label className="text-sm font-medium">Type de vente :</label>
+                  <label className="text-sm font-medium">{t('barcodeScannerModal.typeDeVente')}</label>
                   <div className="flex gap-2">
                     <Button
                       variant={saleType === 'unit' ? 'default' : 'outline'}
@@ -716,7 +718,7 @@ export function BarcodeScannerModal({
 
                 {/* Quantité */}
                 <div className="space-y-3">
-                  <label className="text-sm font-medium">Quantité :</label>
+                  <label className="text-sm font-medium">{t('barcodeScannerModal.quantite')}</label>
                   <div className="flex items-center justify-center gap-4">
                     <Button
                       variant="outline"

@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,6 +43,7 @@ import { useSearchUserId } from '@/hooks/useSearchUserId';
 import { useUserPresence } from '@/hooks/useUserPresence';
 import { useAutoTranslation } from '@/hooks/useAutoTranslation';
 import { AutoTranslatedMessageBubble } from '@/components/messaging/AutoTranslatedMessageBubble';
+import { ChatLanguageSelector } from '@/components/messaging/ChatLanguageSelector';
 import type { UserProfile } from '@/types/communication.types';
 import { format, isToday, isYesterday } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -57,6 +59,7 @@ export default function UniversalCommunicationHub({
   selectedConversationId,
   refreshTrigger
 }: UniversalCommunicationHubProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
   const { isMobile } = useResponsive();
@@ -631,7 +634,7 @@ export default function UniversalCommunicationHub({
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher..."
+                placeholder={t('universalCommunicationHub.rechercher')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 bg-muted/50 border-0 h-9"
@@ -645,7 +648,7 @@ export default function UniversalCommunicationHub({
               {filteredConversations.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                   <MessageSquare className="w-12 h-12 mb-3 opacity-40" />
-                  <p className="text-sm">Aucune conversation</p>
+                  <p className="text-sm">{t('universalCommunicationHub.aucuneConversation')}</p>
                 </div>
               ) : (
                 filteredConversations.map((conv) => {
@@ -755,6 +758,7 @@ export default function UniversalCommunicationHub({
               </div>
 
               <div className="flex items-center gap-1">
+                <ChatLanguageSelector />
                 <Button
                   variant="ghost"
                   size="icon"
@@ -779,8 +783,8 @@ export default function UniversalCommunicationHub({
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                   <MessageSquare className="w-16 h-16 mb-4 opacity-30" />
-                  <p>Aucun message</p>
-                  <p className="text-sm">Commencez la conversation</p>
+                  <p>{t('universalCommunicationHub.aucunMessage')}</p>
+                  <p className="text-sm">{t('universalCommunicationHub.commencezLaConversation')}</p>
                 </div>
               ) : (
                 <>
@@ -845,14 +849,14 @@ export default function UniversalCommunicationHub({
             <div className="p-3 border-t border-border bg-card">
               <ImprovedMessageInput
                 onSendMessage={handleSendMessage}
-                placeholder="Écrivez votre message..."
+                placeholder={t('universalCommunicationHub.ecrivezVotreMessage')}
               />
             </div>
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
             <MessageSquare className="w-20 h-20 mb-4 opacity-20" />
-            <p className="text-lg">Sélectionnez une conversation</p>
+            <p className="text-lg">{t('universalCommunicationHub.selectionnezUneConversation')}</p>
           </div>
         )}
       </div>
@@ -860,9 +864,9 @@ export default function UniversalCommunicationHub({
 
       {/* Dialog nouvelle conversation */}
       <Dialog open={showNewConversation} onOpenChange={setShowNewConversation}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Nouvelle conversation</DialogTitle>
+            <DialogTitle>{t('universalCommunicationHub.nouvelleConversation')}</DialogTitle>
             <DialogDescription>
               Recherchez un utilisateur pour démarrer une conversation
             </DialogDescription>
@@ -877,7 +881,7 @@ export default function UniversalCommunicationHub({
               <div className="flex gap-2">
                 <Search className="h-5 w-5 mt-2" />
                 <Input
-                  placeholder="Rechercher..."
+                  placeholder={t('universalCommunicationHub.rechercher')}
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -910,7 +914,7 @@ export default function UniversalCommunicationHub({
             <TabsContent value="id" className="space-y-4 mt-4">
               <div className="flex gap-2">
                 <Input
-                  placeholder="USR0001 ou 224-123-456"
+                  placeholder={t('universalCommunicationHub.usr0001Ou224123456')}
                   className="font-mono uppercase"
                   value={userIdSearch}
                   onChange={(e) => setUserIdSearch(e.target.value.toUpperCase())}
@@ -938,7 +942,7 @@ export default function UniversalCommunicationHub({
       {/* Dialog appel */}
       {activeCall && (
         <Dialog open={!!activeCall} onOpenChange={() => handleEndCall()}>
-          <DialogContent className="max-w-4xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             {callType === 'video' ? (
               <AgoraVideoCall
                 channel={activeCall.agora_channel || `call_${activeCall.id}`}
@@ -958,7 +962,7 @@ export default function UniversalCommunicationHub({
 
       {/* Dialog Recherche par ID */}
       <Dialog open={showSearchById} onOpenChange={setShowSearchById}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Hash className="w-5 h-5 text-primary" />

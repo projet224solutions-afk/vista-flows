@@ -3,6 +3,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Users, Check, ArrowRight, Briefcase,
   Mail, Phone, FileText, Wallet
@@ -23,6 +24,7 @@ interface AffiliateRegistrationProps {
 }
 
 export function AffiliateRegistration({ onSuccess, onCancel }: AffiliateRegistrationProps) {
+  const { t } = useTranslation();
   const { user, profile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [_step, _setStep] = useState(1);
@@ -42,12 +44,12 @@ export function AffiliateRegistration({ onSuccess, onCancel }: AffiliateRegistra
 
   const handleSubmit = async () => {
     if (!user) {
-      toast.error('Vous devez être connecté');
+      toast.error(t('affiliateRegistration.vousDevezEtreConnecte'));
       return;
     }
 
     if (!formData.acceptTerms) {
-      toast.error('Veuillez accepter les conditions');
+      toast.error(t('affiliateRegistration.veuillezAccepterLesConditions'));
       return;
     }
 
@@ -68,14 +70,14 @@ export function AffiliateRegistration({ onSuccess, onCancel }: AffiliateRegistra
 
       if (error) throw error;
 
-      toast.success('Inscription réussie! Votre compte est en attente de validation.');
+      toast.success(t('affiliateRegistration.inscriptionReussieVotreCompteEst'));
       onSuccess(affiliateCode);
     } catch (error: any) {
       console.error('Error creating affiliate:', error);
       if (error.code === '23505') {
-        toast.error('Vous êtes déjà inscrit comme affilié');
+        toast.error(t('affiliateRegistration.vousEtesDejaInscritComme'));
       } else {
-        toast.error('Erreur lors de l\'inscription');
+        toast.error(t('affiliateRegistration.erreurLorsDeLInscription'));
       }
     } finally {
       setLoading(false);
@@ -98,7 +100,7 @@ export function AffiliateRegistration({ onSuccess, onCancel }: AffiliateRegistra
         <div className="w-16 h-16 mx-auto bg-gradient-to-br from-[#04439e] to-[#ff4000] rounded-2xl flex items-center justify-center mb-4">
           <Users className="w-8 h-8 text-white" />
         </div>
-        <h2 className="text-xl font-bold text-foreground">Devenir Affilié Voyage</h2>
+        <h2 className="text-xl font-bold text-foreground">{t('affiliateRegistration.devenirAffilieVoyage')}</h2>
         <p className="text-sm text-muted-foreground mt-1">
           Gagnez des commissions sur chaque réservation
         </p>
@@ -107,7 +109,7 @@ export function AffiliateRegistration({ onSuccess, onCancel }: AffiliateRegistra
       {/* Avantages */}
       <Card>
         <CardContent className="p-4">
-          <h3 className="font-semibold text-sm mb-3">Vos avantages</h3>
+          <h3 className="font-semibold text-sm mb-3">{t('affiliateRegistration.vosAvantages')}</h3>
           <div className="space-y-2">
             {[
               { icon: Wallet, text: 'Commissions jusqu\'à 10% sur les réservations' },
@@ -136,7 +138,7 @@ export function AffiliateRegistration({ onSuccess, onCancel }: AffiliateRegistra
                 id="fullName"
                 value={formData.fullName}
                 onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
-                placeholder="Votre nom complet"
+                placeholder={t('affiliateRegistration.votreNomComplet')}
               />
             </div>
 
@@ -147,12 +149,12 @@ export function AffiliateRegistration({ onSuccess, onCancel }: AffiliateRegistra
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                placeholder="votre@email.com"
+                placeholder={t('affiliateRegistration.votreEmailCom')}
               />
             </div>
 
             <div>
-              <Label htmlFor="phone">Téléphone</Label>
+              <Label htmlFor="phone">{t('affiliateRegistration.telephone')}</Label>
               <Input
                 id="phone"
                 type="tel"
@@ -164,7 +166,7 @@ export function AffiliateRegistration({ onSuccess, onCancel }: AffiliateRegistra
           </div>
 
           <div>
-            <Label className="mb-2 block">Spécialisation</Label>
+            <Label className="mb-2 block">{t('affiliateRegistration.specialisation')}</Label>
             <div className="grid grid-cols-2 gap-2">
               {[
                 { id: 'flights', label: 'Vols', icon: '✈️' },

@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   ArrowLeft,
   MapPin,
@@ -143,6 +144,7 @@ function computeIsOpen(hours: OpeningHours | undefined): boolean | null {
 }
 
 export default function ServiceDetailPage() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -310,7 +312,7 @@ export default function ServiceDetailPage() {
 
     } catch (error) {
       console.error('Erreur chargement service:', error);
-      toast.error('Erreur lors du chargement du service');
+      toast.error(t('serviceDetail.erreurLorsDuChargementDu'));
       navigate('/services-proximite');
     } finally {
       setLoading(false);
@@ -412,7 +414,7 @@ export default function ServiceDetailPage() {
     if (!file || !id) return;
 
     if (!file.type.startsWith('image/')) {
-      toast.error('Seules les images sont autorisées');
+      toast.error(t('serviceDetail.seulesLesImagesSontAutorisees'));
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
@@ -445,11 +447,11 @@ export default function ServiceDetailPage() {
 
       if (dbError) throw dbError;
 
-      toast.success('Image ajoutée à la galerie !');
+      toast.success(t('serviceDetail.imageAjouteeALaGalerie'));
       loadGalleryImages();
     } catch (err: any) {
       console.error('Erreur upload galerie:', err);
-      toast.error("Erreur lors de l'upload");
+      toast.error(t('serviceDetail.erreurLorsDeLUpload'));
     } finally {
       setUploadingImage(false);
       e.target.value = '';
@@ -463,10 +465,10 @@ export default function ServiceDetailPage() {
         .delete()
         .eq('id', imageId);
       if (error) throw error;
-      toast.success('Image supprimée');
+      toast.success(t('serviceDetail.imageSupprimee'));
       setGalleryImages(prev => prev.filter(img => img.id !== imageId));
     } catch {
-      toast.error('Erreur lors de la suppression');
+      toast.error(t('serviceDetail.erreurLorsDeLaSuppression'));
     }
   };
 
@@ -475,32 +477,32 @@ export default function ServiceDetailPage() {
       window.open(`tel:${service.phone}`, '_self');
     } else if (service?.vendor_user_id) {
       if (!user) {
-        toast.error('Veuillez vous connecter pour contacter ce service');
+        toast.error(t('serviceDetail.veuillezVousConnecterPourContacter'));
         navigate('/auth');
         return;
       }
       if (service.vendor_user_id === user.id) {
-        toast.error("Vous ne pouvez pas vous contacter vous-même");
+        toast.error(t('serviceDetail.vousNePouvezPasVous'));
         return;
       }
       navigate(`/communication/direct/${service.vendor_user_id}`);
     } else {
-      toast.error('Aucun moyen de contact disponible');
+      toast.error(t('serviceDetail.aucunMoyenDeContactDisponible'));
     }
   };
 
   const handleMessage = () => {
     if (!user) {
-      toast.error('Veuillez vous connecter pour envoyer un message');
+      toast.error(t('serviceDetail.veuillezVousConnecterPourEnvoyer'));
       navigate('/auth');
       return;
     }
     if (!service?.vendor_user_id) {
-      toast.error('Informations du prestataire non disponibles');
+      toast.error(t('serviceDetail.informationsDuPrestataireNonDisponibles'));
       return;
     }
     if (service.vendor_user_id === user.id) {
-      toast.error("Vous ne pouvez pas vous contacter vous-même");
+      toast.error(t('serviceDetail.vousNePouvezPasVous'));
       return;
     }
     navigate(`/communication/direct/${service.vendor_user_id}`);
@@ -514,20 +516,20 @@ export default function ServiceDetailPage() {
       const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(service.address)}&travelmode=driving`;
       window.open(url, '_blank');
     } else {
-      toast.error('Position du service non disponible');
+      toast.error(t('serviceDetail.positionDuServiceNonDisponible'));
     }
   };
 
   const handleReservation = () => {
     if (!user) {
-      toast.error('Veuillez vous connecter pour réserver');
+      toast.error(t('serviceDetail.veuillezVousConnecterPourReserver'));
       navigate('/auth');
       return;
     }
     if (isRestaurant) {
       setIsReservationModalOpen(true);
     } else {
-      toast.info('Contactez le prestataire pour réserver');
+      toast.info(t('serviceDetail.contactezLePrestatairePourReserver'));
     }
   };
 
@@ -547,7 +549,7 @@ export default function ServiceDetailPage() {
 
       if (result === 'fallback') {
         await navigator.clipboard.writeText(window.location.href);
-        toast.success('Lien copié dans le presse-papier');
+        toast.success(t('serviceDetail.lienCopieDansLePresse'));
       }
     } catch (error) {
       console.error('Erreur partage:', error);
@@ -562,11 +564,11 @@ export default function ServiceDetailPage() {
       if (isFavorite) {
         newFavs = favs.filter(f => f !== id);
         setIsFavorite(false);
-        toast.success('Retiré des favoris');
+        toast.success(t('serviceDetail.retireDesFavoris'));
       } else {
         newFavs = [...favs, id];
         setIsFavorite(true);
-        toast.success('Ajouté aux favoris');
+        toast.success(t('serviceDetail.ajouteAuxFavoris'));
       }
       localStorage.setItem('service_favorites', JSON.stringify(newFavs));
     } catch {
@@ -582,18 +584,18 @@ export default function ServiceDetailPage() {
       const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(service.address)}`;
       window.open(url, '_blank');
     } else {
-      toast.error('Coordonnées non disponibles');
+      toast.error(t('serviceDetail.coordonneesNonDisponibles'));
     }
   };
 
   const handleSubmitReview = async () => {
     if (!user) {
-      toast.error('Veuillez vous connecter pour laisser un avis');
+      toast.error(t('serviceDetail.veuillezVousConnecterPourLaisser'));
       navigate('/auth');
       return;
     }
     if (!reviewComment.trim()) {
-      toast.error('Veuillez écrire un commentaire');
+      toast.error(t('serviceDetail.veuillezEcrireUnCommentaire'));
       return;
     }
     setSubmittingReview(true);
@@ -605,14 +607,14 @@ export default function ServiceDetailPage() {
         comment: reviewComment.trim(),
       });
       if (error) throw error;
-      toast.success('Merci pour votre avis !');
+      toast.success(t('serviceDetail.merciPourVotreAvis'));
       setShowReviewForm(false);
       setReviewComment("");
       setReviewRating(5);
       loadReviews();
     } catch (err: any) {
       console.error('Erreur soumission avis:', err);
-      toast.error("Erreur lors de l'envoi de l'avis");
+      toast.error(t('serviceDetail.erreurLorsDeLEnvoi'));
     } finally {
       setSubmittingReview(false);
     }
@@ -643,7 +645,7 @@ export default function ServiceDetailPage() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Chargement du service...</p>
+          <p className="text-muted-foreground">{t('serviceDetail.chargementDuService')}</p>
         </div>
       </div>
     );
@@ -653,7 +655,7 @@ export default function ServiceDetailPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="text-muted-foreground mb-4">Service non trouvé</p>
+          <p className="text-muted-foreground mb-4">{t('serviceDetail.serviceNonTrouve')}</p>
           <Button onClick={() => navigate('/services-proximite')}>
             Retour aux services
           </Button>
@@ -809,6 +811,8 @@ export default function ServiceDetailPage() {
             <TabsTrigger value="info" className="flex-1 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold text-xs sm:text-sm">
               Informations
             </TabsTrigger>
+            {/* Galerie Médias = outil de GESTION (upload + upsell vidéo Premium) → propriétaire UNIQUEMENT. */}
+            {isOwner && (
             <TabsTrigger value="media" className="flex-1 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold text-xs sm:text-sm gap-1">
               <Images className="w-3.5 h-3.5 hidden sm:block" />
               Médias
@@ -818,6 +822,7 @@ export default function ServiceDetailPage() {
                 </span>
               )}
             </TabsTrigger>
+            )}
             <TabsTrigger value="hours" className="flex-1 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-semibold text-xs sm:text-sm">
               Horaires
             </TabsTrigger>
@@ -851,7 +856,7 @@ export default function ServiceDetailPage() {
                       <Phone className="w-5 h-5 text-primary" />
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-foreground">Téléphone</p>
+                      <p className="font-semibold text-foreground">{t('serviceDetail.telephone')}</p>
                       <a href={`tel:${service.phone}`} className="text-primary hover:underline text-sm mt-0.5 inline-block">
                         {service.phone}
                       </a>
@@ -875,7 +880,7 @@ export default function ServiceDetailPage() {
 
                 {service.features && service.features.length > 0 && (
                   <div>
-                    <p className="font-semibold text-foreground mb-2">Caractéristiques</p>
+                    <p className="font-semibold text-foreground mb-2">{t('serviceDetail.caracteristiques')}</p>
                     <div className="flex flex-wrap gap-2">
                       {service.features.map((feature, index) => (
                         <Badge key={index} variant="outline" className="rounded-full">{feature}</Badge>
@@ -887,14 +892,16 @@ export default function ServiceDetailPage() {
             </Card>
           </TabsContent>
 
-          {/* --- Médias (galerie images + vidéos) --- */}
+          {/* --- Médias (galerie images + vidéos) — GESTION réservée au propriétaire --- */}
+          {isOwner && (
           <TabsContent value="media">
             <Card className="rounded-2xl border-0 shadow-md">
               <CardContent className="p-5 md:p-6">
-                <ServiceMediaManager serviceId={id!} readonly={!isOwner} />
+                <ServiceMediaManager serviceId={id!} readonly={false} />
               </CardContent>
             </Card>
           </TabsContent>
+          )}
 
           {/* --- Horaires --- */}
           <TabsContent value="hours">
@@ -939,8 +946,8 @@ export default function ServiceDetailPage() {
                 ) : (
                   <div className="text-center py-8">
                     <Clock className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-                    <p className="text-muted-foreground">Horaires non renseignés</p>
-                    <p className="text-sm text-muted-foreground/70 mt-1">Contactez le prestataire pour connaëtre ses horaires</p>
+                    <p className="text-muted-foreground">{t('serviceDetail.horairesNonRenseignes')}</p>
+                    <p className="text-sm text-muted-foreground/70 mt-1">{t('serviceDetail.contactezLePrestatairePourConnaetre')}</p>
                   </div>
                 )}
               </CardContent>
@@ -954,10 +961,10 @@ export default function ServiceDetailPage() {
                 {reviews.length === 0 && !showReviewForm ? (
                   <div className="text-center py-10">
                     <Star className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
-                    <p className="text-muted-foreground mb-4">Aucun avis pour le moment</p>
+                    <p className="text-muted-foreground mb-4">{t('serviceDetail.aucunAvisPourLeMoment')}</p>
                     <Button variant="outline" className="rounded-xl" onClick={() => {
                       if (!user) {
-                        toast.error('Veuillez vous connecter');
+                        toast.error(t('serviceDetail.veuillezVousConnecter'));
                         navigate('/auth');
                         return;
                       }
@@ -979,7 +986,7 @@ export default function ServiceDetailPage() {
 
                     {showReviewForm && (
                       <div className="mb-6 p-4 rounded-xl bg-muted/50 space-y-3">
-                        <p className="font-semibold text-sm">Votre avis</p>
+                        <p className="font-semibold text-sm">{t('serviceDetail.votreAvis')}</p>
                         <div className="flex items-center gap-1">
                           {[1, 2, 3, 4, 5].map((star) => (
                             <button key={star} onClick={() => setReviewRating(star)}>
@@ -988,7 +995,7 @@ export default function ServiceDetailPage() {
                           ))}
                         </div>
                         <Textarea
-                          placeholder="Décrivez votre expérience..."
+                          placeholder={t('serviceDetail.decrivezVotreExperience')}
                           value={reviewComment}
                           onChange={(e) => setReviewComment(e.target.value)}
                           rows={3}
@@ -1096,7 +1103,7 @@ export default function ServiceDetailPage() {
             )}
             {promoVideoUrl && (
               <div>
-                <p className="text-sm font-semibold text-muted-foreground mb-2">Vidéo de présentation</p>
+                <p className="text-sm font-semibold text-muted-foreground mb-2">{t('serviceDetail.videoDePresentation')}</p>
                 <video
                   src={promoVideoUrl}
                   controls
@@ -1113,7 +1120,7 @@ export default function ServiceDetailPage() {
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-4">
               <UtensilsCrossed className="w-6 h-6 text-primary" />
-              <h2 className="text-2xl font-bold text-foreground">Notre Menu</h2>
+              <h2 className="text-2xl font-bold text-foreground">{t('serviceDetail.notreMenu')}</h2>
             </div>
 
             {menuCategories.length > 0 && (

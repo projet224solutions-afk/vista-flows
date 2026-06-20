@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -11,6 +12,7 @@ interface GPSPermissionHelperProps {
 }
 
 export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPermissionHelperProps) {
+  const { t } = useTranslation();
   const [permissionState, setPermissionState] = useState<'checking' | 'denied' | 'granted' | 'prompt' | 'unavailable'>('checking');
   const [isRequesting, setIsRequesting] = useState(false);
 
@@ -61,7 +63,7 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
         );
       });
 
-      toast.success('GPS activé avec succès !', {
+      toast.success(t('gPSPermissionHelper.gpsActiveAvecSucces'), {
         description: `Position: ${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`
       });
 
@@ -98,7 +100,7 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
   };
 
   const openSettings = () => {
-    toast.info('Comment activer le GPS', {
+    toast.info(t('gPSPermissionHelper.commentActiverLeGps'), {
       description: 'Sur Chrome/Safari: Paramètres > Confidentialité > Localisation. Sur Firefox: Préférences > Vie privée > Permissions',
       duration: 10000
     });
@@ -109,7 +111,7 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
       <Card className="bg-white/95 backdrop-blur-sm">
         <CardContent className="pt-8 pb-8 text-center">
           <Loader2 className="w-12 h-12 mx-auto mb-4 text-blue-500 animate-spin" />
-          <p className="text-gray-600">Vérification du GPS...</p>
+          <p className="text-gray-600">{t('gPSPermissionHelper.verificationDuGps')}</p>
         </CardContent>
       </Card>
     );
@@ -131,11 +133,11 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
             </AlertDescription>
           </Alert>
           <div className="text-sm text-gray-600 space-y-2">
-            <p><strong>Vérifiez que :</strong></p>
+            <p><strong>{t('gPSPermissionHelper.verifiezQue')}</strong></p>
             <ul className="list-disc list-inside space-y-1">
-              <li>Vous utilisez un navigateur moderne (Chrome, Safari, Firefox)</li>
-              <li>Vous êtes connecté en HTTPS (l'icône de cadenas est visible)</li>
-              <li>Le GPS de votre appareil est activé</li>
+              <li>{t('gPSPermissionHelper.vousUtilisezUnNavigateurModerne')}</li>
+              <li>{t('gPSPermissionHelper.vousEtesConnecteEnHttps')}</li>
+              <li>{t('gPSPermissionHelper.leGpsDeVotreAppareil')}</li>
             </ul>
           </div>
         </CardContent>
@@ -160,12 +162,12 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
           </Alert>
 
           <div className="bg-blue-50 rounded-lg p-4 text-sm space-y-3">
-            <p className="font-semibold text-blue-900">📱 Comment autoriser le GPS :</p>
+            <p className="font-semibold text-blue-900">{t('gPSPermissionHelper.commentAutoriserLeGps')}</p>
             <ol className="list-decimal list-inside space-y-2 text-blue-800">
-              <li>Cliquez sur l'icône de cadenas 🔒 dans la barre d'adresse</li>
-              <li>Trouvez "Localisation" ou "Position"</li>
-              <li>Sélectionnez "Autoriser"</li>
-              <li>Rechargez la page</li>
+              <li>{t('gPSPermissionHelper.cliquezSurLIconeDe')}</li>
+              <li>{t('gPSPermissionHelper.trouvezLocalisationOuPosition')}</li>
+              <li>{t('gPSPermissionHelper.selectionnezAutoriser')}</li>
+              <li>{t('gPSPermissionHelper.rechargezLaPage')}</li>
             </ol>
           </div>
 
@@ -198,8 +200,8 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="w-10 h-10 text-[#ff4000] animate-spin" />
             <div className="text-center">
-              <p className="font-semibold text-[#ff4000]">GPS activé</p>
-              <p className="text-sm text-[#ff4000]">Chargement de la carte...</p>
+              <p className="font-semibold text-[#ff4000]">{t('gPSPermissionHelper.gpsActive')}</p>
+              <p className="text-sm text-[#ff4000]">{t('gPSPermissionHelper.chargementDeLaCarte')}</p>
             </div>
           </div>
         </CardContent>
@@ -226,12 +228,12 @@ export function GPSPermissionHelper({ onLocationGranted, currentError }: GPSPerm
         )}
 
         <div className="text-sm text-gray-600 space-y-2">
-          <p>Pour utiliser la navigation, nous avons besoin d'accéder à votre position GPS.</p>
-          <p className="font-semibold">Assurez-vous que :</p>
+          <p>{t('gPSPermissionHelper.pourUtiliserLaNavigationNous')}</p>
+          <p className="font-semibold">{t('gPSPermissionHelper.assurezVousQue')}</p>
           <ul className="list-disc list-inside space-y-1">
-            <li>Le GPS de votre téléphone est activé</li>
-            <li>Vous êtes à l'extérieur ou près d'une fenêtre</li>
-            <li>Vous utilisez une connexion HTTPS sécurisée</li>
+            <li>{t('gPSPermissionHelper.leGpsDeVotreTelephone')}</li>
+            <li>{t('gPSPermissionHelper.vousEtesALExterieur')}</li>
+            <li>{t('gPSPermissionHelper.vousUtilisezUneConnexionHttps')}</li>
           </ul>
         </div>
 

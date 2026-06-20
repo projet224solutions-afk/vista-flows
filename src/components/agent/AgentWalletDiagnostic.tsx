@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, CheckCircle, RefreshCw, Wrench } from 'lucide-react';
@@ -11,6 +12,7 @@ interface AgentWalletDiagnosticProps {
 }
 
 export function AgentWalletDiagnostic({ agentId, agentCode }: AgentWalletDiagnosticProps) {
+  const { t } = useTranslation();
   const [diagnosticStatus, setDiagnosticStatus] = useState<{
     agentExists: boolean;
     walletExists: boolean;
@@ -82,7 +84,7 @@ export function AgentWalletDiagnostic({ agentId, agentCode }: AgentWalletDiagnos
   const fixWallet = async () => {
     try {
       setFixing(true);
-      toast.info('Tentative de création du wallet...');
+      toast.info(t('agentWalletDiagnostic.tentativeDeCreationDuWallet'));
 
       // Créer le wallet manuellement
       const { data, error } = await supabase
@@ -99,14 +101,14 @@ export function AgentWalletDiagnostic({ agentId, agentCode }: AgentWalletDiagnos
       if (error) {
         if (error.code === '23505') {
           // Le wallet existe déjà, juste recharger
-          toast.info('Le wallet existe déjà, rechargement...');
+          toast.info(t('agentWalletDiagnostic.leWalletExisteDejaRechargement'));
           await runDiagnostic();
           return;
         }
         throw error;
       }
 
-      toast.success('✅ Wallet créé avec succès !');
+      toast.success(t('agentWalletDiagnostic.walletCreeAvecSucces'));
       await runDiagnostic();
     } catch (error: any) {
       console.error('Erreur création wallet:', error);
@@ -144,7 +146,7 @@ export function AgentWalletDiagnostic({ agentId, agentCode }: AgentWalletDiagnos
                 {diagnosticStatus.agentExists ? (
                   <>
                     <CheckCircle className="w-4 h-4 text-[#ff4000]" />
-                    <span>Agent trouvé ✓</span>
+                    <span>{t('agentWalletDiagnostic.agentTrouve')}</span>
                   </>
                 ) : (
                   <>

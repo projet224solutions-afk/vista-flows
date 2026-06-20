@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,6 +37,7 @@ export function NumericKeypadPopup({
   productName,
   maxQuantity
 }: NumericKeypadPopupProps) {
+  const { t } = useTranslation();
 
   const handleInput = (input: string) => {
     // Empêcher les décimales pour les quantités
@@ -60,7 +62,7 @@ export function NumericKeypadPopup({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xs p-0 overflow-hidden">
+      <DialogContent className="max-w-xs p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
         {/* Header stylisé */}
         <div className={`bg-gradient-to-r ${isQuantityMode ? 'from-blue-500/10 via-blue-500/5' : 'from-primary/10 via-primary/5'} to-transparent p-4 border-b border-border/50`}>
           <div className="flex items-center justify-between">
@@ -93,7 +95,7 @@ export function NumericKeypadPopup({
           <div className="space-y-2">
             {isQuantityMode ? (
               <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl p-3 border border-blue-200 dark:border-blue-800">
-                <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">Quantité actuelle</p>
+                <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">{t('numericKeypadPopup.quantiteActuelle')}</p>
                 <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
                   {numericInput || '0'} unités
                   {maxQuantity && (
@@ -103,7 +105,7 @@ export function NumericKeypadPopup({
               </div>
             ) : (
               <div className="bg-muted/30 rounded-xl p-3 border border-border/50">
-                <p className="text-xs text-muted-foreground mb-1">Montant à payer</p>
+                <p className="text-xs text-muted-foreground mb-1">{t('numericKeypadPopup.montantAPayer')}</p>
                 <p className="text-lg font-bold text-primary">{total.toLocaleString()} {currency}</p>
               </div>
             )}

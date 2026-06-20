@@ -1,5 +1,6 @@
 ﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Shield, TrendingUp, Zap, Award, ArrowLeft, Loader2, BarChart3, Lock, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,7 @@ interface AnalysisResult {
 }
 
 export default function CompetitiveAnalysis() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { isMobile, isTablet } = useResponsive();
   const [loadingCompetitive, setLoadingCompetitive] = useState<boolean>(false);
@@ -67,7 +69,7 @@ export default function CompetitiveAnalysis() {
 
         setCompetitiveAnalysis(data.analysis);
         setError(null);
-        toast.success('✓ Analyse comparative terminée avec succès');
+        toast.success(t('competitiveAnalysis.analyseComparativeTermineeAvecSucces'));
       } else {
         throw new Error(data?.error || 'Aucune analyse reçue du serveur');
       }
@@ -106,7 +108,7 @@ export default function CompetitiveAnalysis() {
 
         setSecurityAnalysis(data.analysis);
         setError(null);
-        toast.success('✓ Analyse de sécurité terminée avec succès');
+        toast.success(t('competitiveAnalysis.analyseDeSecuriteTermineeAvec'));
       } else {
         throw new Error('Aucune analyse reçue du serveur');
       }
@@ -185,7 +187,7 @@ export default function CompetitiveAnalysis() {
                   <div className="flex items-start gap-3">
                     <AlertTriangle className="w-5 h-5 text-destructive mt-0.5" />
                     <div className="flex-1">
-                      <h4 className="font-semibold text-destructive mb-1">Erreur détectée</h4>
+                      <h4 className="font-semibold text-destructive mb-1">{t('competitiveAnalysis.erreurDetectee')}</h4>
                       <p className="text-sm text-muted-foreground">{error}</p>
                       <Button
                         onClick={() => setError(null)}
@@ -212,7 +214,7 @@ export default function CompetitiveAnalysis() {
                 <CardContent className="space-y-6">
                   <div className="space-y-4">
                     <div>
-                      <h4 className="font-semibold mb-2">Concurrents analysés:</h4>
+                      <h4 className="font-semibold mb-2">{t('competitiveAnalysis.concurrentsAnalyses')}</h4>
                       <div className="flex flex-wrap gap-2">
                         {competitors.map((comp) => (
                           <Badge key={comp} variant="outline">{comp}</Badge>
@@ -221,7 +223,7 @@ export default function CompetitiveAnalysis() {
                     </div>
 
                     <div>
-                      <h4 className="font-semibold mb-2">Critères d'évaluation:</h4>
+                      <h4 className="font-semibold mb-2">{t('competitiveAnalysis.criteresDEvaluation')}</h4>
                       <div className="flex flex-wrap gap-2">
                         {criteria.map((crit) => (
                           <Badge key={crit} variant="secondary">{crit}</Badge>
@@ -297,7 +299,7 @@ export default function CompetitiveAnalysis() {
                       <CardContent className="space-y-4">
                         {platform.scores && Object.keys(platform.scores).length > 0 && (
                           <div className="space-y-2">
-                            <h4 className="text-sm font-semibold">Scores par critère</h4>
+                            <h4 className="text-sm font-semibold">{t('competitiveAnalysis.scoresParCritere')}</h4>
                             {Object.entries(platform.scores).map(([criterion, score]) => (
                               <div key={criterion} className="flex items-center justify-between text-sm">
                                 <span className="text-muted-foreground">{criterion}</span>
@@ -356,7 +358,7 @@ export default function CompetitiveAnalysis() {
                 {competitiveAnalysis?.ranking && competitiveAnalysis.ranking.length > 0 && (
                   <Card>
                     <CardHeader>
-                      <CardTitle>Classement Général</CardTitle>
+                      <CardTitle>{t('competitiveAnalysis.classementGeneral')}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
@@ -422,7 +424,7 @@ export default function CompetitiveAnalysis() {
             {!securityAnalysis && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Analyse de Sécurité Comparative</CardTitle>
+                  <CardTitle>{t('competitiveAnalysis.analyseDeSecuriteComparative')}</CardTitle>
                   <CardDescription>
                     Évaluation de la sécurité de 224Solutions face aux standards des leaders
                   </CardDescription>
@@ -507,7 +509,7 @@ export default function CompetitiveAnalysis() {
                       <CardContent className="space-y-4">
                         {platform.scores && Object.keys(platform.scores).length > 0 && (
                           <div className="space-y-2">
-                            <h4 className="text-sm font-semibold">Scores de sécurité</h4>
+                            <h4 className="text-sm font-semibold">{t('competitiveAnalysis.scoresDeSecurite')}</h4>
                             {Object.entries(platform.scores).map(([criterion, score]) => (
                               <div key={criterion} className="flex items-center justify-between text-sm">
                                 <span className="text-muted-foreground">{criterion}</span>

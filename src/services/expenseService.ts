@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * 💰 SERVICE GESTION DÉPENSES RÉEL - 224SOLUTIONS
  * Service opérationnel pour gestion des dépenses avec Supabase
@@ -17,15 +16,18 @@ export interface ExpenseCategory {
 
 export interface VendorExpense {
   id: string;
-  vendor_id: string;
+  vendor_id: string;          // = profiles.id (user id), pas vendors.id
   category_id: string;
+  title: string;              // colonne réelle (NOT NULL)
   amount: number;
-  description: string;
+  currency?: string;
+  expense_date?: string;
+  description?: string;
   receipt_url?: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'draft' | 'pending' | 'approved' | 'rejected' | 'paid';
   created_at: string;
   updated_at: string;
-  category: ExpenseCategory;
+  category?: ExpenseCategory;
 }
 
 export interface ExpenseStats {

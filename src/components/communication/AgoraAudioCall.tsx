@@ -4,6 +4,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -39,6 +40,7 @@ export default function AgoraAudioCall({
   callerInfo,
   onCallEnd
 }: AgoraAudioCallProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { callState, isLoading, joinCall, leaveCall, toggleMute, endCall } = useAgora();
 
@@ -148,7 +150,7 @@ export default function AgoraAudioCall({
       <Card className="w-full max-w-md mx-auto">
         <CardContent className="p-8 text-center">
           <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p>Connexion à l'appel...</p>
+          <p>{t('agoraAudioCall.connexionALAppel')}</p>
         </CardContent>
       </Card>
     );

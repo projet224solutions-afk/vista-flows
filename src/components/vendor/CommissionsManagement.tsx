@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -44,6 +45,7 @@ interface CommissionStats {
 }
 
 export default function CommissionsManagement() {
+  const { t } = useTranslation();
   const { agent } = useAgent();
   const [settings, setSettings] = useState<CommissionSetting[]>([]);
   const [commissionLogs, setCommissionLogs] = useState<CommissionLog[]>([]);
@@ -174,7 +176,7 @@ export default function CommissionsManagement() {
       }
     } catch (error) {
       console.error('Erreur chargement données commission:', error);
-      toast.error('Erreur lors du chargement des données');
+      toast.error(t('commissionsManagement.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -204,7 +206,7 @@ export default function CommissionsManagement() {
       });
     } catch (error) {
       console.error('Erreur mise à jour:', error);
-      toast.error('Erreur lors de la mise à jour');
+      toast.error(t('commissionsManagement.erreurLorsDeLaMise'));
     } finally {
       setSaving(false);
     }
@@ -246,7 +248,7 @@ export default function CommissionsManagement() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="border-l-4 border-l-green-500">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Gagné</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('commissionsManagement.totalGagne')}</CardTitle>
             <DollarSign className="w-4 h-4 text-[#ff4000]" />
           </CardHeader>
           <CardContent>
@@ -331,7 +333,7 @@ export default function CommissionsManagement() {
                       <TableHead>Date</TableHead>
                       <TableHead>Type</TableHead>
                       <TableHead>Description</TableHead>
-                      <TableHead className="text-right">Montant</TableHead>
+                      <TableHead className="text-right">{t('commissionsManagement.montant')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -358,7 +360,7 @@ export default function CommissionsManagement() {
               ) : (
                 <div className="text-center py-12 text-muted-foreground">
                   <DollarSign className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucune commission enregistrée</p>
+                  <p>{t('commissionsManagement.aucuneCommissionEnregistree')}</p>
                   <p className="text-sm mt-2">
                     Les commissions apparaîtront ici lorsque vos clients effectueront des achats
                   </p>
@@ -384,7 +386,7 @@ export default function CommissionsManagement() {
               <CardContent className="space-y-6">
                 <Alert className="border-blue-200 bg-blue-50">
                   <AlertCircle className="h-4 w-4 text-blue-600" />
-                  <AlertTitle className="text-blue-900">Impact en temps réel</AlertTitle>
+                  <AlertTitle className="text-blue-900">{t('commissionsManagement.impactEnTempsReel')}</AlertTitle>
                   <AlertDescription className="text-blue-800">
                     Les modifications s'appliquent immédiatement aux prochaines transactions.
                     Les commissions existantes ne sont pas affectées.
@@ -460,10 +462,10 @@ export default function CommissionsManagement() {
 
                 {/* Aperçu des calculs */}
                 <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
-                  <h5 className="font-medium mb-3">📊 Exemple de calcul</h5>
+                  <h5 className="font-medium mb-3">{t('commissionsManagement.exempleDeCalcul')}</h5>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
-                      <p className="text-muted-foreground">Achat client</p>
+                      <p className="text-muted-foreground">{t('commissionsManagement.achatClient')}</p>
                       <p className="font-bold">100,000 GNF</p>
                     </div>
                     <div>

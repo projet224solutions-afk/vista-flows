@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +17,7 @@ interface PermissionDiagnosticProps {
 }
 
 export function AgentPermissionDiagnostic({ agentId }: PermissionDiagnosticProps) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [diagnosticResult, setDiagnosticResult] = useState<any>(null);
 
@@ -155,8 +157,8 @@ export function AgentPermissionDiagnostic({ agentId }: PermissionDiagnosticProps
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Diagnostic des Permissions</CardTitle>
-          <CardDescription>Vérifiez vos permissions agent</CardDescription>
+          <CardTitle>{t('agentPermissionDiagnostic.diagnosticDesPermissions')}</CardTitle>
+          <CardDescription>{t('agentPermissionDiagnostic.verifiezVosPermissionsAgent')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Button onClick={runDiagnostic} disabled={loading}>
@@ -176,7 +178,7 @@ export function AgentPermissionDiagnostic({ agentId }: PermissionDiagnosticProps
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>Diagnostic des Permissions</CardTitle>
+            <CardTitle>{t('agentPermissionDiagnostic.diagnosticDesPermissions')}</CardTitle>
             <CardDescription>
               Dernière vérification: {new Date(diagnosticResult.timestamp).toLocaleTimeString()}
             </CardDescription>
@@ -205,7 +207,7 @@ export function AgentPermissionDiagnostic({ agentId }: PermissionDiagnosticProps
               ) : (
                 <XCircle className="h-5 w-5 text-[#ff4000]" />
               )}
-              <span className="font-medium">Créer Utilisateurs</span>
+              <span className="font-medium">{t('agentPermissionDiagnostic.creerUtilisateurs')}</span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               {diagnosticResult.canCreateUsers ? 'Autorisé' : 'Non autorisé'}
@@ -218,7 +220,7 @@ export function AgentPermissionDiagnostic({ agentId }: PermissionDiagnosticProps
               ) : (
                 <AlertTriangle className="h-5 w-5 text-[#ff4000]" />
               )}
-              <span className="font-medium">Créer Agents</span>
+              <span className="font-medium">{t('agentPermissionDiagnostic.creerAgents')}</span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               {diagnosticResult.canCreateAgents ? 'Autorisé' : 'Non autorisé'}
@@ -228,7 +230,7 @@ export function AgentPermissionDiagnostic({ agentId }: PermissionDiagnosticProps
 
         {/* Détails des vérifications */}
         <div className="space-y-2">
-          <h4 className="font-semibold text-sm">Vérifications détaillées</h4>
+          <h4 className="font-semibold text-sm">{t('agentPermissionDiagnostic.verificationsDetaillees')}</h4>
           {diagnosticResult.checks.map((check: any, index: number) => (
             <div key={index} className="flex items-start gap-3 p-2 bg-muted/30 rounded">
               {check.status === 'success' && <CheckCircle2 className="h-4 w-4 text-[#ff4000] mt-0.5" />}
@@ -271,10 +273,10 @@ export function AgentPermissionDiagnostic({ agentId }: PermissionDiagnosticProps
             <AlertDescription>
               <strong>Solutions possibles:</strong>
               <ul className="list-disc list-inside mt-2 text-sm space-y-1">
-                <li>Vérifiez que votre compte agent est actif</li>
-                <li>Contactez le PDG pour obtenir les permissions nécessaires</li>
-                <li>Assurez-vous d'être connecté avec le bon compte</li>
-                <li>Essayez de vous déconnecter puis reconnecter</li>
+                <li>{t('agentPermissionDiagnostic.verifiezQueVotreCompteAgent')}</li>
+                <li>{t('agentPermissionDiagnostic.contactezLePdgPourObtenir')}</li>
+                <li>{t('agentPermissionDiagnostic.assurezVousDEtreConnecte')}</li>
+                <li>{t('agentPermissionDiagnostic.essayezDeVousDeconnecterPuis')}</li>
               </ul>
             </AlertDescription>
           </Alert>

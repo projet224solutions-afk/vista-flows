@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -62,6 +63,7 @@ interface POSReceiptProps {
 }
 
 export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
+  const { t } = useTranslation();
   const receiptRef = useRef<HTMLDivElement>(null);
 
   const hasDiscount = orderData.discount > 0;
@@ -112,10 +114,10 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
       pdf.addImage(imgData, 'PNG', 5, 5, 70, (canvas.height * 70) / canvas.width);
       pdf.save(`recu-${orderData.orderNumber}.pdf`);
 
-      toast.success('Reçu téléchargé avec succès');
+      toast.success(t('pOSReceipt.recuTelechargeAvecSucces'));
     } catch (error) {
       console.error('Erreur téléchargement:', error);
-      toast.error('Erreur lors du téléchargement');
+      toast.error(t('pOSReceipt.erreurLorsDuTelechargement'));
     }
   };
 
@@ -173,7 +175,7 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
                 <Check className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-base font-bold">Paiement réussi!</h2>
+                <h2 className="text-base font-bold">{t('pOSReceipt.paiementReussi')}</h2>
                 <p className="text-xs text-white/80">#{orderData.orderNumber}</p>
               </div>
             </div>
@@ -205,7 +207,7 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
                 )}
               </div>
               <h3 className="text-lg font-bold text-foreground">{orderData.companyName}</h3>
-              <p className="text-xs text-muted-foreground mt-1">REÇU DE CAISSE</p>
+              <p className="text-xs text-muted-foreground mt-1">{t('pOSReceipt.recuDeCaisse')}</p>
               <div className="flex items-center justify-center gap-1 mt-1 text-[10px] text-muted-foreground">
                 <Calendar className="h-3 w-3" />
                 <span>{new Date().toLocaleString('fr-FR')}</span>
@@ -214,7 +216,7 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
 
             {/* Numéro de commande */}
             <div className="bg-orange-50 rounded-lg p-2 mb-3 text-center border border-orange-100">
-              <p className="text-xs text-muted-foreground">N° Commande</p>
+              <p className="text-xs text-muted-foreground">{t('pOSReceipt.nCommande')}</p>
               <p className="text-lg font-bold text-[#ff4000]">#{orderData.orderNumber}</p>
             </div>
 
@@ -314,7 +316,7 @@ export function POSReceipt({ open, onClose, orderData }: POSReceiptProps) {
               {orderData.paymentMethod === 'cash' && orderData.receivedAmount > 0 && (
                 <div className="mt-2 pt-2 border-t border-muted-foreground/20 text-xs">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Reçu</span>
+                    <span className="text-muted-foreground">{t('pOSReceipt.recu')}</span>
                     <span>{orderData.receivedAmount.toLocaleString()} {orderData.currency}</span>
                   </div>
                   <div className="flex justify-between font-semibold text-[#ff4000]">

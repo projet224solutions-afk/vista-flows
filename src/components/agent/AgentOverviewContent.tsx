@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
@@ -38,6 +39,7 @@ interface AgentOverviewContentProps {
 }
 
 export function AgentOverviewContent({ agent, stats, walletBalance = 0 }: AgentOverviewContentProps) {
+  const { t } = useTranslation();
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Non disponible';
     return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -86,7 +88,7 @@ export function AgentOverviewContent({ agent, stats, walletBalance = 0 }: AgentO
                     <Phone className="w-4 h-4 text-[#ff4000]" />
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500 uppercase tracking-wide">Téléphone</p>
+                    <p className="text-xs text-slate-500 uppercase tracking-wide">{t('agentOverviewContent.telephone')}</p>
                     <p className="font-medium text-slate-800">{agent.phone || 'Non renseigné'}</p>
                   </div>
                 </div>
@@ -96,7 +98,7 @@ export function AgentOverviewContent({ agent, stats, walletBalance = 0 }: AgentO
                     <Calendar className="w-4 h-4 text-[#04439e]" />
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500 uppercase tracking-wide">Date d'inscription</p>
+                    <p className="text-xs text-slate-500 uppercase tracking-wide">{t('agentOverviewContent.dateDInscription')}</p>
                     <p className="font-medium text-slate-800">{formatDate(agent.created_at)}</p>
                   </div>
                 </div>
@@ -131,7 +133,7 @@ export function AgentOverviewContent({ agent, stats, walletBalance = 0 }: AgentO
                         </Badge>
                       ))
                     ) : (
-                      <span className="text-sm text-slate-500">Aucune permission spécifique</span>
+                      <span className="text-sm text-slate-500">{t('agentOverviewContent.aucunePermissionSpecifique')}</span>
                     )}
                   </div>
                 </div>

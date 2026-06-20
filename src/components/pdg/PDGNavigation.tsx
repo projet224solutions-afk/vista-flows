@@ -14,7 +14,7 @@ import {
   DollarSign, Users, Shield, Settings, Package, Wrench,
   UserCheck, Building2, BarChart3, Brain, MessageSquare, Key, Zap, Cloud,
   ChevronDown, ChevronUp, Sparkles, Percent, Store, Bike, FileText, Landmark,
-  Menu, ChevronRight, Car, Lock, RefreshCw, Megaphone, Headphones, Wallet, Activity
+  Menu, ChevronRight, Car, Lock, RefreshCw, Megaphone, Headphones, Wallet, Activity, BookOpen
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -98,6 +98,7 @@ const categories: NavCategory[] = [
       { value: 'deleted-users-restore', label: '🔄 Restauration', icon: RefreshCw, badge: true, permission: 'view_security' },
       { value: 'bug-bounty', label: 'Bug Bounty', icon: Shield, permission: 'view_bug_bounty' },
       { value: 'config', label: 'Configuration', icon: Settings, permission: 'view_config' },
+      { value: 'documentation', label: '📖 Documentation', icon: BookOpen, permission: 'view_config' },
       { value: 'maintenance', label: 'Maintenance', icon: Wrench, permission: 'view_maintenance' },
       { value: 'api', label: 'API', icon: Key, permission: 'view_api' },
       { value: 'multi-cloud', label: 'Multi-Cloud', icon: Cloud, badge: true, permission: 'view_debug' },
@@ -229,7 +230,7 @@ export default function PDGNavigation({ activeTab, onTabChange, aiActive }: PDGN
                 <ChevronDown className="w-4 h-4 text-muted-foreground" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="h-[85vh] p-0">
+            <SheetContent side="bottom" className="h-[85vh] p-0 max-h-[90vh] overflow-y-auto">
               <SheetHeader className="px-4 py-3 border-b bg-muted/30">
                 <SheetTitle className="flex items-center gap-2 text-base">
                   <Sparkles className="w-4 h-4 text-primary" />

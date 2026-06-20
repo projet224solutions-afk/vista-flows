@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useVendorSubscription } from "@/hooks/useVendorSubscription";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface RestrictedFeatureWrapperProps {
   children: ReactNode;
@@ -16,6 +17,7 @@ export function RestrictedFeatureWrapper({
   feature,
   fallbackMessage
 }: RestrictedFeatureWrapperProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { hasAccess, isExpired, loading } = useVendorSubscription();
 
@@ -31,12 +33,12 @@ export function RestrictedFeatureWrapper({
 
   // ❌ Accès refusé - Afficher le message de restriction
   const defaultMessages = {
-    products: 'Création de produits désactivée',
-    messages: 'Messagerie désactivée',
-    calls: 'Appels désactivés',
-    transfer: 'Transferts désactivés',
-    virtualCard: 'Carte virtuelle suspendue',
-    payments: 'Réception de paiements désactivée',
+    products: t('restrictedFeature.products'),
+    messages: t('restrictedFeature.messages'),
+    calls: t('restrictedFeature.calls'),
+    transfer: t('restrictedFeature.transfer'),
+    virtualCard: t('restrictedFeature.virtualCard'),
+    payments: t('restrictedFeature.payments'),
   };
 
   return (
@@ -48,14 +50,13 @@ export function RestrictedFeatureWrapper({
             {fallbackMessage || defaultMessages[feature]}
           </p>
           <p className="text-orange-800 mb-4">
-            Cette fonctionnalité est temporairement désactivée car votre abonnement a expiré ou est inactif.
-            Renouvelez votre abonnement pour retrouver un accès complet.
+            {t('restrictedFeature.expiredInfo')}
           </p>
           <Button
             onClick={() => navigate('/vendeur/subscription')}
             className="bg-orange-600 hover:bg-orange-700"
           >
-            Renouveler l'abonnement
+            {t('restrictedFeature.renew')}
           </Button>
         </AlertDescription>
       </Alert>

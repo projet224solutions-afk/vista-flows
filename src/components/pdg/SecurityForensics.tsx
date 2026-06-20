@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { FileSearch, Database, Download, Brain, GitMerge, Clock, FileText, Share2, TrendingUp, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 
 const SecurityForensics: React.FC = () => {
+  const { t } = useTranslation();
   const {
     loading,
     snapshots,
@@ -49,7 +51,7 @@ const SecurityForensics: React.FC = () => {
     try {
       const result = await analyzeBehavior(selectedUserId || undefined, '24h');
       setBehaviorAnalysis(result);
-      toast.success('Analyse comportementale terminée');
+      toast.success(t('securityForensics.analyseComportementaleTerminee'));
     } catch (error) {
       console.error('Error analyzing behavior:', error);
     }
@@ -57,7 +59,7 @@ const SecurityForensics: React.FC = () => {
 
   const handleCorrelateEvents = async () => {
     if (!selectedIncidentId) {
-      toast.error('Veuillez sélectionner un incident');
+      toast.error(t('securityForensics.veuillezSelectionnerUnIncident'));
       return;
     }
     try {
@@ -69,7 +71,7 @@ const SecurityForensics: React.FC = () => {
 
   const handleReconstructTimeline = async () => {
     if (!selectedIncidentId) {
-      toast.error('Veuillez sélectionner un incident');
+      toast.error(t('securityForensics.veuillezSelectionnerUnIncident'));
       return;
     }
     try {
@@ -81,7 +83,7 @@ const SecurityForensics: React.FC = () => {
 
   const handleGenerateReport = async () => {
     if (!selectedIncidentId) {
-      toast.error('Veuillez sélectionner un incident');
+      toast.error(t('securityForensics.veuillezSelectionnerUnIncident'));
       return;
     }
     try {
@@ -117,15 +119,15 @@ const SecurityForensics: React.FC = () => {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-2xl font-bold">Forensique et Analyse</h3>
-        <p className="text-muted-foreground">Outils d'investigation et de collecte de preuves avancés</p>
+        <h3 className="text-2xl font-bold">{t('securityForensics.forensiqueEtAnalyse')}</h3>
+        <p className="text-muted-foreground">{t('securityForensics.outilsDInvestigationEtDe')}</p>
       </div>
 
       <Tabs defaultValue="snapshots" className="w-full">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="snapshots">Snapshots</TabsTrigger>
           <TabsTrigger value="behavior">Comportement</TabsTrigger>
-          <TabsTrigger value="correlation">Corrélation</TabsTrigger>
+          <TabsTrigger value="correlation">{t('securityForensics.correlation')}</TabsTrigger>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
           <TabsTrigger value="reports">Rapports</TabsTrigger>
         </TabsList>
@@ -149,7 +151,7 @@ const SecurityForensics: React.FC = () => {
                     id="snapshot-incident"
                     value={selectedIncidentId}
                     onChange={(e) => setSelectedIncidentId(e.target.value)}
-                    placeholder="UUID de l'incident"
+                    placeholder={t('securityForensics.uuidDeLIncident')}
                   />
                 </div>
                 <Button
@@ -189,7 +191,7 @@ const SecurityForensics: React.FC = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Snapshots Récents</CardTitle>
+              <CardTitle>{t('securityForensics.snapshotsRecents')}</CardTitle>
               <CardDescription>
                 {snapshots.length} snapshot(s) disponible(s)
               </CardDescription>
@@ -237,7 +239,7 @@ const SecurityForensics: React.FC = () => {
                   id="user-id"
                   value={selectedUserId}
                   onChange={(e) => setSelectedUserId(e.target.value)}
-                  placeholder="UUID de l'utilisateur"
+                  placeholder={t('securityForensics.uuidDeLUtilisateur')}
                 />
               </div>
               <Button
@@ -261,13 +263,13 @@ const SecurityForensics: React.FC = () => {
                       </p>
                     </div>
                     <div className="p-4 border rounded-lg">
-                      <p className="text-sm text-muted-foreground">Niveau de Risque</p>
+                      <p className="text-sm text-muted-foreground">{t('securityForensics.niveauDeRisque')}</p>
                       <p className="text-2xl font-bold capitalize">{behaviorAnalysis.riskLevel}</p>
                     </div>
                   </div>
 
                   <div>
-                    <h4 className="font-semibold mb-2">Patterns Détectés</h4>
+                    <h4 className="font-semibold mb-2">{t('securityForensics.patternsDetectes')}</h4>
                     <ul className="space-y-1">
                       {behaviorAnalysis.patterns.map((pattern: string, idx: number) => (
                         <li key={idx} className="text-sm flex items-center gap-2">
@@ -310,7 +312,7 @@ const SecurityForensics: React.FC = () => {
                   id="correlate-incident"
                   value={selectedIncidentId}
                   onChange={(e) => setSelectedIncidentId(e.target.value)}
-                  placeholder="UUID de l'incident"
+                  placeholder={t('securityForensics.uuidDeLIncident')}
                 />
               </div>
               <Button
@@ -338,7 +340,7 @@ const SecurityForensics: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="timeline-incident">Sélectionner un Incident</Label>
+                <Label htmlFor="timeline-incident">{t('securityForensics.selectionnerUnIncident')}</Label>
                 <Button
                   variant="outline"
                   className="w-full justify-start text-left font-normal"
@@ -361,12 +363,12 @@ const SecurityForensics: React.FC = () => {
                 </Button>
               </div>
               <div>
-                <Label htmlFor="timeline-incident-id">Ou entrer un ID d'Incident</Label>
+                <Label htmlFor="timeline-incident-id">{t('securityForensics.ouEntrerUnIdD')}</Label>
                 <Input
                   id="timeline-incident-id"
                   value={selectedIncidentId}
                   onChange={(e) => setSelectedIncidentId(e.target.value)}
-                  placeholder="UUID de l'incident ou ID utilisateur"
+                  placeholder={t('securityForensics.uuidDeLIncidentOu')}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   Vous pouvez aussi utiliser un ID utilisateur pour voir son historique
@@ -429,7 +431,7 @@ const SecurityForensics: React.FC = () => {
                     id="report-incident"
                     value={selectedIncidentId}
                     onChange={(e) => setSelectedIncidentId(e.target.value)}
-                    placeholder="UUID de l'incident"
+                    placeholder={t('securityForensics.uuidDeLIncident')}
                   />
                 </div>
                 <Button
@@ -455,7 +457,7 @@ const SecurityForensics: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="siem-type">Type de SIEM</Label>
+                  <Label htmlFor="siem-type">{t('securityForensics.typeDeSiem')}</Label>
                   <Select value={siemType} onValueChange={setSiemType}>
                     <SelectTrigger id="siem-type">
                       <SelectValue />
@@ -475,7 +477,7 @@ const SecurityForensics: React.FC = () => {
                     id="siem-incident"
                     value={selectedIncidentId}
                     onChange={(e) => setSelectedIncidentId(e.target.value)}
-                    placeholder="UUID de l'incident"
+                    placeholder={t('securityForensics.uuidDeLIncident')}
                   />
                 </div>
                 <Button
@@ -499,7 +501,7 @@ const SecurityForensics: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <div className="p-4 border rounded-lg">
                   <p className="text-sm text-muted-foreground">Snapshots</p>
                   <p className="text-2xl font-bold">{snapshots.length}</p>

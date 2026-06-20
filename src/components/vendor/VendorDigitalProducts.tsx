@@ -6,15 +6,18 @@
  */
 
 import { useState } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
+import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Package, Plus, Eye, Edit, Trash2, ExternalLink,
   Laptop, FileText, BookOpen, Plane, Box, Loader2,
-  Archive, RotateCcw, AlertTriangle
+  Archive, RotateCcw, AlertTriangle, Download
 } from "lucide-react";
 import { useMerchantDigitalProducts, DigitalProduct } from "@/hooks/useDigitalProducts";
+import { useDigitalDownload } from "@/hooks/useDigitalDownload";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -59,8 +62,11 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function VendorDigitalProducts() {
+  const { t } = useTranslation();
+  const fc = useFormatCurrency();
   const navigate = useNavigate();
   const { products, loading, refresh } = useMerchantDigitalProducts();
+  const { download, downloading } = useDigitalDownload();
   const [deleteProduct, setDeleteProduct] = useState<DigitalProduct | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [editingProduct, setEditingProduct] = useState<DigitalProduct | null>(null);
@@ -101,11 +107,11 @@ export default function VendorDigitalProducts() {
         .update({ status: 'archived' as any })
         .eq('id', deleteProduct.id);
       if (error) throw error;
-      toast.success("Produit archivé", { description: "Le produit reste accessible pour les acheteurs existants." });
+      toast.success(t('vendorDigitalProducts.produitArchive'), { description: "Le produit reste accessible pour les acheteurs existants." });
       refresh();
     } catch (err: unknown) {
       console.error("Erreur archivage:", err);
-      toast.error("Impossible d'archiver le produit");
+      toast.error(t('vendorDigitalProducts.impossibleDArchiverLeProduit'));
     } finally {
       setIsDeleting(false);
       setDeleteProduct(null);
@@ -122,11 +128,11 @@ export default function VendorDigitalProducts() {
         .delete()
         .eq('id', deleteProduct.id);
       if (error) throw error;
-      toast.success("Produit supprimé définitivement");
+      toast.success(t('vendorDigitalProducts.produitSupprimeDefinitivement'));
       refresh();
     } catch (err: unknown) {
       console.error("Erreur suppression:", err);
-      toast.error("Impossible de supprimer le produit");
+      toast.error(t('vendorDigitalProducts.impossibleDeSupprimerLeProduit'));
     } finally {
       setIsDeleting(false);
       setDeleteProduct(null);
@@ -150,19 +156,17 @@ export default function VendorDigitalProducts() {
       refresh();
     } catch (err: unknown) {
       console.error("Erreur republication:", err);
-      toast.error("Impossible de republier le produit");
+      toast.error(t('vendorDigitalProducts.impossibleDeRepublierLeProduit'));
     } finally {
       setActionLoading(null);
     }
   };
 
+  // CONVERTIT depuis la devise du produit (défaut GNF) vers la devise du vendeur (taux BCRG)
+  // au lieu de seulement formater — sinon le prix s'affichait dans sa devise brute.
   const formatPrice = (price: number, currency: string = 'GNF') => {
     try {
-      return new Intl.NumberFormat('fr-FR', {
-        style: 'currency',
-        currency,
-        maximumFractionDigits: 0
-      }).format(price);
+      return fc(price, currency || 'GNF');
     } catch {
       return `${price.toLocaleString('fr-FR')} ${currency}`;
     }
@@ -200,7 +204,7 @@ export default function VendorDigitalProducts() {
             <div className="mb-3 inline-flex rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white">
               Catalogue vendeur digital
             </div>
-            <h2 className="text-xl font-semibold leading-tight text-white sm:text-3xl">Organisez votre boutique digitale avec une gestion claire, sérieuse et orientée conversion.</h2>
+            <h2 className="text-xl font-semibold leading-tight text-white sm:text-3xl">{t('vendorDigitalProducts.organisezVotreBoutiqueDigitaleAvec')}</h2>
             <p className="mt-3 text-sm leading-6 text-white/70 sm:text-base">
               Retrouvez vos produits, leur statut commercial et les actions de gestion dans une structure plus propre et plus crédible.
             </p>
@@ -220,7 +224,7 @@ export default function VendorDigitalProducts() {
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">Total</p>
                 <div className="mt-3 text-2xl sm:text-3xl font-semibold text-white">{products.length}</div>
-                <p className="mt-2 text-sm text-white/55">produits dans le catalogue</p>
+                <p className="mt-2 text-sm text-white/55">{t('vendorDigitalProducts.produitsDansLeCatalogue')}</p>
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/15 text-white">
                 <Package className="h-5 w-5" />
@@ -232,11 +236,11 @@ export default function VendorDigitalProducts() {
           <CardContent className="p-4 sm:p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60">Publiés</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/60">{t('vendorDigitalProducts.publies')}</p>
                 <div className="mt-3 text-2xl sm:text-3xl font-semibold text-white">
                   {products.filter(p => p.status === 'published').length}
                 </div>
-                <p className="mt-2 text-sm text-white/60">offres visibles sur le marché</p>
+                <p className="mt-2 text-sm text-white/60">{t('vendorDigitalProducts.offresVisiblesSurLeMarche')}</p>
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/15 text-white">
                 <Laptop className="h-5 w-5" />
@@ -252,7 +256,7 @@ export default function VendorDigitalProducts() {
                 <div className="mt-3 text-2xl sm:text-3xl font-semibold text-[#ffb08a]">
                   {products.filter(p => p.product_mode === 'affiliate').length}
                 </div>
-                <p className="mt-2 text-sm text-white/55">produits partenaires</p>
+                <p className="mt-2 text-sm text-white/55">{t('vendorDigitalProducts.produitsPartenaires')}</p>
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/15 text-white">
                 <ExternalLink className="h-5 w-5" />
@@ -264,11 +268,11 @@ export default function VendorDigitalProducts() {
           <CardContent className="p-4 sm:p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">Visibilité</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">{t('vendorDigitalProducts.visibilite')}</p>
                 <div className="mt-3 text-2xl sm:text-3xl font-semibold text-white">
                   {products.reduce((sum, p) => sum + (p.views_count || 0), 0)}
                 </div>
-                <p className="mt-2 text-sm text-white/55">vues cumulées</p>
+                <p className="mt-2 text-sm text-white/55">{t('vendorDigitalProducts.vuesCumulees')}</p>
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/15 text-white">
                 <Eye className="h-5 w-5" />
@@ -280,8 +284,8 @@ export default function VendorDigitalProducts() {
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h3 className="text-lg font-semibold tracking-tight text-[#0b1b33]">Catalogue en gestion</h3>
-          <p className="text-sm text-[#5f78a5]">Retrouvez vos fiches, leur statut et les actions utiles dans un flux clair et professionnel.</p>
+          <h3 className="text-lg font-semibold tracking-tight text-[#0b1b33]">{t('vendorDigitalProducts.catalogueEnGestion')}</h3>
+          <p className="text-sm text-[#5f78a5]">{t('vendorDigitalProducts.retrouvezVosFichesLeurStatut')}</p>
         </div>
         <Badge className="w-fit border-0 bg-[#04439e]/10 px-3 py-1 text-[11px] font-semibold text-[#04439e] shadow-none">
           {products.length} fiche{products.length > 1 ? 's' : ''}
@@ -293,7 +297,7 @@ export default function VendorDigitalProducts() {
         <Card className="rounded-[28px] border border-dashed border-slate-200 bg-white shadow-[0_16px_38px_rgba(15,23,42,0.06)]">
           <CardContent className="flex flex-col items-center justify-center py-10 sm:py-14 text-center">
             <Package className="mb-4 h-12 w-12 text-slate-300 sm:h-16 sm:w-16" />
-            <h3 className="mb-2 text-base font-semibold text-slate-900 sm:text-lg">Aucun produit numérique</h3>
+            <h3 className="mb-2 text-base font-semibold text-slate-900 sm:text-lg">{t('vendorDigitalProducts.aucunProduitNumerique')}</h3>
             <p className="mb-4 max-w-sm px-4 text-sm text-slate-500">
               Commencez à vendre des produits numériques ou à développer vos offres d’affiliation dans un espace propre et structuré.
             </p>
@@ -426,8 +430,20 @@ export default function VendorDigitalProducts() {
                       variant="ghost"
                       size="icon"
                       className="h-10 w-10 shrink-0 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
+                      disabled={downloading}
+                      onClick={() => download(product.id)}
+                      aria-label={t('vendorDigitalProducts.telechargerLeLivrable')}
+                      title={t('vendorDigitalProducts.telechargerLeLivrableLienSecurise')}
+                    >
+                      {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                    </Button>
+
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 shrink-0 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
                       onClick={() => setEditingProduct(product)}
-                      aria-label="Modifier le produit"
+                      aria-label={t('vendorDigitalProducts.modifierLeProduit')}
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
@@ -467,13 +483,13 @@ export default function VendorDigitalProducts() {
               ) : (
                 <>
                   Vous pouvez <strong>archiver</strong> le produit (retrait de la vente, données conservées)
-                  ou le <strong>supprimer définitivement</strong> (irréversible).
+                  ou le <strong>{t('vendorDigitalProducts.supprimerDefinitivement')}</strong> (irréversible).
                 </>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-            <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>{t('vendorDigitalProducts.annuler')}</AlertDialogCancel>
             <Button
               variant="outline"
               onClick={handleArchive}

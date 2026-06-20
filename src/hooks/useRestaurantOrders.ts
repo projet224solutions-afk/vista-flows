@@ -170,7 +170,18 @@ export function useRestaurantOrders(serviceId: string) {
 
   useEffect(() => {
     loadOrders();
-  }, [loadOrders]);
+    if (!serviceId) return;
+    // ⚡ Temps réel (Meituan-like) : toute nouvelle commande / changement de statut recharge la liste.
+    const channel = supabase
+      .channel(`resto-orders-${serviceId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'restaurant_orders', filter: `professional_service_id=eq.${serviceId}` },
+        () => { void loadOrders(); },
+      )
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [loadOrders, serviceId]);
 
   return {
     orders,

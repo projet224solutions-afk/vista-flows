@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
@@ -42,6 +43,7 @@ interface Props {
 }
 
 export default function GenerateBureauInstallLink({ bureauId, bureauName }: Props) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
@@ -68,7 +70,7 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
       if (data.success) {
         setGeneratedLink(data.install_url);
 
-        toast.success('🔗 Lien généré !', {
+        toast.success(t('generateBureauInstallLink.lienGenere'), {
           description: email ? `Email envoyé à ${email}` : 'Copiez et partagez le lien'
         });
       } else {
@@ -86,7 +88,7 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
     if (generatedLink) {
       navigator.clipboard.writeText(generatedLink);
       setCopied(true);
-      toast.success('Lien copié !');
+      toast.success(t('generateBureauInstallLink.lienCopie'));
 
       setTimeout(() => setCopied(false), 2000);
     }
@@ -107,7 +109,7 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Shield className="w-5 h-5 text-blue-600" />
@@ -161,7 +163,7 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
                   <SelectItem value="1">1 heure</SelectItem>
                   <SelectItem value="6">6 heures</SelectItem>
                   <SelectItem value="12">12 heures</SelectItem>
-                  <SelectItem value="24">24 heures (recommandé)</SelectItem>
+                  <SelectItem value="24">{t('generateBureauInstallLink.t24HeuresRecommande')}</SelectItem>
                   <SelectItem value="48">48 heures</SelectItem>
                   <SelectItem value="72">72 heures</SelectItem>
                   <SelectItem value="168">7 jours</SelectItem>
@@ -195,7 +197,7 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
             <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
               <div className="flex items-center gap-2 text-[#ff4000] mb-2">
                 <Check className="w-5 h-5" />
-                <span className="font-medium">Lien généré avec succès !</span>
+                <span className="font-medium">{t('generateBureauInstallLink.lienGenereAvecSucces')}</span>
               </div>
 
               <div className="mt-3 p-3 bg-white rounded border border-orange-300">
@@ -226,11 +228,11 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
             {/* Informations */}
             <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
               <p className="text-sm text-blue-900">
-                <strong>Validité:</strong> {expiresIn} heure(s)
+                <strong>{t('generateBureauInstallLink.validite')}</strong> {expiresIn} heure(s)
               </p>
               {email && (
                 <p className="text-sm text-blue-900 mt-1">
-                  <strong>Email envoyé à:</strong> {email}
+                  <strong>{t('generateBureauInstallLink.emailEnvoyeA')}</strong> {email}
                 </p>
               )}
             </div>
@@ -241,10 +243,10 @@ export default function GenerateBureauInstallLink({ bureauId, bureauName }: Prop
                 📱 Instructions pour le président :
               </p>
               <ol className="text-sm text-[#04439e] space-y-1 list-decimal list-inside">
-                <li>Cliquer sur le lien</li>
-                <li>Accepter l'installation de l'application</li>
-                <li>L'application sera disponible sur l'écran d'accueil</li>
-                <li>Utilisable même sans Internet</li>
+                <li>{t('generateBureauInstallLink.cliquerSurLeLien')}</li>
+                <li>{t('generateBureauInstallLink.accepterLInstallationDeL')}</li>
+                <li>{t('generateBureauInstallLink.lApplicationSeraDisponibleSur')}</li>
+                <li>{t('generateBureauInstallLink.utilisableMemeSansInternet')}</li>
               </ol>
             </div>
 

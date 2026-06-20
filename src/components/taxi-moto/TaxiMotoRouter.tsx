@@ -7,11 +7,13 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function TaxiMotoRouter() {
+  const { t } = useTranslation();
   const { profile, user, loading, profileLoading } = useAuth();
   const navigate = useNavigate();
   const [hasRedirected, setHasRedirected] = useState(false);
@@ -59,7 +61,7 @@ export default function TaxiMotoRouter() {
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="flex flex-col items-center space-y-4">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        <p className="text-muted-foreground">Chargement de votre interface...</p>
+        <p className="text-muted-foreground">{t('taxiMotoRouter.chargementDeVotreInterface')}</p>
       </div>
     </div>
   );

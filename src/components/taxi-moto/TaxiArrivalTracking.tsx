@@ -1,3 +1,4 @@
+import { useTranslation } from "@/hooks/useTranslation";
 /**
  * SUIVI D'ARRIVÉE DU TAXI — 224Solutions
  *
@@ -37,6 +38,7 @@ export function TaxiArrivalTracking({
   driverPos,
   driverName,
 }: TaxiArrivalTrackingProps) {
+  const { t } = useTranslation();
   const hasBoth =
     clientPos && driverPos &&
     Number.isFinite(driverPos.lat) && Number.isFinite(driverPos.lng);
@@ -61,7 +63,7 @@ export function TaxiArrivalTracking({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Car className="w-5 h-5 text-primary" />
@@ -95,7 +97,7 @@ export function TaxiArrivalTracking({
               <div className="rounded-lg border p-3 text-center">
                 <Clock className="w-4 h-4 text-primary mx-auto mb-1" />
                 <div className="text-lg font-bold">{arrived ? '0' : etaMin} min</div>
-                <div className="text-xs text-muted-foreground">Arrivée estimée</div>
+                <div className="text-xs text-muted-foreground">{t('taxiArrivalTracking.arriveeEstimee')}</div>
               </div>
             </div>
           )}
@@ -104,7 +106,7 @@ export function TaxiArrivalTracking({
           {mapSrc && (
             <div className="rounded-lg overflow-hidden border aspect-video bg-muted">
               <iframe
-                title="Suivi du taxi"
+                title={t('taxiArrivalTracking.suiviDuTaxi')}
                 width="100%"
                 height="100%"
                 loading="lazy"

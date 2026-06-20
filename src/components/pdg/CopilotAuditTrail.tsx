@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ interface AuditLog {
 }
 
 export default function CopilotAuditTrail() {
+  const { t } = useTranslation();
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'success' | 'error'>('all');
@@ -52,7 +54,7 @@ export default function CopilotAuditTrail() {
       // setLogs(data || []);
     } catch (error) {
       console.error('Erreur chargement audit logs:', error);
-      toast.error('Erreur lors du chargement des logs');
+      toast.error(t('copilotAuditTrail.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -180,7 +182,7 @@ export default function CopilotAuditTrail() {
         <CardContent>
           <div className="flex gap-2 mb-4">
             <Input
-              placeholder="Rechercher dans les logs..."
+              placeholder={t('copilotAuditTrail.rechercherDansLesLogs')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="flex-1"
@@ -219,7 +221,7 @@ export default function CopilotAuditTrail() {
                   <TableRow>
                     <TableHead className="w-12">Statut</TableHead>
                     <TableHead>Action</TableHead>
-                    <TableHead>Données</TableHead>
+                    <TableHead>{t('copilotAuditTrail.donnees')}</TableHead>
                     <TableHead>Erreur</TableHead>
                     <TableHead className="text-right">Date</TableHead>
                   </TableRow>

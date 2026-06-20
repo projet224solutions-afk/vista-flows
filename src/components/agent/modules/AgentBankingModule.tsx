@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,6 +34,7 @@ interface WalletTx {
 }
 
 export function AgentBankingModule({ agentId, canManage = false }: AgentBankingModuleProps) {
+  const { t } = useTranslation();
   const [walletBalance, setWalletBalance] = useState(0);
   const [walletCurrency, setWalletCurrency] = useState('GNF');
   const [transactions, setTransactions] = useState<WalletTx[]>([]);
@@ -98,7 +100,7 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
       setUsersCount(count || 0);
     } catch (err) {
       console.error('Erreur chargement banking:', err);
-      toast.error('Erreur de chargement');
+      toast.error(t('agentBankingModule.erreurDeChargement'));
     } finally {
       setLoading(false);
     }
@@ -106,9 +108,9 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'completed': return <Badge className="bg-orange-100 text-[#ff4000] flex items-center gap-1"><CheckCircle className="w-3 h-3" />Complété</Badge>;
+      case 'completed': return <Badge className="bg-orange-100 text-[#ff4000] flex items-center gap-1"><CheckCircle className="w-3 h-3" />{t('agentBankingModule.complete')}</Badge>;
       case 'pending': return <Badge className="bg-orange-100 text-[#ff4000] flex items-center gap-1"><Clock className="w-3 h-3" />En attente</Badge>;
-      case 'failed': return <Badge className="bg-orange-100 text-[#ff4000] flex items-center gap-1"><XCircle className="w-3 h-3" />Échoué</Badge>;
+      case 'failed': return <Badge className="bg-orange-100 text-[#ff4000] flex items-center gap-1"><XCircle className="w-3 h-3" />{t('agentBankingModule.echoue')}</Badge>;
       default: return <Badge variant="outline">{status}</Badge>;
     }
   };
@@ -135,7 +137,7 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
             <Shield className="h-6 w-6" />
             Système Bancaire
           </h1>
-          <p className="text-muted-foreground">Supervision financière de votre activité</p>
+          <p className="text-muted-foreground">{t('agentBankingModule.supervisionFinanciereDeVotreActivite')}</p>
         </div>
         <Button variant="outline" size="sm" onClick={loadData}>
           <RefreshCw className="h-4 w-4 mr-2" />
@@ -211,13 +213,13 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
         <TabsContent value="transactions" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Historique des Transactions</CardTitle>
-              <CardDescription>Toutes les transactions de votre wallet</CardDescription>
+              <CardTitle>{t('agentBankingModule.historiqueDesTransactions')}</CardTitle>
+              <CardDescription>{t('agentBankingModule.toutesLesTransactionsDeVotre')}</CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[400px]">
                 {transactions.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">Aucune transaction</p>
+                  <p className="text-center text-muted-foreground py-8">{t('agentBankingModule.aucuneTransaction')}</p>
                 ) : (
                   <div className="space-y-2">
                     {transactions.map((tx) => (
@@ -256,11 +258,11 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Résumé Financier</CardTitle>
+                <CardTitle className="text-base">{t('agentBankingModule.resumeFinancier')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-sm text-muted-foreground">Solde actuel</span>
+                  <span className="text-sm text-muted-foreground">{t('agentBankingModule.soldeActuel')}</span>
                   <span className="font-bold">{formatAmount(walletBalance, walletCurrency)}</span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b">
@@ -280,7 +282,7 @@ export function AgentBankingModule({ agentId, canManage = false }: AgentBankingM
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Statut des Transactions</CardTitle>
+                <CardTitle className="text-base">{t('agentBankingModule.statutDesTransactions')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between items-center py-2 border-b">

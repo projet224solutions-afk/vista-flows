@@ -1,5 +1,5 @@
-// @ts-nocheck
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
@@ -46,6 +46,7 @@ const paymentMethods: { value: PaymentMethod; label: string; icon: React.ReactNo
 ];
 
 export function RecordPaymentDialog({ debt, open, onOpenChange, onSuccess }: RecordPaymentDialogProps) {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -57,7 +58,7 @@ export function RecordPaymentDialog({ debt, open, onOpenChange, onSuccess }: Rec
     e.preventDefault();
 
     if (!user) {
-      toast.error('Vous devez être connecté');
+      toast.error(t('recordPaymentDialog.vousDevezEtreConnecte'));
       return;
     }
 
@@ -65,7 +66,7 @@ export function RecordPaymentDialog({ debt, open, onOpenChange, onSuccess }: Rec
 
     // Validation
     if (!amount || isNaN(paymentAmount) || paymentAmount <= 0) {
-      toast.error('Veuillez entrer un montant valide');
+      toast.error(t('recordPaymentDialog.veuillezEntrerUnMontantValide'));
       return;
     }
 
@@ -107,7 +108,7 @@ export function RecordPaymentDialog({ debt, open, onOpenChange, onSuccess }: Rec
           debt.total_amount,
           'Votre vendeur'
         );
-        toast.success('🎉 Dette entièrement soldée !');
+        toast.success(t('recordPaymentDialog.detteEntierementSoldee'));
       } else {
         // Paiement partiel
         await sendPaymentReceivedNotification(
@@ -119,7 +120,7 @@ export function RecordPaymentDialog({ debt, open, onOpenChange, onSuccess }: Rec
           newRemainingAmount,
           'Votre vendeur'
         );
-        toast.success('Paiement enregistré avec succès');
+        toast.success(t('recordPaymentDialog.paiementEnregistreAvecSucces'));
       }
 
       // Reset form
@@ -159,9 +160,9 @@ export function RecordPaymentDialog({ debt, open, onOpenChange, onSuccess }: Rec
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[450px]">
+      <DialogContent className="sm:max-w-[450px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Encaisser une tranche</DialogTitle>
+          <DialogTitle>{t('recordPaymentDialog.encaisserUneTranche')}</DialogTitle>
           <DialogDescription>
             Client: <span className="font-medium">{debt.customer_name}</span>
           </DialogDescription>
@@ -171,7 +172,7 @@ export function RecordPaymentDialog({ debt, open, onOpenChange, onSuccess }: Rec
           {/* Informations */}
           <div className="bg-muted p-4 rounded-lg space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Restant dû:</span>
+              <span className="text-muted-foreground">{t('recordPaymentDialog.restantDu')}</span>
               <span className="font-bold text-orange-600">{formatAmount(debt.remaining_amount)}</span>
             </div>
             <div className="flex justify-between">
@@ -200,7 +201,7 @@ export function RecordPaymentDialog({ debt, open, onOpenChange, onSuccess }: Rec
 
           {/* Montant */}
           <div className="space-y-2">
-            <Label htmlFor="amount">Montant encaissé (GNF) *</Label>
+            <Label htmlFor="amount">{t('recordPaymentDialog.montantEncaisseGnf')}</Label>
             <div className="relative">
               <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
@@ -220,7 +221,7 @@ export function RecordPaymentDialog({ debt, open, onOpenChange, onSuccess }: Rec
 
           {/* Mode de paiement */}
           <div className="space-y-2">
-            <Label>Mode de paiement</Label>
+            <Label>{t('recordPaymentDialog.modeDePaiement')}</Label>
             <RadioGroup
               value={paymentMethod}
               onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
@@ -252,7 +253,7 @@ export function RecordPaymentDialog({ debt, open, onOpenChange, onSuccess }: Rec
               id="comment"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="Note sur ce paiement..."
+              placeholder={t('recordPaymentDialog.noteSurCePaiement')}
               rows={2}
               className="resize-none"
             />

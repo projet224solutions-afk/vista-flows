@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { usePriceConverter } from '@/hooks/usePriceConverter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -53,6 +54,7 @@ const LoadingSpinner = () => (
 );
 
 export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFullFinanceModuleProps) {
+  const { t } = useTranslation();
   const [agentStats, setAgentStats] = useState<AgentFinancialStats>({
     totalCommissions: 0,
     pendingCommissions: 0,
@@ -145,7 +147,7 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
 
     } catch (error) {
       console.error('Erreur chargement finances agent:', error);
-      toast.error('Erreur lors du chargement des données');
+      toast.error(t('agentFullFinanceModule.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -185,20 +187,20 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
       a.click();
       window.URL.revokeObjectURL(url);
 
-      toast.success('Export réussi');
+      toast.success(t('agentFullFinanceModule.exportReussi'));
     } catch (_error) {
-      toast.error('Erreur lors de l\'export');
+      toast.error(t('agentFullFinanceModule.erreurLorsDeLExport'));
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'paid':
-        return <Badge className="bg-orange-100 text-[#ff4000]">Payé</Badge>;
+        return <Badge className="bg-orange-100 text-[#ff4000]">{t('agentFullFinanceModule.paye')}</Badge>;
       case 'pending':
         return <Badge className="bg-orange-100 text-[#ff4000]">En attente</Badge>;
       case 'cancelled':
-        return <Badge className="bg-orange-100 text-[#ff4000]">Annulé</Badge>;
+        return <Badge className="bg-orange-100 text-[#ff4000]">{t('agentFullFinanceModule.annule')}</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -241,7 +243,7 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
             <div className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] rounded-xl p-4 text-white shadow-lg">
               <div className="flex items-center gap-2 mb-2">
                 <Wallet className="w-5 h-5" />
-                <span className="text-sm opacity-90">Mon Solde</span>
+                <span className="text-sm opacity-90">{t('agentFullFinanceModule.monSolde')}</span>
               </div>
               <p className="text-2xl font-bold">{formatAmount(agentStats.walletBalance)}</p>
               <p className="text-xs opacity-75">GNF</p>
@@ -265,7 +267,7 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
             <div className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] rounded-xl p-4 text-white shadow-lg">
               <div className="flex items-center gap-2 mb-2">
                 <CreditCard className="w-5 h-5" />
-                <span className="text-sm opacity-90">Payées</span>
+                <span className="text-sm opacity-90">{t('agentFullFinanceModule.payees')}</span>
               </div>
               <p className="text-2xl font-bold">{formatAmount(agentStats.paidCommissions)}</p>
               <p className="text-xs opacity-75">GNF</p>
@@ -301,7 +303,7 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
         <TabsList className="grid w-full grid-cols-3 bg-muted/50 p-1 rounded-xl">
           <TabsTrigger value="overview" className="flex items-center gap-1.5 text-xs sm:text-sm">
             <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            <span>Aperçu</span>
+            <span>{t('agentFullFinanceModule.apercu')}</span>
           </TabsTrigger>
           <TabsTrigger value="my-commissions" className="flex items-center gap-1.5 text-xs sm:text-sm">
             <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -367,7 +369,7 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
             <Card className="border-border/40">
               <CardContent className="text-center py-12 text-muted-foreground">
                 <BarChart3 className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Aucune donnée graphique disponible</p>
+                <p>{t('agentFullFinanceModule.aucuneDonneeGraphiqueDisponible')}</p>
               </CardContent>
             </Card>
           )}
@@ -392,7 +394,7 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
               {commissions.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <TrendingUp className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucune commission enregistrée</p>
+                  <p>{t('agentFullFinanceModule.aucuneCommissionEnregistree')}</p>
                 </div>
               ) : (
                 <ScrollArea className="h-[400px]">
@@ -432,8 +434,8 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
         <TabsContent value="transactions" className="space-y-6">
           <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle>Historique des Transactions</CardTitle>
-              <CardDescription>Toutes mes opérations financières</CardDescription>
+              <CardTitle>{t('agentFullFinanceModule.historiqueDesTransactions')}</CardTitle>
+              <CardDescription>{t('agentFullFinanceModule.toutesMesOperationsFinancieres')}</CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[400px]">
@@ -441,7 +443,7 @@ export function AgentFullFinanceModule({ agentId, canManage = false }: AgentFull
                   {agentTransactions.length === 0 ? (
                     <div className="text-center py-12 text-muted-foreground">
                       <Wallet className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>Aucune transaction</p>
+                      <p>{t('agentFullFinanceModule.aucuneTransaction')}</p>
                     </div>
                   ) : (
                     agentTransactions.map((trans) => (

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,6 +47,7 @@ export function InteractiveMapNavigation({
   currentLocation,
   onContactCustomer
 }: InteractiveMapNavigationProps) {
+  const { t } = useTranslation();
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [routeInfo, setRouteInfo] = useState<{
@@ -135,7 +137,7 @@ export function InteractiveMapNavigation({
       pickupMarker.current = new mapboxgl.Marker({ element: pickupEl })
         .setLngLat([activeRide.pickup.coords.longitude, activeRide.pickup.coords.latitude])
         .setPopup(
-          new mapboxgl.Popup().setHTML(`<strong>Départ</strong><br/>${activeRide.pickup.address}`)
+          new mapboxgl.Popup().setHTML(`<strong>{t('interactiveMapNavigation.depart')}</strong><br/>${activeRide.pickup.address}`)
         )
         .addTo(map.current);
     }
@@ -153,7 +155,7 @@ export function InteractiveMapNavigation({
       destinationMarker.current = new mapboxgl.Marker({ element: destEl })
         .setLngLat([activeRide.destination.coords.longitude, activeRide.destination.coords.latitude])
         .setPopup(
-          new mapboxgl.Popup().setHTML(`<strong>Arrivée</strong><br/>${activeRide.destination.address}`)
+          new mapboxgl.Popup().setHTML(`<strong>{t('interactiveMapNavigation.arrivee')}</strong><br/>${activeRide.destination.address}`)
         )
         .addTo(map.current);
     }
@@ -266,7 +268,7 @@ export function InteractiveMapNavigation({
       }
     } catch (error) {
       console.error('Erreur calcul route:', error);
-      toast.error('Impossible de calculer la route');
+      toast.error(t('interactiveMapNavigation.impossibleDeCalculerLaRoute'));
     }
   };
 
@@ -348,7 +350,7 @@ export function InteractiveMapNavigation({
               <div className="bg-white rounded-lg p-3 text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <Clock className="w-3 h-3 text-gray-600" />
-                  <p className="text-xs text-gray-600">Durée</p>
+                  <p className="text-xs text-gray-600">{t('interactiveMapNavigation.duree')}</p>
                 </div>
                 <p className="text-2xl font-bold text-blue-600">
                   {routeInfo.duration} <span className="text-sm">min</span>
@@ -365,7 +367,7 @@ export function InteractiveMapNavigation({
           {/* Client */}
           <div className="bg-gray-50 rounded-lg p-3">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold text-gray-700">Client</span>
+              <span className="text-sm font-semibold text-gray-700">{t('interactiveMapNavigation.client')}</span>
               <Button
                 variant="outline"
                 size="sm"
@@ -386,7 +388,7 @@ export function InteractiveMapNavigation({
               <div className="flex items-start gap-2">
                 <MapPin className="w-5 h-5 text-[#ff4000] mt-0.5" />
                 <div>
-                  <p className="text-xs font-semibold text-[#ff4000] uppercase">Départ</p>
+                  <p className="text-xs font-semibold text-[#ff4000] uppercase">{t('interactiveMapNavigation.depart')}</p>
                   <p className="text-sm text-gray-900">{activeRide.pickup.address}</p>
                 </div>
               </div>
@@ -400,7 +402,7 @@ export function InteractiveMapNavigation({
               <div className="flex items-start gap-2">
                 <MapPin className="w-5 h-5 text-[#ff4000] mt-0.5" />
                 <div>
-                  <p className="text-xs font-semibold text-[#ff4000] uppercase">Arrivée</p>
+                  <p className="text-xs font-semibold text-[#ff4000] uppercase">{t('interactiveMapNavigation.arrivee')}</p>
                   <p className="text-sm text-gray-900">{activeRide.destination.address}</p>
                 </div>
               </div>

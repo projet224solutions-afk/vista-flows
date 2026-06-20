@@ -3,6 +3,7 @@
  * Upload vers Google Cloud Storage
  */
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,6 +42,7 @@ interface Props {
 }
 
 export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('moto');
   const [loading, setLoading] = useState(false);
@@ -87,10 +89,10 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
       console.log(`[MotoRegistrationForm] ✅ File uploaded via ${uploadResult.provider}: ${uploadResult.publicUrl}`);
 
       updateForm(field, uploadResult.publicUrl);
-      toast.success('Photo téléchargée avec succès');
+      toast.success(t('motoRegistrationForm.photoTelechargeeAvecSucces'));
     } catch (error) {
       console.error('Erreur upload:', error);
-      toast.error('Erreur lors du téléchargement');
+      toast.error(t('motoRegistrationForm.erreurLorsDuTelechargement'));
     }
   };
 
@@ -140,7 +142,7 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
       ...prev,
       documents: prev.documents?.filter((_, i) => i !== index) || []
     }));
-    toast.success('Document retiré');
+    toast.success(t('motoRegistrationForm.documentRetire'));
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -189,12 +191,12 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
       ...prev,
       photos: prev.photos?.filter((_, i) => i !== index) || []
     }));
-    toast.success('Photo retirée');
+    toast.success(t('motoRegistrationForm.photoRetiree'));
   };
 
   const searchConducteur = async () => {
     if (!conducteurSearch) return;
-    toast.info('Recherche de conducteur - fonctionnalité à venir');
+    toast.info(t('motoRegistrationForm.rechercheDeConducteurFonctionnaliteA'));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -202,17 +204,17 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
 
     // Validation
     if (!form.plate_number || !form.serial_number || !form.brand || !form.model) {
-      toast.error('Veuillez remplir tous les champs obligatoires');
+      toast.error(t('motoRegistrationForm.veuillezRemplirTousLesChamps'));
       return;
     }
 
     if (form.brand === 'Autre' && !customBrand.trim()) {
-      toast.error('Veuillez spécifier la marque de la moto');
+      toast.error(t('motoRegistrationForm.veuillezSpecifierLaMarqueDe'));
       return;
     }
 
     if (!form.owner_name || !form.owner_phone) {
-      toast.error('Informations du propriétaire requises');
+      toast.error(t('motoRegistrationForm.informationsDuProprietaireRequises'));
       return;
     }
 
@@ -262,14 +264,14 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
         // Note: L'association propriétaire-véhicule se fait via owner_member_id dans vehicles
         // syndicate_workers est géré séparément via l'interface de gestion des membres
 
-        toast.success('🏍️ Véhicule enregistré avec succès!', {
+        toast.success(t('motoRegistrationForm.vehiculeEnregistreAvecSucces'), {
           description: 'En attente de validation'
         });
       } else {
         // Stockage hors ligne - sera synchronisé vers vehicles
         await storeOfflineEvent('moto_registration', { ...motoData, target_table: 'vehicles' });
 
-        toast.success('📴 Véhicule enregistré localement', {
+        toast.success(t('motoRegistrationForm.vehiculeEnregistreLocalement'), {
           description: 'Il sera synchronisé à la reconnexion'
         });
       }
@@ -346,7 +348,7 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="serial_number">Numéro de série *</Label>
+                  <Label htmlFor="serial_number">{t('motoRegistrationForm.numeroDeSerie')}</Label>
                   <Input
                     id="serial_number"
                     required
@@ -356,7 +358,7 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="vest_number">Numéro de gilet</Label>
+                  <Label htmlFor="vest_number">{t('motoRegistrationForm.numeroDeGilet')}</Label>
                   <Input
                     id="vest_number"
                     value={form.vest_number}
@@ -372,7 +374,7 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
                     }
                   }}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner" />
+                      <SelectValue placeholder={t('motoRegistrationForm.selectionner')} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="TVS">TVS</SelectItem>
@@ -382,7 +384,7 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
                 </div>
                 {form.brand === 'Autre' && (
                   <div className="space-y-2">
-                    <Label htmlFor="customBrand">Spécifier la marque *</Label>
+                    <Label htmlFor="customBrand">{t('motoRegistrationForm.specifierLaMarque')}</Label>
                     <Input
                       id="customBrand"
                       required
@@ -393,7 +395,7 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
                   </div>
                 )}
                 <div className="space-y-2">
-                  <Label htmlFor="model">Modèle *</Label>
+                  <Label htmlFor="model">{t('motoRegistrationForm.modele')}</Label>
                   <Input
                     id="model"
                     required
@@ -410,7 +412,7 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="year">Année</Label>
+                  <Label htmlFor="year">{t('motoRegistrationForm.annee')}</Label>
                   <Input
                     id="year"
                     type="number"
@@ -425,10 +427,10 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
 
             <TabsContent value="proprietaire" className="space-y-4">
               <div className="p-4 bg-muted rounded-lg space-y-2">
-                <Label>Rechercher un conducteur existant</Label>
+                <Label>{t('motoRegistrationForm.rechercherUnConducteurExistant')}</Label>
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Téléphone ou nom"
+                    placeholder={t('motoRegistrationForm.telephoneOuNom')}
                     value={conducteurSearch}
                     onChange={(e) => setConducteurSearch(e.target.value)}
                   />
@@ -449,7 +451,7 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="owner_phone">Téléphone *</Label>
+                  <Label htmlFor="owner_phone">{t('motoRegistrationForm.telephone')}</Label>
                   <Input
                     id="owner_phone"
                     required
@@ -535,7 +537,7 @@ export default function MotoRegistrationForm({ bureauId, onSuccess }: Props) {
             <TabsContent value="photos" className="space-y-4">
               <div className="space-y-4">
                 <div className="flex items-center justify-between gap-2">
-                  <Label>Photos de la moto</Label>
+                  <Label>{t('motoRegistrationForm.photosDeLaMoto')}</Label>
                   <div className="flex gap-2">
                     <Button
                       type="button"

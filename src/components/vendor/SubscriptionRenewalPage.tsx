@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ interface Subscription {
 }
 
 export function SubscriptionRenewalPage() {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -167,7 +169,7 @@ export function SubscriptionRenewalPage() {
     return (
       <Card>
         <CardContent className="py-12 text-center">
-          <p className="text-muted-foreground">Aucun abonnement trouvé</p>
+          <p className="text-muted-foreground">{t('subscriptionRenewalPage.aucunAbonnementTrouve')}</p>
         </CardContent>
       </Card>
     );
@@ -208,7 +210,7 @@ export function SubscriptionRenewalPage() {
               <p className="font-semibold">{fc(subscription.plans.price_gnf)}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Durée</p>
+              <p className="text-sm text-muted-foreground">{t('subscriptionRenewalPage.duree')}</p>
               <p className="font-semibold">{subscription.plans.duration_days} jours</p>
             </div>
             <div>
@@ -241,7 +243,7 @@ export function SubscriptionRenewalPage() {
       {/* Payment method selection */}
       <Card>
         <CardHeader>
-          <CardTitle>Méthode de paiement</CardTitle>
+          <CardTitle>{t('subscriptionRenewalPage.methodeDePaiement')}</CardTitle>
           <CardDescription>
             Choisissez comment vous souhaitez renouveler votre abonnement
           </CardDescription>
@@ -274,7 +276,7 @@ export function SubscriptionRenewalPage() {
                 <div className="flex items-center gap-3">
                   <CreditCard className="w-5 h-5" />
                   <div>
-                    <p className="font-medium">Paiement externe</p>
+                    <p className="font-medium">{t('subscriptionRenewalPage.paiementExterne')}</p>
                     <p className="text-sm text-muted-foreground">
                       Prochainement disponible
                     </p>
@@ -286,7 +288,7 @@ export function SubscriptionRenewalPage() {
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-900">
-              <strong>Montant à payer :</strong> {fc(subscription.plans.price_gnf)}
+              <strong>{t('subscriptionRenewalPage.montantAPayer')}</strong> {fc(subscription.plans.price_gnf)}
             </p>
             <p className="text-sm text-blue-700 mt-1">
               Votre abonnement sera renouvelé pour {subscription.plans.duration_days} jours supplémentaires

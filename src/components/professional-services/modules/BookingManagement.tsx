@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Calendar, Clock, User, Phone, CheckCircle, XCircle, DollarSign, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,6 +34,7 @@ interface BookingManagementProps {
 }
 
 export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
+  const { t } = useTranslation();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('pending');
@@ -56,7 +58,7 @@ export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
       setBookings((data || []) as Booking[]);
     } catch (error) {
       console.error('Erreur chargement réservations:', error);
-      toast.error('Erreur lors du chargement des réservations');
+      toast.error(t('bookingManagement.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -75,7 +77,7 @@ export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
       loadBookings();
     } catch (error) {
       console.error('Erreur mise à jour:', error);
-      toast.error('Erreur lors de la mise à jour');
+      toast.error(t('bookingManagement.erreurLorsDeLaMise'));
     }
   };
 
@@ -112,7 +114,7 @@ export const BookingManagement = ({ serviceId }: BookingManagementProps) => {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-2xl font-bold">Gestion des Réservations</h3>
+        <h3 className="text-2xl font-bold">{t('bookingManagement.gestionDesReservations')}</h3>
         <p className="text-sm text-muted-foreground">
           Suivez et gérez vos rendez-vous clients
         </p>

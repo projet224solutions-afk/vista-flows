@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent } from '@/components/ui/card';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,7 @@ interface InstallmentPayment {
 }
 
 export default function InstallmentPlansManager() {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const { vendorId } = useCurrentVendor();
   const { toast } = useToast();
@@ -186,36 +188,14 @@ export default function InstallmentPlansManager() {
     }
   };
 
-  const markAsPaid = async (paymentId: string, planId: string, amountDue: number) => {
+  const markAsPaid = async (paymentId: string, _planId: string, _amountDue: number) => {
     try {
-      // Marquer le paiement comme payé
-      const { error: payError } = await supabase
-        .from('installment_payments')
-        .update({
-          status: 'paid',
-          amount_paid: amountDue,
-          payment_date: new Date().toISOString()
-        })
-        .eq('id', paymentId);
-
-      if (payError) throw payError;
-
-      // Mettre à jour le plan
-      const plan = plans.find(p => p.id === planId);
-      if (plan) {
-        const newRemaining = Math.max(0, plan.remaining_amount - amountDue);
-        const isComplete = newRemaining === 0;
-
-        await supabase
-          .from('installment_plans')
-          .update({
-            remaining_amount: newRemaining,
-            status: isComplete ? 'completed' : 'active'
-          })
-          .eq('id', planId);
-      }
-
-      toast({ title: '✅ Paiement enregistré' });
+      // Règlement ATOMIQUE côté serveur (verrou + recalcul du restant depuis la source) :
+      // remplace l'ancien double-UPDATE client qui pouvait corrompre remaining_amount (lost-update).
+      const { data, error } = await supabase.rpc('pay_installment_atomic' as any, { p_installment_id: paymentId });
+      if (error) throw error;
+      const res = data as any;
+      toast({ title: res?.already_paid ? 'Échéance déjà réglée' : '✅ Paiement enregistré' });
       loadData();
     } catch (error: any) {
       toast({ title: 'Erreur', description: error.message, variant: 'destructive' });
@@ -256,19 +236,19 @@ export default function InstallmentPlansManager() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Créer un plan de paiement</DialogTitle>
+              <DialogTitle>{t('installmentPlansManager.creerUnPlanDePaiement')}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium">Nom du client *</label>
+                <label className="text-sm font-medium">{t('installmentPlansManager.nomDuClient')}</label>
                 <Input
-                  placeholder="Nom du client"
+                  placeholder={t('installmentPlansManager.nomDuClient2')}
                   value={newPlan.customer_name}
                   onChange={(e) => setNewPlan({ ...newPlan, customer_name: e.target.value })}
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Montant total (GNF) *</label>
+                <label className="text-sm font-medium">{t('installmentPlansManager.montantTotalGnf')}</label>
                 <Input
                   type="number"
                   placeholder="0"
@@ -277,7 +257,7 @@ export default function InstallmentPlansManager() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Nombre d'échéances</label>
+                <label className="text-sm font-medium">{t('installmentPlansManager.nombreDEcheances')}</label>
                 <select
                   className="w-full px-3 py-2 border rounded-md bg-background"
                   value={newPlan.number_of_installments}
@@ -291,7 +271,7 @@ export default function InstallmentPlansManager() {
                 </select>
               </div>
               <div>
-                <label className="text-sm font-medium">Date première échéance *</label>
+                <label className="text-sm font-medium">{t('installmentPlansManager.datePremiereEcheance')}</label>
                 <Input
                   type="date"
                   value={newPlan.start_date}
@@ -311,8 +291,8 @@ export default function InstallmentPlansManager() {
               )}
 
               <div className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Annuler</Button>
-                <Button onClick={createPlan}>Créer</Button>
+                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>{t('installmentPlansManager.annuler')}</Button>
+                <Button onClick={createPlan}>{t('installmentPlansManager.creer')}</Button>
               </div>
             </div>
           </DialogContent>
@@ -337,7 +317,7 @@ export default function InstallmentPlansManager() {
             <div className="flex items-center gap-2">
               <DollarSign className="w-5 h-5 text-[#ff4000]" />
               <div>
-                <p className="text-xs text-muted-foreground">Reçu</p>
+                <p className="text-xs text-muted-foreground">{t('installmentPlansManager.recu')}</p>
                 <p className="text-lg font-bold text-[#ff4000]">{totalReceived.toLocaleString()}</p>
               </div>
             </div>
@@ -474,7 +454,7 @@ export default function InstallmentPlansManager() {
           <Card>
             <CardContent className="p-12 text-center">
               <Calendar className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-              <p className="text-muted-foreground">Aucun plan de paiement</p>
+              <p className="text-muted-foreground">{t('installmentPlansManager.aucunPlanDePaiement')}</p>
               <Button className="mt-4" onClick={() => setIsCreateOpen(true)}>
                 Créer mon premier plan
               </Button>

@@ -4,7 +4,8 @@
  * Méthodes: Carte Bancaire (Stripe), Orange Money, MTN MoMo, PayCard (ChapChapPay)
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -84,6 +85,7 @@ export function JomyPaymentSelector({
   sellerId,
   cartItems,
 }: JomyPaymentSelectorProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { initiatePullPayment, pollStatus, isLoading, error } = useChapChapPay();
   const _chapchapLoading = isLoading;
@@ -98,6 +100,36 @@ export function JomyPaymentSelector({
     if (!amount || displayCurrency === userCurrency.toUpperCase()) return null;
     return convert(amount, displayCurrency);
   }, [amount, displayCurrency, userCurrency, convert]);
+
+  // FRAIS DE SERVICE acheteur (purchase_fee_percent, géré par le PDG). Affiché ICI et prélevé EN PLUS
+  // par le backend (create_order_core). Uniquement pour les achats produit (pas les transferts P2P).
+  const NO_DEC_CUR = useMemo(() => new Set(['GNF', 'XOF', 'XAF', 'JPY', 'KRW', 'VND', 'CLP']), []);
+  const [feePercent, setFeePercent] = useState(0);
+  useEffect(() => {
+    if (transactionType === 'transfer') { setFeePercent(0); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase.from('system_settings')
+          .select('setting_value').eq('setting_key', 'purchase_fee_percent').maybeSingle();
+        if (!cancelled) setFeePercent(Math.max(0, Math.min(50, Number(data?.setting_value ?? 0))));
+      } catch { if (!cancelled) setFeePercent(0); }
+    })();
+    return () => { cancelled = true; };
+  }, [transactionType]);
+
+  const serviceFee = useMemo(() => {
+    const raw = amount * (feePercent / 100);
+    return NO_DEC_CUR.has(displayCurrency) ? Math.round(raw) : Math.round(raw * 100) / 100;
+  }, [amount, feePercent, displayCurrency, NO_DEC_CUR]);
+  const grandTotal = amount + serviceFee;
+
+  // Format dans la devise utilisateur (null si même devise que le produit → on n'affiche que l'original).
+  const inUserCur = useCallback((amt: number) => {
+    if (displayCurrency === userCurrency.toUpperCase()) return null;
+    return convert(amt, displayCurrency).formatted;
+  }, [convert, displayCurrency, userCurrency]);
+  const inProductCur = useCallback((amt: number) => formatCurrency(amt, displayCurrency), [displayCurrency]);
 
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethodId>((recipientId || enableEscrow) ? 'WALLET' : 'CARD');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -221,7 +253,7 @@ export function JomyPaymentSelector({
     console.log('🔵 [JomyPaymentSelector] selectedMethod:', selectedMethod);
 
     if (!user) {
-      toast.error('Vous devez être connecté pour effectuer un paiement');
+      toast.error(t('jomyPaymentSelector.vousDevezEtreConnectePour'));
       return;
     }
 
@@ -229,7 +261,7 @@ export function JomyPaymentSelector({
     if (selectedMethod === 'CASH_ON_DELIVERY') {
       // Valider les informations minimales pour rappeler le client.
       if (!deliveryAddress.street.trim()) {
-        toast.error('Numéro requis', {
+        toast.error(t('jomyPaymentSelector.numeroRequis'), {
           description: 'Veuillez entrer le numéro à contacter'
         });
         return;
@@ -270,7 +302,7 @@ export function JomyPaymentSelector({
 
     if (isChapChapPayMethod) {
       if (requiresPhone && (!phoneNumber || phoneNumber.length < 9)) {
-        toast.error('Numéro de téléphone invalide');
+        toast.error(t('jomyPaymentSelector.numeroDeTelephoneInvalide'));
         return;
       }
 
@@ -305,11 +337,11 @@ export function JomyPaymentSelector({
           const finalStatus = await pollStatus(result.transactionId, (status) => {
             if (status.status === 'completed') {
               setPaymentStatus('success');
-              toast.success('🎉 Paiement réussi via ChapChapPay !');
+              toast.success(t('jomyPaymentSelector.paiementReussiViaChapchappay'));
               onPaymentSuccess(result.transactionId!, 'SUCCESS_MOBILE_MONEY');
             } else if (status.status === 'failed' || status.status === 'cancelled') {
               setPaymentStatus('failed');
-              toast.error('Paiement échoué');
+              toast.error(t('jomyPaymentSelector.paiementEchoue'));
               onPaymentFailed?.(status.error || 'Paiement refusé');
             }
           });
@@ -320,7 +352,7 @@ export function JomyPaymentSelector({
               onPaymentSuccess(result.transactionId, 'SUCCESS_MOBILE_MONEY');
             } else if (finalStatus.status === 'pending') {
               onPaymentPending?.(result.transactionId);
-              toast.info('Paiement en attente de confirmation');
+              toast.info(t('jomyPaymentSelector.paiementEnAttenteDeConfirmation'));
             } else {
               setPaymentStatus('failed');
               onPaymentFailed?.(finalStatus.error || 'Paiement échoué');
@@ -339,7 +371,7 @@ export function JomyPaymentSelector({
     }
 
     // Ce bloc n'est plus utilisé - ChapChapPay gère tous les paiements Mobile Money
-    toast.error('Méthode de paiement non supportée');
+    toast.error(t('jomyPaymentSelector.methodeDePaiementNonSupportee'));
     setProcessing(false);
   };
 
@@ -382,7 +414,7 @@ export function JomyPaymentSelector({
     const transferTarget = (sellerId && uuidRegex.test(sellerId)) ? sellerId : recipientId;
 
     if (!transferTarget) {
-      toast.error('ID du destinataire requis');
+      toast.error(t('jomyPaymentSelector.idDuDestinataireRequis'));
       return false;
     }
 
@@ -408,7 +440,7 @@ export function JomyPaymentSelector({
       }
 
       setPaymentStatus('success');
-      toast.success('🎉 Transfert réussi !');
+      toast.success(t('jomyPaymentSelector.transfertReussi'));
       onPaymentSuccess(result.transaction_id || '', 'SUCCESS_WALLET');
       return true;
     } catch (err) {
@@ -448,7 +480,7 @@ export function JomyPaymentSelector({
       <Card className="w-full max-w-lg mx-auto">
         <CardContent className="p-8 text-center">
           <CheckCircle className="h-16 w-16 text-[#ff4000] mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-[#ff4000] mb-2">Paiement réussi !</h3>
+          <h3 className="text-xl font-bold text-[#ff4000] mb-2">{t('jomyPaymentSelector.paiementReussi')}</h3>
           <p className="text-muted-foreground mb-4">
             Votre paiement de {formattedAmount} a été effectué avec succès.
           </p>
@@ -468,15 +500,34 @@ export function JomyPaymentSelector({
             <Shield className="h-5 w-5 text-primary" />
             Paiement sécurisé
           </CardTitle>
-          <div className="text-center mt-2">
-            <p className="text-3xl font-bold text-primary">
-              {formattedAmount}
-            </p>
-            <p className="text-sm text-muted-foreground">Montant à payer</p>
-            {converted && (
-              <p className="text-sm text-muted-foreground mt-1">
-                ≈ {converted.formatted} dans votre devise
-              </p>
+          <div className="mt-2">
+            {transactionType === 'transfer' || feePercent <= 0 ? (
+              <div className="text-center">
+                <p className="text-3xl font-bold text-primary">{inUserCur(grandTotal) ?? inProductCur(grandTotal)}</p>
+                <p className="text-sm text-muted-foreground">{t('jomyPaymentSelector.montantAPayer')}</p>
+                {inUserCur(grandTotal) && <p className="text-sm text-muted-foreground mt-1">({inProductCur(grandTotal)})</p>}
+              </div>
+            ) : (
+              <div className="text-left bg-muted/40 rounded-lg p-3 space-y-1.5">
+                <div className="flex justify-between items-start text-sm">
+                  <span className="text-muted-foreground">{t('jomyPaymentSelector.sousTotalProduits')}</span>
+                  <span className="text-right">
+                    <span className="font-medium">{inUserCur(amount) ?? inProductCur(amount)}</span>
+                    {inUserCur(amount) && <span className="block text-xs text-muted-foreground">({inProductCur(amount)})</span>}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground">Frais de service ({feePercent}%)</span>
+                  <span className="font-medium">+{inUserCur(serviceFee) ?? inProductCur(serviceFee)}</span>
+                </div>
+                <div className="flex justify-between items-start border-t pt-1.5 font-bold">
+                  <span>{t('jomyPaymentSelector.totalAPayer')}</span>
+                  <span className="text-right text-primary">
+                    <span>{inUserCur(grandTotal) ?? inProductCur(grandTotal)}</span>
+                    {inUserCur(grandTotal) && <span className="block text-xs font-normal text-muted-foreground">({inProductCur(grandTotal)})</span>}
+                  </span>
+                </div>
+              </div>
             )}
 
             {enableEscrow && transactionType !== 'transfer' && (
@@ -602,7 +653,7 @@ export function JomyPaymentSelector({
               <Alert className="bg-orange-50 border-orange-200 mt-2">
                 <Truck className="h-4 w-4 text-[#ff4000]" />
                 <AlertDescription className="text-[#ff4000]">
-                  <strong>Paiement à la livraison confirmé</strong><br/>
+                  <strong>{t('jomyPaymentSelector.paiementALaLivraisonConfirme')}</strong><br/>
                   Vous serez contacté par téléphone pour confirmer votre adresse exacte avant la livraison.
                   Préparez {formattedAmount} en espèces.
                 </AlertDescription>
@@ -625,7 +676,7 @@ export function JomyPaymentSelector({
             <div className="pt-4 space-y-3">
               <div className="flex items-center gap-2 mb-2">
                 <CreditCard className="h-5 w-5 text-primary" />
-                <span className="font-semibold text-sm">Saisissez vos informations de carte</span>
+                <span className="font-semibold text-sm">{t('jomyPaymentSelector.saisissezVosInformationsDeCarte')}</span>
               </div>
               <StripeCheckoutButton
                 amount={amount}

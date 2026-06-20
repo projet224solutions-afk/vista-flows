@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Star, User, Calendar, CheckCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -32,6 +33,7 @@ interface ProductReviewsSectionProps {
 }
 
 export default function ProductReviewsSection({ productId, productName }: ProductReviewsSectionProps) {
+  const { t } = useTranslation();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [stats, setStats] = useState<ReviewStats>({
     averageRating: 0,
@@ -152,7 +154,7 @@ export default function ProductReviewsSection({ productId, productName }: Produc
   if (loading) {
     return (
       <div className="py-6 text-center">
-        <p className="text-sm text-muted-foreground">Chargement des avis...</p>
+        <p className="text-sm text-muted-foreground">{t('productReviewsSection.chargementDesAvis')}</p>
       </div>
     );
   }
@@ -161,7 +163,7 @@ export default function ProductReviewsSection({ productId, productName }: Produc
     return (
       <div className="py-6 text-center">
         <Star className="w-12 h-12 mx-auto text-muted-foreground mb-2 opacity-50" />
-        <p className="text-muted-foreground">Aucun avis pour ce produit</p>
+        <p className="text-muted-foreground">{t('productReviewsSection.aucunAvisPourCeProduit')}</p>
         <p className="text-sm text-muted-foreground mt-2">
           Soyez le premier à donner votre avis sur ce produit
         </p>

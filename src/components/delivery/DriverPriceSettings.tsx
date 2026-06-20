@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -49,6 +50,7 @@ const DEFAULT_CONFIG: PriceConfig = {
 };
 
 export function DriverPriceSettings({ driverId, onSave }: DriverPriceSettingsProps) {
+  const { t } = useTranslation();
   const [config, setConfig] = useState<PriceConfig>(DEFAULT_CONFIG);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -109,11 +111,11 @@ export function DriverPriceSettings({ driverId, onSave }: DriverPriceSettingsPro
 
       if (error) throw error;
 
-      toast.success('✅ Tarification mise à jour');
+      toast.success(t('driverPriceSettings.tarificationMiseAJour'));
       onSave?.();
     } catch (error) {
       console.error('Error saving config:', error);
-      toast.error('Erreur lors de la sauvegarde');
+      toast.error(t('driverPriceSettings.erreurLorsDeLaSauvegarde'));
     } finally {
       setSaving(false);
     }
@@ -190,7 +192,7 @@ export function DriverPriceSettings({ driverId, onSave }: DriverPriceSettingsPro
             <div className="flex items-center gap-3">
               <Clock className="h-5 w-5 text-orange-600" />
               <div>
-                <p className="font-medium">Bonus heures de pointe</p>
+                <p className="font-medium">{t('driverPriceSettings.bonusHeuresDePointe')}</p>
                 <p className="text-sm text-muted-foreground">
                   +{formatCurrency(config.rushHourBonus)} (7h-9h, 17h-20h)
                 </p>
@@ -221,7 +223,7 @@ export function DriverPriceSettings({ driverId, onSave }: DriverPriceSettingsPro
 
           {/* Bonus colis fragile */}
           <div className="space-y-2">
-            <Label>Supplément colis fragile</Label>
+            <Label>{t('driverPriceSettings.supplementColisFragile')}</Label>
             <div className="flex items-center gap-2">
               <Input
                 type="number"
@@ -258,7 +260,7 @@ export function DriverPriceSettings({ driverId, onSave }: DriverPriceSettingsPro
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div className="text-center p-3 bg-orange-50 dark:bg-[#ff4000]/20 rounded-lg">
               <p className="text-xs text-muted-foreground">3 km</p>
               <p className="font-bold text-[#ff4000]">{formatCurrency(calculateExample(3))}</p>

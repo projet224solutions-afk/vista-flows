@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,6 +62,7 @@ const DEFAULT_HOURS: OpeningHours = {
 };
 
 export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
+  const { t } = useTranslation();
   const { uploadFile, isUploading } = useStorageUpload();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -90,7 +92,7 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
       }));
       setDetectedCoords({ lat: position.latitude, lng: position.longitude });
       setGpsSuccess(true);
-      toast.success('Position détectée avec succès !');
+      toast.success(t('restaurantSettings.positionDetecteeAvecSucces'));
 
       // Update coordinates in DB
       await supabase
@@ -101,7 +103,7 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
       setTimeout(() => setGpsSuccess(false), 3000);
     } catch (err: any) {
       console.error('Erreur GPS:', err);
-      toast.error('Impossible de détecter votre position. Vérifiez vos paramètres de localisation.');
+      toast.error(t('restaurantSettings.impossibleDeDetecterVotrePosition'));
     } finally {
       setGpsLoading(false);
     }
@@ -118,8 +120,12 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
     neighborhood: '',
     logo_url: '',
     cover_image_url: '',
+    cuisine: '',
+    delivery_fee: '',
+    delivery_eta: '',
   });
 
+  const [metadata, setMetadata] = useState<Record<string, any>>({});
   const [openingHours, setOpeningHours] = useState<OpeningHours>(DEFAULT_HOURS);
 
   useEffect(() => {
@@ -150,7 +156,11 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
           neighborhood: data.neighborhood || '',
           logo_url: data.logo_url || '',
           cover_image_url: data.cover_image_url || '',
+          cuisine: (data.metadata as any)?.cuisine || '',
+          delivery_fee: (data.metadata as any)?.delivery_fee != null ? String((data.metadata as any).delivery_fee) : '',
+          delivery_eta: (data.metadata as any)?.delivery_eta_minutes != null ? String((data.metadata as any).delivery_eta_minutes) : '',
         });
+        setMetadata((data.metadata as any) || {});
 
         if (data.opening_hours && typeof data.opening_hours === 'object') {
           setOpeningHours({ ...DEFAULT_HOURS, ...(data.opening_hours as Partial<OpeningHours>) });
@@ -158,7 +168,7 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
       }
     } catch (err: any) {
       console.error('Error loading settings:', err);
-      toast.error('Erreur lors du chargement des paramètres');
+      toast.error(t('restaurantSettings.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -185,16 +195,23 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
           logo_url: formData.logo_url,
           cover_image_url: formData.cover_image_url,
           opening_hours: openingHoursJson,
+          // Marketplace : cuisine + frais/temps de livraison (préservent les autres clés metadata).
+          metadata: {
+            ...metadata,
+            cuisine: formData.cuisine.trim() || null,
+            delivery_fee: Math.max(0, Number(formData.delivery_fee) || 0),
+            delivery_eta_minutes: formData.delivery_eta ? Math.max(0, Number(formData.delivery_eta)) : null,
+          },
           updated_at: new Date().toISOString(),
         })
         .eq('id', serviceId);
 
       if (error) throw error;
 
-      toast.success('Paramètres sauvegardés !');
+      toast.success(t('restaurantSettings.parametresSauvegardes'));
     } catch (err: any) {
       console.error('Error saving settings:', err);
-      toast.error('Erreur lors de la sauvegarde');
+      toast.error(t('restaurantSettings.erreurLorsDeLaSauvegarde'));
     } finally {
       setSaving(false);
     }
@@ -223,10 +240,10 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
         setFormData(prev => ({ ...prev, cover_image_url: result.publicUrl! }));
       }
 
-      toast.success('Image uploadée !');
+      toast.success(t('restaurantSettings.imageUploadee'));
     } catch (err: any) {
       console.error('Upload error:', err);
-      toast.error('Erreur lors de l\'upload');
+      toast.error(t('restaurantSettings.erreurLorsDeLUpload'));
     } finally {
       setUploadingType(null);
     }
@@ -267,7 +284,7 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Nom du restaurant</Label>
+              <Label>{t('restaurantSettings.nomDuRestaurant')}</Label>
               <Input
                 value={formData.business_name}
                 onChange={(e) => setFormData(prev => ({ ...prev, business_name: e.target.value }))}
@@ -275,7 +292,7 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label>Téléphone</Label>
+              <Label>{t('restaurantSettings.telephone')}</Label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -321,15 +338,35 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
             <Textarea
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Décrivez votre restaurant, votre cuisine, votre ambiance..."
+              placeholder={t('restaurantSettings.decrivezVotreRestaurantVotreCuisine')}
               rows={3}
             />
+          </div>
+
+          {/* MARKETPLACE : ce que le client voit sur la carte du restaurant */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 rounded-xl border p-3">
+            <div className="space-y-1.5 sm:col-span-3">
+              <Label className="text-sm font-semibold">{t('restaurantSettings.visibiliteMarketplace')}</Label>
+              <p className="text-xs text-muted-foreground">{t('restaurantSettings.afficheSurLaCarteDe')}</p>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{t('restaurantSettings.categorieDeCuisine')}</Label>
+              <Input value={formData.cuisine} onChange={(e) => setFormData(prev => ({ ...prev, cuisine: e.target.value }))} placeholder="Ex : Grillades, Pizza, Poulet…" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{t('restaurantSettings.fraisDeLivraisonGnf')}</Label>
+              <Input type="number" min={0} value={formData.delivery_fee} onChange={(e) => setFormData(prev => ({ ...prev, delivery_fee: e.target.value }))} placeholder="0 = gratuite" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{t('restaurantSettings.tempsDePrepaMin')}</Label>
+              <Input type="number" min={0} value={formData.delivery_eta} onChange={(e) => setFormData(prev => ({ ...prev, delivery_eta: e.target.value }))} placeholder="20" />
+            </div>
           </div>
 
           {/* Bouton Position Actuelle */}
           <div className="flex items-center gap-3 p-3 rounded-xl border border-dashed border-primary/30 bg-primary/5">
             <div className="flex-1">
-              <p className="text-sm font-semibold text-foreground">📍 Localisation du restaurant</p>
+              <p className="text-sm font-semibold text-foreground">{t('restaurantSettings.localisationDuRestaurant')}</p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {detectedCoords
                   ? `Coordonnées : ${detectedCoords.lat.toFixed(5)}, ${detectedCoords.lng.toFixed(5)}`
@@ -435,7 +472,7 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
                 ) : (
                   <div className="py-4">
                     <ImageIcon className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">Aucun logo</p>
+                    <p className="text-sm text-muted-foreground">{t('restaurantSettings.aucunLogo')}</p>
                   </div>
                 )}
                 <label className="mt-3 inline-block">
@@ -462,7 +499,7 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
 
             {/* Cover Image */}
             <div className="space-y-3">
-              <Label>Image de couverture</Label>
+              <Label>{t('restaurantSettings.imageDeCouverture')}</Label>
               <div className="border-2 border-dashed rounded-lg p-4 text-center">
                 {formData.cover_image_url ? (
                   <div className="relative inline-block">
@@ -481,7 +518,7 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
                 ) : (
                   <div className="py-4">
                     <ImageIcon className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">Aucune image</p>
+                    <p className="text-sm text-muted-foreground">{t('restaurantSettings.aucuneImage')}</p>
                   </div>
                 )}
                 <label className="mt-3 inline-block">
@@ -549,7 +586,7 @@ export function RestaurantSettings({ serviceId }: RestaurantSettingsProps) {
                   </>
                 )}
                 {openingHours[day].closed && (
-                  <span className="text-sm text-muted-foreground">Fermé</span>
+                  <span className="text-sm text-muted-foreground">{t('restaurantSettings.ferme')}</span>
                 )}
               </div>
             ))}

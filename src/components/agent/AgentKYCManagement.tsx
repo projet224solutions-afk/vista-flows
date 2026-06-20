@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +35,7 @@ interface AgentKYCManagementProps {
 }
 
 export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManagementProps) {
+  const { t } = useTranslation();
   const [vendors, setVendors] = useState<VendorKYC[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -71,7 +73,7 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
       setVendors(data || []);
     } catch (error: any) {
       console.error('Erreur chargement KYC:', error);
-      toast.error('Erreur lors du chargement des vendeurs');
+      toast.error(t('agentKYCManagement.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -79,7 +81,7 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
 
   const handleApprove = async (vendor: VendorKYC) => {
     if (!canManage) {
-      toast.error('Vous n\'avez pas la permission de valider le KYC');
+      toast.error(t('agentKYCManagement.vousNAvezPasLa'));
       return;
     }
 
@@ -102,7 +104,7 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
       setIsDialogOpen(false);
     } catch (error: any) {
       console.error('Erreur validation KYC:', error);
-      toast.error('Erreur lors de la validation');
+      toast.error(t('agentKYCManagement.erreurLorsDeLaValidation'));
     } finally {
       setProcessing(false);
     }
@@ -110,12 +112,12 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
 
   const handleReject = async (vendor: VendorKYC) => {
     if (!canManage) {
-      toast.error('Vous n\'avez pas la permission de rejeter le KYC');
+      toast.error(t('agentKYCManagement.vousNAvezPasLa2'));
       return;
     }
 
     if (!rejectionReason.trim()) {
-      toast.error('Veuillez indiquer une raison de rejet');
+      toast.error(t('agentKYCManagement.veuillezIndiquerUneRaisonDe'));
       return;
     }
 
@@ -138,7 +140,7 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
       setRejectionReason('');
     } catch (error: any) {
       console.error('Erreur rejet KYC:', error);
-      toast.error('Erreur lors du rejet');
+      toast.error(t('agentKYCManagement.erreurLorsDuRejet'));
     } finally {
       setProcessing(false);
     }
@@ -147,9 +149,9 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
   const getStatusBadge = (status: string | null) => {
     switch (status) {
       case 'verified':
-        return <Badge className="bg-orange-100 text-[#ff4000] border-orange-200">Vérifié</Badge>;
+        return <Badge className="bg-orange-100 text-[#ff4000] border-orange-200">{t('agentKYCManagement.verifie')}</Badge>;
       case 'rejected':
-        return <Badge className="bg-orange-100 text-[#ff4000] border-orange-200">Rejeté</Badge>;
+        return <Badge className="bg-orange-100 text-[#ff4000] border-orange-200">{t('agentKYCManagement.rejete')}</Badge>;
       default:
         return <Badge className="bg-orange-100 text-[#ff4000] border-orange-200">En attente</Badge>;
     }
@@ -194,12 +196,12 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
             <div className="bg-orange-50 rounded-lg p-4 text-center">
               <CheckCircle className="w-6 h-6 text-[#ff4000] mx-auto mb-2" />
               <p className="text-2xl font-bold text-[#ff4000]">{stats.verified}</p>
-              <p className="text-sm text-[#ff4000]">Vérifiés</p>
+              <p className="text-sm text-[#ff4000]">{t('agentKYCManagement.verifies')}</p>
             </div>
             <div className="bg-orange-50 rounded-lg p-4 text-center">
               <XCircle className="w-6 h-6 text-[#ff4000] mx-auto mb-2" />
               <p className="text-2xl font-bold text-[#ff4000]">{stats.rejected}</p>
-              <p className="text-sm text-[#ff4000]">Rejetés</p>
+              <p className="text-sm text-[#ff4000]">{t('agentKYCManagement.rejetes')}</p>
             </div>
           </div>
 
@@ -207,7 +209,7 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
-              placeholder="Rechercher par nom, email ou téléphone..."
+              placeholder={t('agentKYCManagement.rechercherParNomEmailOu')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -236,7 +238,7 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
               ) : filteredVendors.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Shield className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucun vendeur dans cette catégorie</p>
+                  <p>{t('agentKYCManagement.aucunVendeurDansCetteCategorie')}</p>
                 </div>
               ) : (
                 <ScrollArea className="h-[400px]">
@@ -282,7 +284,7 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
 
       {/* Dialog détail */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Shield className="w-5 h-5 text-primary" />
@@ -306,18 +308,18 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
                   <p className="font-medium">{selectedVendor.email}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Téléphone</p>
+                  <p className="text-sm text-muted-foreground">{t('agentKYCManagement.telephone')}</p>
                   <p className="font-medium">{selectedVendor.phone || 'N/A'}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Inscrit le</p>
+                  <p className="text-sm text-muted-foreground">{t('agentKYCManagement.inscritLe')}</p>
                   <p className="font-medium">
                     {format(new Date(selectedVendor.created_at), 'dd MMM yyyy', { locale: fr })}
                   </p>
                 </div>
                 {selectedVendor.kyc_verified_at && (
                   <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Vérifié le</p>
+                    <p className="text-sm text-muted-foreground">{t('agentKYCManagement.verifieLe')}</p>
                     <p className="font-medium">
                       {format(new Date(selectedVendor.kyc_verified_at), 'dd MMM yyyy', { locale: fr })}
                     </p>
@@ -328,9 +330,9 @@ export function AgentKYCManagement({ agentId, canManage = false }: AgentKYCManag
               {canManage && selectedVendor.kyc_status !== 'verified' && (
                 <>
                   <div className="border-t pt-4">
-                    <p className="text-sm font-medium mb-2">Raison du rejet (optionnel)</p>
+                    <p className="text-sm font-medium mb-2">{t('agentKYCManagement.raisonDuRejetOptionnel')}</p>
                     <Textarea
-                      placeholder="Indiquez la raison si vous rejetez..."
+                      placeholder={t('agentKYCManagement.indiquezLaRaisonSiVous')}
                       value={rejectionReason}
                       onChange={(e) => setRejectionReason(e.target.value)}
                       rows={3}

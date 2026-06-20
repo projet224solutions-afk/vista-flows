@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BarChart3, TrendingUp, Download, Calendar, Package, Users, ShoppingCart, ArrowUpRight, ArrowDownRight } from 'lucide-react';
@@ -8,6 +9,7 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { usePriceConverter } from '@/hooks/usePriceConverter';
 
 export default function PDGReportsAnalytics() {
+  const { t } = useTranslation();
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
   const { analyticsData, stats, topProducts, topVendors, loading, exportToCSV } = usePDGReportsData(timeRange);
   const fc = useFormatCurrency();
@@ -33,7 +35,7 @@ export default function PDGReportsAnalytics() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold">Rapports & Analytiques</h2>
-          <p className="text-muted-foreground mt-1">Vue d'ensemble des performances de la plateforme</p>
+          <p className="text-muted-foreground mt-1">{t('pDGReportsAnalytics.vueDEnsembleDesPerformances')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -128,7 +130,7 @@ export default function PDGReportsAnalytics() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Commandes</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('pDGReportsAnalytics.commandes')}</CardTitle>
             <ShoppingCart className="w-4 h-4 text-orange-500" />
           </CardHeader>
           <CardContent>
@@ -144,7 +146,7 @@ export default function PDGReportsAnalytics() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Évolution du Revenu</CardTitle>
+            <CardTitle>{t('pDGReportsAnalytics.evolutionDuRevenu')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -183,7 +185,7 @@ export default function PDGReportsAnalytics() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Top 5 Produits</CardTitle>
+            <CardTitle>{t('pDGReportsAnalytics.top5Produits')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">

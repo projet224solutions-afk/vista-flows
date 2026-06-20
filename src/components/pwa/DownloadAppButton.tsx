@@ -326,7 +326,7 @@ function InstallDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Smartphone className="w-6 h-6 text-primary" />
@@ -344,7 +344,7 @@ function InstallDialog({
           </div>
 
           {/* Avantages */}
-          <div className="grid grid-cols-3 gap-2 text-center text-xs">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-center text-xs">
             <div className="flex flex-col items-center gap-1 p-2 rounded-lg bg-muted/30">
               <span className="text-lg">⚡</span>
               <span>Plus rapide</span>

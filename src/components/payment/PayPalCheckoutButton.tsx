@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { PayPalScriptProvider, PayPalButtons, FUNDING } from '@paypal/react-paypal-js';
 import { signedInvoke, generateIdempotencyKey } from '@/lib/security/hmacSigner';
 import { backendConfig } from '@/config/backend';
@@ -50,6 +51,7 @@ export default function PayPalCheckoutButton({
   cardOnly = false,
   disabled = false,
 }: PayPalCheckoutButtonProps) {
+  const { t } = useTranslation();
   const [clientId, setClientId] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [paymentTab, setPaymentTab] = useState<'paypal' | 'card'>('paypal');
@@ -109,7 +111,7 @@ export default function PayPalCheckoutButton({
       if (error) throw new Error(error.message);
       if (!captureData?.success) throw new Error(captureData?.error || 'Capture échouée');
 
-      toast.success('Paiement réussi !');
+      toast.success(t('payPalCheckoutButton.paiementReussi'));
 
       if (creditWallet) {
         window.dispatchEvent(new Event('wallet-updated'));
@@ -152,7 +154,7 @@ export default function PayPalCheckoutButton({
     return (
       <div className="flex items-center justify-center gap-2 p-4">
         <Loader2 className="w-5 h-5 animate-spin text-primary" />
-        <span className="text-sm">Traitement du paiement...</span>
+        <span className="text-sm">{t('payPalCheckoutButton.traitementDuPaiement')}</span>
       </div>
     );
   }
@@ -180,10 +182,10 @@ export default function PayPalCheckoutButton({
             onApprove={async (data) => { await handleApprove(data); }}
             onError={(err: any) => {
               console.error('[PayPal Card] error:', err);
-              toast.error('Erreur paiement carte. Veuillez réessayer.');
+              toast.error(t('payPalCheckoutButton.erreurPaiementCarteVeuillezReessayer'));
               onError?.('Erreur carte');
             }}
-            onCancel={() => { toast.info('Paiement annulé'); onCancel?.(); }}
+            onCancel={() => { toast.info(t('payPalCheckoutButton.paiementAnnule')); onCancel?.(); }}
           />
         ) : (
           /* Mode complet avec onglets PayPal + Carte */
@@ -210,10 +212,10 @@ export default function PayPalCheckoutButton({
                 onApprove={async (data) => { await handleApprove(data); }}
                 onError={(err: any) => {
                   console.error('[PayPal Checkout] error:', err);
-                  toast.error('Erreur PayPal. Veuillez réessayer.');
+                  toast.error(t('payPalCheckoutButton.erreurPaypalVeuillezReessayer'));
                   onError?.('Erreur PayPal');
                 }}
-                onCancel={() => { toast.info('Paiement annulé'); onCancel?.(); }}
+                onCancel={() => { toast.info(t('payPalCheckoutButton.paiementAnnule')); onCancel?.(); }}
               />
             </TabsContent>
 
@@ -228,10 +230,10 @@ export default function PayPalCheckoutButton({
                 onApprove={async (data) => { await handleApprove(data); }}
                 onError={(err: any) => {
                   console.error('[PayPal Card Checkout] error:', err);
-                  toast.error('Erreur paiement carte. Veuillez réessayer.');
+                  toast.error(t('payPalCheckoutButton.erreurPaiementCarteVeuillezReessayer'));
                   onError?.('Erreur carte');
                 }}
-                onCancel={() => { toast.info('Paiement annulé'); onCancel?.(); }}
+                onCancel={() => { toast.info(t('payPalCheckoutButton.paiementAnnule')); onCancel?.(); }}
               />
             </TabsContent>
           </Tabs>
@@ -239,7 +241,7 @@ export default function PayPalCheckoutButton({
 
         <div className="flex items-center gap-2 justify-center">
           <Shield className="w-3.5 h-3.5 text-muted-foreground" />
-          <p className="text-xs text-muted-foreground">Paiement sécurisé — Vérifié côté serveur</p>
+          <p className="text-xs text-muted-foreground">{t('payPalCheckoutButton.paiementSecuriseVerifieCoteServeur')}</p>
         </div>
       </div>
     </PayPalScriptProvider>

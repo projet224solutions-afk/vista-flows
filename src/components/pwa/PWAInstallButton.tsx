@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Download, CheckCircle } from 'lucide-react';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { toast } from 'sonner';
@@ -14,13 +15,14 @@ export default function PWAInstallButton({
   variant = 'default',
   size = 'default'
 }: PWAInstallButtonProps) {
+  const { t } = useTranslation();
   const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
 
   const handleClick = async () => {
     const installed = await promptInstall();
 
     if (installed) {
-      toast.success('🎉 Application installée!', {
+      toast.success(t('pWAInstallButton.applicationInstallee'), {
         description: 'Ouvrez 224Solutions depuis votre écran d\'accueil'
       });
     }

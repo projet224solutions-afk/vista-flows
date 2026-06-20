@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +31,7 @@ export function SyndicateWorkerPermissionsDialog({
   open,
   onOpenChange,
 }: SyndicateWorkerPermissionsDialogProps) {
+  const { t } = useTranslation();
   const { permissions, loading, setWorkerPermissions, reload } = useSyndicateWorkerPermissions(worker?.id);
   const [localPermissions, setLocalPermissions] = useState<SyndicateWorkerPermissions>({});
   const [saving, setSaving] = useState(false);
@@ -157,7 +159,7 @@ export function SyndicateWorkerPermissionsDialog({
               <Shield className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <DialogTitle>Permissions du Membre</DialogTitle>
+              <DialogTitle>{t('syndicateWorkerPermissionsDialog.permissionsDuMembre')}</DialogTitle>
               <DialogDescription>
                 {worker.nom} {worker.prenom} - Gérez les permissions d'accès
               </DialogDescription>

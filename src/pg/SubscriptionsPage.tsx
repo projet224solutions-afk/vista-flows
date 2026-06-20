@@ -1,5 +1,6 @@
 ﻿import { useState } from 'react';
 import { SubscriptionPlans } from '@/components/subscriptions/SubscriptionPlans';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Plan, SubscriptionService } from '@/services/subscriptionService';
 import {
   Dialog,
@@ -18,6 +19,7 @@ import { format, addMonths, addYears } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 export default function SubscriptionsPage() {
+  const { t } = useTranslation();
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -134,9 +136,9 @@ export default function SubscriptionsPage() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Confirmer votre abonnement</DialogTitle>
+            <DialogTitle>{t('subscriptionsPage.confirmerVotreAbonnement')}</DialogTitle>
             <DialogDescription>
               Plan: <strong>{selectedPlan?.display_name}</strong>
             </DialogDescription>
@@ -144,7 +146,7 @@ export default function SubscriptionsPage() {
 
           <div className="py-4 space-y-4">
             <div className="space-y-2">
-              <p className="text-sm font-medium">Cycle de facturation :</p>
+              <p className="text-sm font-medium">{t('subscriptionsPage.cycleDeFacturation')}</p>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => setBillingCycle('monthly')}
@@ -191,15 +193,15 @@ export default function SubscriptionsPage() {
 
             <div className="bg-muted/50 rounded-lg p-4 space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Montant a payer</span>
+                <span className="text-sm text-muted-foreground">{t('subscriptionsPage.montantAPayer')}</span>
                 <span className="font-bold text-lg">{SubscriptionService.formatAmount(currentPrice)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Date de fin</span>
+                <span className="text-sm text-muted-foreground">{t('subscriptionsPage.dateDeFin')}</span>
                 <span className="font-medium">{format(endDate, 'dd/MM/yyyy', { locale: fr })}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Statut apres paiement</span>
+                <span className="text-sm text-muted-foreground">{t('subscriptionsPage.statutApresPaiement')}</span>
                 <span className="font-medium text-[#ff4000]">Actif</span>
               </div>
             </div>
@@ -207,7 +209,7 @@ export default function SubscriptionsPage() {
             <div className="bg-muted/30 rounded-lg p-3 space-y-1">
               <div className="flex items-center gap-2 text-sm">
                 <Wallet className="w-4 h-4 text-primary" />
-                <span className="font-medium">Paiement par Wallet</span>
+                <span className="font-medium">{t('subscriptionsPage.paiementParWallet')}</span>
               </div>
               <p className="text-xs text-muted-foreground">
                 Le montant sera debite de votre wallet 224SOLUTIONS

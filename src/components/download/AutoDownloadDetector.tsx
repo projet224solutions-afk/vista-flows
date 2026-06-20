@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,6 +48,7 @@ interface DeviceInfo {
 }
 
 export default function AutoDownloadDetector() {
+    const { t } = useTranslation();
     const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
     const [recommendedDownload, setRecommendedDownload] = useState<DownloadOption | null>(null);
     const [allDownloads, setAllDownloads] = useState<DownloadOption[]>([]);
@@ -285,7 +287,7 @@ export default function AutoDownloadDetector() {
      */
     const startDownload = (download: DownloadOption) => {
         if (!isOnline && download.platform !== 'web') {
-            toast.error('Connexion Internet requise', {
+            toast.error(t('autoDownloadDetector.connexionInternetRequise'), {
                 description: 'Veuillez vous connecter à Internet pour télécharger'
             });
             return;
@@ -301,7 +303,7 @@ export default function AutoDownloadDetector() {
 
         // Afficher les instructions
         setTimeout(() => {
-            toast.success('📥 Téléchargement démarré !', {
+            toast.success(t('autoDownloadDetector.telechargementDemarre'), {
                 description: 'Consultez les instructions d\'installation ci-dessous',
                 duration: 10000
             });
@@ -321,7 +323,7 @@ export default function AutoDownloadDetector() {
             <Card className="border-0 shadow-xl rounded-2xl">
                 <CardContent className="p-8 text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Détection de votre appareil...</p>
+                    <p className="text-gray-600">{t('autoDownloadDetector.detectionDeVotreAppareil')}</p>
                 </CardContent>
             </Card>
         );
@@ -421,7 +423,7 @@ export default function AutoDownloadDetector() {
                                         alt="QR Code"
                                         className="w-24 h-24 mx-auto rounded-lg shadow-md"
                                     />
-                                    <p className="text-xs text-gray-500 mt-2">Scannez pour télécharger</p>
+                                    <p className="text-xs text-gray-500 mt-2">{t('autoDownloadDetector.scannezPourTelecharger')}</p>
                                 </div>
                             )}
                         </div>
@@ -442,7 +444,7 @@ export default function AutoDownloadDetector() {
                                         Instructions
                                     </Button>
                                 </DialogTrigger>
-                                <DialogContent className="max-w-2xl rounded-2xl">
+                                <DialogContent className="max-w-2xl rounded-2xl max-h-[90vh] overflow-y-auto">
                                     <DialogHeader>
                                         <DialogTitle className="text-xl font-bold text-gray-800">
                                             Instructions d'installation - {recommendedDownload.name}

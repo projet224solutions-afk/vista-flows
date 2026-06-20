@@ -22,6 +22,9 @@ interface AIProduct {
   category_id?: string;
   reason?: string;
   score?: number;
+  vendor_id?: string | null;
+  vendor_name?: string | null;
+  vendor_user_id?: string | null;
 }
 
 /**
@@ -35,24 +38,34 @@ async function enrichWithCurrency(products: AIProduct[]): Promise<AIProduct[]> {
     const ids = products.map(p => p.product_id);
     const { data } = await supabase
       .from('products')
-      .select('id, promotional_videos, seller_currency, vendors(country, shop_currency)')
+      .select('id, promotional_videos, seller_currency, vendor_id, vendors(id, user_id, business_name, country, shop_currency)')
       .in('id', ids);
 
     const currencyMap: Record<string, string> = {};
     const videoMap: Record<string, string[]> = {};
+    const vendorMap: Record<string, { vendor_id: string | null; vendor_name: string; vendor_user_id: string | null }> = {};
     (data || []).forEach((p: any) => {
+      const v = Array.isArray(p.vendors) ? p.vendors[0] : p.vendors;
       // DEVISE = PAYS DU VENDEUR (fiable) : Guinée→GNF, Sénégal→XOF.
-      const cur = getCurrencyForCountry((p.vendors as any)?.country || '');
+      const cur = getCurrencyForCountry(v?.country || '');
       if (cur) currencyMap[p.id] = cur;
       if (Array.isArray(p.promotional_videos) && p.promotional_videos.length > 0) {
         videoMap[p.id] = p.promotional_videos as string[];
       }
+      vendorMap[p.id] = {
+        vendor_id: p.vendor_id || v?.id || null,
+        vendor_name: v?.business_name || '',
+        vendor_user_id: v?.user_id || null,
+      };
     });
 
     return products.map(p => ({
       ...p,
       currency: currencyMap[p.product_id] || p.currency || 'GNF',
       promotional_videos: videoMap[p.product_id] || p.promotional_videos || [],
+      vendor_id: vendorMap[p.product_id]?.vendor_id ?? p.vendor_id ?? null,
+      vendor_name: vendorMap[p.product_id]?.vendor_name ?? p.vendor_name ?? '',
+      vendor_user_id: vendorMap[p.product_id]?.vendor_user_id ?? p.vendor_user_id ?? null,
     }));
   } catch {
     return products.map(p => ({ ...p, currency: p.currency || 'GNF' }));
@@ -122,7 +135,7 @@ export function useAIPersonalized(limit = 20, enabled = true) {
       // Fallback: produits récents bien notés
       const { data } = await supabase
         .from('products')
-        .select('id, name, price, images, promotional_videos, rating, reviews_count, vendor_id, seller_currency, vendors(business_type, country, shop_currency)')
+        .select('id, name, price, images, promotional_videos, rating, reviews_count, vendor_id, seller_currency, vendors(id, user_id, business_name, business_type, country, shop_currency)')
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(limit * 2);
@@ -130,8 +143,9 @@ export function useAIPersonalized(limit = 20, enabled = true) {
       return filterByAllowedVendors(data || [])
         .slice(0, limit)
         .map(p => {
+          const v = Array.isArray((p as any).vendors) ? (p as any).vendors[0] : (p as any).vendors;
           // DEVISE = PAYS DU VENDEUR (fiable) : Guinée→GNF, Sénégal→XOF.
-          const currency = getCurrencyForCountry((p as any).vendors?.country || '');
+          const currency = getCurrencyForCountry(v?.country || '');
           return {
             product_id: p.id,
             name: p.name,
@@ -142,6 +156,9 @@ export function useAIPersonalized(limit = 20, enabled = true) {
             rating: p.rating,
             reviews_count: p.reviews_count,
             reason: 'Nouveauté',
+            vendor_id: (p as any).vendor_id || v?.id || null,
+            vendor_name: v?.business_name || '',
+            vendor_user_id: v?.user_id || null,
           };
         });
     },
@@ -210,7 +227,7 @@ export function useAITrending(limit = 16, enabled = true) {
 
       const { data } = await supabase
         .from('products')
-        .select('id, name, price, images, promotional_videos, rating, reviews_count, vendor_id, seller_currency, vendors(business_type, country, shop_currency)')
+        .select('id, name, price, images, promotional_videos, rating, reviews_count, vendor_id, seller_currency, vendors(id, user_id, business_name, business_type, country, shop_currency)')
         .eq('is_active', true)
         .order('reviews_count', { ascending: false })
         .limit(limit * 3);
@@ -228,8 +245,9 @@ export function useAITrending(limit = 16, enabled = true) {
       return scored
         .slice(0, limit)
         .map(p => {
+          const v = Array.isArray((p as any).vendors) ? (p as any).vendors[0] : (p as any).vendors;
           // DEVISE = PAYS DU VENDEUR (fiable) : Guinée→GNF, Sénégal→XOF.
-          const currency = getCurrencyForCountry((p as any).vendors?.country || '');
+          const currency = getCurrencyForCountry(v?.country || '');
           return {
             product_id: p.id,
             name: p.name,
@@ -239,6 +257,9 @@ export function useAITrending(limit = 16, enabled = true) {
             promotional_videos: Array.isArray((p as any).promotional_videos) ? (p as any).promotional_videos as string[] : [],
             rating: p.rating,
             reviews_count: p.reviews_count,
+            vendor_id: (p as any).vendor_id || v?.id || null,
+            vendor_name: v?.business_name || '',
+            vendor_user_id: v?.user_id || null,
           };
         });
     },

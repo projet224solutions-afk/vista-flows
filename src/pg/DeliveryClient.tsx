@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { formatCurrency } from '@/lib/formatters';
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -59,6 +60,7 @@ interface Delivery {
 }
 
 export default function DeliveryClient() {
+  const { t } = useTranslation();
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
   const { isMobile } = useResponsive();
@@ -99,7 +101,7 @@ export default function DeliveryClient() {
         setCurrentDelivery(payload.new as Delivery);
 
         if (payload.new.status === 'delivered') {
-          toast.success('Livraison terminée !');
+          toast.success(t('deliveryClient.livraisonTerminee'));
           setCurrentDelivery(null);
           loadDeliveryHistory();
         }
@@ -135,7 +137,7 @@ export default function DeliveryClient() {
       setNearbyDrivers(drivers);
     } catch (error) {
       console.error('Erreur chargement livreurs:', error);
-      toast.error('Erreur lors du chargement des livreurs');
+      toast.error(t('deliveryClient.erreurLorsDuChargementDes'));
     }
   };
 
@@ -184,12 +186,12 @@ export default function DeliveryClient() {
 
   const handleBookDelivery = async () => {
     if (!pickupAddress || !deliveryAddress || !packageDescription) {
-      toast.error('Veuillez remplir tous les champs obligatoires');
+      toast.error(t('deliveryClient.veuillezRemplirTousLesChamps'));
       return;
     }
 
     if (!user) {
-      toast.error('Vous devez être connecté pour commander une livraison');
+      toast.error(t('deliveryClient.vousDevezEtreConnectePour'));
       return;
     }
 
@@ -214,7 +216,7 @@ export default function DeliveryClient() {
 
       if (error) throw error;
 
-      toast.success('Commande de livraison créée avec succès !');
+      toast.success(t('deliveryClient.commandeDeLivraisonCreeeAvec'));
       setCurrentDelivery(data as any);
       setActiveTab('tracking');
 
@@ -226,7 +228,7 @@ export default function DeliveryClient() {
       setRecipientPhone('');
     } catch (error) {
       console.error('Erreur création livraison:', error);
-      toast.error('Erreur lors de la création de la commande');
+      toast.error(t('deliveryClient.erreurLorsDeLaCreation'));
     } finally {
       setLoading(false);
     }
@@ -320,10 +322,10 @@ export default function DeliveryClient() {
           <TabsContent value="booking" className="space-y-6">
             <Card>
               <CardContent className="p-6 space-y-4">
-                <h2 className="text-xl font-bold mb-4">Nouvelle livraison</h2>
+                <h2 className="text-xl font-bold mb-4">{t('deliveryClient.nouvelleLivraison')}</h2>
 
                 <div className="space-y-2">
-                  <Label htmlFor="pickup">Adresse de récupération *</Label>
+                  <Label htmlFor="pickup">{t('deliveryClient.adresseDeRecuperation')}</Label>
                   <Input
                     id="pickup"
                     placeholder="Ex: Rue KA001, Kaloum"
@@ -333,7 +335,7 @@ export default function DeliveryClient() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="delivery">Adresse de livraison *</Label>
+                  <Label htmlFor="delivery">{t('deliveryClient.adresseDeLivraison')}</Label>
                   <Input
                     id="delivery"
                     placeholder="Ex: Quartier Matam, Conakry"
@@ -343,10 +345,10 @@ export default function DeliveryClient() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description du colis *</Label>
+                  <Label htmlFor="description">{t('deliveryClient.descriptionDuColis')}</Label>
                   <Textarea
                     id="description"
-                    placeholder="Décrivez le colis à livrer..."
+                    placeholder={t('deliveryClient.decrivezLeColisALivrer')}
                     value={packageDescription}
                     onChange={(e) => setPackageDescription(e.target.value)}
                   />
@@ -354,17 +356,17 @@ export default function DeliveryClient() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="recipient">Nom du destinataire</Label>
+                    <Label htmlFor="recipient">{t('deliveryClient.nomDuDestinataire')}</Label>
                     <Input
                       id="recipient"
-                      placeholder="Nom du destinataire"
+                      placeholder={t('deliveryClient.nomDuDestinataire')}
                       value={recipientName}
                       onChange={(e) => setRecipientName(e.target.value)}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Téléphone du destinataire</Label>
+                    <Label htmlFor="phone">{t('deliveryClient.telephoneDuDestinataire')}</Label>
                     <Input
                       id="phone"
                       placeholder="+224 ..."
@@ -425,7 +427,7 @@ export default function DeliveryClient() {
               <Card>
                 <CardContent className="p-6 space-y-4">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-bold">Livraison en cours</h2>
+                    <h2 className="text-xl font-bold">{t('deliveryClient.livraisonEnCours')}</h2>
                     {getStatusBadge(currentDelivery.status)}
                   </div>
 
@@ -433,7 +435,7 @@ export default function DeliveryClient() {
                     <div className="flex items-start gap-3 p-3 bg-accent rounded-lg">
                       <MapPin className="w-5 h-5 text-livreur-primary mt-1" />
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-muted-foreground">Récupération</p>
+                        <p className="text-sm font-medium text-muted-foreground">{t('deliveryClient.recuperation')}</p>
                         <p className="font-medium">{currentDelivery.pickup_address}</p>
                       </div>
                     </div>
@@ -457,7 +459,7 @@ export default function DeliveryClient() {
 
                   {currentDelivery.driver && (
                     <div className="border-t pt-4">
-                      <h3 className="font-bold mb-3">Votre livreur</h3>
+                      <h3 className="font-bold mb-3">{t('deliveryClient.votreLivreur')}</h3>
                       <div className="flex items-center gap-3 p-3 bg-accent rounded-lg">
                         <div className="w-12 h-12 bg-livreur-primary rounded-full flex items-center justify-center">
                           <User className="w-6 h-6 text-white" />
@@ -478,7 +480,7 @@ export default function DeliveryClient() {
 
                   <div className="bg-muted p-4 rounded-lg">
                     <div className="flex justify-between items-center">
-                      <span className="font-medium">Frais de livraison</span>
+                      <span className="font-medium">{t('deliveryClient.fraisDeLivraison')}</span>
                       <span className="text-xl font-bold text-livreur-primary">
                         {formatCurrency(currentDelivery.delivery_fee)}
                       </span>
@@ -490,7 +492,7 @@ export default function DeliveryClient() {
               <Card>
                 <CardContent className="p-12 text-center">
                   <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">Aucune livraison en cours</p>
+                  <p className="text-muted-foreground">{t('deliveryClient.aucuneLivraisonEnCours')}</p>
                   <Button
                     className="mt-4"
                     onClick={() => setActiveTab('booking')}
@@ -520,7 +522,7 @@ export default function DeliveryClient() {
                 {deliveryHistory.length === 0 ? (
                   <div className="text-center py-8">
                     <History className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-muted-foreground">Aucune livraison dans l'historique</p>
+                    <p className="text-muted-foreground">{t('deliveryClient.aucuneLivraisonDansLHistorique')}</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -536,7 +538,7 @@ export default function DeliveryClient() {
                           {getStatusBadge(delivery.status)}
                         </div>
                         <div className="text-sm space-y-1">
-                          <p><span className="text-muted-foreground">De:</span> {delivery.pickup_address}</p>
+                          <p><span className="text-muted-foreground">{t('deliveryClient.de')}</span> {delivery.pickup_address}</p>
                           <p><span className="text-muted-foreground">À:</span> {delivery.delivery_address}</p>
                           <p className="font-semibold text-livreur-primary">
                             {formatCurrency(delivery.delivery_fee)}

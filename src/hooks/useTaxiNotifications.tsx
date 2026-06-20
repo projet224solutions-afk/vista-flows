@@ -4,12 +4,14 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { NotificationsService, type TaxiNotification } from '@/services/taxi/notificationsService';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
 export const useTaxiNotifications = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<TaxiNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -39,31 +41,21 @@ export const useTaxiNotifications = () => {
         setNotifications(prev => [notification, ...prev]);
         setUnreadCount(prev => prev + 1);
 
-        // Afficher toast selon le type
+        // Tous les toasts taxi ramènent le chauffeur vers son tableau de bord course.
+        const ride = notification.ride_id ? `?ride=${notification.ride_id}` : '';
+        const goToRide = { label: 'Voir', onClick: () => navigate(`/taxi-moto/driver${ride}`) };
+
         if (notification.type === 'ride_request' || notification.type === 'new_ride_request') {
           toast.info(notification.title, {
             description: notification.body,
             duration: 10000,
-            action: {
-              label: 'Voir',
-              onClick: () => {
-                // Navigation vers la course
-                window.location.pathname = `/taxi-moto/driver`;
-              }
-            }
+            action: goToRide,
           });
-
-          // Jouer un son
           playNotificationSound();
         } else if (notification.type === 'ride_accepted') {
-          toast.success(notification.title, {
-            description: notification.body
-          });
+          toast.success(notification.title, { description: notification.body, action: goToRide });
         } else if (notification.type === 'payment_received') {
-          toast.success(notification.title, {
-            description: notification.body,
-            icon: '💰'
-          });
+          toast.success(notification.title, { description: notification.body, icon: '💰', action: goToRide });
         }
       }
     );

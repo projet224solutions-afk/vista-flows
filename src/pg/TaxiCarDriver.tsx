@@ -124,7 +124,7 @@ function CarRideRequestCard({ request, accepting, onAccept, onDecline }: {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 mb-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
         <div className="bg-gray-800/60 rounded-xl p-2 text-center">
           <p className="text-blue-400 font-bold text-sm">{request.distance ? `${request.distance.toFixed(1)} km` : '--'}</p>
           <p className="text-gray-500 text-[10px]">Distance</p>
@@ -266,7 +266,7 @@ function CarMainDashboard({
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <button
             onClick={() => onStatClick?.('earnings')}
             className="bg-gray-900 rounded-xl p-3 border border-gray-800 text-center hover:border-blue-500/30 transition-colors"

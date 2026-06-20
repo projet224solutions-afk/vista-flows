@@ -33,7 +33,7 @@ export function NearbyServicesSection({
   const services = [
     {
       id: 'boutiques',
-      icon: <img src="/service-icons/logo-boutique.jpeg" alt="Boutique" className="w-8 h-8 object-cover rounded-lg" loading="lazy" />,
+      icon: <img src="/service-icons/logo-boutique.jpeg" alt={t('proximity.svc.boutique.title')} className="w-8 h-8 object-cover rounded-lg" loading="lazy" />,
       title: t('home.shops'),
       subtitle: t('home.localShops'),
       count: stats.boutiques,

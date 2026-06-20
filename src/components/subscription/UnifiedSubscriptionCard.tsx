@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -16,6 +17,7 @@ interface UnifiedSubscriptionCardProps {
 }
 
 export function UnifiedSubscriptionCard({ userRole, compact = false }: UnifiedSubscriptionCardProps) {
+  const { t } = useTranslation();
   const {
     subscription,
     plans,
@@ -97,7 +99,7 @@ export function UnifiedSubscriptionCard({ userRole, compact = false }: UnifiedSu
 
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-muted-foreground">Expire le</p>
+                  <p className="text-muted-foreground">{t('unifiedSubscriptionCard.expireLe')}</p>
                   <p className="font-medium">
                     {format(new Date(subscription.current_period_end), 'dd MMMM yyyy', { locale: fr })}
                   </p>
@@ -111,12 +113,12 @@ export function UnifiedSubscriptionCard({ userRole, compact = false }: UnifiedSu
               {subscription.auto_renew ? (
                 <div className="flex items-center gap-2 text-sm text-success">
                   <CheckCircle2 className="h-4 w-4" />
-                  <span>Renouvellement automatique activé</span>
+                  <span>{t('unifiedSubscriptionCard.renouvellementAutomatiqueActive')}</span>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <XCircle className="h-4 w-4" />
-                  <span>Renouvellement automatique désactivé</span>
+                  <span>{t('unifiedSubscriptionCard.renouvellementAutomatiqueDesactive')}</span>
                 </div>
               )}
             </div>
@@ -147,7 +149,7 @@ export function UnifiedSubscriptionCard({ userRole, compact = false }: UnifiedSu
             {/* Fonctionnalités du plan */}
             {!compact && subscription.features && subscription.features.length > 0 && (
               <div className="space-y-2">
-                <p className="text-sm font-medium">Fonctionnalités incluses:</p>
+                <p className="text-sm font-medium">{t('unifiedSubscriptionCard.fonctionnalitesIncluses')}</p>
                 <ul className="space-y-1">
                   {subscription.features.map((feature, index) => (
                     <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
@@ -166,7 +168,7 @@ export function UnifiedSubscriptionCard({ userRole, compact = false }: UnifiedSu
           <div className="space-y-4">
             {/* Sélection du cycle de facturation */}
             <div className="space-y-3">
-              <Label className="text-sm font-medium">Durée de l'abonnement</Label>
+              <Label className="text-sm font-medium">{t('unifiedSubscriptionCard.dureeDeLAbonnement')}</Label>
               <RadioGroup value={billingCycle} onValueChange={(v) => setBillingCycle(v as 'monthly' | 'yearly')}>
                 <div className={`flex items-center space-x-2 p-3 border rounded-lg hover:bg-accent cursor-pointer transition ${billingCycle === 'monthly' ? 'border-primary bg-primary/5' : ''}`}>
                   <RadioGroupItem value="monthly" id="monthly" />
@@ -193,7 +195,7 @@ export function UnifiedSubscriptionCard({ userRole, compact = false }: UnifiedSu
 
             {/* Sélection du plan */}
             <div className="space-y-3">
-              <Label className="text-sm font-medium">Choisir un plan</Label>
+              <Label className="text-sm font-medium">{t('unifiedSubscriptionCard.choisirUnPlan')}</Label>
               <RadioGroup value={selectedPlanId} onValueChange={setSelectedPlanId}>
                 {plans.map((plan) => {
                   const planPrice = calculatePrice(plan, billingCycle);
@@ -230,13 +232,13 @@ export function UnifiedSubscriptionCard({ userRole, compact = false }: UnifiedSu
 
             {/* Méthode de paiement */}
             <div className="space-y-3">
-              <Label className="text-sm font-medium">Méthode de paiement</Label>
+              <Label className="text-sm font-medium">{t('unifiedSubscriptionCard.methodeDePaiement')}</Label>
               <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as any)}>
                 <div className={`flex items-center space-x-2 p-3 border rounded-lg hover:bg-accent cursor-pointer ${paymentMethod === 'wallet' ? 'border-primary bg-primary/5' : ''}`}>
                   <RadioGroupItem value="wallet" id="wallet" />
                   <Wallet className="h-4 w-4" />
                   <Label htmlFor="wallet" className="flex-1 cursor-pointer flex items-center justify-between">
-                    <span>Portefeuille</span>
+                    <span>{t('unifiedSubscriptionCard.portefeuille')}</span>
                     <span className="text-sm font-medium">{formatPrice(walletBalance)}</span>
                   </Label>
                 </div>
@@ -263,7 +265,7 @@ export function UnifiedSubscriptionCard({ userRole, compact = false }: UnifiedSu
             {selectedPlan && (
               <div className="p-4 bg-muted/50 rounded-lg">
                 <div className="flex items-center justify-between text-lg font-bold">
-                  <span>Total à payer</span>
+                  <span>{t('unifiedSubscriptionCard.totalAPayer')}</span>
                   <span className="text-primary">{formatPrice(price)}</span>
                 </div>
                 {billingCycle === 'yearly' && (

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Money } from '@/components/Money';
@@ -25,6 +26,7 @@ export function ManageCommissionsSection({
   totalCommissions,
   commissionRate
 }: ManageCommissionsSectionProps) {
+  const { t } = useTranslation();
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -60,7 +62,7 @@ export function ManageCommissionsSection({
       setCommissions(mappedCommissions);
     } catch (error) {
       console.error('Erreur chargement commissions:', error);
-      toast.error('Erreur lors du chargement des commissions');
+      toast.error(t('manageCommissionsSection.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -92,7 +94,7 @@ export function ManageCommissionsSection({
               <div className="text-2xl font-bold text-[#ff4000]">
                 <Money amount={totalCommissions} from="GNF" />
               </div>
-              <p className="text-xs text-muted-foreground">Depuis le début</p>
+              <p className="text-xs text-muted-foreground">{t('manageCommissionsSection.depuisLeDebut')}</p>
             </div>
           </CardContent>
         </Card>
@@ -118,7 +120,7 @@ export function ManageCommissionsSection({
                 <Calendar className="w-4 h-4 text-[#04439e]" />
               </div>
               <div className="text-2xl font-bold text-[#04439e]">0 GNF</div>
-              <p className="text-xs text-muted-foreground">Commissions du mois</p>
+              <p className="text-xs text-muted-foreground">{t('manageCommissionsSection.commissionsDuMois')}</p>
             </div>
           </CardContent>
         </Card>
@@ -135,8 +137,8 @@ export function ManageCommissionsSection({
           {commissions.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <CheckCircle className="w-12 h-12 mx-auto mb-4 opacity-20" />
-              <p>Aucune commission pour le moment</p>
-              <p className="text-sm mt-2">Les commissions apparaîtront ici dès que vous créerez des utilisateurs</p>
+              <p>{t('manageCommissionsSection.aucuneCommissionPourLeMoment')}</p>
+              <p className="text-sm mt-2">{t('manageCommissionsSection.lesCommissionsApparaitrontIciDes')}</p>
             </div>
           ) : (
             <div className="space-y-3">

@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -48,6 +49,7 @@ interface BadgeData {
 }
 
 export default function BadgeVerification() {
+  const { t } = useTranslation();
   const { vehicleId } = useParams<{ vehicleId: string }>();
   const [badgeData, setBadgeData] = useState<BadgeData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -180,7 +182,7 @@ export default function BadgeVerification() {
         <Card className="w-full max-w-md">
           <CardContent className="p-8 text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
-            <p className="text-gray-600">Vérification du badge en cours...</p>
+            <p className="text-gray-600">{t('badgeVerification.verificationDuBadgeEnCours')}</p>
           </CardContent>
         </Card>
       </div>
@@ -219,8 +221,8 @@ export default function BadgeVerification() {
             <Shield className="w-5 h-5 text-blue-400" />
             <span className="text-white font-semibold">224SOLUTIONS</span>
           </div>
-          <h1 className="text-2xl font-bold text-white">Vérification de Badge</h1>
-          <p className="text-blue-200 text-sm mt-1">Carte Professionnelle de Transport</p>
+          <h1 className="text-2xl font-bold text-white">{t('badgeVerification.verificationDeBadge')}</h1>
+          <p className="text-blue-200 text-sm mt-1">{t('badgeVerification.carteProfessionnelleDeTransport')}</p>
         </div>
 
         {/* Statut du badge */}
@@ -310,7 +312,7 @@ export default function BadgeVerification() {
                 <div className="text-lg font-bold text-slate-900">{badgeData.license_plate}</div>
               </div>
               <div className="bg-blue-50 rounded-lg p-3">
-                <div className="text-xs text-[#04439e] font-medium mb-1">N° Série</div>
+                <div className="text-xs text-[#04439e] font-medium mb-1">{t('badgeVerification.nSerie')}</div>
                 <div className="text-lg font-bold text-slate-900">{badgeData.serial_number || 'N/A'}</div>
               </div>
             </div>
@@ -362,7 +364,7 @@ export default function BadgeVerification() {
           <CardContent>
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-orange-50 rounded-lg p-3">
-                <div className="text-xs text-[#ff4000] font-medium mb-1">Émis le</div>
+                <div className="text-xs text-[#ff4000] font-medium mb-1">{t('badgeVerification.emisLe')}</div>
                 <div className="font-semibold text-slate-900">{formatDate(generatedDate)}</div>
               </div>
               <div className={`rounded-lg p-3 ${isExpired ? 'bg-orange-50' : 'bg-orange-50'}`}>
@@ -425,8 +427,8 @@ export default function BadgeVerification() {
 
         {/* Footer */}
         <div className="text-center py-4 text-white/60 text-sm">
-          <p>Système de vérification sécurisé</p>
-          <p className="text-xs mt-1">224SOLUTIONS • République de Guinée</p>
+          <p>{t('badgeVerification.systemeDeVerificationSecurise')}</p>
+          <p className="text-xs mt-1">{t('badgeVerification.t224solutionsRepubliqueDeGuinee')}</p>
         </div>
       </div>
     </div>

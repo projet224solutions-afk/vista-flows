@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { Button } from "@/components/ui/button";
@@ -79,6 +80,7 @@ export default function PaymentMethodStep({
     onBack,
     isLoading = false
 }: PaymentMethodStepProps) {
+    const { t } = useTranslation();
     const fc = useFormatCurrency();
     const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -122,7 +124,7 @@ export default function PaymentMethodStep({
 
                 {/* Montant */}
                 <div className="mt-4 p-4 bg-primary/10 rounded-xl text-center">
-                    <p className="text-sm text-muted-foreground">Montant à payer</p>
+                    <p className="text-sm text-muted-foreground">{t('paymentMethodStep.montantAPayer')}</p>
                     <p className="text-3xl font-bold text-primary">
                         {fc(amount)}
                     </p>

@@ -4,6 +4,7 @@
  */
 
 import { CheckCircle, Circle, Package, Truck, MapPin, CheckCheck } from 'lucide-react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from '@/lib/utils';
 
 interface TimelineStep {
@@ -48,6 +49,7 @@ const SHIPMENT_STEPS: TimelineStep[] = [
 ];
 
 export function ShipmentTimeline({ currentStatus, trackingHistory, className }: ShipmentTimelineProps) {
+  const { t } = useTranslation();
   const getCurrentStepIndex = () => {
     return SHIPMENT_STEPS.findIndex(step => step.status === currentStatus);
   };
@@ -164,7 +166,7 @@ export function ShipmentTimeline({ currentStatus, trackingHistory, className }: 
       {/* Message d'annulation */}
       {isCancelled && (
         <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg animate-in fade-in slide-in-from-bottom duration-300">
-          <p className="text-sm font-medium text-[#ff4000]">Expédition annulée</p>
+          <p className="text-sm font-medium text-[#ff4000]">{t('shipmentTimeline.expeditionAnnulee')}</p>
           <p className="text-xs text-[#ff4000] mt-1">
             Cette expédition a été annulée et ne sera pas livrée.
           </p>

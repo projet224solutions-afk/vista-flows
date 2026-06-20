@@ -1,4 +1,5 @@
 import { ReactNode, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from 'react-router-dom';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useWallet } from '@/hooks/useWallet';
@@ -84,6 +85,7 @@ export function AgentLayoutProfessional({
   onSignOut,
   unifiedPermissions = {}
 }: AgentLayoutProfessionalProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -458,7 +460,7 @@ export function AgentLayoutProfessional({
         {/* Wallet Balance Card */}
         <div className="mt-4 p-4 bg-gradient-to-br from-[#ff4000]/20 via-[#ff4000]/10 to-blue-500/10 rounded-xl border border-[#ff4000]/30 shadow-lg">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-white/70 font-semibold uppercase tracking-wide">Solde disponible</span>
+            <span className="text-xs text-white/70 font-semibold uppercase tracking-wide">{t('agentLayoutProfessional.soldeDisponible')}</span>
             <div className="p-1.5 bg-[#ff4000]/20 rounded-lg">
               <CreditCard className="w-4 h-4 text-[#ff4000]" />
             </div>
@@ -554,7 +556,7 @@ export function AgentLayoutProfessional({
           onClick={onSignOut}
         >
           <LogOut className="w-5 h-5" />
-          {(!sidebarCollapsed || isMobile) && <span className="font-medium">Déconnexion</span>}
+          {(!sidebarCollapsed || isMobile) && <span className="font-medium">{t('agentLayoutProfessional.deconnexion')}</span>}
         </Button>
       </div>
     </div>

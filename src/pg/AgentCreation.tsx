@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -19,6 +20,7 @@ import { AutoIdGenerator } from '@/components/shared/AutoIdGenerator';
 import { generateUniqueId } from '@/lib/autoIdGenerator';
 
 export default function AgentCreation() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { profile } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -72,13 +74,13 @@ export default function AgentCreation() {
       // Vérifier le type
       const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
       if (!allowedTypes.includes(file.type)) {
-        toast.error('Format non supporté. Utilisez JPG, PNG, GIF ou WebP');
+        toast.error(t('agentCreation.formatNonSupporteUtilisezJpg'));
         return;
       }
 
       // Vérifier la taille - Max 10 Mo
       if (file.size > 10 * 1024 * 1024) {
-        toast.error('L\'image ne doit pas dépasser 10 Mo');
+        toast.error(t('agentCreation.lImageNeDoitPas'));
         return;
       }
 
@@ -195,7 +197,7 @@ export default function AgentCreation() {
 
       console.log('✓ Agent créé avec succès:', newAgent);
 
-      toast.success('Agent créé avec succès !', {
+      toast.success(t('agentCreation.agentCreeAvecSucces'), {
         description: `Code agent: ${newAgent.agent_code}`
       });
 
@@ -232,15 +234,15 @@ export default function AgentCreation() {
               <UserPlus className="h-8 w-8 text-primary" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold">Créer un nouvel agent</h1>
-              <p className="text-muted-foreground">Remplissez le formulaire pour ajouter un agent</p>
+              <h1 className="text-3xl font-bold">{t('agentCreation.creerUnNouvelAgent')}</h1>
+              <p className="text-muted-foreground">{t('agentCreation.remplissezLeFormulairePourAjouter')}</p>
             </div>
           </div>
         </div>
 
         <Card className="shadow-xl">
           <CardHeader>
-            <CardTitle>Informations de l'agent</CardTitle>
+            <CardTitle>{t('agentCreation.informationsDeLAgent')}</CardTitle>
             <CardDescription>
               Le code agent sera généré automatiquement si non fourni
             </CardDescription>
@@ -249,12 +251,12 @@ export default function AgentCreation() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Photo de profil */}
               <div className="space-y-2">
-                <Label>Photo de profil (optionnel)</Label>
+                <Label>{t('agentCreation.photoDeProfilOptionnel')}</Label>
                 <div className="flex items-center gap-4">
                   {photoPreview && (
                     <img
                       src={photoPreview}
-                      alt="Aperçu"
+                      alt={t('agentCreation.apercu')}
                       className="w-20 h-20 rounded-full object-cover border-2 border-border"
                     />
                   )}
@@ -272,7 +274,7 @@ export default function AgentCreation() {
               {/* Identité */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">Prénom *</Label>
+                  <Label htmlFor="firstName">{t('agentCreation.prenom')}</Label>
                   <Input
                     id="firstName"
                     value={formData.firstName}
@@ -302,11 +304,11 @@ export default function AgentCreation() {
                   disabled={loading}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner" />
+                    <SelectValue placeholder={t('agentCreation.selectionner')} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="M">Masculin</SelectItem>
-                    <SelectItem value="F">Féminin</SelectItem>
+                    <SelectItem value="F">{t('agentCreation.feminin')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -314,7 +316,7 @@ export default function AgentCreation() {
               {/* Contact */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Téléphone *</Label>
+                  <Label htmlFor="phone">{t('agentCreation.telephone')}</Label>
                   <Input
                     id="phone"
                     type="tel"
@@ -375,7 +377,7 @@ export default function AgentCreation() {
                   <SelectContent>
                     <SelectItem value="principal">Agent Principal</SelectItem>
                     <SelectItem value="sous_agent">Sous-Agent</SelectItem>
-                    <SelectItem value="agent_regional">Agent Régional</SelectItem>
+                    <SelectItem value="agent_regional">{t('agentCreation.agentRegional')}</SelectItem>
                     <SelectItem value="agent_local">Agent Local</SelectItem>
                   </SelectContent>
                 </Select>
@@ -412,11 +414,11 @@ export default function AgentCreation() {
               {/* Mot de passe */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="password">Mot de passe *</Label>
+                  <Label htmlFor="password">{t('agentCreation.motDePasse')}</Label>
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Min. 6 caractères"
+                    placeholder={t('agentCreation.min6Caracteres')}
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     disabled={loading}
@@ -428,7 +430,7 @@ export default function AgentCreation() {
                   <Input
                     id="confirmPassword"
                     type="password"
-                    placeholder="Répéter le mot de passe"
+                    placeholder={t('agentCreation.repeterLeMotDePasse')}
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                     disabled={loading}

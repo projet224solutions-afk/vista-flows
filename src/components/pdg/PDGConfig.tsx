@@ -1,6 +1,5 @@
-// @ts-nocheck
-// @ts-nocheck
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
@@ -30,6 +29,7 @@ import {
 import TransferFeeSettings from '@/components/admin/TransferFeeSettings';
 
 export default function PDGConfig() {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const { configs, stats, loading, refetch, createConfig, updateConfig, toggleActive, deleteConfig, initializeDefaultConfigs } = useConfigData(true);
   const [newConfig, setNewConfig] = useState({
@@ -102,8 +102,8 @@ export default function PDGConfig() {
       {/* Header with Actions */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Configuration Système</h2>
-          <p className="text-muted-foreground">Gestion des commissions et paramètres globaux</p>
+          <h2 className="text-2xl font-bold">{t('pDGConfig.configurationSysteme')}</h2>
+          <p className="text-muted-foreground">{t('pDGConfig.gestionDesCommissionsEtParametres')}</p>
         </div>
         <div className="flex gap-2">
           {configs.length === 0 && (
@@ -116,13 +116,13 @@ export default function PDGConfig() {
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Initialiser les configurations par défaut?</AlertDialogTitle>
+                  <AlertDialogTitle>{t('pDGConfig.initialiserLesConfigurationsParDefaut')}</AlertDialogTitle>
                   <AlertDialogDescription>
                     Cela créera des configurations de commission standard pour tous les services.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogCancel>{t('pDGConfig.annuler')}</AlertDialogCancel>
                   <AlertDialogAction onClick={initializeDefaultConfigs}>
                     Initialiser
                   </AlertDialogAction>
@@ -193,7 +193,7 @@ export default function PDGConfig() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.services_count}</p>
-                <p className="text-sm text-muted-foreground">Services</p>
+                <p className="text-sm text-muted-foreground">{t('pDGConfig.services')}</p>
               </div>
             </div>
           </CardContent>
@@ -210,12 +210,12 @@ export default function PDGConfig() {
             <Plus className="w-5 h-5 text-primary" />
             Nouvelle Configuration de Commission
           </CardTitle>
-          <CardDescription>Ajouter une règle de commission</CardDescription>
+          <CardDescription>{t('pDGConfig.ajouterUneRegleDeCommission')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="service">Service</Label>
+              <Label htmlFor="service">{t('pDGConfig.service')}</Label>
               <Input
                 id="service"
                 placeholder="ex: marketplace, taxi, delivery"
@@ -225,7 +225,7 @@ export default function PDGConfig() {
               />
             </div>
             <div>
-              <Label htmlFor="transaction">Type de Transaction</Label>
+              <Label htmlFor="transaction">{t('pDGConfig.typeDeTransaction')}</Label>
               <Input
                 id="transaction"
                 placeholder="ex: achat, vente, location"
@@ -235,7 +235,7 @@ export default function PDGConfig() {
               />
             </div>
             <div>
-              <Label htmlFor="type">Type de Commission</Label>
+              <Label htmlFor="type">{t('pDGConfig.typeDeCommission')}</Label>
               <Select
                 value={newConfig.commission_type}
                 onValueChange={(value) => setNewConfig({ ...newConfig, commission_type: value })}
@@ -245,7 +245,7 @@ export default function PDGConfig() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="percentage">Pourcentage</SelectItem>
-                  <SelectItem value="fixed">Montant Fixe</SelectItem>
+                  <SelectItem value="fixed">{t('pDGConfig.montantFixe')}</SelectItem>
                   <SelectItem value="hybrid">Hybride</SelectItem>
                 </SelectContent>
               </Select>
@@ -264,7 +264,7 @@ export default function PDGConfig() {
               />
             </div>
             <div>
-              <Label htmlFor="min">Montant Minimum (GNF)</Label>
+              <Label htmlFor="min">{t('pDGConfig.montantMinimumGnf')}</Label>
               <Input
                 id="min"
                 type="number"
@@ -274,11 +274,11 @@ export default function PDGConfig() {
               />
             </div>
             <div>
-              <Label htmlFor="max">Montant Maximum (GNF)</Label>
+              <Label htmlFor="max">{t('pDGConfig.montantMaximumGnf')}</Label>
               <Input
                 id="max"
                 type="number"
-                placeholder="Illimité si vide"
+                placeholder={t('pDGConfig.illimiteSiVide')}
                 value={newConfig.max_amount || ''}
                 onChange={(e) => setNewConfig({ ...newConfig, max_amount: e.target.value ? Number(e.target.value) : null })}
                 className="bg-background"
@@ -296,7 +296,7 @@ export default function PDGConfig() {
       <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
         <CardHeader>
           <CardTitle>Configurations Existantes</CardTitle>
-          <CardDescription>Gestion des règles de commission</CardDescription>
+          <CardDescription>{t('pDGConfig.gestionDesReglesDeCommission')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -310,7 +310,7 @@ export default function PDGConfig() {
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor={`edit-service-${config.id}`}>Service</Label>
+                        <Label htmlFor={`edit-service-${config.id}`}>{t('pDGConfig.service')}</Label>
                         <Input
                           id={`edit-service-${config.id}`}
                           value={editConfig.service_name}
@@ -319,7 +319,7 @@ export default function PDGConfig() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`edit-transaction-${config.id}`}>Type de Transaction</Label>
+                        <Label htmlFor={`edit-transaction-${config.id}`}>{t('pDGConfig.typeDeTransaction')}</Label>
                         <Input
                           id={`edit-transaction-${config.id}`}
                           value={editConfig.transaction_type}
@@ -328,7 +328,7 @@ export default function PDGConfig() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`edit-type-${config.id}`}>Type de Commission</Label>
+                        <Label htmlFor={`edit-type-${config.id}`}>{t('pDGConfig.typeDeCommission')}</Label>
                         <Select
                           value={editConfig.commission_type}
                           onValueChange={(value) => setEditConfig({ ...editConfig, commission_type: value })}
@@ -338,7 +338,7 @@ export default function PDGConfig() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="percentage">Pourcentage</SelectItem>
-                            <SelectItem value="fixed">Montant Fixe</SelectItem>
+                            <SelectItem value="fixed">{t('pDGConfig.montantFixe')}</SelectItem>
                             <SelectItem value="hybrid">Hybride</SelectItem>
                           </SelectContent>
                         </Select>
@@ -357,7 +357,7 @@ export default function PDGConfig() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`edit-min-${config.id}`}>Montant Minimum (GNF)</Label>
+                        <Label htmlFor={`edit-min-${config.id}`}>{t('pDGConfig.montantMinimumGnf')}</Label>
                         <Input
                           id={`edit-min-${config.id}`}
                           type="number"
@@ -367,11 +367,11 @@ export default function PDGConfig() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor={`edit-max-${config.id}`}>Montant Maximum (GNF)</Label>
+                        <Label htmlFor={`edit-max-${config.id}`}>{t('pDGConfig.montantMaximumGnf')}</Label>
                         <Input
                           id={`edit-max-${config.id}`}
                           type="number"
-                          placeholder="Illimité si vide"
+                          placeholder={t('pDGConfig.illimiteSiVide')}
                           value={editConfig.max_amount || ''}
                           onChange={(e) => setEditConfig({ ...editConfig, max_amount: e.target.value ? Number(e.target.value) : null })}
                           className="bg-background"
@@ -437,13 +437,13 @@ export default function PDGConfig() {
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Supprimer cette configuration?</AlertDialogTitle>
+                            <AlertDialogTitle>{t('pDGConfig.supprimerCetteConfiguration')}</AlertDialogTitle>
                             <AlertDialogDescription>
                               Cette action est irréversible.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Annuler</AlertDialogCancel>
+                            <AlertDialogCancel>{t('pDGConfig.annuler')}</AlertDialogCancel>
                             <AlertDialogAction onClick={() => deleteConfig(config.id)}>
                               Supprimer
                             </AlertDialogAction>

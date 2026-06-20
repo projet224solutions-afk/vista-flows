@@ -4,6 +4,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useRealEstateData } from '@/hooks/useRealEstateData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   Home, Building2, Users, Calendar, MapPin, Phone, Mail,
   Plus, Search, Eye, Heart, DollarSign, TrendingUp,
-  Loader2, CheckCircle, XCircle, Clock, Map, Wallet, Bot
+  Loader2, CheckCircle, XCircle, Clock, Map, Wallet, Bot, KeyRound
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -28,6 +29,7 @@ import { AdvancedSearchPanel, DEFAULT_FILTERS, type SearchFilters } from './real
 import { RealEstateMapView } from './real-estate/RealEstateMapView';
 import { RealEstateWalletWidget } from './real-estate/RealEstateWalletWidget';
 import { RealEstateCopilot } from './real-estate/RealEstateCopilot';
+import { RealEstateRentals } from './real-estate/RealEstateRentals';
 import type { Property } from '@/hooks/useRealEstateData';
 
 interface RealEstateModuleProps {
@@ -36,6 +38,7 @@ interface RealEstateModuleProps {
 }
 
 export function RealEstateModule({ serviceId, businessName }: RealEstateModuleProps) {
+  const { t } = useTranslation();
   const {
     properties, visits, contacts, stats, loading, saving,
     createProperty, updatePropertyStatus, deleteProperty,
@@ -99,7 +102,7 @@ export function RealEstateModule({ serviceId, businessName }: RealEstateModulePr
 
   const handleAddVisit = async () => {
     if (!visitForm.client_name || !visitForm.visit_date) {
-      toast.error('Nom et date requis');
+      toast.error(t('realEstateModule.nomEtDateRequis'));
       return;
     }
     const ok = await createVisit(visitForm);
@@ -129,7 +132,7 @@ export function RealEstateModule({ serviceId, businessName }: RealEstateModulePr
       <div className="flex items-center justify-center py-20">
         <div className="text-center space-y-3">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-          <p className="text-muted-foreground">Chargement du module immobilier...</p>
+          <p className="text-muted-foreground">{t('realEstateModule.chargementDuModuleImmobilier')}</p>
         </div>
       </div>
     );
@@ -145,7 +148,7 @@ export function RealEstateModule({ serviceId, businessName }: RealEstateModulePr
           </div>
           <div>
             <h2 className="text-xl sm:text-2xl font-bold">{businessName || 'Agence Immobilière'}</h2>
-            <p className="text-sm text-muted-foreground">Gestion complète de vos biens et clients</p>
+            <p className="text-sm text-muted-foreground">{t('realEstateModule.gestionCompleteDeVosBiens')}</p>
           </div>
         </div>
         <Button onClick={() => setShowNewProperty(true)} className="gap-2">
@@ -182,7 +185,7 @@ export function RealEstateModule({ serviceId, businessName }: RealEstateModulePr
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground font-medium">Visites à venir</p>
+                <p className="text-xs text-muted-foreground font-medium">{t('realEstateModule.visitesAVenir')}</p>
                 <p className="text-2xl font-bold">{stats.pendingVisits}</p>
               </div>
               <Calendar className="h-8 w-8 text-accent/20" />
@@ -217,9 +220,12 @@ export function RealEstateModule({ serviceId, businessName }: RealEstateModulePr
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="annonces" className="gap-1 text-xs sm:text-sm">
             <Building2 className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Biens</span>
+          </TabsTrigger>
+          <TabsTrigger value="locations" className="gap-1 text-xs sm:text-sm">
+            <KeyRound className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Locations</span>
           </TabsTrigger>
           <TabsTrigger value="carte" className="gap-1 text-xs sm:text-sm">
             <Map className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Carte</span>
@@ -247,7 +253,7 @@ export function RealEstateModule({ serviceId, businessName }: RealEstateModulePr
             <Card className="border-dashed">
               <CardContent className="py-12 text-center">
                 <Building2 className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-                <h3 className="font-semibold text-lg">Aucun bien immobilier</h3>
+                <h3 className="font-semibold text-lg">{t('realEstateModule.aucunBienImmobilier')}</h3>
                 <p className="text-muted-foreground text-sm mt-1">
                   {filters.query ? 'Aucun résultat pour votre recherche' : 'Commencez par publier votre premier bien'}
                 </p>
@@ -316,14 +322,14 @@ export function RealEstateModule({ serviceId, businessName }: RealEstateModulePr
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Planifier une visite</DialogTitle>
+                  <DialogTitle>{t('realEstateModule.planifierUneVisite')}</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   {properties.length > 0 && (
                     <div className="space-y-2">
-                      <Label>Bien concerné</Label>
+                      <Label>{t('realEstateModule.bienConcerne')}</Label>
                       <Select value={visitForm.property_id} onValueChange={v => setVisitForm(prev => ({...prev, property_id: v}))}>
-                        <SelectTrigger><SelectValue placeholder="Sélectionner un bien" /></SelectTrigger>
+                        <SelectTrigger><SelectValue placeholder={t('realEstateModule.selectionnerUnBien')} /></SelectTrigger>
                         <SelectContent>
                           {properties.map(p => (
                             <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
@@ -333,12 +339,12 @@ export function RealEstateModule({ serviceId, businessName }: RealEstateModulePr
                     </div>
                   )}
                   <div className="space-y-2">
-                    <Label>Nom du client *</Label>
+                    <Label>{t('realEstateModule.nomDuClient')}</Label>
                     <Input value={visitForm.client_name} onChange={e => setVisitForm(prev => ({...prev, client_name: e.target.value}))} />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Téléphone</Label>
+                      <Label>{t('realEstateModule.telephone')}</Label>
                       <Input value={visitForm.client_phone} onChange={e => setVisitForm(prev => ({...prev, client_phone: e.target.value}))} />
                     </div>
                     <div className="space-y-2">
@@ -362,7 +368,7 @@ export function RealEstateModule({ serviceId, businessName }: RealEstateModulePr
                   </div>
                 </div>
                 <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setShowNewVisit(false)}>Annuler</Button>
+                  <Button variant="outline" onClick={() => setShowNewVisit(false)}>{t('realEstateModule.annuler')}</Button>
                   <Button onClick={handleAddVisit}>Planifier</Button>
                 </div>
               </DialogContent>
@@ -373,7 +379,7 @@ export function RealEstateModule({ serviceId, businessName }: RealEstateModulePr
             <Card className="border-dashed">
               <CardContent className="py-8 text-center">
                 <Calendar className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
-                <p className="text-muted-foreground text-sm">Aucune visite planifiée</p>
+                <p className="text-muted-foreground text-sm">{t('realEstateModule.aucuneVisitePlanifiee')}</p>
               </CardContent>
             </Card>
           ) : (
@@ -430,11 +436,11 @@ export function RealEstateModule({ serviceId, businessName }: RealEstateModulePr
             <h3 className="font-semibold">Contacts ({contacts.length})</h3>
             <Dialog open={showNewContact} onOpenChange={setShowNewContact}>
               <DialogTrigger asChild>
-                <Button size="sm"><Plus className="h-4 w-4 mr-2" /> Ajouter</Button>
+                <Button size="sm"><Plus className="h-4 w-4 mr-2" /> {t('realEstateModule.ajouter')}</Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Ajouter un contact</DialogTitle>
+                  <DialogTitle>{t('realEstateModule.ajouterUnContact')}</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="space-y-2">
@@ -443,7 +449,7 @@ export function RealEstateModule({ serviceId, businessName }: RealEstateModulePr
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Téléphone</Label>
+                      <Label>{t('realEstateModule.telephone')}</Label>
                       <Input value={contactForm.phone} onChange={e => setContactForm(prev => ({...prev, phone: e.target.value}))} />
                     </div>
                     <div className="space-y-2">
@@ -458,7 +464,7 @@ export function RealEstateModule({ serviceId, businessName }: RealEstateModulePr
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="acheteur">Acheteur</SelectItem>
-                          <SelectItem value="vendeur">Vendeur</SelectItem>
+                          <SelectItem value="vendeur">{t('realEstateModule.vendeur')}</SelectItem>
                           <SelectItem value="locataire">Locataire</SelectItem>
                           <SelectItem value="bailleur">Bailleur</SelectItem>
                         </SelectContent>
@@ -475,8 +481,8 @@ export function RealEstateModule({ serviceId, businessName }: RealEstateModulePr
                   </div>
                 </div>
                 <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setShowNewContact(false)}>Annuler</Button>
-                  <Button onClick={handleAddContact}>Ajouter</Button>
+                  <Button variant="outline" onClick={() => setShowNewContact(false)}>{t('realEstateModule.annuler')}</Button>
+                  <Button onClick={handleAddContact}>{t('realEstateModule.ajouter')}</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -486,7 +492,7 @@ export function RealEstateModule({ serviceId, businessName }: RealEstateModulePr
             <Card className="border-dashed">
               <CardContent className="py-8 text-center">
                 <Users className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
-                <p className="text-muted-foreground text-sm">Aucun contact enregistré</p>
+                <p className="text-muted-foreground text-sm">{t('realEstateModule.aucunContactEnregistre')}</p>
               </CardContent>
             </Card>
           ) : (
@@ -522,6 +528,10 @@ export function RealEstateModule({ serviceId, businessName }: RealEstateModulePr
         </TabsContent>
 
         {/* === WALLET === */}
+        <TabsContent value="locations" className="space-y-4">
+          <RealEstateRentals serviceId={serviceId} />
+        </TabsContent>
+
         <TabsContent value="wallet" className="space-y-4">
           <RealEstateWalletWidget />
         </TabsContent>

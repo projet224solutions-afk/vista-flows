@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -39,6 +40,7 @@ interface Transaction {
 }
 
 export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
+  const { t } = useTranslation();
   const [stats, setStats] = useState<FinancialStats>({
     totalCommissions: 0,
     pendingCommissions: 0,
@@ -138,7 +140,7 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
 
     } catch (error: any) {
       console.error('Erreur chargement données financières:', error);
-      toast.error('Erreur lors du chargement des données');
+      toast.error(t('agentFinanceOverview.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -149,11 +151,11 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'paid':
-        return <Badge className="bg-orange-100 text-[#ff4000]">Payé</Badge>;
+        return <Badge className="bg-orange-100 text-[#ff4000]">{t('agentFinanceOverview.paye')}</Badge>;
       case 'pending':
         return <Badge className="bg-orange-100 text-[#ff4000]">En attente</Badge>;
       case 'cancelled':
-        return <Badge className="bg-orange-100 text-[#ff4000]">Annulé</Badge>;
+        return <Badge className="bg-orange-100 text-[#ff4000]">{t('agentFinanceOverview.annule')}</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -189,7 +191,7 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
             <div className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] rounded-xl p-4 text-white">
               <div className="flex items-center gap-2 mb-2">
                 <Wallet className="w-5 h-5" />
-                <span className="text-sm opacity-90">Solde Wallet</span>
+                <span className="text-sm opacity-90">{t('agentFinanceOverview.soldeWallet')}</span>
               </div>
               <p className="text-lg sm:text-2xl font-bold break-words">{formatAmount(stats.walletBalance)}</p>
               <p className="text-xs opacity-75">{stats.walletCurrency}</p>
@@ -216,7 +218,7 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
             <div className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] rounded-xl p-4 text-white">
               <div className="flex items-center gap-2 mb-2">
                 <CreditCard className="w-5 h-5" />
-                <span className="text-sm opacity-90">Payées</span>
+                <span className="text-sm opacity-90">{t('agentFinanceOverview.payees')}</span>
               </div>
               <p className="text-lg sm:text-2xl font-bold break-words">{formatAmount(stats.paidCommissions)}</p>
               <p className="text-xs opacity-75">{stats.walletCurrency}</p>
@@ -265,7 +267,7 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
               {recentTransactions.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <DollarSign className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucune transaction récente</p>
+                  <p>{t('agentFinanceOverview.aucuneTransactionRecente')}</p>
                 </div>
               ) : (
                 <ScrollArea className="h-[300px]">
@@ -314,7 +316,7 @@ export function AgentFinanceOverview({ agentId }: AgentFinanceOverviewProps) {
               {commissions.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <TrendingUp className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucune commission enregistrée</p>
+                  <p>{t('agentFinanceOverview.aucuneCommissionEnregistree')}</p>
                 </div>
               ) : (
                 <ScrollArea className="h-[300px]">

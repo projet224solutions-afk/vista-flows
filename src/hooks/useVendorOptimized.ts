@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * HOOK VENDEUR OPTIMISÉ
  * Gestion optimisée des données vendeur avec cache et retry

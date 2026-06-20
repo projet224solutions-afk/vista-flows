@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -57,6 +58,7 @@ interface DeliveryOfferCardProps {
 }
 
 export function DeliveryOfferCard({ offer, onAccept, onRefuse }: DeliveryOfferCardProps) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState<'accept' | 'refuse' | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(
     Math.max(0, Math.floor((new Date(offer.expiresAt).getTime() - Date.now()) / 1000))
@@ -140,17 +142,17 @@ export function DeliveryOfferCard({ offer, onAccept, onRefuse }: DeliveryOfferCa
         </div>
 
         {/* Distances */}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           <div className="text-center p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
             <MapPin className="h-4 w-4 mx-auto text-orange-600 mb-1" />
-            <p className="text-xs text-muted-foreground">Vous → Vendeur</p>
+            <p className="text-xs text-muted-foreground">{t('deliveryOfferCard.vousVendeur')}</p>
             <p className="font-bold text-orange-700 dark:text-orange-300">
               {offer.distanceToVendor.toFixed(1)} km
             </p>
           </div>
           <div className="text-center p-2 bg-orange-100 dark:bg-[#ff4000]/30 rounded-lg">
             <Navigation className="h-4 w-4 mx-auto text-[#ff4000] mb-1" />
-            <p className="text-xs text-muted-foreground">Vendeur → Client</p>
+            <p className="text-xs text-muted-foreground">{t('deliveryOfferCard.vendeurClient')}</p>
             <p className="font-bold text-[#ff4000] dark:text-orange-300">
               {offer.distanceVendorToClient.toFixed(1)} km
             </p>
@@ -176,7 +178,7 @@ export function DeliveryOfferCard({ offer, onAccept, onRefuse }: DeliveryOfferCa
           {offer.basePrice && offer.distancePrice ? (
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Prix de base</span>
+                <span className="text-muted-foreground">{t('deliveryOfferCard.prixDeBase')}</span>
                 <span className="font-medium">{formatCurrency(offer.basePrice)}</span>
               </div>
               <div className="flex justify-between">
@@ -186,13 +188,13 @@ export function DeliveryOfferCard({ offer, onAccept, onRefuse }: DeliveryOfferCa
                 <span className="font-medium">{formatCurrency(offer.distancePrice)}</span>
               </div>
               <div className="flex justify-between pt-1 border-t border-orange-200 dark:border-[#ff4000]">
-                <span className="font-medium">Total livraison</span>
+                <span className="font-medium">{t('deliveryOfferCard.totalLivraison')}</span>
                 <span className="font-bold text-[#ff4000] dark:text-[#ff4000]">{formatCurrency(offer.estimatedEarnings)}</span>
               </div>
             </div>
           ) : (
             <div className="text-center">
-              <p className="text-xs text-muted-foreground">Prix calculé par le vendeur</p>
+              <p className="text-xs text-muted-foreground">{t('deliveryOfferCard.prixCalculeParLeVendeur')}</p>
               <p className="font-bold text-xl text-[#ff4000] dark:text-[#ff4000]">{formatCurrency(offer.estimatedEarnings)}</p>
             </div>
           )}
@@ -203,7 +205,7 @@ export function DeliveryOfferCard({ offer, onAccept, onRefuse }: DeliveryOfferCa
           <div className="flex items-center gap-2">
             <DollarSign className="h-6 w-6" />
             <div>
-              <p className="text-xs opacity-90">Vos gains (98.5%)</p>
+              <p className="text-xs opacity-90">{t('deliveryOfferCard.vosGains985')}</p>
               <p className="font-bold text-xl">{formatCurrency(driverEarning)}</p>
             </div>
           </div>

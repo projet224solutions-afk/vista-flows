@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -108,6 +109,7 @@ interface Props {
 }
 
 export default function StolenVehicleManagement({ bureauId }: Props) {
+    const { t } = useTranslation();
     const [stolenVehicles, setStolenVehicles] = useState<StolenVehicle[]>([]);
     const [allVehicles, setAllVehicles] = useState<StolenVehicle[]>([]);
     const [securityLogs, setSecurityLogs] = useState<SecurityLog[]>([]);
@@ -205,7 +207,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
 
         } catch (error) {
             console.error('Erreur chargement données:', error);
-            toast.error('Erreur lors du chargement des données');
+            toast.error(t('stolenVehicleManagement.erreurLorsDuChargementDes'));
         } finally {
             setLoading(false);
         }
@@ -216,7 +218,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
 
         // Real-time subscription pour les alertes
         const channel = supabase
-            .channel('stolen-vehicle-alerts')
+            .channel(`stolen-vehicle-alerts-${bureauId}`)
             .on('postgres_changes', {
                 event: '*',
                 schema: 'public',
@@ -225,7 +227,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
                 console.log('🚨 Nouvelle alerte fraude:', payload);
                 loadData();
                 if (payload.eventType === 'INSERT') {
-                    toast.error('🚨 Nouvelle activité suspecte détectée!', {
+                    toast.error(t('stolenVehicleManagement.nouvelleActiviteSuspecteDetectee'), {
                         description: 'Une activité a été détectée sur un véhicule volé',
                         duration: 10000
                     });
@@ -240,7 +242,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
 
     const handleDeclareStolen = async () => {
         if (!selectedVehicle || !declareReason.trim()) {
-            toast.error('Veuillez indiquer le motif de la déclaration');
+            toast.error(t('stolenVehicleManagement.veuillezIndiquerLeMotifDe'));
             return;
         }
 
@@ -261,7 +263,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
             const result = data as { success: boolean; error?: string; message?: string };
 
             if (result.success) {
-                toast.success('🚨 Moto déclarée volée', {
+                toast.success(t('stolenVehicleManagement.motoDeclareeVolee'), {
                     description: 'Blocage global activé. Tous les bureaux sont alertés.',
                     duration: 8000
                 });
@@ -282,19 +284,18 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
 
     const handleDeclareRecovered = async () => {
         if (!selectedVehicle || !recoveryReason.trim()) {
-            toast.error('Veuillez indiquer le motif de la levée de blocage');
+            toast.error(t('stolenVehicleManagement.veuillezIndiquerLeMotifDe2'));
             return;
         }
 
         setSubmitting(true);
         try {
+            // Signature réelle du RPC : (p_recovered_by, p_recovery_location, p_recovery_notes, p_vehicle_id)
             const { data, error } = await supabase.rpc('declare_vehicle_recovered', {
-                p_vehicle_id: selectedVehicle.id,
-                p_bureau_id: bureauId,
                 p_recovered_by: bureauId,
+                p_recovery_location: null,
                 p_recovery_notes: recoveryReason,
-                p_ip_address: null,
-                p_user_agent: navigator.userAgent
+                p_vehicle_id: selectedVehicle.id,
             });
 
             if (error) throw error;
@@ -302,7 +303,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
             const result = data as { success: boolean; error?: string; message?: string };
 
             if (result.success) {
-                toast.success('✅ Véhicule réactivé', {
+                toast.success(t('stolenVehicleManagement.vehiculeReactive'), {
                     description: 'Le blocage a été levé et le véhicule est de nouveau opérationnel.',
                     duration: 6000
                 });
@@ -333,7 +334,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
             setGpsTrackings((data || []) as GPSTracking[]);
         } catch (error) {
             console.error('Erreur chargement GPS:', error);
-            toast.error('Erreur lors du chargement de l\'historique GPS');
+            toast.error(t('stolenVehicleManagement.erreurLorsDuChargementDe'));
         }
     };
 
@@ -350,11 +351,11 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
                 .eq('id', alertId);
 
             if (error) throw error;
-            toast.success('Alerte résolue');
+            toast.success(t('stolenVehicleManagement.alerteResolue'));
             loadData();
         } catch (error) {
             console.error('Erreur résolution alerte:', error);
-            toast.error('Erreur lors de la résolution');
+            toast.error(t('stolenVehicleManagement.erreurLorsDeLaResolution'));
         }
     };
 
@@ -363,7 +364,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
     };
 
     const generatePDFReport = async (_vehicle: StolenVehicle) => {
-        toast.info('Génération du rapport PDF en cours...');
+        toast.info(t('stolenVehicleManagement.generationDuRapportPdfEn'));
         // TODO: Implémenter la génération PDF
     };
 
@@ -377,11 +378,11 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'stolen':
-                return <Badge className="bg-[#ff4000] text-white">🚨 VOLÉE</Badge>;
+                return <Badge className="bg-[#ff4000] text-white">{t('stolenVehicleManagement.volee')}</Badge>;
             case 'recovered':
-                return <Badge className="bg-[#ff4000] text-white">✅ Retrouvée</Badge>;
+                return <Badge className="bg-[#ff4000] text-white">{t('stolenVehicleManagement.retrouvee')}</Badge>;
             case 'blocked':
-                return <Badge className="bg-orange-600 text-white">🔒 Bloquée</Badge>;
+                return <Badge className="bg-orange-600 text-white">{t('stolenVehicleManagement.bloquee')}</Badge>;
             default:
                 return <Badge className="bg-gray-500 text-white">Normal</Badge>;
         }
@@ -424,7 +425,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
                             <ShieldAlert className="w-8 h-8 text-[#ff4000]" />
                             <div>
                                 <p className="text-2xl font-bold text-[#ff4000]">{stats.totalStolen}</p>
-                                <p className="text-sm text-[#ff4000]">Motos volées</p>
+                                <p className="text-sm text-[#ff4000]">{t('stolenVehicleManagement.motosVolees')}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -436,7 +437,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
                             <ShieldCheck className="w-8 h-8 text-[#ff4000]" />
                             <div>
                                 <p className="text-2xl font-bold text-[#ff4000]">{stats.totalRecovered}</p>
-                                <p className="text-sm text-[#ff4000]">Retrouvées</p>
+                                <p className="text-sm text-[#ff4000]">{t('stolenVehicleManagement.retrouvees')}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -460,7 +461,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
                             <History className="w-8 h-8 text-blue-600" />
                             <div>
                                 <p className="text-2xl font-bold text-blue-700">{stats.securityEvents30d}</p>
-                                <p className="text-sm text-blue-600">Événements (30j)</p>
+                                <p className="text-sm text-blue-600">{t('stolenVehicleManagement.evenements30j')}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -521,7 +522,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
                                     <div className="relative">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                         <Input
-                                            placeholder="Rechercher..."
+                                            placeholder={t('stolenVehicleManagement.rechercher')}
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
                                             className="pl-9 w-64"
@@ -538,10 +539,10 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>N° Série</TableHead>
+                                            <TableHead>{t('stolenVehicleManagement.nSerie')}</TableHead>
                                             <TableHead>Plaque</TableHead>
-                                            <TableHead>Véhicule</TableHead>
-                                            <TableHead>Propriétaire</TableHead>
+                                            <TableHead>{t('stolenVehicleManagement.vehicule')}</TableHead>
+                                            <TableHead>{t('stolenVehicleManagement.proprietaire')}</TableHead>
                                             <TableHead>Statut</TableHead>
                                             <TableHead>Actions</TableHead>
                                         </TableRow>
@@ -624,7 +625,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
                             {stolenVehicles.length === 0 ? (
                                 <div className="p-8 text-center text-muted-foreground">
                                     <ShieldCheck className="w-12 h-12 mx-auto mb-4 text-[#ff4000]" />
-                                    <p>Aucune moto déclarée volée</p>
+                                    <p>{t('stolenVehicleManagement.aucuneMotoDeclareeVolee')}</p>
                                 </div>
                             ) : (
                                 <ScrollArea className="h-[400px]">
@@ -635,17 +636,17 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
                                                     <div className="flex items-start justify-between">
                                                         <div className="space-y-2">
                                                             <div className="flex items-center gap-2">
-                                                                <Badge className="bg-[#ff4000] text-white">🚨 VOLÉE</Badge>
+                                                                <Badge className="bg-[#ff4000] text-white">{t('stolenVehicleManagement.volee')}</Badge>
                                                                 <span className="font-mono font-bold">{vehicle.license_plate}</span>
                                                             </div>
                                                             <p className="text-sm">
-                                                                <strong>Châssis:</strong> {vehicle.serial_number}
+                                                                <strong>{t('stolenVehicleManagement.chassis')}</strong> {vehicle.serial_number}
                                                             </p>
                                                             <p className="text-sm">
-                                                                <strong>Véhicule:</strong> {vehicle.brand} {vehicle.model} {vehicle.color && `(${vehicle.color})`}
+                                                                <strong>{t('stolenVehicleManagement.vehicule2')}</strong> {vehicle.brand} {vehicle.model} {vehicle.color && `(${vehicle.color})`}
                                                             </p>
                                                             <p className="text-sm">
-                                                                <strong>Propriétaire:</strong> {vehicle.owner_name}
+                                                                <strong>{t('stolenVehicleManagement.proprietaire2')}</strong> {vehicle.owner_name}
                                                             </p>
                                                             {vehicle.stolen_declared_at && (
                                                                 <p className="text-sm text-[#ff4000]">
@@ -732,7 +733,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
                             {fraudAlerts.length === 0 ? (
                                 <div className="p-8 text-center text-muted-foreground">
                                     <CheckCircle className="w-12 h-12 mx-auto mb-4 text-[#ff4000]" />
-                                    <p>Aucune alerte de fraude active</p>
+                                    <p>{t('stolenVehicleManagement.aucuneAlerteDeFraudeActive')}</p>
                                 </div>
                             ) : (
                                 <ScrollArea className="h-[400px]">
@@ -854,7 +855,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
 
             {/* Dialog: Déclarer volée */}
             <Dialog open={showDeclareDialog} onOpenChange={setShowDeclareDialog}>
-                <DialogContent className="sm:max-w-[500px]">
+                <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-[#ff4000]">
                             <ShieldAlert className="w-5 h-5" />
@@ -868,20 +869,20 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
                     {selectedVehicle && (
                         <div className="space-y-4">
                             <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                                <h4 className="font-semibold text-[#ff4000] mb-2">Véhicule concerné</h4>
+                                <h4 className="font-semibold text-[#ff4000] mb-2">{t('stolenVehicleManagement.vehiculeConcerne')}</h4>
                                 <div className="grid grid-cols-2 gap-2 text-sm">
                                     <div><strong>Plaque:</strong> {selectedVehicle.license_plate}</div>
-                                    <div><strong>Châssis:</strong> {selectedVehicle.serial_number}</div>
-                                    <div><strong>Véhicule:</strong> {selectedVehicle.brand} {selectedVehicle.model}</div>
-                                    <div><strong>Propriétaire:</strong> {selectedVehicle.owner_name}</div>
+                                    <div><strong>{t('stolenVehicleManagement.chassis')}</strong> {selectedVehicle.serial_number}</div>
+                                    <div><strong>{t('stolenVehicleManagement.vehicule2')}</strong> {selectedVehicle.brand} {selectedVehicle.model}</div>
+                                    <div><strong>{t('stolenVehicleManagement.proprietaire2')}</strong> {selectedVehicle.owner_name}</div>
                                 </div>
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="reason">Motif de la déclaration *</Label>
+                                <Label htmlFor="reason">{t('stolenVehicleManagement.motifDeLaDeclaration')}</Label>
                                 <Textarea
                                     id="reason"
-                                    placeholder="Décrivez les circonstances du vol..."
+                                    placeholder={t('stolenVehicleManagement.decrivezLesCirconstancesDuVol')}
                                     value={declareReason}
                                     onChange={(e) => setDeclareReason(e.target.value)}
                                     rows={3}
@@ -889,7 +890,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="location">Lieu du vol</Label>
+                                <Label htmlFor="location">{t('stolenVehicleManagement.lieuDuVol')}</Label>
                                 <Input
                                     id="location"
                                     placeholder="Ex: Conakry, Ratoma"
@@ -939,7 +940,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
 
             {/* Dialog: Lever blocage */}
             <Dialog open={showRecoveryDialog} onOpenChange={setShowRecoveryDialog}>
-                <DialogContent className="sm:max-w-[500px]">
+                <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-[#ff4000]">
                             <ShieldCheck className="w-5 h-5" />
@@ -953,18 +954,18 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
                     {selectedVehicle && (
                         <div className="space-y-4">
                             <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                                <h4 className="font-semibold text-[#ff4000] mb-2">Véhicule à réactiver</h4>
+                                <h4 className="font-semibold text-[#ff4000] mb-2">{t('stolenVehicleManagement.vehiculeAReactiver')}</h4>
                                 <div className="grid grid-cols-2 gap-2 text-sm">
                                     <div><strong>Plaque:</strong> {selectedVehicle.license_plate}</div>
-                                    <div><strong>Châssis:</strong> {selectedVehicle.serial_number}</div>
+                                    <div><strong>{t('stolenVehicleManagement.chassis')}</strong> {selectedVehicle.serial_number}</div>
                                 </div>
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="recovery-reason">Justification de la levée de blocage *</Label>
+                                <Label htmlFor="recovery-reason">{t('stolenVehicleManagement.justificationDeLaLeveeDe')}</Label>
                                 <Textarea
                                     id="recovery-reason"
-                                    placeholder="Expliquez pourquoi le blocage est levé..."
+                                    placeholder={t('stolenVehicleManagement.expliquezPourquoiLeBlocageEst')}
                                     value={recoveryReason}
                                     onChange={(e) => setRecoveryReason(e.target.value)}
                                     rows={3}
@@ -1004,7 +1005,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
 
             {/* Dialog: Historique GPS */}
             <Dialog open={showGPSDialog} onOpenChange={setShowGPSDialog}>
-                <DialogContent className="sm:max-w-[600px]">
+                <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <MapPin className="w-5 h-5 text-blue-600" />
@@ -1027,7 +1028,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
                                 <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="font-medium text-[#ff4000]">Dernière position connue</p>
+                                            <p className="font-medium text-[#ff4000]">{t('stolenVehicleManagement.dernierePositionConnue')}</p>
                                             <p className="text-sm text-[#ff4000]">
                                                 Lat: {selectedVehicle.last_known_latitude.toFixed(6)},
                                                 Lng: {selectedVehicle.last_known_longitude.toFixed(6)}
@@ -1054,7 +1055,7 @@ export default function StolenVehicleManagement({ bureauId }: Props) {
                                         <TableRow>
                                             <TableHead>Date/Heure</TableHead>
                                             <TableHead>Position</TableHead>
-                                            <TableHead>Précision</TableHead>
+                                            <TableHead>{t('stolenVehicleManagement.precision')}</TableHead>
                                             <TableHead>Vitesse</TableHead>
                                             <TableHead></TableHead>
                                         </TableRow>

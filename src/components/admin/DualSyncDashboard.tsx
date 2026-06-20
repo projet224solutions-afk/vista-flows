@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +26,7 @@ import { useDualSync } from '@/hooks/useDualSync';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function DualSyncDashboard() {
+  const { t } = useTranslation();
   const {
     status,
     syncAll,
@@ -169,7 +171,7 @@ export default function DualSyncDashboard() {
               <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
                 <div className="flex items-center gap-2 text-[#ff4000]">
                   <CheckCircle className="w-4 h-4" />
-                  <span className="font-medium">Dernière synchronisation</span>
+                  <span className="font-medium">{t('dualSyncDashboard.derniereSynchronisation')}</span>
                 </div>
                 <div className="text-sm text-[#ff4000] mt-1">
                   {status.lastSync.toLocaleString('fr-FR')}
@@ -288,7 +290,7 @@ export default function DualSyncDashboard() {
                 <CardContent className="p-4 text-center">
                   <CheckCircle className="w-8 h-8 mx-auto mb-2 text-blue-600" />
                   <div className="text-2xl font-bold">{status.stats.synced}</div>
-                  <div className="text-sm text-gray-600">Synchronisés</div>
+                  <div className="text-sm text-gray-600">{t('dualSyncDashboard.synchronises')}</div>
                 </CardContent>
               </Card>
 
@@ -296,7 +298,7 @@ export default function DualSyncDashboard() {
                 <CardContent className="p-4 text-center">
                   <AlertTriangle className="w-8 h-8 mx-auto mb-2 text-[#ff4000]" />
                   <div className="text-2xl font-bold">{status.stats.failed}</div>
-                  <div className="text-sm text-gray-600">Échecs</div>
+                  <div className="text-sm text-gray-600">{t('dualSyncDashboard.echecs')}</div>
                 </CardContent>
               </Card>
             </div>

@@ -4,6 +4,7 @@
  */
 
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from "@/hooks/useTranslation";
 import { ArrowLeft, Store, ShoppingBag, Ticket, GraduationCap, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -46,6 +47,7 @@ const mainCategories: Category[] = [
 
 
 export default function Categories() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (
@@ -62,8 +64,8 @@ export default function Categories() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-lg font-bold text-foreground">Catégories</h1>
-            <p className="text-xs text-muted-foreground">Explorez nos produits et services</p>
+            <h1 className="text-lg font-bold text-foreground">{t('categories.categories')}</h1>
+            <p className="text-xs text-muted-foreground">{t('categories.explorezNosProduitsEtServices')}</p>
           </div>
         </div>
       </header>
@@ -71,7 +73,7 @@ export default function Categories() {
       <div className="px-4 py-4 space-y-6">
         {/* Section principale */}
         <section>
-          <h2 className="text-base font-semibold text-foreground mb-3">Services principaux</h2>
+          <h2 className="text-base font-semibold text-foreground mb-3">{t('categories.servicesPrincipaux')}</h2>
           <div className="space-y-3">
             {mainCategories.map((category) => (
               <button
@@ -114,7 +116,7 @@ export default function Categories() {
             )}
           >
             <ShoppingBag className="w-5 h-5 text-primary" />
-            <span className="font-semibold text-primary">Explorer le Marketplace</span>
+            <span className="font-semibold text-primary">{t('categories.explorerLeMarketplace')}</span>
             <ChevronRight className="w-5 h-5 text-primary" />
           </button>
         </section>

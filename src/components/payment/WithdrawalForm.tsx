@@ -5,6 +5,7 @@
  */
 
 import React, { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +34,7 @@ interface WithdrawalFormProps {
 type WithdrawalMethod = 'BANK_TRANSFER' | 'MOBILE_MONEY';
 
 export function WithdrawalForm({ onSuccess, onCancel }: WithdrawalFormProps) {
+  const { t } = useTranslation();
   const { wallet, balance, currency, isBlocked, withdraw, processing, refresh } = useWallet();
 
   const [amount, setAmount] = useState('');
@@ -161,7 +163,7 @@ export function WithdrawalForm({ onSuccess, onCancel }: WithdrawalFormProps) {
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <ArrowDownLeft className="w-5 h-5" />
-          <span>Demande de Retrait</span>
+          <span>{t('withdrawalForm.demandeDeRetrait')}</span>
         </CardTitle>
         <CardDescription>
           Retirez vos fonds vers votre compte bancaire ou Mobile Money
@@ -174,7 +176,7 @@ export function WithdrawalForm({ onSuccess, onCancel }: WithdrawalFormProps) {
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription>
-              <strong>Solde disponible:</strong> {formatAmount(balance, currency)}
+              <strong>{t('withdrawalForm.soldeDisponible')}</strong> {formatAmount(balance, currency)}
             </AlertDescription>
           </Alert>
 
@@ -187,7 +189,7 @@ export function WithdrawalForm({ onSuccess, onCancel }: WithdrawalFormProps) {
               <Input
                 id="amount"
                 type="number"
-                placeholder="Entrez le montant"
+                placeholder={t('withdrawalForm.entrezLeMontant')}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 min={minWithdrawal}
@@ -278,7 +280,7 @@ export function WithdrawalForm({ onSuccess, onCancel }: WithdrawalFormProps) {
                     id="bank_name"
                     value={bankDetails.bank_name}
                     onChange={(e) => setBankDetails({ ...bankDetails, bank_name: e.target.value })}
-                    placeholder="Ex: Ecobank Guinée"
+                    placeholder={t('withdrawalForm.exEcobankGuinee')}
                     required
                     disabled={loading || processing}
                   />
@@ -349,7 +351,7 @@ export function WithdrawalForm({ onSuccess, onCancel }: WithdrawalFormProps) {
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Ajoutez des informations supplémentaires si nécessaire..."
+              placeholder={t('withdrawalForm.ajoutezDesInformationsSupplementairesSi')}
               rows={3}
               disabled={loading || processing}
             />

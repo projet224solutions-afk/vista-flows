@@ -1,5 +1,6 @@
 ﻿import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Trash2, Plus, Minus, ShoppingCart, ExternalLink, AlertCircle } from 'lucide-react';
@@ -10,6 +11,7 @@ import { toast } from 'sonner';
 import { usePriceConverter } from '@/hooks/usePriceConverter';
 
 export default function Cart() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { cartItems, removeFromCart, updateQuantity, clearCart, getCartTotal, getCartCount } = useCart();
   const { convert } = usePriceConverter();
@@ -39,7 +41,7 @@ export default function Cart() {
   const handleAffiliateClick = (item: typeof cartItems[0]) => {
     if (item.affiliate_url) {
       window.open(item.affiliate_url, '_blank');
-      toast.success('Redirection vers le partenaire...');
+      toast.success(t('cart.redirectionVersLePartenaire'));
       // Optionnel: retirer du panier apr├¿s redirection
       removeFromCart(item.id);
     }
@@ -47,7 +49,7 @@ export default function Cart() {
 
   const handleCheckout = () => {
     if (normalItems.length === 0) {
-      toast.info('Votre panier ne contient que des produits affili├®s. Cliquez sur "Voir l\'offre" pour chaque produit.');
+      toast.info(t('cart.votrePanierNeContientQue'));
       return;
     }
 
@@ -74,8 +76,8 @@ export default function Cart() {
 
         <div className="flex-1 flex flex-col items-center justify-center p-4 pb-24 md:pb-4">
           <ShoppingCart className="w-20 h-20 md:w-24 md:h-24 text-muted-foreground mb-4" />
-          <h2 className="text-xl md:text-2xl font-bold mb-2">Votre panier est vide</h2>
-          <p className="text-muted-foreground mb-6 text-center">Ajoutez des produits pour commencer vos achats</p>
+          <h2 className="text-xl md:text-2xl font-bold mb-2">{t('cart.votrePanierEstVide')}</h2>
+          <p className="text-muted-foreground mb-6 text-center">{t('cart.ajoutezDesProduitsPourCommencer')}</p>
           <Button onClick={() => navigate('/marketplace')}>
             Découvrir les produits
           </Button>
@@ -229,7 +231,7 @@ export default function Cart() {
         {normalItems.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>R├®sum├® de la commande</CardTitle>
+              <CardTitle>{t('cart.rSumDeLaCommande')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -238,8 +240,8 @@ export default function Cart() {
                   <span className="font-semibold">{formatLocalPrice(normalItemsTotal)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Frais de livraison</span>
-                  <span className="font-semibold">├Ç calculer</span>
+                  <span className="text-muted-foreground">{t('cart.fraisDeLivraison')}</span>
+                  <span className="font-semibold">{t('cart.cCalculer')}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between text-lg font-bold">
@@ -263,7 +265,7 @@ export default function Cart() {
           <Card className="border-muted">
             <CardContent className="py-8 text-center">
               <ExternalLink className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="font-semibold text-lg mb-2">Produits partenaires uniquement</h3>
+              <h3 className="font-semibold text-lg mb-2">{t('cart.produitsPartenairesUniquement')}</h3>
               <p className="text-muted-foreground text-sm mb-4">
                 Votre panier ne contient que des produits affili├®s.
                 Cliquez sur "Voir l'offre" pour chaque produit afin d'├¬tre redirig├® vers le site du partenaire.

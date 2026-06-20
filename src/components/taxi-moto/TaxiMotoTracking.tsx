@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -79,6 +80,7 @@ export default function TaxiMotoTracking({
     currentRide,
     userLocation
 }: TaxiMotoTrackingProps) {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [rideProgress, setRideProgress] = useState(0);
     const [_rideDetails, setRideDetails] = useState<any>(null);
@@ -220,11 +222,11 @@ export default function TaxiMotoTracking({
             const result = await tryNativeShare({ title: 'Suivi de ma course Taxi-Moto', text: shareText });
             if (result === 'fallback') {
                 await navigator.clipboard.writeText(shareText);
-                toast.success('Lien de suivi copié dans le presse-papier');
+                toast.success(t('taxiMotoTracking.lienDeSuiviCopieDans'));
             }
         })().catch(() => {
             navigator.clipboard.writeText(shareText);
-            toast.success('Lien de suivi copié dans le presse-papier');
+            toast.success(t('taxiMotoTracking.lienDeSuiviCopieDans'));
         });
     };
 
@@ -233,19 +235,19 @@ export default function TaxiMotoTracking({
         if (phone) {
             window.open(`tel:${phone}`);
         } else {
-            toast.error('Numéro du conducteur non disponible');
+            toast.error(t('taxiMotoTracking.numeroDuConducteurNonDisponible'));
         }
     };
 
     const cancelRide = async () => {
         if (!currentRide) return;
-        if (window.confirm('Êtes-vous sûr de vouloir annuler cette course ?')) {
+        if (window.confirm(t('taxiMotoTracking.etesVousSurDeVouloir'))) {
             try {
                 await RidesService.updateRideStatus(currentRide.id, 'cancelled');
-                toast.success('Course annulée');
+                toast.success(t('taxiMotoTracking.courseAnnulee'));
             } catch (error) {
                 console.error('Error cancelling ride:', error);
-                toast.error('Erreur lors de l\'annulation');
+                toast.error(t('taxiMotoTracking.erreurLorsDeLAnnulation'));
             }
         }
     };
@@ -309,8 +311,8 @@ export default function TaxiMotoTracking({
             <Card className="bg-card/90 backdrop-blur-sm border-0 shadow-lg">
                 <CardContent className="p-8 text-center">
                     <MapPin className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                    <h3 className="text-lg font-semibold text-foreground mb-2">Aucune course active</h3>
-                    <p className="text-muted-foreground">Réservez une course pour voir le suivi en temps réel</p>
+                    <h3 className="text-lg font-semibold text-foreground mb-2">{t('taxiMotoTracking.aucuneCourseActive')}</h3>
+                    <p className="text-muted-foreground">{t('taxiMotoTracking.reservezUneCoursePourVoir')}</p>
                 </CardContent>
             </Card>
         );
@@ -323,7 +325,7 @@ export default function TaxiMotoTracking({
                 amount={currentRide.estimatedPrice}
                 onPaymentSuccess={() => {
                     setShowPayment(false);
-                    toast.success('Merci ! À bientôt sur 224Solutions');
+                    toast.success(t('taxiMotoTracking.merciABientotSur224solutions'));
                 }}
                 onCancel={() => setShowPayment(false)}
             />
@@ -347,7 +349,7 @@ export default function TaxiMotoTracking({
                         </Badge>
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                             <Wifi className="w-3 h-3 text-[#ff4000]" />
-                            <span>Temps réel</span>
+                            <span>{t('taxiMotoTracking.tempsReel')}</span>
                         </div>
                     </div>
 
@@ -366,7 +368,7 @@ export default function TaxiMotoTracking({
                         <div className="flex items-center justify-between bg-primary/8 rounded-xl p-3">
                             <div className="flex items-center gap-2">
                                 <Clock className="w-4 h-4 text-primary" />
-                                <span className="text-sm text-muted-foreground">Arrivée estimée</span>
+                                <span className="text-sm text-muted-foreground">{t('taxiMotoTracking.arriveeEstimee')}</span>
                             </div>
                             <div className="flex items-baseline gap-1">
                                 <span className="text-2xl font-bold text-primary">{displayEta}</span>
@@ -445,7 +447,7 @@ export default function TaxiMotoTracking({
                         ) : (
                             <div className="text-center">
                                 <Loader2 className="w-8 h-8 mx-auto mb-2 text-primary animate-spin" />
-                                <p className="text-sm text-muted-foreground">Localisation du conducteur…</p>
+                                <p className="text-sm text-muted-foreground">{t('taxiMotoTracking.localisationDuConducteur')}</p>
                             </div>
                         )}
                     </div>
@@ -465,7 +467,7 @@ export default function TaxiMotoTracking({
                                 </p>
                             </div>
                             <div className="text-center border-l">
-                                <p className="text-xs text-muted-foreground mb-0.5">Arrive dans</p>
+                                <p className="text-xs text-muted-foreground mb-0.5">{t('taxiMotoTracking.arriveDans')}</p>
                                 <p className="text-base font-bold text-[#ff4000]">
                                     {displayEta !== null ? `${displayEta} min` : '–'}
                                 </p>
@@ -479,7 +481,7 @@ export default function TaxiMotoTracking({
             {driver && (
                 <Card className="bg-card/90 backdrop-blur-sm border-0 shadow-lg">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-base">Votre conducteur</CardTitle>
+                        <CardTitle className="text-base">{t('taxiMotoTracking.votreConducteur')}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="flex items-center gap-4 mb-4">
@@ -533,13 +535,13 @@ export default function TaxiMotoTracking({
             {/* DÉTAILS DU TRAJET */}
             <Card className="bg-card/90 backdrop-blur-sm border-0 shadow-lg">
                 <CardHeader className="pb-2">
-                    <CardTitle className="text-base">Détails du trajet</CardTitle>
+                    <CardTitle className="text-base">{t('taxiMotoTracking.detailsDuTrajet')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                     <div className="flex items-start gap-3">
                         <div className="w-3 h-3 bg-[#ff4000] rounded-full mt-1.5 flex-shrink-0" />
                         <div>
-                            <p className="text-xs text-muted-foreground">Départ</p>
+                            <p className="text-xs text-muted-foreground">{t('taxiMotoTracking.depart')}</p>
                             <p className="text-sm font-medium">{currentRide.pickupAddress}</p>
                         </div>
                     </div>
@@ -552,7 +554,7 @@ export default function TaxiMotoTracking({
                         </div>
                     </div>
                     <div className="flex items-center justify-between pt-3 border-t">
-                        <span className="text-sm font-medium">Prix estimé</span>
+                        <span className="text-sm font-medium">{t('taxiMotoTracking.prixEstime')}</span>
                         <LocalPrice amount={currentRide.estimatedPrice} currency="GNF" size="lg" />
                     </div>
                 </CardContent>

@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { WifiOff, RefreshCw, Wifi } from 'lucide-react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { cn } from '@/lib/utils';
@@ -17,6 +18,7 @@ interface OfflineBannerProps {
 }
 
 export function OfflineBanner({ className, fixed = true, forceShow = false }: OfflineBannerProps) {
+  const { t } = useTranslation();
   const { isOnline, wasOffline, checkConnection, lastError } = useOnlineStatus();
   const [isChecking, setIsChecking] = React.useState(false);
 
@@ -44,7 +46,7 @@ export function OfflineBanner({ className, fixed = true, forceShow = false }: Of
       >
         <div className="flex items-center justify-center gap-2">
           <Wifi className="w-4 h-4" />
-          <span>Connexion rétablie</span>
+          <span>{t('offlineBanner.connexionRetablie')}</span>
         </div>
       </div>
     );

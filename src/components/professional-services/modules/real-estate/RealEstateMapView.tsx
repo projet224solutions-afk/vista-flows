@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MapPin, Loader2, AlertCircle, Maximize } from 'lucide-react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useTranslation } from '@/hooks/useTranslation';
 import type { Property } from '@/hooks/useRealEstateData';
 
 interface RealEstateMapViewProps {
@@ -16,6 +17,7 @@ interface RealEstateMapViewProps {
 }
 
 export function RealEstateMapView({ properties, onPropertyClick }: RealEstateMapViewProps) {
+  const { t } = useTranslation();
   const mapRef = useRef<HTMLDivElement>(null);
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
   const [apiKey, setApiKey] = useState<string | null>(null);
@@ -28,7 +30,7 @@ export function RealEstateMapView({ properties, onPropertyClick }: RealEstateMap
   useEffect(() => {
     const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || import.meta.env.VITE_GOOGLE_CLOUD_API_KEY || null;
     if (!key) {
-      setError('Clé Google Maps non configurée');
+      setError(t('realEstateMap.mapKeyMissing'));
       setLoading(false);
       return;
     }
@@ -49,7 +51,7 @@ export function RealEstateMapView({ properties, onPropertyClick }: RealEstateMap
     script.async = true;
     script.onload = () => initMap();
     script.onerror = () => {
-      setError('Erreur de chargement Google Maps');
+      setError(t('realEstateMap.mapLoadError'));
       setLoading(false);
     };
     document.head.appendChild(script);
@@ -124,7 +126,7 @@ export function RealEstateMapView({ properties, onPropertyClick }: RealEstateMap
           <AlertCircle className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
           <h3 className="font-medium">{error}</h3>
           <p className="text-sm text-muted-foreground mt-1">
-            Configurez la clé GOOGLE_CLOUD_API_KEY dans les secrets Supabase
+            {t('realEstateMap.configureKey')}
           </p>
         </CardContent>
       </Card>
@@ -142,7 +144,7 @@ export function RealEstateMapView({ properties, onPropertyClick }: RealEstateMap
       <div className="absolute bottom-3 left-3">
         <Badge variant="secondary" className="bg-card/80 backdrop-blur-sm gap-1">
           <MapPin className="h-3 w-3" />
-          {properties.filter(p => p.latitude && p.longitude).length} biens géolocalisés
+          {properties.filter(p => p.latitude && p.longitude).length} {t('realEstateMap.geolocatedProperties')}
         </Badge>
       </div>
     </div>

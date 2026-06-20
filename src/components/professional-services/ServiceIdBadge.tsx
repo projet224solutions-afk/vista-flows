@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { StandardIdBadge } from '@/components/StandardIdBadge';
 import { Badge } from '@/components/ui/badge';
 import { Briefcase, Shield } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface ServiceIdBadgeProps {
   serviceId?: string;
@@ -18,6 +19,7 @@ interface ServiceIdBadgeProps {
 }
 
 export function ServiceIdBadge({ serviceId, compact = false, className }: ServiceIdBadgeProps) {
+  const { t } = useTranslation();
   const { user, profile } = useAuth();
   const [publicId, setPublicId] = useState<string | null>(null);
   const [_serviceName, setServiceName] = useState<string | null>(null);
@@ -87,7 +89,7 @@ export function ServiceIdBadge({ serviceId, compact = false, className }: Servic
     <div className={`flex items-center gap-2 ${className || ''}`}>
       <div className="flex items-center gap-1.5 bg-primary/5 border border-primary/20 rounded-lg px-3 py-1.5">
         <Briefcase className="w-3.5 h-3.5 text-primary" />
-        <span className="text-xs text-muted-foreground font-medium">ID Pro:</span>
+        <span className="text-xs text-muted-foreground font-medium">{t('serviceIdBadge.idPro')}</span>
         <StandardIdBadge
           standardId={publicId}
           variant="outline"
@@ -98,7 +100,7 @@ export function ServiceIdBadge({ serviceId, compact = false, className }: Servic
       </div>
       <Badge variant="outline" className="text-[10px] gap-1 border-primary/30 text-primary">
         <Shield className="w-2.5 h-2.5" />
-        Service Pro
+        {t('serviceIdBadge.servicePro')}
       </Badge>
     </div>
   );

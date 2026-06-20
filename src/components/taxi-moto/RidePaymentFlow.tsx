@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Star } from "lucide-react";
@@ -25,12 +26,13 @@ export default function RidePaymentFlow({
     onPaymentSuccess,
     onCancel
 }: RidePaymentFlowProps) {
+    const { t } = useTranslation();
     const [showRating, setShowRating] = useState(false);
     const [rating, setRating] = useState(0);
 
     const handlePaymentSuccess = (transactionId: string) => {
         console.log('[RidePaymentFlow] Payment success:', transactionId);
-        toast.success('🎉 Paiement effectué avec succès !');
+        toast.success(t('ridePaymentFlow.paiementEffectueAvecSucces'));
         setShowRating(true);
     };
 
@@ -57,7 +59,7 @@ export default function RidePaymentFlow({
             }
         } catch (e) {
             console.error('Erreur enregistrement avis:', e);
-            toast.warning('Note non enregistrée, mais merci pour votre retour.');
+            toast.warning(t('ridePaymentFlow.noteNonEnregistreeMaisMerci'));
         } finally {
             setSubmitting(false);
             onPaymentSuccess();
@@ -75,7 +77,7 @@ export default function RidePaymentFlow({
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="text-center">
-                        <p className="text-lg font-semibold mb-2">Comment était votre course ?</p>
+                        <p className="text-lg font-semibold mb-2">{t('ridePaymentFlow.commentEtaitVotreCourse')}</p>
                         <p className="text-sm text-muted-foreground mb-4">
                             Notez votre expérience
                         </p>

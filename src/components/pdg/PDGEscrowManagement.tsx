@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
@@ -63,10 +64,11 @@ const statusConfig = {
 };
 
 export default function PDGEscrowManagement() {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const { profile } = useAuth();
   const { toast } = useToast();
-  const { transactions, loading, releaseEscrow, refundEscrow, disputeEscrow } = useEscrowTransactions();
+  const { transactions, loading, releaseEscrow, refundEscrow, disputeEscrow } = useEscrowTransactions({ scope: 'admin' });
   const [selectedTransaction, setSelectedTransaction] = useState<string | null>(null);
   const [actionType, setActionType] = useState<'release' | 'refund' | 'dispute' | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -81,7 +83,7 @@ export default function PDGEscrowManagement() {
     pending: transactions.filter(t => t.status === 'pending' || t.status === 'held').length,
     released: transactions.filter(t => t.status === 'released').length,
     refunded: transactions.filter(t => t.status === 'refunded').length,
-    dispute: transactions.filter(t => t.status === 'dispute').length,
+    dispute: transactions.filter(t => (t as any).dispute || t.status === 'dispute').length,
     totalAmount: transactions.reduce((sum, t) => sum + t.amount, 0),
     commission: transactions
       .filter(t => t.status === 'released')
@@ -212,7 +214,7 @@ export default function PDGEscrowManagement() {
           <Card className="bg-gradient-to-br from-[#ff4000]/10 to-[#ff4000]/10 border-[#ff4000]/20">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-muted-foreground">Libérées</p>
+                <p className="text-sm text-muted-foreground">{t('pDGEscrowManagement.liberees')}</p>
                 <CheckCircle className="w-4 h-4 text-[#ff4000]" />
               </div>
               <p className="text-3xl font-bold text-[#ff4000]">{stats.released}</p>
@@ -240,7 +242,7 @@ export default function PDGEscrowManagement() {
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Rechercher par ID commande ou transaction..."
+                  placeholder={t('pDGEscrowManagement.rechercherParIdCommandeOu')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-9"
@@ -287,7 +289,7 @@ export default function PDGEscrowManagement() {
             {loading ? (
               <div className="py-12 text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-muted-foreground">Chargement des transactions...</p>
+                <p className="text-muted-foreground">{t('pDGEscrowManagement.chargementDesTransactions')}</p>
               </div>
             ) : filteredTransactions.length === 0 ? (
               <div className="py-12 text-center">
@@ -342,7 +344,7 @@ export default function PDGEscrowManagement() {
                                   </span>
                                 </p>
                                 <p>
-                                  <span className="text-muted-foreground">ID Vendeur:</span>{' '}
+                                  <span className="text-muted-foreground">{t('pDGEscrowManagement.idVendeur')}</span>{' '}
                                   <span className="font-mono text-xs bg-white px-2 py-0.5 rounded">
                                     {transaction.receiver.id ? String(transaction.receiver.id).slice(0, 12) + '...' : 'N/A'}
                                   </span>
@@ -353,7 +355,7 @@ export default function PDGEscrowManagement() {
 
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-muted/30 rounded-lg p-4">
                             <div>
-                              <p className="text-sm text-muted-foreground mb-1">Montant</p>
+                              <p className="text-sm text-muted-foreground mb-1">{t('pDGEscrowManagement.montant')}</p>
                               <p className="text-xl font-bold text-foreground">
                                 {transaction.amount.toLocaleString()} {transaction.currency}
                               </p>
@@ -441,9 +443,9 @@ export default function PDGEscrowManagement() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              {actionType === 'release' && <><CheckCircle className="w-5 h-5 text-[#ff4000]" />Libérer les fonds (Admin)</>}
-              {actionType === 'refund' && <><XCircle className="w-5 h-5 text-blue-600" />Rembourser la transaction</>}
-              {actionType === 'dispute' && <><AlertCircle className="w-5 h-5 text-[#ff4000]" />Ouvrir un litige</>}
+              {actionType === 'release' && <><CheckCircle className="w-5 h-5 text-[#ff4000]" />{t('pDGEscrowManagement.libererLesFondsAdmin')}</>}
+              {actionType === 'refund' && <><XCircle className="w-5 h-5 text-blue-600" />{t('pDGEscrowManagement.rembourserLaTransaction')}</>}
+              {actionType === 'dispute' && <><AlertCircle className="w-5 h-5 text-[#ff4000]" />{t('pDGEscrowManagement.ouvrirUnLitige')}</>}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {actionType === 'release' && '⚠️ Les fonds seront transférés au vendeur avec une commission de 2.5%. Cette action est irréversible.'}
@@ -452,7 +454,7 @@ export default function PDGEscrowManagement() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel>{t('pDGEscrowManagement.annuler')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleAction} className={
               actionType === 'release' ? 'bg-[#ff4000] hover:bg-[#ff4000]' :
               actionType === 'refund' ? 'bg-blue-600 hover:bg-blue-700' :

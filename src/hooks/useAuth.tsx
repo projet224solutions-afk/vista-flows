@@ -1,3 +1,4 @@
+import { useTranslation } from "@/hooks/useTranslation";
 import { useState, useEffect, useRef, createContext, useContext, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
@@ -36,6 +37,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const { t } = useTranslation();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -322,7 +324,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         const meta: any = (authUser as any).user_metadata || {};
         const fullName = (meta.full_name || meta.name || '').toString().trim();
-        const businessName = fullName || authUser.email?.split('@')[0] || 'Mon Service';
+        // Priorité au nom d'établissement saisi à l'inscription (pharmacie/clinique…),
+        // transmis via la métadonnée business_name ou le localStorage oauth_business_name.
+        const storedBusinessName = (() => {
+          try { return localStorage.getItem('oauth_business_name')?.trim() || ''; } catch { return ''; }
+        })();
+        const businessName = (meta.business_name && String(meta.business_name).trim())
+          || storedBusinessName
+          || fullName
+          || authUser.email?.split('@')[0]
+          || 'Mon Service';
 
         // Vérifier si un professional_service existe déjà
         const { data: existingService } = await supabase
@@ -333,6 +344,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         if (existingService) {
           console.log('ℹ️ Professional service existe déjà, skip création');
+          localStorage.removeItem('oauth_service_type');
+          try { localStorage.removeItem('oauth_business_name'); } catch { /* ignore */ }
           return;
         }
 
@@ -349,6 +362,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               user_id: authUser.id,
               service_type_id: serviceTypeData.id,
               business_name: businessName,
+              city: meta.city || null,
+              address: meta.city || null,
+              phone: meta.phone || null,
               status: 'active',
               verification_status: 'unverified',
               email: authUser.email || '',
@@ -356,7 +372,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (psError) {
             console.error('❌ Erreur création professional_service:', psError);
           } else {
-            console.log('✅ Professional service créé via OAuth pour prestataire:', oauthServiceType);
+            console.log('✅ Professional service créé pour prestataire:', oauthServiceType);
+            localStorage.removeItem('oauth_service_type');
+            try { localStorage.removeItem('oauth_business_name'); } catch { /* ignore */ }
           }
         } else {
           console.warn('⚠️ Service type non trouvé pour le code:', oauthServiceType);
@@ -462,7 +480,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (intendedRole === 'vendeur') {
               void createVendorForOAuth(user);
             } else if (intendedRole === 'prestataire') {
-              void createServiceForOAuthPrestataire(user);
+              // await : la ligne professional_services (type pharmacie/…) doit exister AVANT le
+              // redirect, et oauth_service_type ne doit pas être effacé avant lecture.
+              await createServiceForOAuthPrestataire(user);
             } else if (intendedRole === 'taxi') {
               await createTaxiDriverForOAuth(user);
             }
@@ -484,7 +504,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             );
 
             // ✅ Supprimer les flags AVANT setProfile : quand React flush setProfile,
-            // EnhancedAuth verra isNewSignup=false → pas de double insert taxi_drivers
+            // Flags nettoyés AVANT setProfile : isNewSignup=false au prochain rendu (pas de double insert taxi_drivers)
             localStorage.removeItem('oauth_intent_role');
             localStorage.removeItem('oauth_is_new_signup');
             setProfile(updatedProfile);
@@ -531,6 +551,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         }
 
+        // 🩹 FILET : un prestataire dont le professional_services n'a pas pu être créé à l'inscription
+        // (insert RLS bloqué faute de session quand la confirmation email est active) le voit (re)créé
+        // ici, une fois authentifié. Idempotent : no-op si oauth_service_type absent ou service déjà présent.
+        if ((current.role as string) === 'prestataire' && localStorage.getItem('oauth_service_type')) {
+          await createServiceForOAuthPrestataire(user);
+        }
+
         // NE JAMAIS modifier le rôle d'un profil existant (sauf cas OAuth ci-dessus)
         setProfile(current);
         console.log('[PROFILE LOADED]', { source: 'existing_profile', role: current.role, userId: current.id });
@@ -555,7 +582,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         if (emailCheck) {
           console.log('⚠️ Email déjà utilisé par un autre compte:', emailCheck.email);
-          toast.warning('Cet email est déjà associé à un autre compte.');
+          toast.warning(t('useAuth.cetEmailEstDejaAssocie'));
           // Ne pas créer de doublon
           localStorage.removeItem('oauth_intent_role');
           localStorage.removeItem('oauth_is_new_signup');
@@ -623,7 +650,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (createdProfile.role === 'vendeur') {
           void createVendorForOAuth(user);
         } else if ((createdProfile.role as string) === 'prestataire') {
-          void createServiceForOAuthPrestataire(user);
+          await createServiceForOAuthPrestataire(user);
         } else if ((createdProfile.role as string) === 'taxi') {
           await createTaxiDriverForOAuth(user);
         }
@@ -649,7 +676,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem(profileCacheKey, JSON.stringify(createdProfile));
 
         // ✅ Supprimer les flags AVANT setProfile : quand React flush setProfile,
-        // EnhancedAuth verra isNewSignup=false → pas de double insert taxi_drivers
+        // Flags nettoyés AVANT setProfile : isNewSignup=false au prochain rendu (pas de double insert taxi_drivers)
         localStorage.removeItem('oauth_intent_role');
         localStorage.removeItem('oauth_is_new_signup');
         setProfile(createdProfile as Profile);
@@ -879,10 +906,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error('Erreur déconnexion Supabase:', error);
       }
 
-      // Nettoyer aussi le localStorage de façon explicite
+      // Nettoyer aussi le localStorage de façon explicite — TOUTES les sessions, sinon une
+      // déconnexion laisse l'accès UI agent/bureau actif (ProtectedRoute.checkCustomSession) et
+      // le cache profil offline pourrait reconférer un rôle.
       localStorage.removeItem('supabase.auth.token');
       localStorage.removeItem('sb-uakkxaibujzxdiqzpnpr-auth-token');
+      // Sessions custom agent / bureau (UI) + jetons associés
       localStorage.removeItem('agent_token');
+      localStorage.removeItem('agent_session');
+      localStorage.removeItem('agent_user');
+      localStorage.removeItem('bureau_token');
+      localStorage.removeItem('bureau_session');
+      localStorage.removeItem('bureau_user');
+      // Cache profil offline (évite de reconférer un rôle après déconnexion en mode hors ligne)
+      try {
+        Object.keys(localStorage).filter((k) => k.startsWith('profile_cache_')).forEach((k) => localStorage.removeItem(k));
+      } catch { /* noop */ }
       sessionStorage.clear();
 
       console.log('✅ Déconnexion réussie');

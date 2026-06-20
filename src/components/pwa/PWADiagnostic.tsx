@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,7 @@ interface DiagnosticItem {
 }
 
 export default function PWADiagnostic() {
+  const { t } = useTranslation();
   const [diagnostics, setDiagnostics] = useState<DiagnosticItem[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [isInstallable, setIsInstallable] = useState(false);
@@ -253,16 +255,16 @@ export default function PWADiagnostic() {
       const { outcome } = await deferredPrompt.userChoice;
 
       if (outcome === 'accepted') {
-        toast.success("🎉 Installation réussie !");
+        toast.success(t('pWADiagnostic.installationReussie'));
         setIsInstallable(false);
       } else {
-        toast.info("Installation annulée");
+        toast.info(t('pWADiagnostic.installationAnnulee'));
       }
 
       setDeferredPrompt(null);
     } catch (error) {
       console.error('Erreur installation:', error);
-      toast.error("Erreur lors de l'installation");
+      toast.error(t('pWADiagnostic.erreurLorsDeLInstallation'));
     }
   };
 
@@ -309,14 +311,14 @@ export default function PWADiagnostic() {
       runDiagnostic();
     } catch (error) {
       console.error('Erreur mise en cache:', error);
-      toast.error("Erreur lors de la mise en cache");
+      toast.error(t('pWADiagnostic.erreurLorsDeLaMise'));
     }
   };
 
   // Réinitialiser le Service Worker
   const resetServiceWorker = async () => {
     try {
-      toast.info("Réinitialisation en cours...");
+      toast.info(t('pWADiagnostic.reinitialisationEnCours'));
 
       // Supprimer tous les caches
       const cacheNames = await caches.keys();
@@ -326,14 +328,14 @@ export default function PWADiagnostic() {
       const registrations = await navigator.serviceWorker.getRegistrations();
       await Promise.all(registrations.map(reg => reg.unregister()));
 
-      toast.success("Service Worker réinitialisé", {
+      toast.success(t('pWADiagnostic.serviceWorkerReinitialise'), {
         description: "Rechargez la page pour réactiver le mode offline"
       });
 
       setTimeout(() => window.location.reload(), 1500);
     } catch (error) {
       console.error('Erreur réinitialisation:', error);
-      toast.error("Erreur lors de la réinitialisation");
+      toast.error(t('pWADiagnostic.erreurLorsDeLaReinitialisation'));
     }
   };
 
@@ -441,13 +443,13 @@ export default function PWADiagnostic() {
             </h4>
             <ul className="text-sm text-[#ff4000] space-y-1">
               {diagnostics.find(d => d.label === 'Service Worker' && d.status !== 'success') && (
-                <li>• Rechargez la page pour activer le Service Worker</li>
+                <li>{t('pWADiagnostic.rechargezLaPagePourActiver')}</li>
               )}
               {!navigator.onLine && (
-                <li>• Connectez-vous à Internet pour une première utilisation</li>
+                <li>{t('pWADiagnostic.connectezVousAInternetPour')}</li>
               )}
               {window.top !== window.self && (
-                <li>• Ouvrez l'application dans un nouvel onglet (pas en iframe)</li>
+                <li>{t('pWADiagnostic.ouvrezLApplicationDansUn')}</li>
               )}
             </ul>
           </div>

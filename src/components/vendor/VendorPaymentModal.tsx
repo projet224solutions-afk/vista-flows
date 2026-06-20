@@ -6,6 +6,7 @@
 
 import { useState, lazy, Suspense } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useTranslation } from '@/hooks/useTranslation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -38,6 +39,7 @@ export const VendorPaymentModal = ({
   customerId,
   onPaymentSuccess
 }: VendorPaymentModalProps) => {
+  const { t } = useTranslation();
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethodType>('wallet');
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -64,7 +66,7 @@ export const VendorPaymentModal = ({
           break;
         case 'mobile_money':
           if (!mobilePhone) {
-            toast.error('Veuillez entrer un numéro de téléphone');
+            toast.error(t('vendorPaymentModal.enterPhone'));
             setIsProcessing(false);
             return;
           }
@@ -72,26 +74,26 @@ export const VendorPaymentModal = ({
           break;
         case 'card':
           if (!cardToken) {
-            toast.error('Veuillez entrer un token de carte valide');
+            toast.error(t('vendorPaymentModal.enterCardToken'));
             setIsProcessing(false);
             return;
           }
           result = await VendorPaymentService.payWithCard(orderId, amount, customerId, cardToken);
           break;
         default:
-          throw new Error('Méthode de paiement non supportée');
+          throw new Error(t('vendorPaymentModal.methodNotSupported'));
       }
 
       if (result.success) {
-        toast.success('Paiement effectué avec succès');
+        toast.success(t('vendorPaymentModal.paymentSuccess'));
         onPaymentSuccess?.();
         onClose();
       } else {
-        toast.error(result.error || 'Erreur lors du paiement');
+        toast.error(result.error || t('vendorPaymentModal.paymentError'));
       }
     } catch (error: any) {
       console.error('[VendorPaymentModal] Payment error:', error);
-      toast.error(error.message || 'Erreur lors du paiement');
+      toast.error(error.message || t('vendorPaymentModal.paymentError'));
     } finally {
       setIsProcessing(false);
     }
@@ -118,19 +120,19 @@ export const VendorPaymentModal = ({
         onFocusOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle>Paiement de la commande</DialogTitle>
+          <DialogTitle>{t('vendorPaymentModal.title')}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
           {/* Montant */}
           <div className="bg-muted p-4 rounded-lg">
-            <p className="text-sm text-muted-foreground">Montant à payer</p>
+            <p className="text-sm text-muted-foreground">{t('vendorPaymentModal.amountToPay')}</p>
             <p className="text-2xl font-bold text-primary">{formatAmount(amount)}</p>
           </div>
 
           {/* Sélection de la méthode de paiement */}
           <div className="space-y-2">
-            <Label>Méthode de paiement</Label>
+            <Label>{t('vendorPaymentModal.method')}</Label>
             <RadioGroup value={selectedMethod} onValueChange={(v) => setSelectedMethod(v as PaymentMethodType)}>
               <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted cursor-pointer">
                 <RadioGroupItem value="wallet" id="wallet" />
@@ -144,7 +146,7 @@ export const VendorPaymentModal = ({
                 <RadioGroupItem value="cash" id="cash" />
                 <Label htmlFor="cash" className="flex items-center gap-2 cursor-pointer flex-1">
                   <Banknote className="h-4 w-4" />
-                  Espèces (Cash)
+                  {t('vendorPaymentModal.cash')}
                 </Label>
               </div>
 
@@ -160,7 +162,7 @@ export const VendorPaymentModal = ({
                 <RadioGroupItem value="card" id="card" />
                 <Label htmlFor="card" className="flex items-center gap-2 cursor-pointer flex-1">
                   <CreditCard className="h-4 w-4" />
-                  Carte bancaire
+                  {t('vendorPaymentModal.card')}
                 </Label>
               </div>
 
@@ -168,7 +170,7 @@ export const VendorPaymentModal = ({
                 <RadioGroupItem value="stripe" id="stripe" />
                 <Label htmlFor="stripe" className="flex items-center gap-2 cursor-pointer flex-1">
                   <CreditCard className="h-4 w-4" />
-                  Carte bancaire (Stripe)
+                  {t('vendorPaymentModal.cardStripe')}
                 </Label>
               </div>
             </RadioGroup>
@@ -178,7 +180,7 @@ export const VendorPaymentModal = ({
           {selectedMethod === 'mobile_money' && (
             <div className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor="provider">Opérateur</Label>
+                <Label htmlFor="provider">{t('vendorPaymentModal.operator')}</Label>
                 <Select value={mobileProvider} onValueChange={(v) => setMobileProvider(v as any)}>
                   <SelectTrigger id="provider">
                     <SelectValue />
@@ -191,7 +193,7 @@ export const VendorPaymentModal = ({
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone">Numéro de téléphone</Label>
+                <Label htmlFor="phone">{t('vendorPaymentModal.phone')}</Label>
                 <Input
                   id="phone"
                   placeholder="622123456"
@@ -206,7 +208,7 @@ export const VendorPaymentModal = ({
 
           {selectedMethod === 'card' && (
             <div className="space-y-2">
-              <Label htmlFor="cardToken">Token de carte</Label>
+              <Label htmlFor="cardToken">{t('vendorPaymentModal.cardToken')}</Label>
               <Input
                 id="cardToken"
                 placeholder="tok_xxxxxxxxxxxxx"
@@ -216,7 +218,7 @@ export const VendorPaymentModal = ({
                 onFocus={(e) => e.stopPropagation()}
               />
               <p className="text-xs text-muted-foreground">
-                Le token sera généré par Stripe lors de la saisie de la carte
+                {t('vendorPaymentModal.cardTokenHint')}
               </p>
             </div>
           )}
@@ -225,16 +227,16 @@ export const VendorPaymentModal = ({
             <Suspense fallback={
               <div className="flex items-center justify-center p-4 gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span className="text-sm">Chargement Stripe...</span>
+                <span className="text-sm">{t('vendorPaymentModal.loadingStripe')}</span>
               </div>
             }>
               <StripeCheckoutButton
                 amount={amount}
                 currency="USD"
-                description={`Commande ${orderId}`}
+                description={`${t('vendorPaymentModal.orderPrefix')} ${orderId}`}
                 orderId={orderId}
                 onSuccess={handleStripeSuccess}
-                onCancel={() => toast.info('Paiement annulé')}
+                onCancel={() => toast.info(t('vendorPaymentModal.paymentCancelled'))}
               />
             </Suspense>
           )}
@@ -242,7 +244,7 @@ export const VendorPaymentModal = ({
           {selectedMethod === 'cash' && (
             <Alert>
               <AlertDescription>
-                Le paiement en espèces sera collecté à la livraison. La commande sera marquée comme "en attente de paiement".
+                {t('vendorPaymentModal.cashInfo')}
               </AlertDescription>
             </Alert>
           )}
@@ -250,7 +252,7 @@ export const VendorPaymentModal = ({
           {selectedMethod === 'wallet' && (
             <Alert>
               <AlertDescription>
-                Le montant sera débité directement de votre Wallet 224Solutions.
+                {t('vendorPaymentModal.walletInfo')}
               </AlertDescription>
             </Alert>
           )}
@@ -259,16 +261,16 @@ export const VendorPaymentModal = ({
           {selectedMethod !== 'stripe' && (
             <div className="flex gap-2 pt-4">
               <Button variant="outline" onClick={onClose} disabled={isProcessing} className="flex-1">
-                Annuler
+                {t('vendorPaymentModal.cancel')}
               </Button>
               <Button onClick={handlePayment} disabled={isProcessing} className="flex-1">
                 {isProcessing ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Traitement...
+                    {t('vendorPaymentModal.processing')}
                   </>
                 ) : (
-                  'Confirmer le paiement'
+                  t('vendorPaymentModal.confirm')
                 )}
               </Button>
             </div>

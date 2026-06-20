@@ -9,6 +9,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,7 @@ interface EnhancedDelivery extends NearbyDelivery {
 }
 
 export function NearbyDeliveriesPanel() {
+  const { t } = useTranslation();
   const [deliveries, setDeliveries] = useState<EnhancedDelivery[]>([]);
   const [loading, setLoading] = useState(true);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
@@ -61,7 +63,7 @@ export function NearbyDeliveriesPanel() {
       }
     } catch (error) {
       console.error('Error loading deliveries:', error);
-      toast.error('Erreur lors du chargement');
+      toast.error(t('nearbyDeliveriesPanel.erreurLorsDuChargement'));
     } finally {
       setLoading(false);
     }
@@ -144,7 +146,7 @@ export function NearbyDeliveriesPanel() {
       // Retirer immédiatement de la liste pour un feedback visuel instantané
       setDeliveries(prev => prev.filter(d => d.id !== deliveryId));
 
-      toast.success('✅ Livraison acceptée avec succès !', {
+      toast.success(t('nearbyDeliveriesPanel.livraisonAccepteeAvecSucces'), {
         description: 'Rendez-vous chez le vendeur pour récupérer le colis'
       });
 
@@ -171,7 +173,7 @@ export function NearbyDeliveriesPanel() {
       <Card>
         <CardContent className="p-6 text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-orange-600" />
-          <p className="mt-2 text-muted-foreground">Recherche de livraisons...</p>
+          <p className="mt-2 text-muted-foreground">{t('nearbyDeliveriesPanel.rechercheDeLivraisons')}</p>
         </CardContent>
       </Card>
     );
@@ -197,7 +199,7 @@ export function NearbyDeliveriesPanel() {
         {deliveries.length === 0 ? (
           <div className="text-center py-8">
             <Package className="h-12 w-12 mx-auto text-muted-foreground/30 mb-2" />
-            <p className="text-muted-foreground">Aucune livraison disponible</p>
+            <p className="text-muted-foreground">{t('nearbyDeliveriesPanel.aucuneLivraisonDisponible')}</p>
           </div>
         ) : (
           deliveries.map((d) => (
@@ -217,13 +219,13 @@ export function NearbyDeliveriesPanel() {
               </div>
 
               {/* Distances */}
-              <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-center">
                 <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-                  <p className="text-xs text-muted-foreground">Vous → Vendeur</p>
+                  <p className="text-xs text-muted-foreground">{t('nearbyDeliveriesPanel.vousVendeur')}</p>
                   <p className="font-bold text-orange-700">{d.distance_to_vendor} km</p>
                 </div>
                 <div className="p-2 bg-orange-100 dark:bg-[#ff4000]/30 rounded-lg">
-                  <p className="text-xs text-muted-foreground">Vendeur → Client</p>
+                  <p className="text-xs text-muted-foreground">{t('nearbyDeliveriesPanel.vendeurClient')}</p>
                   <p className="font-bold text-[#ff4000]">{d.distance_vendor_to_client} km</p>
                 </div>
                 <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">

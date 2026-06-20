@@ -1,8 +1,8 @@
-// @ts-nocheck
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCurrentVendor } from '@/hooks/useCurrentVendor';
 import { useToast } from '@/hooks/use-toast';
+import { readSectionCache, writeSectionCache, isBrowserOffline } from '@/lib/offline/sectionCache';
 
 export interface InventoryItem {
   id: string;
@@ -110,6 +110,18 @@ export const useInventoryService = () => {
       return;
     }
 
+    // 📴 Hors ligne : afficher le dernier inventaire connu (cache), sans réseau.
+    if (isBrowserOffline()) {
+      const cachedInv = readSectionCache('inventory_items', vendorId);
+      const cachedAlerts = readSectionCache('inventory_alerts', vendorId);
+      const cachedHist = readSectionCache('inventory_history', vendorId);
+      if (cachedInv) setInventory(cachedInv);
+      if (cachedAlerts) setAlerts(cachedAlerts as any);
+      if (cachedHist) setHistory(cachedHist as any);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       console.log('🔄 Chargement inventaire pour vendorId:', vendorId);
@@ -173,12 +185,27 @@ export const useInventoryService = () => {
       setHistory((historyData as any) || []);
       setStats(statsData as any);
 
+      // Persister pour l'affichage hors ligne.
+      writeSectionCache('inventory_items', vendorId, inventoryData || []);
+      writeSectionCache('inventory_alerts', vendorId, alertsData || []);
+      writeSectionCache('inventory_history', vendorId, historyData || []);
+
     } catch (error: any) {
-      toast({
-        title: "Erreur",
-        description: `Impossible de charger les données: ${error.message}`,
-        variant: "destructive"
-      });
+      // Repli sur le cache en cas d'échec réseau, sinon signaler l'erreur.
+      const cachedInv = readSectionCache('inventory_items', vendorId);
+      if (cachedInv) {
+        setInventory(cachedInv);
+        const cachedAlerts = readSectionCache('inventory_alerts', vendorId);
+        const cachedHist = readSectionCache('inventory_history', vendorId);
+        if (cachedAlerts) setAlerts(cachedAlerts as any);
+        if (cachedHist) setHistory(cachedHist as any);
+      } else {
+        toast({
+          title: "Erreur",
+          description: `Impossible de charger les données: ${error.message}`,
+          variant: "destructive"
+        });
+      }
     } finally {
       setLoading(false);
     }

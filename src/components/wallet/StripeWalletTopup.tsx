@@ -12,6 +12,7 @@ import { CreditCard, ArrowDownCircle, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import StripeCheckoutButton from '@/components/payment/StripeCheckoutButton';
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface StripeWalletTopupProps {
   userId: string;
@@ -20,6 +21,7 @@ interface StripeWalletTopupProps {
 }
 
 export default function StripeWalletTopup({ userId, walletId, onSuccess }: StripeWalletTopupProps) {
+  const { t } = useTranslation();
   const [amount, setAmount] = useState("");
   const [showStripe, setShowStripe] = useState(false);
 
@@ -52,7 +54,7 @@ export default function StripeWalletTopup({ userId, walletId, onSuccess }: Strip
             {/* Montants rapides */}
             <div className="space-y-2">
               <Label>Montants rapides</Label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {quickAmounts.map((quickAmount) => (
                   <Button
                     key={quickAmount}
@@ -69,7 +71,7 @@ export default function StripeWalletTopup({ userId, walletId, onSuccess }: Strip
 
             {/* Montant personnalisé */}
             <div className="space-y-2">
-              <Label htmlFor="topup-amount">Montant personnalisé (GNF)</Label>
+              <Label htmlFor="topup-amount">{t('stripeWalletTopup.montantPersonnaliseGnf')}</Label>
               <Input
                 id="topup-amount"
                 type="number"
@@ -78,7 +80,7 @@ export default function StripeWalletTopup({ userId, walletId, onSuccess }: Strip
                 onChange={(e) => setAmount(e.target.value)}
                 min="5000"
               />
-              <p className="text-xs text-muted-foreground">Montant minimum: 5,000 GNF</p>
+              <p className="text-xs text-muted-foreground">{t('stripeWalletTopup.montantMinimum5000Gnf')}</p>
             </div>
 
             {/* Info sécurité */}
@@ -102,7 +104,7 @@ export default function StripeWalletTopup({ userId, walletId, onSuccess }: Strip
 
             {/* Cartes acceptées */}
             <div className="flex items-center justify-center gap-3 pt-2">
-              <span className="text-xs text-muted-foreground">Cartes acceptées:</span>
+              <span className="text-xs text-muted-foreground">{t('stripeWalletTopup.cartesAcceptees')}</span>
               <div className="flex gap-2">
                 <div className="w-10 h-6 bg-[#04439e] rounded flex items-center justify-center text-white text-[8px] font-bold">
                   VISA
@@ -120,7 +122,7 @@ export default function StripeWalletTopup({ userId, walletId, onSuccess }: Strip
           <div className="space-y-3">
             <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 text-center">
               <p className="text-lg font-bold text-primary">{numAmount.toLocaleString()} GNF</p>
-              <p className="text-xs text-muted-foreground">Dépôt sur votre wallet</p>
+              <p className="text-xs text-muted-foreground">{t('stripeWalletTopup.depotSurVotreWallet')}</p>
             </div>
 
             <StripeCheckoutButton

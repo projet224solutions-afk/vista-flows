@@ -3,6 +3,7 @@
  * 224Solutions - Admin Broadcast Oversight
  */
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +36,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function PDGCampaignSupervision() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -131,7 +133,7 @@ export default function PDGCampaignSupervision() {
         <Card>
           <CardContent className="pt-3 pb-2 text-center">
             <p className="text-2xl font-bold text-[#ff4000]">{globalStats.sent}</p>
-            <p className="text-[10px] text-muted-foreground">Envoyées</p>
+            <p className="text-[10px] text-muted-foreground">{t('pDGCampaignSupervision.envoyees')}</p>
           </CardContent>
         </Card>
         <Card>
@@ -143,19 +145,19 @@ export default function PDGCampaignSupervision() {
         <Card>
           <CardContent className="pt-3 pb-2 text-center">
             <p className="text-2xl font-bold text-[#ff4000]">{globalStats.failed}</p>
-            <p className="text-[10px] text-muted-foreground">Échouées</p>
+            <p className="text-[10px] text-muted-foreground">{t('pDGCampaignSupervision.echouees')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-3 pb-2 text-center">
             <p className="text-2xl font-bold text-blue-600">{globalStats.totalMessages.toLocaleString()}</p>
-            <p className="text-[10px] text-muted-foreground">Messages envoyés</p>
+            <p className="text-[10px] text-muted-foreground">{t('pDGCampaignSupervision.messagesEnvoyes')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-3 pb-2 text-center">
             <p className="text-2xl font-bold text-[#ff4000]">{globalStats.totalFailed.toLocaleString()}</p>
-            <p className="text-[10px] text-muted-foreground">Échecs total</p>
+            <p className="text-[10px] text-muted-foreground">{t('pDGCampaignSupervision.echecsTotal')}</p>
           </CardContent>
         </Card>
       </div>
@@ -167,7 +169,7 @@ export default function PDGCampaignSupervision() {
           <Input
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            placeholder="Rechercher par titre ou vendeur..."
+            placeholder={t('pDGCampaignSupervision.rechercherParTitreOuVendeur')}
             className="pl-9"
           />
         </div>
@@ -182,7 +184,7 @@ export default function PDGCampaignSupervision() {
           {loading ? (
             <div className="flex justify-center py-8"><RefreshCw className="animate-spin h-5 w-5" /></div>
           ) : filtered.length === 0 ? (
-            <p className="text-center py-8 text-muted-foreground">Aucune campagne trouvée</p>
+            <p className="text-center py-8 text-muted-foreground">{t('pDGCampaignSupervision.aucuneCampagneTrouvee')}</p>
           ) : (
             <div className="space-y-2">
               {filtered.map(campaign => (
@@ -250,33 +252,33 @@ export default function PDGCampaignSupervision() {
                   <Label className="text-xs text-muted-foreground">Message</Label>
                   <p className="text-sm bg-muted/50 p-3 rounded-lg">{selectedCampaign.message_body}</p>
                 </div>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <div className="text-center p-2 bg-muted/50 rounded">
                     <p className="font-bold">{selectedCampaign.total_targeted}</p>
-                    <p className="text-[10px] text-muted-foreground">Ciblés</p>
+                    <p className="text-[10px] text-muted-foreground">{t('pDGCampaignSupervision.cibles')}</p>
                   </div>
                   <div className="text-center p-2 bg-muted/50 rounded">
                     <p className="font-bold">{selectedCampaign.total_eligible}</p>
-                    <p className="text-[10px] text-muted-foreground">Éligibles</p>
+                    <p className="text-[10px] text-muted-foreground">{t('pDGCampaignSupervision.eligibles')}</p>
                   </div>
                   <div className="text-center p-2 bg-muted/50 rounded">
                     <p className="font-bold text-[#ff4000]">{selectedCampaign.total_sent}</p>
-                    <p className="text-[10px] text-muted-foreground">Envoyés</p>
+                    <p className="text-[10px] text-muted-foreground">{t('pDGCampaignSupervision.envoyes')}</p>
                   </div>
                   <div className="text-center p-2 bg-muted/50 rounded">
                     <p className="font-bold text-[#ff4000]">{selectedCampaign.total_failed}</p>
-                    <p className="text-[10px] text-muted-foreground">Échecs</p>
+                    <p className="text-[10px] text-muted-foreground">{t('pDGCampaignSupervision.echecs')}</p>
                   </div>
                 </div>
                 {selectedAnalytics && (
                   <Card>
                     <CardHeader className="py-3">
-                      <CardTitle className="text-sm">Taux de performance</CardTitle>
+                      <CardTitle className="text-sm">{t('pDGCampaignSupervision.tauxDePerformance')}</CardTitle>
                     </CardHeader>
-                    <CardContent className="grid grid-cols-3 gap-3">
+                    <CardContent className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       <div className="text-center">
                         <p className="text-xl font-bold text-[#ff4000]">{selectedAnalytics.rates.delivery_rate}%</p>
-                        <p className="text-[10px] text-muted-foreground">Délivrance</p>
+                        <p className="text-[10px] text-muted-foreground">{t('pDGCampaignSupervision.delivrance')}</p>
                       </div>
                       <div className="text-center">
                         <p className="text-xl font-bold text-blue-600">{selectedAnalytics.rates.read_rate}%</p>
@@ -284,7 +286,7 @@ export default function PDGCampaignSupervision() {
                       </div>
                       <div className="text-center">
                         <p className="text-xl font-bold text-[#ff4000]">{selectedAnalytics.rates.failure_rate}%</p>
-                        <p className="text-[10px] text-muted-foreground">Échec</p>
+                        <p className="text-[10px] text-muted-foreground">{t('pDGCampaignSupervision.echec')}</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -305,11 +307,11 @@ export default function PDGCampaignSupervision() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Raison de la suspension *</Label>
+              <Label>{t('pDGCampaignSupervision.raisonDeLaSuspension')}</Label>
               <Textarea
                 value={suspendReason}
                 onChange={e => setSuspendReason(e.target.value)}
-                placeholder="Ex: Contenu inapproprié, spam, violation des conditions..."
+                placeholder={t('pDGCampaignSupervision.exContenuInapproprieSpamViolation')}
                 rows={3}
               />
             </div>

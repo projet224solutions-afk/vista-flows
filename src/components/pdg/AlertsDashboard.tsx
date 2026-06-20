@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -39,6 +40,7 @@ interface AlertStats {
 }
 
 export default function AlertsDashboard() {
+  const { t } = useTranslation();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [stats, setStats] = useState<AlertStats>({
     active: 0,
@@ -95,7 +97,7 @@ export default function AlertsDashboard() {
       }
     } catch (error) {
       console.error('Error loading alerts:', error);
-      toast.error('Erreur lors du chargement des alertes');
+      toast.error(t('alertsDashboard.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -141,11 +143,11 @@ export default function AlertsDashboard() {
 
       if (error) throw error;
 
-      toast.success('Alerte acquittée');
+      toast.success(t('alertsDashboard.alerteAcquittee'));
       loadAlerts();
     } catch (error) {
       console.error('Error acknowledging alert:', error);
-      toast.error('Erreur lors de l\'acquittement');
+      toast.error(t('alertsDashboard.erreurLorsDeLAcquittement'));
     }
   };
 
@@ -164,11 +166,11 @@ export default function AlertsDashboard() {
 
       if (error) throw error;
 
-      toast.success('Alerte résolue');
+      toast.success(t('alertsDashboard.alerteResolue'));
       loadAlerts();
     } catch (error) {
       console.error('Error resolving alert:', error);
-      toast.error('Erreur lors de la résolution');
+      toast.error(t('alertsDashboard.erreurLorsDeLaResolution'));
     }
   };
 
@@ -232,7 +234,7 @@ export default function AlertsDashboard() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Acquittées</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('alertsDashboard.acquittees')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -244,7 +246,7 @@ export default function AlertsDashboard() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Résolues</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('alertsDashboard.resolues')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -272,8 +274,8 @@ export default function AlertsDashboard() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Alertes Système</CardTitle>
-              <CardDescription>Surveillance et gestion en temps réel</CardDescription>
+              <CardTitle>{t('alertsDashboard.alertesSysteme')}</CardTitle>
+              <CardDescription>{t('alertsDashboard.surveillanceEtGestionEnTemps')}</CardDescription>
             </div>
             <Button
               variant="outline"
@@ -323,8 +325,8 @@ export default function AlertsDashboard() {
               {alerts.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-[#ff4000]" />
-                  <p className="text-lg font-semibold">Aucune alerte</p>
-                  <p className="text-sm">Tous les systèmes fonctionnent normalement</p>
+                  <p className="text-lg font-semibold">{t('alertsDashboard.aucuneAlerte')}</p>
+                  <p className="text-sm">{t('alertsDashboard.tousLesSystemesFonctionnentNormalement')}</p>
                 </div>
               ) : (
                 alerts.map((alert) => (
@@ -371,7 +373,7 @@ export default function AlertsDashboard() {
                         {alert.metadata?.autoFix && (
                           <div className="flex items-center gap-2 text-xs text-[#ff4000]">
                             <Zap className="h-3 w-3" />
-                            <span>Auto-fix appliqué automatiquement</span>
+                            <span>{t('alertsDashboard.autoFixAppliqueAutomatiquement')}</span>
                           </div>
                         )}
 

@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,7 @@ import { ServiceSelector } from '@/components/vendor/business-module/ServiceSele
 import { VendorShopDashboard } from '@/components/vendor/VendorShopDashboard';
 
 export default function VendorServiceModule() {
+  const { t } = useTranslation();
   const { vendorId, profile, loading: vendorLoading } = useCurrentVendor();
   const {
     services,
@@ -107,7 +109,7 @@ export default function VendorServiceModule() {
       {services.length > 0 && (
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b">
           <div>
-            <h2 className="text-lg font-semibold mb-1">Mes services professionnels</h2>
+            <h2 className="text-lg font-semibold mb-1">{t('vendorServiceModule.mesServicesProfessionnels')}</h2>
             <p className="text-sm text-muted-foreground">
               {services.length > 1
                 ? 'Sélectionnez le service à gérer'
@@ -127,7 +129,7 @@ export default function VendorServiceModule() {
       {selectedService?.status === 'pending' && (
         <Alert variant="default" className="bg-orange-50 border-orange-200 dark:bg-[#ff4000]/20">
           <Clock className="w-4 h-4 text-[#ff4000]" />
-          <AlertTitle className="text-[#ff4000] dark:text-orange-100">Service en cours de validation</AlertTitle>
+          <AlertTitle className="text-[#ff4000] dark:text-orange-100">{t('vendorServiceModule.serviceEnCoursDeValidation')}</AlertTitle>
           <AlertDescription className="text-[#ff4000] dark:text-orange-200">
             Votre service "{selectedService.business_name}" est en attente de validation.
           </AlertDescription>
@@ -137,8 +139,8 @@ export default function VendorServiceModule() {
       {selectedService?.verification_status === 'rejected' && (
         <Alert variant="destructive">
           <XCircle className="w-4 h-4" />
-          <AlertTitle>Service rejeté</AlertTitle>
-          <AlertDescription>Contactez le support pour plus d'informations.</AlertDescription>
+          <AlertTitle>{t('vendorServiceModule.serviceRejete')}</AlertTitle>
+          <AlertDescription>{t('vendorServiceModule.contactezLeSupportPourPlus')}</AlertDescription>
         </Alert>
       )}
 

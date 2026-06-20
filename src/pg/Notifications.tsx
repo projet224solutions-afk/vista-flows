@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useUserNotifications, UserNotification } from '@/hooks/useUserNotifications';
 import { useAuth } from '@/hooks/useAuth';
+import { getNotificationLink } from '@/lib/notificationLink';
 import {
   Bell,
   CheckCheck,
@@ -48,11 +49,11 @@ const notificationColors: Record<string, string> = {
 
 function NotificationItem({
   notification,
-  onRead,
+  onOpen,
   onDelete
 }: {
   notification: UserNotification;
-  onRead: () => void;
+  onOpen: () => void;
   onDelete: () => void;
 }) {
   const Icon = notificationIcons[notification.type] || Bell;
@@ -65,7 +66,7 @@ function NotificationItem({
         "transition-all hover:shadow-md cursor-pointer",
         !notification.read && "bg-primary/5 border-primary/30"
       )}
-      onClick={onRead}
+      onClick={onOpen}
     >
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
@@ -108,7 +109,7 @@ function NotificationItem({
 
 export default function Notifications() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const {
     notifications,
     unreadCount,
@@ -119,6 +120,14 @@ export default function Notifications() {
   } = useUserNotifications();
 
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
+
+  // Clic sur une notification : la marquer lue PUIS rediriger vers la fonctionnalité dédiée
+  // (ex. confirmation de réception → page de suivi de la commande concernée).
+  const handleOpen = (notification: UserNotification) => {
+    if (!notification.read) markAsRead(notification.id);
+    const link = getNotificationLink(notification, (profile as any)?.role);
+    if (link) navigate(link);
+  };
 
   const filteredNotifications = filter === 'unread'
     ? notifications.filter(n => !n.read)
@@ -228,7 +237,7 @@ export default function Notifications() {
                 <NotificationItem
                   key={notification.id}
                   notification={notification}
-                  onRead={() => !notification.read && markAsRead(notification.id)}
+                  onOpen={() => handleOpen(notification)}
                   onDelete={() => deleteNotification(notification.id)}
                 />
               ))}

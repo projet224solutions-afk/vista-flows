@@ -5,8 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { StandardIdBadge } from '@/components/StandardIdBadge';
 import { User } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation } from "@/hooks/useTranslation";
 
 export const UserCustomIdDisplay = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [standardId, setStandardId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,8 +64,8 @@ export const UserCustomIdDisplay = () => {
             <User className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <CardTitle className="text-lg">Votre ID Client</CardTitle>
-            <CardDescription>Identifiant unique de compte</CardDescription>
+            <CardTitle className="text-lg">{t('userCustomIdDisplay.votreIdClient')}</CardTitle>
+            <CardDescription>{t('userCustomIdDisplay.identifiantUniqueDeCompte')}</CardDescription>
           </div>
         </div>
       </CardHeader>

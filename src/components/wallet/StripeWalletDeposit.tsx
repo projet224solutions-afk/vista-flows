@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowDownCircle, Loader2, Shield, CreditCard } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import StripeCheckoutButton from '@/components/payment/StripeCheckoutButton';
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface StripeWalletDepositProps {
   userId: string;
@@ -20,6 +21,7 @@ interface StripeWalletDepositProps {
 }
 
 export default function StripeWalletDeposit({ userId, walletId, onSuccess }: StripeWalletDepositProps) {
+  const { t } = useTranslation();
   const [depositAmount, setDepositAmount] = useState("");
   const [showStripe, setShowStripe] = useState(false);
 
@@ -51,7 +53,7 @@ export default function StripeWalletDeposit({ userId, walletId, onSuccess }: Str
           <>
             <div className="space-y-2">
               <Label>Montants rapides (USD)</Label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {quickAmounts.map((q) => (
                   <Button
                     key={q}
@@ -67,7 +69,7 @@ export default function StripeWalletDeposit({ userId, walletId, onSuccess }: Str
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="stripe-deposit">Montant personnalisé (USD)</Label>
+              <Label htmlFor="stripe-deposit">{t('stripeWalletDeposit.montantPersonnaliseUsd')}</Label>
               <Input
                 id="stripe-deposit"
                 type="number"
@@ -93,7 +95,7 @@ export default function StripeWalletDeposit({ userId, walletId, onSuccess }: Str
           <div className="space-y-3">
             <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 text-center">
               <p className="text-lg font-bold text-primary">${numAmount.toFixed(2)} USD</p>
-              <p className="text-xs text-muted-foreground">Dépôt sur votre wallet</p>
+              <p className="text-xs text-muted-foreground">{t('stripeWalletDeposit.depotSurVotreWallet')}</p>
             </div>
 
             <StripeCheckoutButton

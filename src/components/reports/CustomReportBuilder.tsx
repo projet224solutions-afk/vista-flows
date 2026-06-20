@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,6 +38,7 @@ const exportFormats = [
 ];
 
 export function CustomReportBuilder() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { toast } = useToast();
   const [generating, setGenerating] = useState(false);
@@ -101,8 +103,8 @@ export function CustomReportBuilder() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Générateur de Rapports Personnalisés</h2>
-          <p className="text-muted-foreground">Créez des rapports sur mesure pour votre activité</p>
+          <h2 className="text-2xl font-bold">{t('customReportBuilder.generateurDeRapportsPersonnalises')}</h2>
+          <p className="text-muted-foreground">{t('customReportBuilder.creezDesRapportsSurMesure')}</p>
         </div>
         <Badge className="bg-gradient-to-r from-primary to-primary-glow">
           Premium Feature
@@ -112,15 +114,15 @@ export function CustomReportBuilder() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Configuration du Rapport</CardTitle>
+            <CardTitle>{t('customReportBuilder.configurationDuRapport')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Nom du rapport</label>
+              <label className="text-sm font-medium">{t('customReportBuilder.nomDuRapport')}</label>
               <Input
                 value={template.name}
                 onChange={(e) => setTemplate({ ...template, name: e.target.value })}
-                placeholder="Ex: Rapport mensuel des ventes"
+                placeholder={t('customReportBuilder.exRapportMensuelDesVentes')}
               />
             </div>
 
@@ -129,13 +131,13 @@ export function CustomReportBuilder() {
               <Textarea
                 value={template.description}
                 onChange={(e) => setTemplate({ ...template, description: e.target.value })}
-                placeholder="Décrivez l'objectif de ce rapport"
+                placeholder={t('customReportBuilder.decrivezLObjectifDeCe')}
                 rows={3}
               />
             </div>
 
             <div>
-              <label className="text-sm font-medium">Type de rapport</label>
+              <label className="text-sm font-medium">{t('customReportBuilder.typeDeRapport')}</label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-2">
                 {reportTypes.map((type) => {
                   const Icon = type.icon;
@@ -169,7 +171,7 @@ export function CustomReportBuilder() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Aucune (Manuel)</SelectItem>
+                  <SelectItem value="none">{t('customReportBuilder.aucuneManuel')}</SelectItem>
                   <SelectItem value="daily">Quotidien</SelectItem>
                   <SelectItem value="weekly">Hebdomadaire</SelectItem>
                   <SelectItem value="monthly">Mensuel</SelectItem>
@@ -217,12 +219,12 @@ export function CustomReportBuilder() {
       {/* Preview des données */}
       <Card>
         <CardHeader>
-          <CardTitle>Aperçu des Données</CardTitle>
+          <CardTitle>{t('customReportBuilder.apercuDesDonnees')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-12 text-muted-foreground">
             <BarChart3 className="w-16 h-16 mx-auto mb-4 opacity-50" />
-            <p>Sélectionnez les sources de données pour voir un aperçu</p>
+            <p>{t('customReportBuilder.selectionnezLesSourcesDeDonnees')}</p>
           </div>
         </CardContent>
       </Card>

@@ -1,11 +1,13 @@
 // 📖 Playbooks de réponse aux incidents
 import React from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Book, Play } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 const SecurityPlaybooks: React.FC = () => {
+  const { t } = useTranslation();
   const playbooks = [
     {
       name: 'Réponse Brute Force',
@@ -40,8 +42,8 @@ const SecurityPlaybooks: React.FC = () => {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-2xl font-bold">Playbooks de Sécurité</h3>
-        <p className="text-muted-foreground">Procédures automatisées de réponse</p>
+        <h3 className="text-2xl font-bold">{t('securityPlaybooks.playbooksDeSecurite')}</h3>
+        <p className="text-muted-foreground">{t('securityPlaybooks.proceduresAutomatiseesDeReponse')}</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -73,8 +75,8 @@ const SecurityPlaybooks: React.FC = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Création de Playbooks</CardTitle>
-          <CardDescription>Créez des playbooks personnalisés pour votre organisation</CardDescription>
+          <CardTitle>{t('securityPlaybooks.creationDePlaybooks')}</CardTitle>
+          <CardDescription>{t('securityPlaybooks.creezDesPlaybooksPersonnalisesPour')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Button>

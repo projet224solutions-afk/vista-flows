@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -43,6 +44,7 @@ export function AgentServiceSubscriptionsModule({
   agentId,
   canManage = false
 }: AgentServiceSubscriptionsModuleProps) {
+  const { t } = useTranslation();
   const [plans, setPlans] = useState<ServicePlan[]>([]);
   const [stats, setStats] = useState<ServiceSubscriptionStats | null>(null);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
@@ -66,7 +68,7 @@ export function AgentServiceSubscriptionsModule({
       setSubscriptions(subsData);
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast.error('Impossible de charger les données des abonnements');
+      toast.error(t('agentServiceSubscriptionsModule.impossibleDeChargerLesDonnees'));
     } finally {
       setLoading(false);
     }
@@ -135,8 +137,8 @@ export function AgentServiceSubscriptionsModule({
             <Sparkles className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-slate-800">Abonnements Services</h2>
-            <p className="text-slate-500">Gérez les abonnements des services professionnels</p>
+            <h2 className="text-2xl font-bold text-slate-800">{t('agentServiceSubscriptionsModule.abonnementsServices')}</h2>
+            <p className="text-slate-500">{t('agentServiceSubscriptionsModule.gerezLesAbonnementsDesServices')}</p>
           </div>
         </div>
         <Button onClick={fetchData} variant="outline" size="sm">
@@ -190,7 +192,7 @@ export function AgentServiceSubscriptionsModule({
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-600">Services Actifs</p>
+                  <p className="text-sm text-slate-600">{t('agentServiceSubscriptionsModule.servicesActifs')}</p>
                   <p className="text-2xl font-bold text-[#ff4000]">
                     {plans.filter(p => p.is_active).length}
                   </p>
@@ -221,13 +223,13 @@ export function AgentServiceSubscriptionsModule({
             <CardHeader className="border-b bg-slate-50">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-lg">Liste des Abonnements</CardTitle>
-                  <CardDescription>Tous les abonnements services actifs et passés</CardDescription>
+                  <CardTitle className="text-lg">{t('agentServiceSubscriptionsModule.listeDesAbonnements')}</CardTitle>
+                  <CardDescription>{t('agentServiceSubscriptionsModule.tousLesAbonnementsServicesActifs')}</CardDescription>
                 </div>
                 <div className="relative w-64">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <Input
-                    placeholder="Rechercher..."
+                    placeholder={t('agentServiceSubscriptionsModule.rechercher')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-9"
@@ -239,12 +241,12 @@ export function AgentServiceSubscriptionsModule({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Service</TableHead>
+                    <TableHead>{t('agentServiceSubscriptionsModule.service')}</TableHead>
                     <TableHead>Forfait</TableHead>
-                    <TableHead>Vendeur</TableHead>
+                    <TableHead>{t('agentServiceSubscriptionsModule.vendeur')}</TableHead>
                     <TableHead>Statut</TableHead>
-                    <TableHead>Période</TableHead>
-                    <TableHead className="text-right">Prix Payé</TableHead>
+                    <TableHead>{t('agentServiceSubscriptionsModule.periode')}</TableHead>
+                    <TableHead className="text-right">{t('agentServiceSubscriptionsModule.prixPaye')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -329,7 +331,7 @@ export function AgentServiceSubscriptionsModule({
 
                     {plan.features && plan.features.length > 0 && (
                       <div className="pt-2 border-t">
-                        <p className="text-xs font-medium text-slate-500 mb-2">Fonctionnalités:</p>
+                        <p className="text-xs font-medium text-slate-500 mb-2">{t('agentServiceSubscriptionsModule.fonctionnalites')}</p>
                         <ul className="space-y-1">
                           {plan.features.slice(0, 4).map((feature, idx) => (
                             <li key={idx} className="flex items-center gap-2 text-sm text-slate-600">

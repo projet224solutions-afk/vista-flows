@@ -8,6 +8,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
@@ -77,6 +78,7 @@ export function ChinaProductImportDialog({
   onConvert,
   onCalculateCosts
 }: ChinaProductImportDialogProps) {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   // États
   const [currentStep, setCurrentStep] = useState<ImportStep['step']>('url');
@@ -167,7 +169,7 @@ export function ChinaProductImportDialog({
       const productId = await onConvert(importedProduct.id, margin);
 
       if (productId) {
-        toast.success('Produit ajouté à votre catalogue !');
+        toast.success(t('chinaProductImportDialog.produitAjouteAVotreCatalogue'));
         handleReset();
         onOpenChange(false);
       }
@@ -203,7 +205,7 @@ export function ChinaProductImportDialog({
       </Alert>
 
       {/* Sélection plateforme visuelle */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {(Object.entries(CHINA_PLATFORMS) as [ChinaPlatformType, typeof CHINA_PLATFORMS[ChinaPlatformType]][])
           .filter(([key]) => key !== 'PRIVATE')
           .map(([key, info]) => (
@@ -229,7 +231,7 @@ export function ChinaProductImportDialog({
 
       {/* Input URL */}
       <div className="space-y-2">
-        <Label htmlFor="product-url">URL du produit</Label>
+        <Label htmlFor="product-url">{t('chinaProductImportDialog.urlDuProduit')}</Label>
         <div className="relative">
           <Link className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -347,7 +349,7 @@ export function ChinaProductImportDialog({
             </div>
 
             {/* MOQ et délais */}
-            <div className="grid grid-cols-3 gap-4 text-sm">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
               <div className="flex items-center gap-2">
                 <Package className="w-4 h-4 text-muted-foreground" />
                 <div>
@@ -365,7 +367,7 @@ export function ChinaProductImportDialog({
               <div className="flex items-center gap-2">
                 <Truck className="w-4 h-4 text-muted-foreground" />
                 <div>
-                  <p className="text-muted-foreground">Livraison</p>
+                  <p className="text-muted-foreground">{t('chinaProductImportDialog.livraison')}</p>
                   <p className="font-medium">{importedProduct.shipping_time_days}j</p>
                 </div>
               </div>
@@ -413,8 +415,8 @@ export function ChinaProductImportDialog({
       <div className="space-y-6">
         <Tabs defaultValue="costs">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="costs">Calcul des coûts</TabsTrigger>
-            <TabsTrigger value="margin">Définir la marge</TabsTrigger>
+            <TabsTrigger value="costs">{t('chinaProductImportDialog.calculDesCouts')}</TabsTrigger>
+            <TabsTrigger value="margin">{t('chinaProductImportDialog.definirLaMarge')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="costs" className="space-y-4 mt-4">
@@ -428,7 +430,7 @@ export function ChinaProductImportDialog({
               <CardContent className="space-y-3">
                 {/* Quantité */}
                 <div className="flex items-center justify-between">
-                  <Label>Quantité simulée</Label>
+                  <Label>{t('chinaProductImportDialog.quantiteSimulee')}</Label>
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
@@ -460,7 +462,7 @@ export function ChinaProductImportDialog({
                     <span>${costBreakdown.supplier_price_usd?.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Livraison Chine interne</span>
+                    <span className="text-muted-foreground">{t('chinaProductImportDialog.livraisonChineInterne')}</span>
                     <span>${(costBreakdown.domestic_shipping_cny / 7.2)?.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
@@ -483,7 +485,7 @@ export function ChinaProductImportDialog({
                   <Separator />
 
                   <div className="flex justify-between font-medium">
-                    <span>Coût total USD</span>
+                    <span>{t('chinaProductImportDialog.coutTotalUsd')}</span>
                     <span>${costBreakdown.total_cost_usd?.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between font-bold text-lg">
@@ -505,12 +507,12 @@ export function ChinaProductImportDialog({
           <TabsContent value="margin" className="space-y-4 mt-4">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Marge bénéficiaire</CardTitle>
+                <CardTitle className="text-sm">{t('chinaProductImportDialog.margeBeneficiaire')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <Label>Marge souhaitée</Label>
+                    <Label>{t('chinaProductImportDialog.margeSouhaitee')}</Label>
                     <span className="text-2xl font-bold text-primary">{margin}%</span>
                   </div>
                   <Slider
@@ -532,7 +534,7 @@ export function ChinaProductImportDialog({
 
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Coût de revient</span>
+                    <span className="text-muted-foreground">{t('chinaProductImportDialog.coutDeRevient')}</span>
                     <span>{fc(costBreakdown?.total_cost_local || 0)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
@@ -543,7 +545,7 @@ export function ChinaProductImportDialog({
                   </div>
                   <Separator />
                   <div className="flex justify-between font-bold text-lg">
-                    <span>Prix de vente</span>
+                    <span>{t('chinaProductImportDialog.prixDeVente')}</span>
                     <span className="text-primary">
                       {fc((costBreakdown?.total_cost_local || 0) * (1 + margin / 100))}
                     </span>
@@ -644,11 +646,11 @@ export function ChinaProductImportDialog({
             <span>{platform && CHINA_PLATFORMS[platform].name}</span>
           </div>
           <div className="flex justify-between">
-            <span>Délai de livraison estimé</span>
+            <span>{t('chinaProductImportDialog.delaiDeLivraisonEstime')}</span>
             <span>{(importedProduct.production_time_days || 0) + (importedProduct.shipping_time_days || 0)} jours</span>
           </div>
           <div className="flex justify-between">
-            <span>Profit estimé par unité</span>
+            <span>{t('chinaProductImportDialog.profitEstimeParUnite')}</span>
             <span className="text-[#ff4000] font-medium">
               {fc(finalPrice - costBreakdown.total_cost_local)}
             </span>

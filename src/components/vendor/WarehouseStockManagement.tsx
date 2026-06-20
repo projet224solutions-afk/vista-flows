@@ -1,5 +1,5 @@
-// @ts-nocheck
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { Button } from "@/components/ui/button";
@@ -68,6 +68,7 @@ interface StockMovement {
 }
 
 export default function WarehouseStockManagement() {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -502,12 +503,12 @@ export default function WarehouseStockManagement() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">🏭 Gestion Stock Entrepôts</h2>
-          <p className="text-muted-foreground">Stock centralisé par entrepôt avec permissions</p>
+          <h2 className="text-2xl font-bold">{t('warehouseStockManagement.gestionStockEntrepots')}</h2>
+          <p className="text-muted-foreground">{t('warehouseStockManagement.stockCentraliseParEntrepotAvec')}</p>
         </div>
         <Select value={selectedWarehouse} onValueChange={setSelectedWarehouse}>
           <SelectTrigger className="w-[300px]">
-            <SelectValue placeholder="Sélectionner un entrepôt" />
+            <SelectValue placeholder={t('warehouseStockManagement.selectionnerUnEntrepot')} />
           </SelectTrigger>
           <SelectContent>
             {warehouses.map((warehouse) => (
@@ -527,7 +528,7 @@ export default function WarehouseStockManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalStock}</div>
-            <p className="text-xs text-muted-foreground">unités</p>
+            <p className="text-xs text-muted-foreground">{t('warehouseStockManagement.unites')}</p>
           </CardContent>
         </Card>
         <Card>
@@ -540,7 +541,7 @@ export default function WarehouseStockManagement() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Produits</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">{t('warehouseStockManagement.produits')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stocks.length}</div>
@@ -591,7 +592,7 @@ export default function WarehouseStockManagement() {
             <CardContent className="pt-6">
               <div className="space-y-3">
                 {stocks.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">Aucun stock dans cet entrepôt</p>
+                  <p className="text-center text-muted-foreground py-8">{t('warehouseStockManagement.aucunStockDansCetEntrepot')}</p>
                 ) : (
                   stocks.map((stock) => (
                     <div key={stock.id} className="flex items-center justify-between p-4 border rounded-lg">
@@ -629,12 +630,12 @@ export default function WarehouseStockManagement() {
         <TabsContent value="movements" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Historique des mouvements</CardTitle>
+              <CardTitle>{t('warehouseStockManagement.historiqueDesMouvements')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {movements.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">Aucun mouvement</p>
+                  <p className="text-center text-muted-foreground py-8">{t('warehouseStockManagement.aucunMouvement')}</p>
                 ) : (
                   movements.map((movement) => (
                     <div key={movement.id} className="flex items-center justify-between p-4 border rounded-lg">
@@ -676,12 +677,12 @@ export default function WarehouseStockManagement() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Utilisateurs autorisés</CardTitle>
+              <CardTitle>{t('warehouseStockManagement.utilisateursAutorises')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {permissions.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">Aucune permission configurée</p>
+                  <p className="text-center text-muted-foreground py-8">{t('warehouseStockManagement.aucunePermissionConfiguree')}</p>
                 ) : (
                   permissions.map((perm) => (
                     <div key={perm.id} className="flex items-center justify-between p-4 border rounded-lg">
@@ -689,9 +690,9 @@ export default function WarehouseStockManagement() {
                         <p className="font-medium">{perm.user_id}</p>
                         <div className="flex gap-2 mt-2">
                           {perm.can_view && <Badge variant="secondary"><Eye className="w-3 h-3 mr-1" />Voir</Badge>}
-                          {perm.can_edit && <Badge variant="secondary"><Edit2 className="w-3 h-3 mr-1" />Éditer</Badge>}
-                          {perm.can_manage_stock && <Badge variant="secondary"><Package className="w-3 h-3 mr-1" />Gérer Stock</Badge>}
-                          {perm.can_transfer && <Badge variant="secondary"><ArrowRightLeft className="w-3 h-3 mr-1" />Transférer</Badge>}
+                          {perm.can_edit && <Badge variant="secondary"><Edit2 className="w-3 h-3 mr-1" />{t('warehouseStockManagement.editer')}</Badge>}
+                          {perm.can_manage_stock && <Badge variant="secondary"><Package className="w-3 h-3 mr-1" />{t('warehouseStockManagement.gererStock')}</Badge>}
+                          {perm.can_transfer && <Badge variant="secondary"><ArrowRightLeft className="w-3 h-3 mr-1" />{t('warehouseStockManagement.transferer')}</Badge>}
                         </div>
                       </div>
                       <Button size="sm" variant="ghost" onClick={() => handleDeletePermission(perm.id)}>
@@ -710,12 +711,12 @@ export default function WarehouseStockManagement() {
       <Dialog open={transferOpen} onOpenChange={setTransferOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Transférer du stock</DialogTitle>
+            <DialogTitle>{t('warehouseStockManagement.transfererDuStock')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <Select value={transferData.product_id} onValueChange={(v) => setTransferData({...transferData, product_id: v})}>
               <SelectTrigger>
-                <SelectValue placeholder="Produit" />
+                <SelectValue placeholder={t('warehouseStockManagement.produit')} />
               </SelectTrigger>
               <SelectContent>
                 {products.map(p => (
@@ -725,7 +726,7 @@ export default function WarehouseStockManagement() {
             </Select>
             <Select value={transferData.from_warehouse_id} onValueChange={(v) => setTransferData({...transferData, from_warehouse_id: v})}>
               <SelectTrigger>
-                <SelectValue placeholder="Depuis entrepôt" />
+                <SelectValue placeholder={t('warehouseStockManagement.depuisEntrepot')} />
               </SelectTrigger>
               <SelectContent>
                 {warehouses.map(w => (
@@ -735,7 +736,7 @@ export default function WarehouseStockManagement() {
             </Select>
             <Select value={transferData.to_warehouse_id} onValueChange={(v) => setTransferData({...transferData, to_warehouse_id: v})}>
               <SelectTrigger>
-                <SelectValue placeholder="Vers entrepôt" />
+                <SelectValue placeholder={t('warehouseStockManagement.versEntrepot')} />
               </SelectTrigger>
               <SelectContent>
                 {warehouses.map(w => (
@@ -745,7 +746,7 @@ export default function WarehouseStockManagement() {
             </Select>
             <Input
               type="number"
-              placeholder="Quantité"
+              placeholder={t('warehouseStockManagement.quantite')}
               value={transferData.quantity || ''}
               onChange={(e) => setTransferData({...transferData, quantity: parseInt(e.target.value) || 0})}
             />
@@ -755,8 +756,8 @@ export default function WarehouseStockManagement() {
               onChange={(e) => setTransferData({...transferData, notes: e.target.value})}
             />
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setTransferOpen(false)}>Annuler</Button>
-              <Button onClick={handleTransfer}>Transférer</Button>
+              <Button variant="outline" onClick={() => setTransferOpen(false)}>{t('warehouseStockManagement.annuler')}</Button>
+              <Button onClick={handleTransfer}>{t('warehouseStockManagement.transferer')}</Button>
             </div>
           </div>
         </DialogContent>
@@ -766,12 +767,12 @@ export default function WarehouseStockManagement() {
       <Dialog open={adjustmentOpen} onOpenChange={setAdjustmentOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Ajustement de stock</DialogTitle>
+            <DialogTitle>{t('warehouseStockManagement.ajustementDeStock')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <Select value={adjustmentData.warehouse_id} onValueChange={(v) => setAdjustmentData({...adjustmentData, warehouse_id: v})}>
               <SelectTrigger>
-                <SelectValue placeholder="Entrepôt" />
+                <SelectValue placeholder={t('warehouseStockManagement.entrepot')} />
               </SelectTrigger>
               <SelectContent>
                 {warehouses.map(w => (
@@ -781,7 +782,7 @@ export default function WarehouseStockManagement() {
             </Select>
             <Select value={adjustmentData.product_id} onValueChange={(v) => setAdjustmentData({...adjustmentData, product_id: v})}>
               <SelectTrigger>
-                <SelectValue placeholder="Produit" />
+                <SelectValue placeholder={t('warehouseStockManagement.produit')} />
               </SelectTrigger>
               <SelectContent>
                 {products.map(p => (
@@ -791,17 +792,17 @@ export default function WarehouseStockManagement() {
             </Select>
             <Input
               type="number"
-              placeholder="Changement de quantité (+ ou -)"
+              placeholder={t('warehouseStockManagement.changementDeQuantiteOu')}
               value={adjustmentData.quantity_change || ''}
               onChange={(e) => setAdjustmentData({...adjustmentData, quantity_change: parseInt(e.target.value) || 0})}
             />
             <Input
-              placeholder="Raison de l'ajustement"
+              placeholder={t('warehouseStockManagement.raisonDeLAjustement')}
               value={adjustmentData.notes}
               onChange={(e) => setAdjustmentData({...adjustmentData, notes: e.target.value})}
             />
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setAdjustmentOpen(false)}>Annuler</Button>
+              <Button variant="outline" onClick={() => setAdjustmentOpen(false)}>{t('warehouseStockManagement.annuler')}</Button>
               <Button onClick={handleAdjustment}>Ajuster</Button>
             </div>
           </div>
@@ -812,12 +813,12 @@ export default function WarehouseStockManagement() {
       <Dialog open={permissionOpen} onOpenChange={setPermissionOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Ajouter une permission</DialogTitle>
+            <DialogTitle>{t('warehouseStockManagement.ajouterUnePermission')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <Input
               type="email"
-              placeholder="Email de l'utilisateur"
+              placeholder={t('warehouseStockManagement.emailDeLUtilisateur')}
               value={newPermission.user_email}
               onChange={(e) => setNewPermission({...newPermission, user_email: e.target.value})}
             />
@@ -860,8 +861,8 @@ export default function WarehouseStockManagement() {
               </label>
             </div>
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setPermissionOpen(false)}>Annuler</Button>
-              <Button onClick={handleAddPermission}>Ajouter</Button>
+              <Button variant="outline" onClick={() => setPermissionOpen(false)}>{t('warehouseStockManagement.annuler')}</Button>
+              <Button onClick={handleAddPermission}>{t('warehouseStockManagement.ajouter')}</Button>
             </div>
           </div>
         </DialogContent>

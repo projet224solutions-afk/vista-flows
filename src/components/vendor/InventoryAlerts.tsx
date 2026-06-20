@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, CheckCircle, Eye, EyeOff } from "lucide-react";
 import { InventoryAlert } from "@/hooks/useInventoryService";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface InventoryAlertsProps {
   alerts: InventoryAlert[];
@@ -11,6 +12,7 @@ interface InventoryAlertsProps {
 }
 
 export default function InventoryAlerts({ alerts, onMarkAsRead, onResolve }: InventoryAlertsProps) {
+  const { t } = useTranslation();
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical': return 'bg-orange-100 text-[#ff4000] border-orange-200';
@@ -30,10 +32,10 @@ export default function InventoryAlerts({ alerts, onMarkAsRead, onResolve }: Inv
         <CardContent className="p-6 text-center">
           <CheckCircle className="w-12 h-12 text-[#ff4000] mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-[#ff4000] mb-2">
-            Aucune alerte active
+            {t('inventoryAlerts.noActiveAlerts')}
           </h3>
           <p className="text-[#ff4000]">
-            Tous vos produits sont en bon état de stock 🎉
+            {t('inventoryAlerts.allGood')}
           </p>
         </CardContent>
       </Card>
@@ -46,7 +48,7 @@ export default function InventoryAlerts({ alerts, onMarkAsRead, onResolve }: Inv
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-orange-800">
             <AlertTriangle className="w-5 h-5" />
-            Alertes Actives ({alerts.length})
+            {t('inventoryAlerts.activeAlerts')} ({alerts.length})
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -66,7 +68,7 @@ export default function InventoryAlerts({ alerts, onMarkAsRead, onResolve }: Inv
                     </Badge>
                     {!alert.is_read && (
                       <Badge variant="outline" className="bg-white">
-                        Nouveau
+                        {t('inventoryAlerts.new')}
                       </Badge>
                     )}
                   </div>
@@ -77,7 +79,7 @@ export default function InventoryAlerts({ alerts, onMarkAsRead, onResolve }: Inv
 
                   {alert.product && (
                     <p className="text-sm opacity-80">
-                      Produit: {alert.product.name}
+                      {t('inventoryAlerts.product')} {alert.product.name}
                       {alert.product.sku && ` (${alert.product.sku})`}
                     </p>
                   )}
@@ -96,7 +98,7 @@ export default function InventoryAlerts({ alerts, onMarkAsRead, onResolve }: Inv
                       className="whitespace-nowrap"
                     >
                       <Eye className="w-4 h-4 mr-1" />
-                      Marquer lu
+                      {t('inventoryAlerts.markRead')}
                     </Button>
                   )}
                   <Button
@@ -105,7 +107,7 @@ export default function InventoryAlerts({ alerts, onMarkAsRead, onResolve }: Inv
                     className="whitespace-nowrap"
                   >
                     <CheckCircle className="w-4 h-4 mr-1" />
-                    Résoudre
+                    {t('inventoryAlerts.resolve')}
                   </Button>
                 </div>
               </div>

@@ -26,7 +26,7 @@ export default function AffiliateDashboardPage() {
   const copyLink = () => {
     if (affiliateLink) {
       navigator.clipboard.writeText(affiliateLink);
-      toast.success('Lien affilié copié !');
+      toast.success(t('affiliateDashboardPage.lienAffilieCopie'));
     }
   };
 
@@ -64,7 +64,7 @@ export default function AffiliateDashboardPage() {
             </Button>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold">Espace Affilié</h1>
+                <h1 className="text-2xl font-bold">{t('affiliateDashboardPage.espaceAffilie')}</h1>
                 <Badge variant="secondary" className="text-xs">
                   {affiliateStatus === 'approved' ? 'Actif' : affiliateStatus}
                 </Badge>
@@ -84,7 +84,7 @@ export default function AffiliateDashboardPage() {
           <Card className="border-primary/20 bg-primary/5">
             <CardContent className="p-3 flex items-center gap-3 flex-wrap">
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-muted-foreground mb-1">Votre lien de parrainage</p>
+                <p className="text-xs text-muted-foreground mb-1">{t('affiliateDashboardPage.votreLienDeParrainage')}</p>
                 <p className="text-sm font-mono truncate">{affiliateLink}</p>
               </div>
               <Button size="sm" variant="outline" onClick={copyLink}>
@@ -98,11 +98,11 @@ export default function AffiliateDashboardPage() {
           <div className="overflow-x-auto scrollbar-hide -mx-3 px-3 md:mx-0 md:px-0">
             <TabsList className="inline-flex w-max md:grid md:w-full md:grid-cols-6">
               <TabsTrigger value="dashboard"><BarChart3 className="h-4 w-4 mr-1" />Dashboard</TabsTrigger>
-              <TabsTrigger value="products"><Megaphone className="h-4 w-4 mr-1" />Produits</TabsTrigger>
+              <TabsTrigger value="products"><Megaphone className="h-4 w-4 mr-1" />{t('affiliateDashboardPage.produits')}</TabsTrigger>
               <TabsTrigger value="links"><Link2 className="h-4 w-4 mr-1" />Mes liens</TabsTrigger>
               <TabsTrigger value="stats"><TrendingUp className="h-4 w-4 mr-1" />Statistiques</TabsTrigger>
-              <TabsTrigger value="payments"><Wallet className="h-4 w-4 mr-1" />Paiements</TabsTrigger>
-              <TabsTrigger value="profile"><UserCircle className="h-4 w-4 mr-1" />Profil</TabsTrigger>
+              <TabsTrigger value="payments"><Wallet className="h-4 w-4 mr-1" />{t('affiliateDashboardPage.paiements')}</TabsTrigger>
+              <TabsTrigger value="profile"><UserCircle className="h-4 w-4 mr-1" />{t('affiliateDashboardPage.profil')}</TabsTrigger>
             </TabsList>
           </div>
 
@@ -128,13 +128,13 @@ export default function AffiliateDashboardPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Button onClick={() => navigate('/marketplace')} className="h-auto py-4 flex-col gap-1">
                       <Package className="h-5 w-5" />
-                      <span>Produits physiques</span>
-                      <span className="text-xs opacity-70">Marketplace complète</span>
+                      <span>{t('affiliateDashboardPage.produitsPhysiques')}</span>
+                      <span className="text-xs opacity-70">{t('affiliateDashboardPage.marketplaceComplete')}</span>
                     </Button>
                     <Button variant="outline" onClick={() => navigate('/digital-products')} className="h-auto py-4 flex-col gap-1">
                       <Megaphone className="h-5 w-5" />
-                      <span>Produits numériques</span>
-                      <span className="text-xs opacity-70">Modules & services digitaux</span>
+                      <span>{t('affiliateDashboardPage.produitsNumeriques')}</span>
+                      <span className="text-xs opacity-70">{t('affiliateDashboardPage.modulesServicesDigitaux')}</span>
                     </Button>
                   </div>
                   <Button variant="outline" className="w-full" onClick={() => navigate('/services-proximite')}>
@@ -179,7 +179,7 @@ export default function AffiliateDashboardPage() {
                     </code>
                     <Button size="sm" variant="outline" onClick={() => {
                       navigator.clipboard.writeText(`${window.location.origin}/marketplace?ref=${affiliateCode}`);
-                      toast.success('Lien copié !');
+                      toast.success(t('affiliateDashboardPage.lienCopie'));
                     }}>
                       <Copy className="h-4 w-4" />
                     </Button>
@@ -187,14 +187,14 @@ export default function AffiliateDashboardPage() {
                 </div>
 
                 <div className="rounded-lg border p-4 space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground">Lien Services</p>
+                  <p className="text-xs font-medium text-muted-foreground">{t('affiliateDashboardPage.lienServices')}</p>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 text-sm bg-muted p-2 rounded truncate">
                       {affiliateCode ? `${window.location.origin}/services-proximite?ref=${affiliateCode}` : '...'}
                     </code>
                     <Button size="sm" variant="outline" onClick={() => {
                       navigator.clipboard.writeText(`${window.location.origin}/services-proximite?ref=${affiliateCode}`);
-                      toast.success('Lien copié !');
+                      toast.success(t('affiliateDashboardPage.lienCopie'));
                     }}>
                       <Copy className="h-4 w-4" />
                     </Button>
@@ -286,7 +286,7 @@ export default function AffiliateDashboardPage() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Code affilié</p>
+                    <p className="text-xs text-muted-foreground">{t('affiliateDashboardPage.codeAffilie')}</p>
                     <p className="font-mono font-semibold text-sm">{affiliateCode || 'N/A'}</p>
                   </div>
                   <div className="space-y-1">
@@ -300,7 +300,7 @@ export default function AffiliateDashboardPage() {
                     <p className="text-sm">{profile?.first_name} {profile?.last_name}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Rôle</p>
+                    <p className="text-xs text-muted-foreground">{t('affiliateDashboardPage.role')}</p>
                     <Badge variant="outline">{profile?.role || 'client'} + affilié</Badge>
                   </div>
                 </div>

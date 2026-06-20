@@ -7,6 +7,7 @@
 import { lazy, Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Wallet } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const UniversalWalletTransactions = lazy(() =>
   import('@/components/wallet/UniversalWalletTransactions').then(m => ({ default: m.UniversalWalletTransactions }))
@@ -18,12 +19,13 @@ interface ServiceWalletWidgetProps {
 }
 
 export function ServiceWalletWidget({ userId, businessName }: ServiceWalletWidgetProps) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
       {businessName && (
         <div className="flex items-center gap-2 mb-2">
           <Wallet className="w-5 h-5 text-primary" />
-          <h2 className="text-lg font-semibold">Wallet — {businessName}</h2>
+          <h2 className="text-lg font-semibold">{t('serviceWallet.walletOf')} {businessName}</h2>
         </div>
       )}
       <Suspense fallback={

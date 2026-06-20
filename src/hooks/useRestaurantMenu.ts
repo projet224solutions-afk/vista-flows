@@ -5,6 +5,13 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import offlineDB from '@/lib/offlineDB';
+
+// Cache du menu (catégories + plats) pour que la CAISSE restaurant fonctionne hors ligne.
+// IndexedDB (offlineDB), même mécanique que le catalogue du POS vendeur.
+const MENU_CATS_CACHE = (sid: string) => `restaurant_menu_cats_${sid}`;
+const MENU_ITEMS_CACHE = (sid: string) => `restaurant_menu_items_${sid}`;
+const MENU_CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 jours
 
 export interface MenuCategory {
   id: string;
@@ -42,6 +49,8 @@ export interface MenuItem {
   display_order: number;
   ingredients: any;
   variants: any;
+  stock_quantity: number | null;   // NULL = illimité ; nombre = portions restantes
+  section: string | null;          // regroupement libre (ex. « Midi », « Bar ») en plus de la catégorie
   created_at: string;
   category?: MenuCategory;
 }
@@ -55,6 +64,24 @@ export function useRestaurantMenu(serviceId: string) {
   const loadMenu = useCallback(async () => {
     if (!serviceId) {
       setLoading(false);
+      return;
+    }
+
+    // HORS LIGNE : servir directement le dernier menu connu depuis le cache (zéro réseau)
+    // → la caisse restaurant reste utilisable sans connexion.
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      try {
+        const [cats, items] = await Promise.all([
+          offlineDB.getCachedData<MenuCategory[]>(MENU_CATS_CACHE(serviceId)),
+          offlineDB.getCachedData<MenuItem[]>(MENU_ITEMS_CACHE(serviceId)),
+        ]);
+        if (cats) setCategories(cats);
+        if (items) setMenuItems(items);
+      } catch (cacheErr) {
+        console.warn('⚠️ [Restaurant] Lecture cache menu échouée:', cacheErr);
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 
@@ -82,9 +109,27 @@ export function useRestaurantMenu(serviceId: string) {
       if (itemsError) throw itemsError;
       setMenuItems(itemsData || []);
 
+      // Mettre le menu en cache pour un usage hors ligne ultérieur (non bloquant).
+      void offlineDB.cacheData(MENU_CATS_CACHE(serviceId), categoriesData || [], MENU_CACHE_TTL, false);
+      void offlineDB.cacheData(MENU_ITEMS_CACHE(serviceId), itemsData || [], MENU_CACHE_TTL, false);
+
     } catch (err: any) {
       console.error('Erreur chargement menu:', err);
-      setError(err.message);
+      // Repli : si le réseau échoue silencieusement, servir le dernier menu connu.
+      try {
+        const [cats, items] = await Promise.all([
+          offlineDB.getCachedData<MenuCategory[]>(MENU_CATS_CACHE(serviceId)),
+          offlineDB.getCachedData<MenuItem[]>(MENU_ITEMS_CACHE(serviceId)),
+        ]);
+        if (cats || items) {
+          if (cats) setCategories(cats);
+          if (items) setMenuItems(items);
+        } else {
+          setError(err.message);
+        }
+      } catch {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -156,6 +201,10 @@ export function useRestaurantMenu(serviceId: string) {
         display_order: data.display_order ?? 0,
         allergens: data.allergens,
         dietary_tags: data.dietary_tags,
+        variants: data.variants ?? null,        // ⚠️ options/suppléments — était oublié (perdues à la création)
+        ingredients: data.ingredients ?? null,
+        stock_quantity: data.stock_quantity ?? null,  // NULL = illimité
+        section: (data.section ?? null) || null,
         professional_service_id: serviceId
       }])
       .select()
@@ -196,6 +245,23 @@ export function useRestaurantMenu(serviceId: string) {
     await updateMenuItem(id, { is_available: !item.is_available });
   };
 
+  // Décrément LOCAL du stock pour une vente encaissée HORS LIGNE : met à jour l'affichage ET le
+  // cache (sans réseau), pour que le « restant » baisse immédiatement et survive à un rechargement
+  // hors ligne. Le vrai décrément serveur se fait à la resync (RPC). Plats à stock NULL = illimités,
+  // ignorés. Au retour en ligne, loadMenu recharge le stock réel et écrase ce cache.
+  const decrementLocalStock = useCallback((lines: { menuItemId: string; quantity: number }[]) => {
+    setMenuItems(prev => {
+      const updated = prev.map(item => {
+        const line = lines.find(l => l.menuItemId === item.id);
+        if (!line || item.stock_quantity == null) return item;
+        const next = Math.max(0, item.stock_quantity - line.quantity);
+        return { ...item, stock_quantity: next, is_available: next > 0 ? item.is_available : false };
+      });
+      void offlineDB.cacheData(MENU_ITEMS_CACHE(serviceId), updated, MENU_CACHE_TTL, false);
+      return updated;
+    });
+  }, [serviceId]);
+
   useEffect(() => {
     loadMenu();
   }, [loadMenu]);
@@ -213,5 +279,6 @@ export function useRestaurantMenu(serviceId: string) {
     updateMenuItem,
     deleteMenuItem,
     toggleItemAvailability,
+    decrementLocalStock,
   };
 }

@@ -9,39 +9,37 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Wifi, WifiOff, RefreshCw } from "lucide-react";
 import { toast } from 'sonner';
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function NetworkStatusIndicator() {
+    const { t } = useTranslation();
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [pendingSync, setPendingSync] = useState(0);
     const [isSyncing, setIsSyncing] = useState(false);
 
+    // Ne compter QUE les ventes encore synchronisables (type POS + non abandonnées).
+    // Une vente abandonnée (retry_count >= MAX) ne doit plus apparaître comme "en attente".
+    const MAX_SYNC_ATTEMPTS = 5;
     const checkPendingData = useCallback(async () => {
         try {
-            const dbRequest = indexedDB.open('224Solutions-OfflineDB', 3);
-            dbRequest.onsuccess = () => {
-                const db = dbRequest.result;
-                if (db.objectStoreNames.contains('events')) {
-                    const tx = db.transaction('events', 'readonly');
-                    const store = tx.objectStore('events');
-                    const index = store.index('by-status');
-                    const pendingCountRequest = index.count('pending');
-                    const failedCountRequest = index.count('failed');
-
-                    pendingCountRequest.onsuccess = () => {
-                        failedCountRequest.onsuccess = () => {
-                            setPendingSync((pendingCountRequest.result || 0) + (failedCountRequest.result || 0));
-                        };
-                    };
-                }
-                db.close();
-            };
+            const { default: offlineDB } = await import('@/lib/offlineDB');
+            const pendingEvents = await offlineDB.getPendingEvents();
+            const failedEvents = await offlineDB.getFailedEvents();
+            const syncable = [...pendingEvents, ...failedEvents].filter(
+                (event) =>
+                    (event.type === 'sale' || event.type === 'credit_sale') &&
+                    (event.retry_count || 0) < MAX_SYNC_ATTEMPTS
+            );
+            setPendingSync(syncable.length);
         } catch {
             // Ignorer
         }
     }, []);
 
-    // Sync manuelle: marquer les events pending comme synced si on est en ligne
-    const forceSyncPending = useCallback(async () => {
+    // Synchronisation. `manual=true` quand l'utilisateur clique → on peut alors signaler un échec.
+    // En automatique (montage / reconnexion / intervalle), on reste SILENCIEUX sur les échecs
+    // pour ne pas spammer un message récurrent sur une vente bloquée.
+    const forceSyncPending = useCallback(async (manual = false) => {
         if (!navigator.onLine || isSyncing) return;
 
         setIsSyncing(true);
@@ -50,7 +48,9 @@ export default function NetworkStatusIndicator() {
             const pendingEvents = await offlineDB.getPendingEvents();
             const failedEvents = await offlineDB.getFailedEvents();
             const posEvents = [...pendingEvents, ...failedEvents].filter(
-                (event) => event.type === 'sale' || event.type === 'credit_sale'
+                (event) =>
+                    (event.type === 'sale' || event.type === 'credit_sale') &&
+                    (event.retry_count || 0) < MAX_SYNC_ATTEMPTS
             );
 
             if (posEvents.length === 0) {
@@ -64,10 +64,11 @@ export default function NetworkStatusIndicator() {
             await checkPendingData();
 
             if (result.synced > 0) {
-                toast.success(`${result.synced} vente(s) synchronisée(s)`);
+                toast.success(`${result.synced} ${t('networkStatus.salesSynced')}`);
             }
-            if (result.failed > 0) {
-                toast.error(`${result.failed} vente(s) en échec de sync`);
+            // Échec signalé UNIQUEMENT sur action manuelle de l'utilisateur.
+            if (manual && result.failed > 0) {
+                toast.error(`${result.failed} ${t('networkStatus.salesSyncFailed')}`);
             }
         } catch (error) {
             console.error('Erreur sync:', error);
@@ -111,7 +112,7 @@ export default function NetworkStatusIndicator() {
             <Tooltip>
                 <TooltipTrigger asChild>
                     <Badge
-                        onClick={isOnline && pendingSync > 0 ? forceSyncPending : undefined}
+                        onClick={isOnline && pendingSync > 0 ? () => forceSyncPending(true) : undefined}
                         className={`${
                             isSyncing ? 'bg-blue-500' : !isOnline ? 'bg-destructive' : 'bg-[#ff4000]'
                         } text-white text-[9px] leading-none px-1.5 py-0.5 flex items-center gap-0.5 ${
@@ -127,7 +128,7 @@ export default function NetworkStatusIndicator() {
                             <RefreshCw className="w-2.5 h-2.5" />
                         )}
                         <span>
-                            {isSyncing ? 'Sync' : !isOnline ? 'Off' : pendingSync.toString()}
+                            {isSyncing ? t('networkStatus.syncShort') : !isOnline ? t('networkStatus.offShort') : pendingSync.toString()}
                         </span>
                     </Badge>
                 </TooltipTrigger>
@@ -139,14 +140,14 @@ export default function NetworkStatusIndicator() {
                             ) : (
                                 <WifiOff className="w-3 h-3 text-destructive" />
                             )}
-                            <span className="font-medium">{isOnline ? 'Connecté' : 'Hors ligne'}</span>
+                            <span className="font-medium">{isOnline ? t('networkStatus.connected') : t('networkStatus.offline')}</span>
                         </div>
                         {pendingSync > 0 && (
                             <p className="text-muted-foreground">
-                                {pendingSync} en attente — {isOnline ? 'Cliquez pour synchroniser' : 'Sync à la reconnexion'}
+                                {pendingSync} {t('networkStatus.pending')} — {isOnline ? t('networkStatus.clickToSync') : t('networkStatus.syncOnReconnect')}
                             </p>
                         )}
-                        {isSyncing && <p className="text-blue-500">Synchronisation...</p>}
+                        {isSyncing && <p className="text-blue-500">{t('networkStatus.syncing')}</p>}
                     </div>
                 </TooltipContent>
             </Tooltip>

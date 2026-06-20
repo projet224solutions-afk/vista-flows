@@ -4,6 +4,7 @@
  */
 
 import { Badge } from '@/components/ui/badge';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Hash, Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -29,6 +30,7 @@ export function StandardIdBadge({
   copyable = true,
   className
 }: StandardIdBadgeProps) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   const formattedId = standardId ? standardId.toUpperCase().trim() : '';
@@ -39,13 +41,13 @@ export function StandardIdBadge({
     try {
       await navigator.clipboard.writeText(formattedId);
       setCopied(true);
-      toast.success('ID copié', {
+      toast.success(t('standardIdBadge.idCopie'), {
         description: formattedId
       });
 
       setTimeout(() => setCopied(false), 2000);
     } catch (_err) {
-      toast.error('Échec copie ID');
+      toast.error(t('standardIdBadge.echecCopieId'));
     }
   };
 

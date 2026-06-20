@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useSyndicatUltraProData } from '@/hooks/useSyndicatUltraProData';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -79,6 +80,7 @@ interface _TaxiMotard {
 }
 
 export default function SyndicatDashboardUltraPro() {
+    const { t } = useTranslation();
     const { user, profile, signOut } = useAuth();
     const navigate = useNavigate();
     useRoleRedirect();
@@ -183,7 +185,7 @@ export default function SyndicatDashboardUltraPro() {
                                 className="border-blue-200 text-blue-600 hover:bg-blue-50 rounded-lg sm:rounded-xl text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                             >
                                 <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                                <span className="hidden sm:inline">Télécharger</span> App
+                                <span className="hidden sm:inline">{t('syndicatDashboardUltraPro.telecharger')}</span> App
                             </Button>
 
                             <Button
@@ -193,7 +195,7 @@ export default function SyndicatDashboardUltraPro() {
                                 className="border-orange-200 text-[#ff4000] hover:bg-orange-50 rounded-lg sm:rounded-xl text-xs sm:text-sm whitespace-nowrap flex-shrink-0"
                             >
                                 <LogOut className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                                <span className="hidden sm:inline">Déconnexion</span>
+                                <span className="hidden sm:inline">{t('syndicatDashboardUltraPro.deconnexion')}</span>
                             </Button>
                         </div>
                     </div>
@@ -234,7 +236,7 @@ export default function SyndicatDashboardUltraPro() {
                         <CardContent className="p-3 sm:p-6">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-blue-100 text-xs sm:text-sm font-medium">Solde</p>
+                                    <p className="text-blue-100 text-xs sm:text-sm font-medium">{t('syndicatDashboardUltraPro.solde')}</p>
                                     <p className="text-lg sm:text-2xl font-bold">
                                         {syndicateStats.total_balance.toLocaleString()}
                                     </p>
@@ -333,7 +335,7 @@ export default function SyndicatDashboardUltraPro() {
                             <Card className="border-0 shadow-xl rounded-2xl border-orange-200">
                                 <CardContent className="p-12 text-center">
                                     <Siren className="w-16 h-16 mx-auto mb-4 text-[#ff4000]" />
-                                    <p className="text-gray-600">Chargement du système SOS...</p>
+                                    <p className="text-gray-600">{t('syndicatDashboardUltraPro.chargementDuSystemeSos')}</p>
                                 </CardContent>
                             </Card>
                         )}
@@ -354,8 +356,8 @@ export default function SyndicatDashboardUltraPro() {
                                     {syndicateMembers.length === 0 && taxiMotards.length === 0 ? (
                                         <div className="text-center py-8 text-gray-500">
                                             <Activity className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                                            <p>Aucune activité récente</p>
-                                            <p className="text-sm">Les données apparaîtront ici quand le bureau sera actif</p>
+                                            <p>{t('syndicatDashboardUltraPro.aucuneActiviteRecente')}</p>
+                                            <p className="text-sm">{t('syndicatDashboardUltraPro.lesDonneesApparaitrontIciQuand')}</p>
                                         </div>
                                     ) : (
                                         <div className="space-y-4">
@@ -450,7 +452,7 @@ export default function SyndicatDashboardUltraPro() {
                             <Card className="border-0 shadow-xl rounded-2xl">
                                 <CardContent className="p-12 text-center">
                                     <Users className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                                    <p className="text-gray-600">Chargement des membres...</p>
+                                    <p className="text-gray-600">{t('syndicatDashboardUltraPro.chargementDesMembres')}</p>
                                 </CardContent>
                             </Card>
                         )}
@@ -611,7 +613,7 @@ export default function SyndicatDashboardUltraPro() {
                                     <Button
                                         onClick={() => {
                                             loadSyndicateData();
-                                            toast.success('Données synchronisées !');
+                                            toast.success(t('syndicatDashboardUltraPro.donneesSynchronisees'));
                                         }}
                                         className="w-full bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg shadow-blue-600/40"
                                     >
@@ -655,12 +657,12 @@ export default function SyndicatDashboardUltraPro() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <Card className="border-0 shadow-xl rounded-2xl">
                                 <CardHeader>
-                                    <CardTitle className="text-xl font-bold text-gray-800">Statistiques Générales</CardTitle>
+                                    <CardTitle className="text-xl font-bold text-gray-800">{t('syndicatDashboardUltraPro.statistiquesGenerales')}</CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center p-3 bg-blue-50 rounded-xl">
-                                            <span className="font-medium text-gray-700">Taux d'activité membres</span>
+                                            <span className="font-medium text-gray-700">{t('syndicatDashboardUltraPro.tauxDActiviteMembres')}</span>
                                             <span className="font-bold text-blue-600">
                                                 {syndicateStats.total_members > 0
                                                     ? `${Math.round((syndicateStats.active_members / syndicateStats.total_members) * 100)}%`
@@ -692,8 +694,8 @@ export default function SyndicatDashboardUltraPro() {
                                 <CardContent>
                                     <div className="text-center py-8">
                                         <BarChart3 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                                        <p className="text-gray-600">Graphiques détaillés disponibles</p>
-                                        <p className="text-sm text-gray-500">Analyse des performances en temps réel</p>
+                                        <p className="text-gray-600">{t('syndicatDashboardUltraPro.graphiquesDetaillesDisponibles')}</p>
+                                        <p className="text-sm text-gray-500">{t('syndicatDashboardUltraPro.analyseDesPerformancesEnTemps')}</p>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -711,7 +713,7 @@ export default function SyndicatDashboardUltraPro() {
                             <Card className="border-0 shadow-xl rounded-2xl">
                                 <CardContent className="p-12 text-center">
                                     <Ticket className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                                    <p className="text-gray-600">Chargement du bureau...</p>
+                                    <p className="text-gray-600">{t('syndicatDashboardUltraPro.chargementDuBureau')}</p>
                                 </CardContent>
                             </Card>
                         )}

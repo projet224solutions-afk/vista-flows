@@ -1,3 +1,4 @@
+import { useTranslation } from "@/hooks/useTranslation";
 import React, { createContext, useContext, useRef, useMemo, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useListPersistence } from '@/hooks/useAppPersistence';
@@ -33,6 +34,7 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { t } = useTranslation();
   // Ref pour éviter les toasts multiples
   const hasShownRestoreToast = useRef(false);
 
@@ -64,7 +66,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addToCart = useCallback((item: Omit<CartItem, 'quantity'>) => {
     if (item.item_type === 'digital_product') {
-      toast.info('Les produits numériques ne passent pas par le panier. Utilisez le bouton Acheter.');
+      toast.info(t('cartContext.lesProduitsNumeriquesNePassent'));
       return;
     }
 
@@ -75,22 +77,22 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (existingItem) {
       updateItem(item.id, { quantity: existingItem.quantity + 1 });
-      toast.success('Quantité augmentée dans le panier');
+      toast.success(t('cartContext.quantiteAugmenteeDansLePanier'));
     } else {
       addItem({ ...item, quantity: 1 });
-      toast.success('Produit ajouté au panier');
+      toast.success(t('cartContext.produitAjouteAuPanier'));
     }
   }, [cartItems, updateItem, addItem]);
 
   const removeFromCart = useCallback((itemId: string) => {
     removeItem(itemId);
-    toast.info('Produit retiré du panier');
+    toast.info(t('cartContext.produitRetireDuPanier'));
   }, [removeItem]);
 
   const updateQuantity = useCallback((itemId: string, quantity: number) => {
     if (quantity <= 0) {
       removeItem(itemId);
-      toast.info('Produit retiré du panier');
+      toast.info(t('cartContext.produitRetireDuPanier'));
       return;
     }
     updateItem(itemId, { quantity });
@@ -98,7 +100,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const clearCart = useCallback(() => {
     clearList();
-    toast.info('Panier vidé');
+    toast.info(t('cartContext.panierVide'));
   }, [clearList]);
 
   // Total CONVERTI : chaque item est converti depuis SA devise (vendeur) vers la devise d'affichage

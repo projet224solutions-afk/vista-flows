@@ -8,6 +8,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -200,6 +201,7 @@ export function ChinaLogisticsTracking({
   logistics,
   onRefreshTracking
 }: ChinaLogisticsTrackingProps) {
+  const { t } = useTranslation();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Calcul de la progression
@@ -225,9 +227,9 @@ export function ChinaLogisticsTracking({
     setIsRefreshing(true);
     try {
       await onRefreshTracking();
-      toast.success('Tracking mis à jour');
+      toast.success(t('chinaLogisticsTracking.trackingMisAJour'));
     } catch (_error) {
-      toast.error('Erreur lors de la mise à jour');
+      toast.error(t('chinaLogisticsTracking.erreurLorsDeLaMise'));
     } finally {
       setIsRefreshing(false);
     }
@@ -235,7 +237,7 @@ export function ChinaLogisticsTracking({
 
   const copyTrackingNumber = (number: string) => {
     navigator.clipboard.writeText(number);
-    toast.success('Numéro copié !');
+    toast.success(t('chinaLogisticsTracking.numeroCopie'));
   };
 
   // ==================== RENDER ====================
@@ -263,7 +265,7 @@ export function ChinaLogisticsTracking({
             <div className="flex items-center gap-4">
               {estimatedDelivery && daysRemaining !== null && (
                 <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Livraison estimée</p>
+                  <p className="text-sm text-muted-foreground">{t('chinaLogisticsTracking.livraisonEstimee')}</p>
                   <p className="font-semibold">
                     {format(estimatedDelivery, 'dd MMM yyyy', { locale: fr })}
                   </p>
@@ -299,7 +301,7 @@ export function ChinaLogisticsTracking({
       {/* Timeline détaillée */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Suivi détaillé</CardTitle>
+          <CardTitle className="text-lg">{t('chinaLogisticsTracking.suiviDetaille')}</CardTitle>
           <CardDescription>
             Parcours de votre colis de la Chine jusqu'à destination
           </CardDescription>
@@ -490,14 +492,14 @@ export function ChinaLogisticsTracking({
 
                   {logistics.customs_reference && (
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Référence</span>
+                      <span className="text-muted-foreground">{t('chinaLogisticsTracking.reference')}</span>
                       <span className="font-mono">{logistics.customs_reference}</span>
                     </div>
                   )}
 
                   {logistics.customs_duty_amount && (
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Droits de douane</span>
+                      <span className="text-muted-foreground">{t('chinaLogisticsTracking.droitsDeDouane')}</span>
                       <span className="font-medium">
                         {logistics.customs_duty_amount} {logistics.customs_duty_currency}
                       </span>
@@ -512,7 +514,7 @@ export function ChinaLogisticsTracking({
               <Alert className="mt-4">
                 <Info className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Information client:</strong> Délai estimé {logistics.customer_estimated_min_days}-{logistics.customer_estimated_max_days} jours ouvrables
+                  <strong>{t('chinaLogisticsTracking.informationClient')}</strong> Délai estimé {logistics.customer_estimated_min_days}-{logistics.customer_estimated_max_days} jours ouvrables
                 </AlertDescription>
               </Alert>
             )}

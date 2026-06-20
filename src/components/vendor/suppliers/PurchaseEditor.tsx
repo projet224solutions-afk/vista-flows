@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -111,11 +112,16 @@ interface PurchaseEditorProps {
 }
 
 export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorProps) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false);
   const [showVerificationDialog, setShowVerificationDialog] = useState(false);
   const [showValidateConfirm, setShowValidateConfirm] = useState(false);
   const [missingProductsData, setMissingProductsData] = useState<any[]>([]);
+  // Mode de paiement de l'achat : payé (dépense) ou à crédit (dette fournisseur).
+  const [paymentMode, setPaymentMode] = useState<'cash' | 'credit'>('cash');
+  const [creditDueDate, setCreditDueDate] = useState('');
+  const [creditMinInstallment, setCreditMinInstallment] = useState('');
   const [notes, setNotes] = useState(purchase.notes || '');
   const [newItem, setNewItem] = useState({
     supplier_id: '',
@@ -257,7 +263,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
     onSuccess: () => {
       refetchItems();
       queryClient.invalidateQueries({ queryKey: ['stock-purchases', vendorId] });
-      toast.success('Produit ajouté');
+      toast.success(t('purchaseEditor.produitAjoute'));
       setIsAddItemDialogOpen(false);
       resetNewItem();
     },
@@ -279,7 +285,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
     onSuccess: () => {
       refetchItems();
       queryClient.invalidateQueries({ queryKey: ['stock-purchases', vendorId] });
-      toast.success('Produit retiré');
+      toast.success(t('purchaseEditor.produitRetire'));
     },
     onError: (error: Error) => {
       toast.error(`Erreur: ${error.message}`);
@@ -297,7 +303,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success('Notes enregistrées');
+      toast.success(t('purchaseEditor.notesEnregistrees'));
     },
   });
 
@@ -384,7 +390,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stock-purchases', vendorId] });
-      toast.success('Document PDF généré et téléchargé');
+      toast.success(t('purchaseEditor.documentPdfGenereEtTelecharge'));
     },
     onError: (error: Error) => {
       toast.error(`Erreur: ${error.message}`);
@@ -394,6 +400,22 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
   // Validate purchase mutation - backend Node (atomique, RPC validate_stock_purchase)
   const validateMutation = useMutation({
     mutationFn: async () => {
+      // ACHAT À CRÉDIT : on pose le mode + échéance + fournisseur sur l'achat AVANT validation.
+      // Le RPC validate_stock_purchase lit ces champs et crée une DETTE au lieu d'une dépense payée.
+      if (paymentMode === 'credit') {
+        const firstSupplier = items.find((i) => i.supplier_id)?.supplier_id || null;
+        const { error: upErr } = await supabase
+          .from('stock_purchases')
+          .update({
+            payment_mode: 'credit',
+            supplier_id: firstSupplier,
+            due_date: creditDueDate || null,
+            minimum_installment: creditMinInstallment ? Number(creditMinInstallment) : 0,
+          })
+          .eq('id', purchase.id);
+        if (upErr) throw new Error(upErr.message);
+      }
+
       const { backendFetch } = await import('@/services/backendApi');
       const resp = await backendFetch<any>('/api/inventory/validate-purchase', {
         body: {
@@ -413,7 +435,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
       queryClient.invalidateQueries({ queryKey: ['stock-purchases', vendorId] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['vendor-expenses'] });
-      toast.success('Achat validé! Stock, prix d\'achat et dépenses mis à jour.');
+      toast.success(t('purchaseEditor.achatValideStockPrixD'));
       setShowValidateConfirm(false);
       onClose();
     },
@@ -450,19 +472,19 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
 
   const handleAddItem = () => {
     if (!newItem.product_name.trim()) {
-      toast.error('Le nom du produit est requis');
+      toast.error(t('purchaseEditor.leNomDuProduitEst'));
       return;
     }
     if (newItem.quantity < 1) {
-      toast.error('La quantité doit être supérieure à 0');
+      toast.error(t('purchaseEditor.laQuantiteDoitEtreSuperieure'));
       return;
     }
     if (newItem.purchase_price <= 0) {
-      toast.error('Le prix d\'achat est requis');
+      toast.error(t('purchaseEditor.lePrixDAchatEst'));
       return;
     }
     if (newItem.selling_price <= 0) {
-      toast.error('Le prix de vente est requis');
+      toast.error(t('purchaseEditor.lePrixDeVenteEst'));
       return;
     }
     addItemMutation.mutate();
@@ -520,7 +542,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Total de l'achat</p>
+              <p className="text-sm text-muted-foreground">{t('purchaseEditor.totalDeLAchat')}</p>
               <p className="text-2xl font-bold text-primary">
                 {formatCurrency(totalPurchase)}
               </p>
@@ -547,7 +569,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
           {items.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Calculator className="mx-auto h-8 w-8 mb-2 opacity-50" />
-              <p>Aucun produit ajouté</p>
+              <p>{t('purchaseEditor.aucunProduitAjoute')}</p>
             </div>
           ) : (
             <ScrollArea className="max-h-[300px]">
@@ -595,7 +617,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-4 text-center mb-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center mb-4">
             <div className="p-3 rounded-lg bg-background">
               <p className="text-xs text-muted-foreground">Total Achat</p>
               <p className="text-lg font-bold text-destructive">
@@ -603,11 +625,11 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
               </p>
             </div>
             <div className="p-3 rounded-lg bg-background">
-              <p className="text-xs text-muted-foreground">Total Vente Estimé</p>
+              <p className="text-xs text-muted-foreground">{t('purchaseEditor.totalVenteEstime')}</p>
               <p className="text-lg font-bold">{formatCurrency(totalSelling)}</p>
             </div>
             <div className="p-3 rounded-lg bg-background">
-              <p className="text-xs text-muted-foreground">Profit Estimé</p>
+              <p className="text-xs text-muted-foreground">{t('purchaseEditor.profitEstime')}</p>
               <p className="text-lg font-bold text-[#ff4000]">
                 +{formatCurrency(totalProfit)}
               </p>
@@ -641,7 +663,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
 
               {/* Marge bénéficiaire */}
               <div className="mt-3 pt-3 border-t flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Marge bénéficiaire</span>
+                <span className="text-sm text-muted-foreground">{t('purchaseEditor.margeBeneficiaire')}</span>
                 <span className="font-bold text-[#ff4000]">
                   {totalPurchase > 0 ? ((totalProfit / totalPurchase) * 100).toFixed(1) : 0}%
                 </span>
@@ -660,7 +682,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               onBlur={() => updateNotesMutation.mutate(notes)}
-              placeholder="Notes sur cet achat..."
+              placeholder={t('purchaseEditor.notesSurCetAchat')}
               rows={2}
               className="mt-1"
             />
@@ -743,13 +765,13 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Catégorie (optionnel)</Label>
+                <Label className="text-sm font-medium">{t('purchaseEditor.categorieOptionnel')}</Label>
                 <Select
                   value={newItem.category_id}
                   onValueChange={(v) => setNewItem({ ...newItem, category_id: v, product_id: '' })}
                 >
                   <SelectTrigger className="h-11">
-                    <SelectValue placeholder="Filtrer par catégorie..." />
+                    <SelectValue placeholder={t('purchaseEditor.filtrerParCategorie')} />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((c) => (
@@ -766,7 +788,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
 
             {/* Sélection du produit avec images */}
             <div className="space-y-3">
-              <Label className="text-sm font-medium">Sélectionner un produit existant</Label>
+              <Label className="text-sm font-medium">{t('purchaseEditor.selectionnerUnProduitExistant')}</Label>
 
               {products.length > 0 ? (
                 <ScrollArea className="h-48 border rounded-lg p-2">
@@ -840,13 +862,13 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
               <Input
                 value={newItem.product_name}
                 onChange={(e) => setNewItem({ ...newItem, product_name: e.target.value })}
-                placeholder="Saisissez ou modifiez le nom du produit"
+                placeholder={t('purchaseEditor.saisissezOuModifiezLeNom')}
                 className="h-11"
               />
             </div>
 
             {/* Quantité et Prix */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label className="text-sm font-medium">
                   Quantité <span className="text-destructive">*</span>
@@ -907,9 +929,9 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <Calculator className="h-4 w-4" />
-                    <span className="font-medium text-sm">Récapitulatif des calculs</span>
+                    <span className="font-medium text-sm">{t('purchaseEditor.recapitulatifDesCalculs')}</span>
                   </div>
-                  <div className="grid grid-cols-3 gap-4 text-center">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center">
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Profit unitaire</p>
                       <p className={`font-bold ${newItem.selling_price >= newItem.purchase_price ? 'text-[#ff4000]' : 'text-destructive'}`}>
@@ -935,7 +957,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
                   {newItem.selling_price < newItem.purchase_price && (
                     <div className="mt-3 flex items-center gap-2 text-destructive text-sm">
                       <AlertTriangle className="h-4 w-4" />
-                      <span>Attention: Le prix de vente est inférieur au prix d'achat!</span>
+                      <span>{t('purchaseEditor.attentionLePrixDeVente')}</span>
                     </div>
                   )}
                 </CardContent>
@@ -986,13 +1008,40 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
               Valider définitivement cet achat ?
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <p>Cette action est <strong>irréversible</strong>. Une fois validé :</p>
+              <p>Cette action est <strong>{t('purchaseEditor.irreversible')}</strong>{t('purchaseEditor.uneFoisValide')}</p>
               <ul className="list-disc list-inside text-sm space-y-1">
-                <li>Le stock sera automatiquement mis à jour</li>
-                <li>Une dépense sera créée ({formatCurrency(totalPurchase)})</li>
-                <li>Les prix de vente seront synchronisés</li>
-                <li>L'achat sera verrouillé</li>
+                <li>{t('purchaseEditor.leStockSeraAutomatiquementMis')}</li>
+                <li>{paymentMode === 'credit' ? `Une DETTE fournisseur sera créée (${formatCurrency(totalPurchase)})` : `Une dépense sera créée (${formatCurrency(totalPurchase)})`}</li>
+                <li>{t('purchaseEditor.lesPrixDeVenteSeront')}</li>
+                <li>{t('purchaseEditor.lAchatSeraVerrouille')}</li>
               </ul>
+
+              {/* Mode de paiement : payé (dépense) ou à crédit (dette fournisseur) */}
+              <div className="mt-3 rounded-lg border p-3 space-y-2">
+                <p className="text-sm font-medium text-foreground">Règlement</p>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setPaymentMode('cash')}
+                    className={`flex-1 rounded-md border px-3 py-2 text-sm ${paymentMode === 'cash' ? 'border-primary bg-primary/10 font-medium' : 'border-border'}`}>
+                    💵 Payé
+                  </button>
+                  <button type="button" onClick={() => setPaymentMode('credit')}
+                    className={`flex-1 rounded-md border px-3 py-2 text-sm ${paymentMode === 'credit' ? 'border-[#ff4000] bg-orange-50 font-medium text-[#ff4000]' : 'border-border'}`}>
+                    🧾 À crédit (dette)
+                  </button>
+                </div>
+                {paymentMode === 'credit' && (
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <label className="text-xs text-muted-foreground">Échéance
+                      <input type="date" value={creditDueDate} onChange={(e) => setCreditDueDate(e.target.value)}
+                        className="mt-1 block w-full rounded-md border px-2 py-1.5 text-sm bg-background" />
+                    </label>
+                    <label className="text-xs text-muted-foreground">Tranche min. (GNF)
+                      <input type="number" value={creditMinInstallment} onChange={(e) => setCreditMinInstallment(e.target.value)}
+                        placeholder="0" className="mt-1 block w-full rounded-md border px-2 py-1.5 text-sm bg-background" />
+                    </label>
+                  </div>
+                )}
+              </div>
               {missingProductsData.length > 0 && (
                 <div className="mt-3 p-3 bg-destructive/10 rounded-lg border border-destructive/20">
                   <p className="text-sm font-medium text-destructive flex items-center gap-2">
@@ -1007,7 +1056,7 @@ export function PurchaseEditor({ purchase, vendorId, onClose }: PurchaseEditorPr
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel>{t('purchaseEditor.annuler')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => validateMutation.mutate()}
               className="bg-[#ff4000] hover:bg-[#ff4000]"

@@ -1,5 +1,5 @@
-// @ts-nocheck
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +32,7 @@ export function OrderSupplierProductDialog({
   onOpenChange,
   onSuccess
 }: OrderSupplierProductDialogProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [quantity, setQuantity] = useState(product.minimum_order || 1);
@@ -48,7 +49,7 @@ export function OrderSupplierProductDialog({
     e.preventDefault();
 
     if (!user) {
-      toast.error('Vous devez être connecté');
+      toast.error(t('orderSupplierProductDialog.vousDevezEtreConnecte'));
       return;
     }
 
@@ -63,7 +64,7 @@ export function OrderSupplierProductDialog({
     }
 
     if (deliveryMethod === 'delivery' && !deliveryAddress) {
-      toast.error('Veuillez fournir une adresse de livraison');
+      toast.error(t('orderSupplierProductDialog.veuillezFournirUneAdresseDe'));
       return;
     }
 
@@ -95,7 +96,7 @@ export function OrderSupplierProductDialog({
 
       if (error) throw error;
 
-      toast.success('Commande créée avec succès');
+      toast.success(t('orderSupplierProductDialog.commandeCreeeAvecSucces'));
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
@@ -112,9 +113,9 @@ export function OrderSupplierProductDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Commander ce produit</DialogTitle>
+          <DialogTitle>{t('orderSupplierProductDialog.commanderCeProduit')}</DialogTitle>
           <DialogDescription>
             {product.product_name} - {product.supplier.business_name}
           </DialogDescription>
@@ -123,7 +124,7 @@ export function OrderSupplierProductDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Quantité */}
           <div className="space-y-2">
-            <Label htmlFor="quantity">Quantité *</Label>
+            <Label htmlFor="quantity">{t('orderSupplierProductDialog.quantite')}</Label>
             <div className="relative">
               <Package className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
@@ -153,7 +154,7 @@ export function OrderSupplierProductDialog({
               <span className="font-medium">{formatAmount(subtotal)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span>Frais de livraison:</span>
+              <span>{t('orderSupplierProductDialog.fraisDeLivraison')}</span>
               <span className="font-medium">{formatAmount(shippingCost)}</span>
             </div>
             <div className="flex justify-between text-lg font-bold pt-2 border-t">
@@ -164,7 +165,7 @@ export function OrderSupplierProductDialog({
 
           {/* Méthode de paiement */}
           <div className="space-y-2">
-            <Label>Méthode de paiement *</Label>
+            <Label>{t('orderSupplierProductDialog.methodeDePaiement')}</Label>
             <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="wallet" id="wallet" />
@@ -172,7 +173,7 @@ export function OrderSupplierProductDialog({
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="debt" id="debt" />
-                <Label htmlFor="debt" className="cursor-pointer">Dette (paiement en tranches)</Label>
+                <Label htmlFor="debt" className="cursor-pointer">{t('orderSupplierProductDialog.dettePaiementEnTranches')}</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="mobile_money" id="mobile_money" />
@@ -187,15 +188,15 @@ export function OrderSupplierProductDialog({
 
           {/* Méthode de livraison */}
           <div className="space-y-2">
-            <Label>Méthode de livraison *</Label>
+            <Label>{t('orderSupplierProductDialog.methodeDeLivraison')}</Label>
             <RadioGroup value={deliveryMethod} onValueChange={setDeliveryMethod}>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="pickup" id="pickup" />
-                <Label htmlFor="pickup" className="cursor-pointer">Retrait sur place (Gratuit)</Label>
+                <Label htmlFor="pickup" className="cursor-pointer">{t('orderSupplierProductDialog.retraitSurPlaceGratuit')}</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="delivery" id="delivery" />
-                <Label htmlFor="delivery" className="cursor-pointer">Livraison à domicile (5,000 GNF)</Label>
+                <Label htmlFor="delivery" className="cursor-pointer">{t('orderSupplierProductDialog.livraisonADomicile5000')}</Label>
               </div>
             </RadioGroup>
           </div>
@@ -203,12 +204,12 @@ export function OrderSupplierProductDialog({
           {/* Adresse de livraison */}
           {deliveryMethod === 'delivery' && (
             <div className="space-y-2">
-              <Label htmlFor="address">Adresse de livraison *</Label>
+              <Label htmlFor="address">{t('orderSupplierProductDialog.adresseDeLivraison')}</Label>
               <Input
                 id="address"
                 value={deliveryAddress}
                 onChange={(e) => setDeliveryAddress(e.target.value)}
-                placeholder="Votre adresse complète"
+                placeholder={t('orderSupplierProductDialog.votreAdresseComplete')}
                 required
               />
             </div>
@@ -221,7 +222,7 @@ export function OrderSupplierProductDialog({
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Instructions spéciales..."
+              placeholder={t('orderSupplierProductDialog.instructionsSpeciales')}
               rows={2}
             />
           </div>

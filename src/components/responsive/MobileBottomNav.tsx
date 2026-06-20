@@ -38,7 +38,7 @@ export function MobileBottomNav({
         className
       )}
     >
-      <div className="grid grid-cols-5 gap-1 p-2 max-w-screen-md mx-auto">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-1 p-2 max-w-screen-md mx-auto">
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = activeValue === item.value;

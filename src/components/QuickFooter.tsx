@@ -53,6 +53,10 @@ export default function QuickFooter() {
     },
   ];
 
+  // Pages publiques plein écran (paiement / signature de contrat) : pas de nav d'app
+  // (sinon elle recouvre le bouton « Payer » et déroute un client non connecté).
+  if (/^\/(pay|contrat)\//.test(location.pathname)) return null;
+
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 bg-card/98 backdrop-blur-md border-t border-border z-[100] shadow-lg"

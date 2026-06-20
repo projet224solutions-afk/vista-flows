@@ -235,18 +235,18 @@ export default function TransitaireDashboard() {
           <CardContent className="p-6">
             <div className="text-center">
               <Globe className="w-12 h-12 mx-auto mb-4 text-blue-500" />
-              <h3 className="text-xl font-bold mb-2">Plateforme de Transit International</h3>
+              <h3 className="text-xl font-bold mb-2">{t('transitaireDashboard.plateformeDeTransitInternational')}</h3>
               <p className="text-muted-foreground mb-4">
                 Gérez vos expéditions internationales avec notre système avancé
               </p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span>Suivi en temps réel</span>
+                  <span>{t('transitaireDashboard.suiviEnTempsReel')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span>Gestion douanière</span>
+                  <span>{t('transitaireDashboard.gestionDouaniere')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -262,7 +262,7 @@ export default function TransitaireDashboard() {
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span>Rapports détaillés</span>
+                  <span>{t('transitaireDashboard.rapportsDetailles')}</span>
                 </div>
               </div>
             </div>

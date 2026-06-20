@@ -109,6 +109,7 @@ export function AutoInstallPrompt({
   onInstalled,
   onDismissed
 }: AutoInstallPromptProps) {
+  const { t } = useTranslation();
   useTranslation();
 
   const { profile } = useAuth();
@@ -389,7 +390,7 @@ export function AutoInstallPrompt({
                   <button
                     onClick={handleDismiss}
                     className="p-2 hover:bg-white/20 rounded-full transition-colors"
-                    aria-label="Fermer"
+                    aria-label={t('autoInstallPrompt.fermer')}
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -407,7 +408,7 @@ export function AutoInstallPrompt({
                   <div className="bg-orange-50 dark:bg-[#ff4000]/30 border border-orange-200 dark:border-[#ff4000] rounded-lg p-3">
                     <p className="text-sm text-[#ff4000] dark:text-orange-200 flex items-center gap-2">
                       <Database className="w-4 h-4 flex-shrink-0" />
-                      <span>La base de données locale POS n'est pas encore initialisée.</span>
+                      <span>{t('autoInstallPrompt.laBaseDeDonneesLocale')}</span>
                     </p>
                   </div>
                 )}
@@ -451,7 +452,7 @@ export function AutoInstallPrompt({
                       </div>
                       <div className="flex items-center gap-2 p-3 bg-orange-50 dark:bg-orange-900/30 rounded-lg">
                         <Smartphone className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-                        <span className="text-sm font-medium">Accès direct</span>
+                        <span className="text-sm font-medium">{t('autoInstallPrompt.accesDirect')}</span>
                       </div>
                     </>
                   )}
@@ -462,7 +463,7 @@ export function AutoInstallPrompt({
                   <div className="bg-orange-50 dark:bg-[#ff4000]/30 border border-orange-200 dark:border-[#ff4000] rounded-lg p-4">
                     <p className="text-sm text-[#ff4000] dark:text-orange-200 flex items-center gap-2">
                       <Share className="w-4 h-4" />
-                      Appuyez sur <strong>Partager</strong> puis <strong>"Sur l'écran d'accueil"</strong>
+                      Appuyez sur <strong>Partager</strong> puis <strong>{t('autoInstallPrompt.surLEcranDAccueil')}</strong>
                     </p>
                   </div>
                 )}

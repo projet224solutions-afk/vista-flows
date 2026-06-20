@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -122,6 +123,7 @@ interface FxHealthData {
 }
 
 export function WalletAdminPanel() {
+  const { t } = useTranslation();
   const [wallets, setWallets] = useState<WalletAdminData[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -201,7 +203,7 @@ export function WalletAdminPanel() {
       if (!response.success) {
         throw new Error(response.error || 'Refresh FX échoué');
       }
-      toast.success('Collecte des taux lancée avec succès');
+      toast.success(t('walletAdminPanel.collecteDesTauxLanceeAvec'));
       await loadFxHealth();
     } catch (error: any) {
       toast.error(error?.message || 'Erreur refresh FX');
@@ -219,7 +221,7 @@ export function WalletAdminPanel() {
   const handleFxMarginUpdate = async () => {
     const marginPercent = Number(String(fxMarginPercentInput).replace(',', '.'));
     if (!Number.isFinite(marginPercent) || marginPercent < 0 || marginPercent > 30) {
-      toast.error('Commission invalide. Entrez un pourcentage entre 0 et 30.');
+      toast.error(t('walletAdminPanel.commissionInvalideEntrezUnPourcentage'));
       return;
     }
 
@@ -322,7 +324,7 @@ export function WalletAdminPanel() {
 
   const handleBlockWallet = async () => {
     if (!selectedWallet || !blockReason) {
-      toast.error('Raison de blocage requise');
+      toast.error(t('walletAdminPanel.raisonDeBlocageRequise'));
       return;
     }
 
@@ -339,7 +341,7 @@ export function WalletAdminPanel() {
 
       if (error) throw error;
 
-      toast.success('Wallet bloqué avec succès');
+      toast.success(t('walletAdminPanel.walletBloqueAvecSucces'));
       setBlockDialogOpen(false);
       setBlockReason('');
       setSelectedWallet(null);
@@ -364,11 +366,11 @@ export function WalletAdminPanel() {
 
       if (error) throw error;
 
-      toast.success('Wallet débloqué avec succès');
+      toast.success(t('walletAdminPanel.walletDebloqueAvecSucces'));
       await loadWallets();
 
     } catch (_error: any) {
-      toast.error('Erreur déblocage wallet');
+      toast.error(t('walletAdminPanel.erreurDeblocageWallet'));
     }
   };
 
@@ -457,7 +459,7 @@ export function WalletAdminPanel() {
                   <p className="text-2xl font-bold">
                     {Math.round(stats.total_balance).toLocaleString()}
                   </p>
-                  <p className="text-sm text-muted-foreground">Solde Total GNF</p>
+                  <p className="text-sm text-muted-foreground">{t('walletAdminPanel.soldeTotalGnf')}</p>
                 </div>
               </div>
             </CardContent>
@@ -472,7 +474,7 @@ export function WalletAdminPanel() {
             <div>
               <div className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5" />
-                <CardTitle>Monitoring Taux de Change</CardTitle>
+                <CardTitle>{t('walletAdminPanel.monitoringTauxDeChange')}</CardTitle>
                 {typeof displayedFxMargin === 'number' && (
                   <Badge variant="secondary">
                     Commission: {(displayedFxMargin * 100).toFixed(2)}%
@@ -518,7 +520,7 @@ export function WalletAdminPanel() {
             <>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div className="rounded-lg border p-3">
-                  <p className="text-xs text-muted-foreground">Fraîcheur des taux</p>
+                  <p className="text-xs text-muted-foreground">{t('walletAdminPanel.fraicheurDesTaux')}</p>
                   <p className="text-lg font-semibold">
                     {formatRateAgeCountdown(liveRateAgeSeconds)}
                   </p>
@@ -527,7 +529,7 @@ export function WalletAdminPanel() {
                   </Badge>
                 </div>
                 <div className="rounded-lg border p-3">
-                  <p className="text-xs text-muted-foreground">Collecte consécutive</p>
+                  <p className="text-xs text-muted-foreground">{t('walletAdminPanel.collecteConsecutive')}</p>
                   <p className="text-lg font-semibold">
                     {fxHealth.two_consecutive_failures ? '2 échecs détectés' : 'Stable'}
                   </p>
@@ -562,9 +564,9 @@ export function WalletAdminPanel() {
               </div>
 
               <div className="rounded-lg border p-3">
-                <p className="text-sm font-medium mb-2">Sources bancaires visitées</p>
+                <p className="text-sm font-medium mb-2">{t('walletAdminPanel.sourcesBancairesVisitees')}</p>
                 {fxHealth.bank_sources.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">Aucune source bancaire trouvée.</p>
+                  <p className="text-xs text-muted-foreground">{t('walletAdminPanel.aucuneSourceBancaireTrouvee')}</p>
                 ) : (
                   <div className="space-y-1">
                     {fxHealth.bank_sources.slice(0, 6).map((source, idx) => (
@@ -585,9 +587,9 @@ export function WalletAdminPanel() {
               </div>
 
               <div className="rounded-lg border p-3">
-                <p className="text-sm font-medium mb-2">Historique devise Guinée (GNF)</p>
+                <p className="text-sm font-medium mb-2">{t('walletAdminPanel.historiqueDeviseGuineeGnf')}</p>
                 {!fxHealth.gnf_today_history || fxHealth.gnf_today_history.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">Aucun taux GNF collecté aujourd'hui.</p>
+                  <p className="text-xs text-muted-foreground">{t('walletAdminPanel.aucunTauxGnfCollecteAujourd')}</p>
                 ) : (
                   <div className="max-h-48 overflow-auto space-y-1">
                     {fxHealth.gnf_today_history.slice(0, 20).map((rate, idx) => (
@@ -610,9 +612,9 @@ export function WalletAdminPanel() {
               </div>
 
               <div className="rounded-lg border p-3">
-                <p className="text-sm font-medium mb-2">Historique du taux (aujourd'hui)</p>
+                <p className="text-sm font-medium mb-2">{t('walletAdminPanel.historiqueDuTauxAujourdHui')}</p>
                 {fxHealth.today_history.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">Aucun taux collecté aujourd'hui.</p>
+                  <p className="text-xs text-muted-foreground">{t('walletAdminPanel.aucunTauxCollecteAujourdHui')}</p>
                 ) : (
                   <div className="max-h-64 overflow-auto space-y-1">
                     {fxHealth.today_history.slice(0, 20).map((rate, idx) => (
@@ -649,7 +651,7 @@ export function WalletAdminPanel() {
               <div className="rounded-lg border p-3">
                 <p className="text-sm font-medium mb-2">Alertes FX actives</p>
                 {fxHealth.active_alerts.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">Aucune alerte active.</p>
+                  <p className="text-xs text-muted-foreground">{t('walletAdminPanel.aucuneAlerteActive')}</p>
                 ) : (
                   <div className="space-y-2">
                     {fxHealth.active_alerts.slice(0, 5).map((alert) => (
@@ -703,7 +705,7 @@ export function WalletAdminPanel() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher par ID, nom, email..."
+                placeholder={t('walletAdminPanel.rechercherParIdNomEmail')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -719,7 +721,7 @@ export function WalletAdminPanel() {
           ) : filteredWallets.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Wallet className="w-16 h-16 mx-auto mb-3 opacity-30" />
-              <p>Aucun wallet trouvé</p>
+              <p>{t('walletAdminPanel.aucunWalletTrouve')}</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -808,7 +810,7 @@ export function WalletAdminPanel() {
       <Dialog open={showFxMarginDialog} onOpenChange={setShowFxMarginDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Modifier commission FX</DialogTitle>
+            <DialogTitle>{t('walletAdminPanel.modifierCommissionFx')}</DialogTitle>
             <DialogDescription>
               Saisissez le pourcentage de commission à appliquer au taux.
             </DialogDescription>
@@ -854,7 +856,7 @@ export function WalletAdminPanel() {
       <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Bloquer le wallet</DialogTitle>
+            <DialogTitle>{t('walletAdminPanel.bloquerLeWallet')}</DialogTitle>
             <DialogDescription>
               Cette action bloquera toutes les opérations sur ce wallet
             </DialogDescription>
@@ -878,9 +880,9 @@ export function WalletAdminPanel() {
             )}
 
             <div>
-              <label className="text-sm font-medium">Raison du blocage *</label>
+              <label className="text-sm font-medium">{t('walletAdminPanel.raisonDuBlocage')}</label>
               <Input
-                placeholder="Ex: Activité suspecte, fraude détectée..."
+                placeholder={t('walletAdminPanel.exActiviteSuspecteFraudeDetectee')}
                 value={blockReason}
                 onChange={(e) => setBlockReason(e.target.value)}
                 className="mt-2"

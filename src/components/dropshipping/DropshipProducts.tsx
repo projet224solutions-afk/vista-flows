@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
@@ -33,8 +34,11 @@ import {
   Trash2,
   ExternalLink,
   Eye,
-  EyeOff
+  EyeOff,
+  Store
 } from 'lucide-react';
+import { toast } from 'sonner';
+import { backendFetch } from '@/services/backendApi';
 import type { DropshipProduct, DropshipSupplier } from '@/types/dropshipping';
 import { AddDropshipProductDialog } from './AddDropshipProductDialog';
 
@@ -57,8 +61,29 @@ export function DropshipProducts({
   onDelete,
   onAdd
 }: DropshipProductsProps) {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
+
+  // Publie (ou retire) le produit dropship dans le catalogue marketplace via le backend
+  // atomique → le produit importé devient réellement ACHETABLE (bridge type Shopify).
+  const handleTogglePublish = async (product: DropshipProduct) => {
+    const isPublished = Boolean((product as any).is_published);
+    const action = isPublished ? 'unpublish' : 'publish';
+    setPublishingId(product.id);
+    try {
+      const res = await backendFetch(`/api/v2/dropship/${product.id}/${action}`, { method: 'POST', body: {} });
+      if (res.success) {
+        toast.success(isPublished ? 'Produit retiré du marketplace' : 'Produit publié — il est maintenant achetable');
+        await onUpdate(product.id, { is_published: !isPublished });
+      } else {
+        toast.error(res.error || 'Action impossible');
+      }
+    } finally {
+      setPublishingId(null);
+    }
+  };
 
   const filteredProducts = products.filter(p =>
     p.product_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -93,7 +118,7 @@ export function DropshipProducts({
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Rechercher un produit..."
+            placeholder={t('dropshipProducts.rechercherUnProduit')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -123,8 +148,8 @@ export function DropshipProducts({
           {filteredProducts.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Package className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <h3 className="font-medium text-lg mb-2">Aucun produit dropshipping</h3>
-              <p className="mb-4">Importez des produits depuis vos fournisseurs pour commencer à vendre</p>
+              <h3 className="font-medium text-lg mb-2">{t('dropshipProducts.aucunProduitDropshipping')}</h3>
+              <p className="mb-4">{t('dropshipProducts.importezDesProduitsDepuisVos')}</p>
               <Button onClick={() => setShowAddDialog(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Importer un Produit
@@ -135,13 +160,13 @@ export function DropshipProducts({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Produit</TableHead>
+                    <TableHead>{t('dropshipProducts.produit')}</TableHead>
                     <TableHead>Fournisseur</TableHead>
                     <TableHead>Prix Achat</TableHead>
                     <TableHead>Prix Vente</TableHead>
                     <TableHead>Marge</TableHead>
-                    <TableHead>Disponibilité</TableHead>
-                    <TableHead>Livraison</TableHead>
+                    <TableHead>{t('dropshipProducts.disponibilite')}</TableHead>
+                    <TableHead>{t('dropshipProducts.livraison')}</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -233,6 +258,13 @@ export function DropshipProducts({
                                   Activer
                                 </>
                               )}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              disabled={publishingId === product.id}
+                              onClick={() => handleTogglePublish(product)}
+                            >
+                              <Store className="w-4 h-4 mr-2" />
+                              {(product as any).is_published ? 'Retirer du marketplace' : 'Publier sur le marketplace'}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => onDelete(product.id)}

@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ interface SubscriptionData {
 }
 
 export function VendorSubscriptionBanner() {
+  const { t } = useTranslation();
   const { user, profile } = useAuth();
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -190,7 +192,7 @@ export function VendorSubscriptionBanner() {
 
               {/* Date de fin */}
               <div className="flex items-center gap-2">
-                <span className="text-sm text-black font-medium">Date de fin</span>
+                <span className="text-sm text-black font-medium">{t('vendorSubscriptionBanner.dateDeFin')}</span>
                 <span className="font-medium text-black">{formatDate(subscription?.end_date || null)}</span>
               </div>
 

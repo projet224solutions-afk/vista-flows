@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -54,6 +55,7 @@ const roleConfig: Record<string, { label: string; icon: React.ReactNode; color: 
 };
 
 export function AgentCreatedUsersList({ agentId }: AgentCreatedUsersListProps) {
+  const { t } = useTranslation();
   const [users, setUsers] = useState<CreatedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -76,7 +78,7 @@ export function AgentCreatedUsersList({ agentId }: AgentCreatedUsersListProps) {
       setUsers(resp.data?.users || []);
     } catch (err) {
       console.error('Exception:', err);
-      toast.error('Erreur de connexion au serveur');
+      toast.error(t('agentCreatedUsersList.erreurDeConnexionAuServeur'));
     } finally {
       setLoading(false);
     }
@@ -86,7 +88,7 @@ export function AgentCreatedUsersList({ agentId }: AgentCreatedUsersListProps) {
     setIsRefreshing(true);
     await loadUsers();
     setIsRefreshing(false);
-    toast.success('Liste actualisée');
+    toast.success(t('agentCreatedUsersList.listeActualisee'));
   };
 
   useEffect(() => {
@@ -176,7 +178,7 @@ export function AgentCreatedUsersList({ agentId }: AgentCreatedUsersListProps) {
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input
-            placeholder="Rechercher par nom, email, téléphone..."
+            placeholder={t('agentCreatedUsersList.rechercherParNomEmailTelephone')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +27,7 @@ interface WalletApiPanelProps {
 }
 
 export default function WalletApiPanel({ serviceId, businessName }: WalletApiPanelProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [request, setRequest] = useState<WalletApiRequest | null>(null);
   const [keys, setKeys] = useState<WalletApiKey[]>([]);
@@ -63,7 +65,7 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
 
   const handleSubmitRequest = async () => {
     if (!user || !requestForm.useCase.trim()) {
-      toast.error('Décrivez votre cas d\'utilisation');
+      toast.error(t('walletApiPanel.decrivezVotreCasDUtilisation'));
       return;
     }
     try {
@@ -77,14 +79,14 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
         expectedVolume: requestForm.expectedVolume || undefined,
       });
       if (id) {
-        toast.success('Demande soumise avec succès ! Elle sera examinée sous 24-48h.');
+        toast.success(t('walletApiPanel.demandeSoumiseAvecSuccesElle'));
         setShowRequestDialog(false);
         loadData();
       } else {
-        toast.error('Erreur lors de la soumission');
+        toast.error(t('walletApiPanel.erreurLorsDeLaSoumission'));
       }
     } catch (_error) {
-      toast.error('Erreur lors de la soumission');
+      toast.error(t('walletApiPanel.erreurLorsDeLaSoumission'));
     } finally {
       setSubmitting(false);
     }
@@ -100,7 +102,7 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
 
   const handleToggleTestMode = async (keyId: string, isTestMode: boolean) => {
     if (!isTestMode) {
-      if (!confirm('⚠️ Passer en mode production ? Les transactions seront réelles.')) return;
+      if (!confirm(t('walletApiPanel.passerEnModeProductionLes'))) return;
     }
     const success = await WalletApiService.toggleTestMode(keyId, isTestMode);
     if (success) {
@@ -131,7 +133,7 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
               <Key className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="text-xl font-bold mb-2">API de Paiement 224Wallet</h3>
+            <h3 className="text-xl font-bold mb-2">{t('walletApiPanel.apiDePaiement224wallet')}</h3>
             <p className="text-muted-foreground max-w-md mb-6">
               Intégrez les paiements 224Wallet directement dans votre site web ou application.
               Acceptez les paiements de vos clients en toute sécurité.
@@ -139,15 +141,15 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 w-full max-w-lg">
               <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-muted/50">
                 <Shield className="w-5 h-5 text-primary" />
-                <span className="text-xs font-medium">Sécurisé</span>
+                <span className="text-xs font-medium">{t('walletApiPanel.securise')}</span>
               </div>
               <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-muted/50">
                 <Zap className="w-5 h-5 text-primary" />
-                <span className="text-xs font-medium">Instantané</span>
+                <span className="text-xs font-medium">{t('walletApiPanel.instantane')}</span>
               </div>
               <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-muted/50">
                 <Code className="w-5 h-5 text-primary" />
-                <span className="text-xs font-medium">Simple à intégrer</span>
+                <span className="text-xs font-medium">{t('walletApiPanel.simpleAIntegrer')}</span>
               </div>
             </div>
             <Button onClick={() => setShowRequestDialog(true)} size="lg">
@@ -159,9 +161,9 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
 
         {/* Request Dialog */}
         <Dialog open={showRequestDialog} onOpenChange={setShowRequestDialog}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Demande d'accès API 224Wallet</DialogTitle>
+              <DialogTitle>{t('walletApiPanel.demandeDAccesApi224wallet')}</DialogTitle>
               <DialogDescription>
                 Décrivez votre projet pour obtenir vos clés d'API. Votre demande sera examinée sous 24-48h.
               </DialogDescription>
@@ -180,12 +182,12 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
                 <Textarea
                   value={requestForm.useCase}
                   onChange={e => setRequestForm(f => ({ ...f, useCase: e.target.value }))}
-                  placeholder="Décrivez comment vous comptez utiliser l'API de paiement..."
+                  placeholder={t('walletApiPanel.decrivezCommentVousComptezUtiliser')}
                   rows={4}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Volume de transactions estimé (optionnel)</Label>
+                <Label>{t('walletApiPanel.volumeDeTransactionsEstimeOptionnel')}</Label>
                 <Input
                   value={requestForm.expectedVolume}
                   onChange={e => setRequestForm(f => ({ ...f, expectedVolume: e.target.value }))}
@@ -194,7 +196,7 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowRequestDialog(false)}>Annuler</Button>
+              <Button variant="outline" onClick={() => setShowRequestDialog(false)}>{t('walletApiPanel.annuler')}</Button>
               <Button onClick={handleSubmitRequest} disabled={submitting || !requestForm.useCase.trim()}>
                 {submitting ? 'Envoi...' : 'Soumettre la demande'}
               </Button>
@@ -235,7 +237,7 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
           <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-4">
             <XCircle className="w-8 h-8 text-destructive" />
           </div>
-          <h3 className="text-xl font-bold mb-2">Demande refusée</h3>
+          <h3 className="text-xl font-bold mb-2">{t('walletApiPanel.demandeRefusee')}</h3>
           <p className="text-muted-foreground max-w-md mb-2">
             Votre demande d'accès API a été refusée.
           </p>
@@ -261,7 +263,7 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
               <Key className="w-4 h-4" />
-              <span className="text-xs">Clés actives</span>
+              <span className="text-xs">{t('walletApiPanel.clesActives')}</span>
             </div>
             <p className="text-2xl font-bold">{keys.filter(k => k.is_active).length}</p>
           </CardContent>
@@ -290,7 +292,7 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-1">
               <CheckCircle className="w-4 h-4" />
-              <span className="text-xs">Réussies</span>
+              <span className="text-xs">{t('walletApiPanel.reussies')}</span>
             </div>
             <p className="text-2xl font-bold text-[#ff4000]">
               {transactions.filter(t => t.status === 'completed').length}
@@ -308,7 +310,7 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
                 <Key className="w-5 h-5" />
                 Vos Clés API
               </CardTitle>
-              <CardDescription>Utilisez ces clés pour intégrer 224Wallet dans votre application</CardDescription>
+              <CardDescription>{t('walletApiPanel.utilisezCesClesPourIntegrer')}</CardDescription>
             </div>
             <Button variant="outline" size="sm" onClick={loadData}>
               <RefreshCw className="w-4 h-4 mr-1" /> Actualiser
@@ -317,7 +319,7 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
         </CardHeader>
         <CardContent className="space-y-4">
           {keys.length === 0 ? (
-            <p className="text-center text-muted-foreground py-6">Aucune clé API générée</p>
+            <p className="text-center text-muted-foreground py-6">{t('walletApiPanel.aucuneCleApiGeneree')}</p>
           ) : (
             keys.map(key => (
               <div key={key.id} className={cn(
@@ -348,7 +350,7 @@ export default function WalletApiPanel({ serviceId, businessName }: WalletApiPan
 
                 {/* API Key */}
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Clé API</Label>
+                  <Label className="text-xs text-muted-foreground">{t('walletApiPanel.cleApi')}</Label>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 bg-background border rounded-md px-3 py-2 text-xs font-mono truncate">
                       {showSecrets[`key-${key.id}`] ? key.api_key : key.api_key.slice(0, 12) + '••••••••••••••••'}
@@ -440,7 +442,7 @@ const { payment_id, status } = await response.json();`}</pre>
       {transactions.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Dernières Transactions</CardTitle>
+            <CardTitle className="text-base">{t('walletApiPanel.dernieresTransactions')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">

@@ -13,6 +13,7 @@ import { ArrowDownCircle, ArrowUpCircle, Loader2, Shield, CheckCircle2 } from "l
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { signedInvoke, generateIdempotencyKey } from "@/lib/security/hmacSigner";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface PayPalWalletOperationsProps {
   userId: string;
@@ -21,6 +22,7 @@ interface PayPalWalletOperationsProps {
 }
 
 export default function PayPalWalletOperations({ userId, walletId, onSuccess }: PayPalWalletOperationsProps) {
+  const { t } = useTranslation();
   const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [paypalEmail, setPaypalEmail] = useState("");
@@ -34,7 +36,7 @@ export default function PayPalWalletOperations({ userId, walletId, onSuccess }: 
   const handleCreateDeposit = async () => {
     const numAmount = parseFloat(depositAmount);
     if (!numAmount || numAmount < 5) {
-      toast.error("Montant invalide", { description: "Minimum $5 USD" });
+      toast.error(t('payPalWalletOperations.montantInvalide'), { description: "Minimum $5 USD" });
       return;
     }
 
@@ -55,7 +57,7 @@ export default function PayPalWalletOperations({ userId, walletId, onSuccess }: 
       const approveUrl = `https://www.paypal.com/checkoutnow?token=${data.orderId}`;
       window.open(approveUrl, "_blank", "width=500,height=700");
 
-      toast.info("Approuvez le paiement dans PayPal", {
+      toast.info(t('payPalWalletOperations.approuvezLePaiementDansPaypal'), {
         description: "Une fenêtre PayPal s'est ouverte. Validez le paiement puis cliquez sur Confirmer.",
         duration: 15000,
       });
@@ -80,7 +82,7 @@ export default function PayPalWalletOperations({ userId, walletId, onSuccess }: 
       if (error) throw new Error(error.message);
       if (!data?.success) throw new Error(data?.error || "Capture échouée");
 
-      toast.success("Dépôt PayPal réussi !", {
+      toast.success(t('payPalWalletOperations.depotPaypalReussi'), {
         description: `${data.netAmount?.toFixed(2)} USD crédités (frais: ${data.depositFee?.toFixed(2)} USD)`,
       });
 
@@ -90,7 +92,7 @@ export default function PayPalWalletOperations({ userId, walletId, onSuccess }: 
       window.dispatchEvent(new Event("wallet-updated"));
       onSuccess?.();
     } catch (err) {
-      toast.error("Erreur de capture", { description: err instanceof Error ? err.message : "Erreur" });
+      toast.error(t('payPalWalletOperations.erreurDeCapture'), { description: err instanceof Error ? err.message : "Erreur" });
       setDepositStep('approve');
     } finally {
       setProcessing(false);
@@ -101,7 +103,7 @@ export default function PayPalWalletOperations({ userId, walletId, onSuccess }: 
   const handleWithdrawal = async () => {
     const numAmount = parseFloat(withdrawAmount);
     if (!numAmount || numAmount < 5) {
-      toast.error("Montant invalide", { description: "Minimum $5 USD" });
+      toast.error(t('payPalWalletOperations.montantInvalide'), { description: "Minimum $5 USD" });
       return;
     }
     if (!paypalEmail || !paypalEmail.includes("@")) {
@@ -119,7 +121,7 @@ export default function PayPalWalletOperations({ userId, walletId, onSuccess }: 
       if (error) throw new Error(error.message);
       if (!data?.success) throw new Error(data?.error || "Erreur retrait");
 
-      toast.success("Retrait PayPal effectué !", {
+      toast.success(t('payPalWalletOperations.retraitPaypalEffectue'), {
         description: data.message,
       });
 
@@ -143,7 +145,7 @@ export default function PayPalWalletOperations({ userId, walletId, onSuccess }: 
           </div>
           PayPal
         </CardTitle>
-        <CardDescription>Déposez ou retirez via votre compte PayPal</CardDescription>
+        <CardDescription>{t('payPalWalletOperations.deposezOuRetirezViaVotre')}</CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="deposit" className="w-full">
@@ -162,7 +164,7 @@ export default function PayPalWalletOperations({ userId, walletId, onSuccess }: 
               <>
                 <div className="space-y-2">
                   <Label>Montants rapides (USD)</Label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {quickAmounts.map((q) => (
                       <Button
                         key={q}
@@ -178,7 +180,7 @@ export default function PayPalWalletOperations({ userId, walletId, onSuccess }: 
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="pp-deposit">Montant personnalisé (USD)</Label>
+                  <Label htmlFor="pp-deposit">{t('payPalWalletOperations.montantPersonnaliseUsd')}</Label>
                   <Input
                     id="pp-deposit"
                     type="number"
@@ -200,7 +202,7 @@ export default function PayPalWalletOperations({ userId, walletId, onSuccess }: 
                   {processing ? (
                     <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Traitement...</>
                   ) : (
-                    <><ArrowDownCircle className="w-4 h-4 mr-2" /> Payer avec PayPal</>
+                    <><ArrowDownCircle className="w-4 h-4 mr-2" /> {t('payPalWalletOperations.payerAvecPaypal')}</>
                   )}
                 </Button>
               </>
@@ -222,7 +224,7 @@ export default function PayPalWalletOperations({ userId, walletId, onSuccess }: 
                   {processing ? (
                     <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Confirmation...</>
                   ) : (
-                    <><CheckCircle2 className="w-4 h-4 mr-2" /> J'ai approuvé — Confirmer</>
+                    <><CheckCircle2 className="w-4 h-4 mr-2" /> {t('payPalWalletOperations.jAiApprouveConfirmer')}</>
                   )}
                 </Button>
                 <Button
@@ -238,7 +240,7 @@ export default function PayPalWalletOperations({ userId, walletId, onSuccess }: 
             {depositStep === 'capturing' && (
               <div className="flex flex-col items-center gap-3 py-6">
                 <Loader2 className="w-8 h-8 animate-spin text-[#0070BA]" />
-                <p className="text-sm text-muted-foreground">Finalisation du dépôt...</p>
+                <p className="text-sm text-muted-foreground">{t('payPalWalletOperations.finalisationDuDepot')}</p>
               </div>
             )}
           </TabsContent>
@@ -246,11 +248,11 @@ export default function PayPalWalletOperations({ userId, walletId, onSuccess }: 
           {/* WITHDRAWAL TAB */}
           <TabsContent value="withdraw" className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label htmlFor="pp-email">Email PayPal du destinataire</Label>
+              <Label htmlFor="pp-email">{t('payPalWalletOperations.emailPaypalDuDestinataire')}</Label>
               <Input
                 id="pp-email"
                 type="email"
-                placeholder="votre@email.com"
+                placeholder={t('payPalWalletOperations.votreEmailCom')}
                 value={paypalEmail}
                 onChange={(e) => setPaypalEmail(e.target.value)}
               />
@@ -258,7 +260,7 @@ export default function PayPalWalletOperations({ userId, walletId, onSuccess }: 
 
             <div className="space-y-2">
               <Label>Montants rapides (USD)</Label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {quickAmounts.map((q) => (
                   <Button
                     key={q}
@@ -274,7 +276,7 @@ export default function PayPalWalletOperations({ userId, walletId, onSuccess }: 
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="pp-withdraw">Montant (USD)</Label>
+              <Label htmlFor="pp-withdraw">{t('payPalWalletOperations.montantUsd')}</Label>
               <Input
                 id="pp-withdraw"
                 type="number"

@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
 import type { ServiceType } from '@/hooks/useProfessionalServices';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface ServiceSelectionCardProps {
   service: ServiceType;
@@ -15,6 +16,7 @@ export const ServiceSelectionCard = ({
   selected = false,
   onSelect,
 }: ServiceSelectionCardProps) => {
+  const { t } = useTranslation();
   const features = Array.isArray(service.features) ? service.features : [];
 
   return (
@@ -47,7 +49,7 @@ export const ServiceSelectionCard = ({
               {service.category}
             </Badge>
             <Badge variant="outline" className="text-xs ml-2">
-              Commission: {service.commission_rate}%
+              {t('serviceSelection.commission')} {service.commission_rate}%
             </Badge>
           </div>
         </CardHeader>
@@ -55,7 +57,7 @@ export const ServiceSelectionCard = ({
         <CardContent>
           <div className="space-y-2">
             <p className="text-xs font-semibold text-muted-foreground mb-2">
-              Fonctionnalités incluses:
+              {t('serviceSelection.featuresIncluded')}
             </p>
             {features.slice(0, 3).map((feature, index) => (
               <div key={index} className="flex items-start space-x-2">
@@ -65,7 +67,7 @@ export const ServiceSelectionCard = ({
             ))}
             {features.length > 3 && (
               <p className="text-xs text-primary font-medium mt-2">
-                +{features.length - 3} autres fonctionnalités
+                +{features.length - 3} {t('serviceSelection.moreFeatures')}
               </p>
             )}
           </div>
@@ -75,7 +77,7 @@ export const ServiceSelectionCard = ({
             variant={selected ? 'default' : 'outline'}
             size="sm"
           >
-            {selected ? 'Sélectionné' : 'Sélectionner ce service'}
+            {selected ? t('serviceSelection.selected') : t('serviceSelection.selectService')}
           </Button>
         </CardContent>
       </Card>

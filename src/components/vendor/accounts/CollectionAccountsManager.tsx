@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,6 +45,7 @@ const accountTypeConfig = {
 };
 
 export default function CollectionAccountsManager() {
+  const { t } = useTranslation();
   const { vendorId } = useCurrentVendor();
   const { toast } = useToast();
   const { currency, convert } = useVendorCurrency();
@@ -193,7 +195,7 @@ export default function CollectionAccountsManager() {
   const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
 
   if (loading) {
-    return <div className="p-4 text-center">Chargement des comptes...</div>;
+    return <div className="p-4 text-center">{t('collectionAccountsManager.chargementDesComptes')}</div>;
   }
 
   return (
@@ -218,11 +220,11 @@ export default function CollectionAccountsManager() {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Créer un compte d'encaissement</DialogTitle>
+              <DialogTitle>{t('collectionAccountsManager.creerUnCompteDEncaissement')}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium">Nom du compte</label>
+                <label className="text-sm font-medium">{t('collectionAccountsManager.nomDuCompte')}</label>
                 <Input
                   placeholder="Ex: Caisse principale"
                   value={newAccount.account_name}
@@ -230,7 +232,7 @@ export default function CollectionAccountsManager() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Type de compte</label>
+                <label className="text-sm font-medium">{t('collectionAccountsManager.typeDeCompte')}</label>
                 <select
                   className="w-full px-3 py-2 border rounded-md bg-background"
                   value={newAccount.account_type}
@@ -244,7 +246,7 @@ export default function CollectionAccountsManager() {
                 </select>
               </div>
               <div>
-                <label className="text-sm font-medium">Numéro de compte (optionnel)</label>
+                <label className="text-sm font-medium">{t('collectionAccountsManager.numeroDeCompteOptionnel')}</label>
                 <Input
                   placeholder="Ex: 620XXXXXX"
                   value={newAccount.account_number}
@@ -252,8 +254,8 @@ export default function CollectionAccountsManager() {
                 />
               </div>
               <div className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Annuler</Button>
-                <Button onClick={createAccount}>Créer</Button>
+                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>{t('collectionAccountsManager.annuler')}</Button>
+                <Button onClick={createAccount}>{t('collectionAccountsManager.creer')}</Button>
               </div>
             </div>
           </DialogContent>
@@ -265,7 +267,7 @@ export default function CollectionAccountsManager() {
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Solde total</p>
+              <p className="text-sm text-muted-foreground">{t('collectionAccountsManager.soldeTotal')}</p>
               <p className="text-3xl font-bold">{Math.round(convert(totalBalance)).toLocaleString('fr-FR')} {currency}</p>
             </div>
             <Wallet className="w-12 h-12 text-primary/50" />
@@ -295,7 +297,7 @@ export default function CollectionAccountsManager() {
                     </div>
                   </div>
                   {account.is_default && (
-                    <Badge className="bg-primary/10 text-primary text-xs">Par défaut</Badge>
+                    <Badge className="bg-primary/10 text-primary text-xs">{t('collectionAccountsManager.parDefaut')}</Badge>
                   )}
                 </div>
 
@@ -342,7 +344,7 @@ export default function CollectionAccountsManager() {
           <Card className="col-span-full">
             <CardContent className="p-12 text-center">
               <Wallet className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
-              <p className="text-muted-foreground">Aucun compte d'encaissement</p>
+              <p className="text-muted-foreground">{t('collectionAccountsManager.aucunCompteDEncaissement')}</p>
               <Button className="mt-4" onClick={() => setIsCreateOpen(true)}>
                 Créer mon premier compte
               </Button>
@@ -353,7 +355,7 @@ export default function CollectionAccountsManager() {
 
       {/* Dialog Transaction */}
       <Dialog open={isTransactionOpen} onOpenChange={setIsTransactionOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {newTransaction.type === 'deposit' ? 'Enregistrer une entrée' : 'Enregistrer une sortie'}
@@ -400,7 +402,7 @@ export default function CollectionAccountsManager() {
               <div>
                 <label className="text-sm font-medium">Description (optionnel)</label>
                 <Input
-                  placeholder="Ex: Vente client X"
+                  placeholder={t('collectionAccountsManager.exVenteClientX')}
                   value={newTransaction.description}
                   onChange={(e) => setNewTransaction({ ...newTransaction, description: e.target.value })}
                 />
@@ -418,7 +420,7 @@ export default function CollectionAccountsManager() {
               {/* Historique récent */}
               {transactions.length > 0 && (
                 <div className="border-t pt-4">
-                  <p className="text-sm font-medium mb-2">Historique récent</p>
+                  <p className="text-sm font-medium mb-2">{t('collectionAccountsManager.historiqueRecent')}</p>
                   <div className="space-y-2 max-h-40 overflow-y-auto">
                     {transactions.slice(0, 5).map((tx) => (
                       <div key={tx.id} className="flex items-center justify-between text-sm p-2 bg-muted/50 rounded">

@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +23,7 @@ interface ApiTest {
 }
 
 export default function GoogleCloudMonitoring() {
+  const { t } = useTranslation();
   const { getCurrentLocation, location, loading: _geoLoading } = useCurrentLocation();
   const [testAddress, setTestAddress] = useState('Tour Eiffel, Paris');
   const [tests, setTests] = useState<Record<string, ApiTest>>({
@@ -52,7 +54,7 @@ export default function GoogleCloudMonitoring() {
           latency,
           result: results[0]
         });
-        toast.success('Géocodage réussi', {
+        toast.success(t('googleCloudMonitoring.geocodageReussi'), {
           description: `Trouvé: ${results[0].address}`
         });
       } else {
@@ -60,14 +62,14 @@ export default function GoogleCloudMonitoring() {
           status: 'error',
           error: 'Aucun résultat trouvé'
         });
-        toast.error('Aucun résultat trouvé');
+        toast.error(t('googleCloudMonitoring.aucunResultatTrouve'));
       }
     } catch (error: any) {
       updateTest('geocoding', {
         status: 'error',
         error: error.message
       });
-      toast.error('Erreur de géocodage', {
+      toast.error(t('googleCloudMonitoring.erreurDeGeocodage'), {
         description: 'Vérifiez que la clé API Google Cloud est configurée et que les APIs sont activées'
       });
     }
@@ -89,12 +91,12 @@ export default function GoogleCloudMonitoring() {
       const data = await response.json();
 
       if (data.status === 'success') {
-        toast.success('Configuration API validée', {
+        toast.success(t('googleCloudMonitoring.configurationApiValidee'), {
           description: data.message
         });
         return true;
       } else {
-        toast.error('Problème de configuration', {
+        toast.error(t('googleCloudMonitoring.problemeDeConfiguration'), {
           description: data.message,
           duration: 10000
         });
@@ -105,7 +107,7 @@ export default function GoogleCloudMonitoring() {
         return false;
       }
     } catch (error: any) {
-      toast.error('Erreur de test de configuration', {
+      toast.error(t('googleCloudMonitoring.erreurDeTestDeConfiguration'), {
         description: error.message
       });
       return false;
@@ -126,7 +128,7 @@ export default function GoogleCloudMonitoring() {
         latency,
         result: address
       });
-      toast.success('Reverse geocoding réussi', {
+      toast.success(t('googleCloudMonitoring.reverseGeocodingReussi'), {
         description: `Adresse: ${address}`
       });
     } catch (error: any) {
@@ -155,7 +157,7 @@ export default function GoogleCloudMonitoring() {
         latency,
         result: route
       });
-      toast.success('Calcul d\'itinéraire réussi', {
+      toast.success(t('googleCloudMonitoring.calculDItineraireReussi'), {
         description: `Distance: ${route.distance.toFixed(1)}km, Durée: ${route.duration}min`
       });
     } catch (error: any) {
@@ -163,7 +165,7 @@ export default function GoogleCloudMonitoring() {
         status: 'error',
         error: error.message
       });
-      toast.error('Erreur de calcul d\'itinéraire', { description: error.message });
+      toast.error(t('googleCloudMonitoring.erreurDeCalculDItineraire'), { description: error.message });
     }
   };
 
@@ -180,7 +182,7 @@ export default function GoogleCloudMonitoring() {
         latency,
         result: pos
       });
-      toast.success('Géolocalisation réussie', {
+      toast.success(t('googleCloudMonitoring.geolocalisationReussie'), {
         description: `Position: ${pos.latitude.toFixed(4)}, ${pos.longitude.toFixed(4)}`
       });
     } catch (error: any) {
@@ -188,7 +190,7 @@ export default function GoogleCloudMonitoring() {
         status: 'error',
         error: error.message
       });
-      toast.error('Erreur de géolocalisation', { description: error.message });
+      toast.error(t('googleCloudMonitoring.erreurDeGeolocalisation'), { description: error.message });
     }
   };
 
@@ -227,11 +229,11 @@ export default function GoogleCloudMonitoring() {
       case 'loading':
         return <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/20">Test en cours</Badge>;
       case 'success':
-        return <Badge variant="outline" className="bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20">Opérationnel</Badge>;
+        return <Badge variant="outline" className="bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20">{t('googleCloudMonitoring.operationnel')}</Badge>;
       case 'error':
         return <Badge variant="outline" className="bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20">Erreur</Badge>;
       default:
-        return <Badge variant="outline">Non testé</Badge>;
+        return <Badge variant="outline">{t('googleCloudMonitoring.nonTeste')}</Badge>;
     }
   };
 
@@ -239,21 +241,21 @@ export default function GoogleCloudMonitoring() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold mb-2">Monitoring Google Cloud APIs</h2>
-        <p className="text-muted-foreground">Testez et surveillez les APIs Google Cloud (Maps, Directions, Geocoding)</p>
+        <p className="text-muted-foreground">{t('googleCloudMonitoring.testezEtSurveillezLesApis')}</p>
       </div>
 
       <div className="grid gap-4">
         <Card>
           <CardHeader>
-            <CardTitle>Tests des APIs</CardTitle>
-            <CardDescription>Lancez des tests pour vérifier le fonctionnement des APIs</CardDescription>
+            <CardTitle>{t('googleCloudMonitoring.testsDesApis')}</CardTitle>
+            <CardDescription>{t('googleCloudMonitoring.lancezDesTestsPourVerifier')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex gap-2">
               <Input
                 value={testAddress}
                 onChange={(e) => setTestAddress(e.target.value)}
-                placeholder="Adresse à géocoder"
+                placeholder={t('googleCloudMonitoring.adresseAGeocoder')}
                 className="flex-1"
               />
               <Button onClick={testApiConfiguration} variant="outline">
@@ -391,7 +393,7 @@ export default function GoogleCloudMonitoring() {
           <Card>
             <CardHeader>
               <CardTitle>Position Actuelle</CardTitle>
-              <CardDescription>Votre position GPS actuelle</CardDescription>
+              <CardDescription>{t('googleCloudMonitoring.votrePositionGpsActuelle')}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
@@ -404,7 +406,7 @@ export default function GoogleCloudMonitoring() {
                   <span className="font-mono">{location.longitude.toFixed(6)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Précision:</span>
+                  <span className="text-muted-foreground">{t('googleCloudMonitoring.precision')}</span>
                   <span className="font-mono">{location.accuracy.toFixed(0)}m</span>
                 </div>
               </div>

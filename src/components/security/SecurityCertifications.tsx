@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ interface Certification {
 }
 
 export function SecurityCertifications() {
+  const { t } = useTranslation();
   const [certifications, setCertifications] = useState<Certification[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -45,7 +47,7 @@ export function SecurityCertifications() {
       setCertifications((data || []) as Certification[]);
     } catch (error) {
       console.error('Erreur chargement certifications:', error);
-      toast.error('Impossible de charger les certifications');
+      toast.error(t('securityCertifications.impossibleDeChargerLesCertifications'));
     } finally {
       setLoading(false);
     }
@@ -58,13 +60,13 @@ export function SecurityCertifications() {
   const getStatusBadge = (status: Certification['status']) => {
     switch (status) {
       case 'certified':
-        return <Badge className="bg-[#ff4000]"><CheckCircle2 className="w-3 h-3 mr-1" />Certifié</Badge>;
+        return <Badge className="bg-[#ff4000]"><CheckCircle2 className="w-3 h-3 mr-1" />{t('securityCertifications.certifie')}</Badge>;
       case 'in_progress':
         return <Badge className="bg-blue-500"><Clock className="w-3 h-3 mr-1" />En cours</Badge>;
       case 'planned':
-        return <Badge variant="outline"><AlertTriangle className="w-3 h-3 mr-1" />Planifié</Badge>;
+        return <Badge variant="outline"><AlertTriangle className="w-3 h-3 mr-1" />{t('securityCertifications.planifie')}</Badge>;
       case 'expired':
-        return <Badge variant="destructive"><AlertTriangle className="w-3 h-3 mr-1" />Expiré</Badge>;
+        return <Badge variant="destructive"><AlertTriangle className="w-3 h-3 mr-1" />{t('securityCertifications.expire')}</Badge>;
     }
   };
 
@@ -116,7 +118,7 @@ export function SecurityCertifications() {
         {certifications.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <Shield className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>Aucune certification trouvée</p>
+            <p>{t('securityCertifications.aucuneCertificationTrouvee')}</p>
           </div>
         ) : (
           <>

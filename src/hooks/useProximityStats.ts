@@ -24,6 +24,10 @@ interface ProximityStats {
   agriculture: number;
   freelance: number;
   construction: number;
+  plomberie: number;
+  vitrerie: number;
+  menuiserie: number;
+  soudure: number;
 }
 
 /** Debug info returned by hook */
@@ -68,6 +72,10 @@ export function useProximityStats() {
     agriculture: 0,
     freelance: 0,
     construction: 0,
+    plomberie: 0,
+    vitrerie: 0,
+    menuiserie: 0,
+    soudure: 0,
   });
 
   const [loading, setLoading] = useState(true);
@@ -188,6 +196,10 @@ export function useProximityStats() {
         agriculture: 0,
         freelance: 0,
         construction: 0,
+        plomberie: 0,
+        vitrerie: 0,
+        menuiserie: 0,
+        soudure: 0,
       };
 
       // Debug counters
@@ -319,6 +331,10 @@ export function useProximityStats() {
       newStats.agriculture = serviceTypeCounts['agriculture'] || 0;
       newStats.freelance = serviceTypeCounts['freelance'] || serviceTypeCounts['administratif'] || 0;
       newStats.construction = serviceTypeCounts['construction'] || serviceTypeCounts['btp'] || 0;
+      newStats.plomberie = serviceTypeCounts['plomberie'] || serviceTypeCounts['plombier'] || 0;
+      newStats.vitrerie = serviceTypeCounts['vitrerie'] || serviceTypeCounts['vitrier'] || 0;
+      newStats.menuiserie = serviceTypeCounts['menuiserie'] || serviceTypeCounts['menuisier'] || 0;
+      newStats.soudure = serviceTypeCounts['soudure'] || serviceTypeCounts['metallerie'] || serviceTypeCounts['soudeur'] || 0;
 
       // 5) Produits (catégories) — inchangé (pas de notion GPS)
       const productCategoryCounts: Record<string, Set<string>> = {};

@@ -3,6 +3,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ interface QuoteItem {
 }
 
 export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const { vendorId } = useVendorId();
   const [loading, setLoading] = useState(false);
@@ -90,12 +92,12 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
 
   const handleGenerate = async () => {
     if (!vendorId) {
-      toast.error('Erreur: Vendeur non identifié');
+      toast.error(t('quoteForm.erreurVendeurNonIdentifie'));
       return;
     }
 
     if (!clientName || items.some(i => !i.name || !i.quantity || !i.unit_price)) {
-      toast.error('Veuillez remplir tous les champs requis');
+      toast.error(t('quoteForm.veuillezRemplirTousLesChamps'));
       return;
     }
 
@@ -134,14 +136,15 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
       // Générer le PDF via le backend Node
       const { backendFetch } = await import('@/services/backendApi');
       const pdfResp = await backendFetch<any>('/api/documents/quote-pdf', {
+        method: 'POST',
         body: { quote_id: quote.id, ref: quote.ref }
       });
 
       if (!pdfResp.success) {
         console.error('Erreur génération PDF:', pdfResp.error);
-        toast.error('Devis créé mais erreur génération PDF');
+        toast.error(t('quoteForm.devisCreeMaisErreurGeneration'));
       } else {
-        toast.success('Devis créé avec succès!');
+        toast.success(t('quoteForm.devisCreeAvecSucces'));
       }
 
       // Reset form avec persistance
@@ -151,7 +154,7 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
       onSuccess?.();
     } catch (error: any) {
       console.error('Erreur:', error);
-      toast.error('Erreur lors de la création du devis');
+      toast.error(t('quoteForm.erreurLorsDeLaCreation'));
     } finally {
       setLoading(false);
     }
@@ -169,12 +172,12 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
         {/* Infos Client */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="clientName">Nom Client *</Label>
+            <Label htmlFor="clientName">{t('quoteForm.nomClient')}</Label>
             <Input
               id="clientName"
               value={clientName}
               onChange={(e) => setClientName(e.target.value)}
-              placeholder="Nom complet du client"
+              placeholder={t('quoteForm.nomCompletDuClient')}
             />
           </div>
           <div className="space-y-2">
@@ -188,7 +191,7 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="clientPhone">Téléphone</Label>
+            <Label htmlFor="clientPhone">{t('quoteForm.telephone')}</Label>
             <Input
               id="clientPhone"
               value={clientPhone}
@@ -202,7 +205,7 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
               id="clientAddress"
               value={clientAddress}
               onChange={(e) => setClientAddress(e.target.value)}
-              placeholder="Adresse complète"
+              placeholder={t('quoteForm.adresseComplete')}
             />
           </div>
         </div>
@@ -224,11 +227,11 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
                 <Input
                   value={item.name}
                   onChange={(e) => updateItem(idx, 'name', e.target.value)}
-                  placeholder="Nom du produit"
+                  placeholder={t('quoteForm.nomDuProduit')}
                 />
               </div>
               <div className="col-span-2 space-y-2">
-                <Label className="text-xs">Qté</Label>
+                <Label className="text-xs">{t('quoteForm.qte')}</Label>
                 <Input
                   type="number"
                   min="1"
@@ -307,7 +310,7 @@ export default function QuoteForm({ onSuccess }: { onSuccess?: () => void }) {
             id="notes"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Conditions de paiement, garanties, etc."
+            placeholder={t('quoteForm.conditionsDePaiementGarantiesEtc')}
             rows={3}
           />
         </div>

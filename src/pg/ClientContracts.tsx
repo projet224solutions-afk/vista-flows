@@ -1,5 +1,6 @@
 ﻿import { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -46,6 +47,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export default function ClientContracts() {
+  const { t } = useTranslation();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
@@ -209,7 +211,7 @@ export default function ClientContracts() {
       <Card className="max-w-4xl mx-auto mt-8">
         <CardContent className="flex flex-col items-center justify-center p-8">
           <FileText className="w-12 h-12 text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">Aucun contrat pour le moment</p>
+          <p className="text-muted-foreground">{t('clientContracts.aucunContratPourLeMoment')}</p>
         </CardContent>
       </Card>
     );
@@ -240,19 +242,19 @@ export default function ClientContracts() {
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Montant</p>
+                  <p className="text-sm text-muted-foreground">{t('clientContracts.montant')}</p>
                   <p className="font-medium">
                     {contract.amount ? formatCurrency(contract.amount) : '-'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Date de création</p>
+                  <p className="text-sm text-muted-foreground">{t('clientContracts.dateDeCreation')}</p>
                   <p className="font-medium">
                     {format(new Date(contract.created_at), 'dd MMM yyyy', { locale: fr })}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Référence</p>
+                  <p className="text-sm text-muted-foreground">{t('clientContracts.reference')}</p>
                   <p className="font-medium font-mono text-sm">
                     {contract.id.substring(0, 8).toUpperCase()}
                   </p>
@@ -305,7 +307,7 @@ export default function ClientContracts() {
               {!selectedContract.client_signature_url && (
                 <div className="space-y-4">
                   <div>
-                    <h4 className="font-semibold mb-2">Votre signature</h4>
+                    <h4 className="font-semibold mb-2">{t('clientContracts.votreSignature')}</h4>
                     <div className="border-2 border-dashed rounded-lg p-2">
                       <canvas
                         ref={canvasRef}

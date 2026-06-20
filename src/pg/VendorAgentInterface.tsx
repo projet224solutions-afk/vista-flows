@@ -398,7 +398,7 @@ export default function VendorAgentInterface() {
                       <Menu className="h-5 w-5" />
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="left" className="w-72 p-0">
+                  <SheetContent side="left" className="w-72 p-0 max-h-[90vh] overflow-y-auto">
                     <NavigationContent />
                   </SheetContent>
                 </Sheet>

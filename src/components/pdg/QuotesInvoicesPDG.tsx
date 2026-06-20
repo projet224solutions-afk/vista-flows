@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Badge } from '@/components/ui/badge';
@@ -49,6 +50,7 @@ interface Invoice {
 }
 
 export default function QuotesInvoicesPDG() {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -70,7 +72,7 @@ export default function QuotesInvoicesPDG() {
       setQuotes(data as any || []);
     } catch (error: any) {
       console.error('Erreur chargement devis:', error);
-      toast.error('Erreur lors du chargement des devis');
+      toast.error(t('quotesInvoicesPDG.erreurLorsDuChargementDes'));
     } finally {
       setLoadingQuotes(false);
     }
@@ -91,7 +93,7 @@ export default function QuotesInvoicesPDG() {
       setInvoices(data as any || []);
     } catch (error: any) {
       console.error('Erreur chargement factures:', error);
-      toast.error('Erreur lors du chargement des factures');
+      toast.error(t('quotesInvoicesPDG.erreurLorsDuChargementDes2'));
     } finally {
       setLoadingInvoices(false);
     }
@@ -118,10 +120,10 @@ export default function QuotesInvoicesPDG() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      toast.success('Téléchargement démarré');
+      toast.success(t('quotesInvoicesPDG.telechargementDemarre'));
     } catch (error) {
       console.error('Erreur téléchargement:', error);
-      toast.error('Erreur lors du téléchargement');
+      toast.error(t('quotesInvoicesPDG.erreurLorsDuTelechargement'));
     }
   };
 
@@ -165,7 +167,7 @@ export default function QuotesInvoicesPDG() {
     <div className="container mx-auto p-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold mb-2">Devis & Factures</h1>
-        <p className="text-muted-foreground">Vue d'ensemble de tous les devis et factures des vendeurs</p>
+        <p className="text-muted-foreground">{t('quotesInvoicesPDG.vueDEnsembleDeTous')}</p>
       </div>
 
       <Tabs defaultValue="quotes" className="w-full">
@@ -184,7 +186,7 @@ export default function QuotesInvoicesPDG() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Tous les Devis</CardTitle>
+                <CardTitle>{t('quotesInvoicesPDG.tousLesDevis')}</CardTitle>
                 <Button onClick={loadQuotes} variant="outline" size="sm">
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Actualiser
@@ -199,7 +201,7 @@ export default function QuotesInvoicesPDG() {
               ) : quotes.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucun devis trouvé</p>
+                  <p>{t('quotesInvoicesPDG.aucunDevisTrouve')}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -264,7 +266,7 @@ export default function QuotesInvoicesPDG() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Toutes les Factures</CardTitle>
+                <CardTitle>{t('quotesInvoicesPDG.toutesLesFactures')}</CardTitle>
                 <Button onClick={loadInvoices} variant="outline" size="sm">
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Actualiser
@@ -279,7 +281,7 @@ export default function QuotesInvoicesPDG() {
               ) : invoices.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucune facture trouvée</p>
+                  <p>{t('quotesInvoicesPDG.aucuneFactureTrouvee')}</p>
                 </div>
               ) : (
                 <div className="space-y-4">

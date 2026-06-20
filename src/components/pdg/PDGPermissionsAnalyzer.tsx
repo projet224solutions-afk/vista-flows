@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -17,6 +18,7 @@ interface AnalysisResult {
 }
 
 export function PDGPermissionsAnalyzer() {
+  const { t } = useTranslation();
   const [analysis, setAnalysis] = useState<Record<string, AnalysisResult[]>>({});
   const [loading, setLoading] = useState(false);
 
@@ -37,7 +39,7 @@ export function PDGPermissionsAnalyzer() {
       setAnalysis(results);
     } catch (error) {
       console.error('Erreur analyse:', error);
-      toast.error('Erreur lors de l\'analyse');
+      toast.error(t('pDGPermissionsAnalyzer.erreurLorsDeLAnalyse'));
     } finally {
       setLoading(false);
     }
@@ -211,7 +213,7 @@ export function PDGPermissionsAnalyzer() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Analyseur de Permissions PDG</CardTitle>
+              <CardTitle>{t('pDGPermissionsAnalyzer.analyseurDePermissionsPdg')}</CardTitle>
               <CardDescription>
                 Vérifie l'intégrité du système de permissions agents
               </CardDescription>

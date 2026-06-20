@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,7 @@ interface ClientStats {
 }
 
 export default function ClientManagement() {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const {
     vendorId: currentVendorId,
@@ -231,15 +233,15 @@ export default function ClientManagement() {
   const clientsWithEmails = clients.filter(client => Boolean(client.email || client.profile?.email));
   const clientsWithPhones = clients.filter(client => Boolean(client.phone || client.profile?.phone));
 
-  if (loading) return <div className="p-4">Chargement des clients...</div>;
+  if (loading) return <div className="p-4">{t('clientManagement.chargementDesClients')}</div>;
 
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header - Mobile optimized */}
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
         <div className="min-w-0">
-          <h2 className="text-lg sm:text-2xl font-bold truncate">Gestion des Clients</h2>
-          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">Gérez vos relations clients</p>
+          <h2 className="text-lg sm:text-2xl font-bold truncate">{t('clientManagement.gestionDesClients')}</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{t('clientManagement.gerezVosRelationsClients')}</p>
           <p className="text-[11px] sm:text-xs text-muted-foreground mt-1">
             Cette section affiche les contacts saisis au POS et ceux issus des commandes en ligne.
           </p>
@@ -257,7 +259,7 @@ export default function ClientManagement() {
             setShowContactsDialog(true);
           }}>
             <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-            <span>Contact client</span>
+            <span>{t('clientManagement.contactClient')}</span>
           </Button>
           <Button size="sm" className="flex-1 sm:flex-none text-xs sm:text-sm" onClick={() => {
             if (clientsWithContacts.length === 0) {
@@ -273,7 +275,7 @@ export default function ClientManagement() {
             setShowBroadcastDialog(true);
           }}>
             <Send className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-            <span>Envoyer un message</span>
+            <span>{t('clientManagement.envoyerUnMessage')}</span>
           </Button>
         </div>
       </div>
@@ -355,7 +357,7 @@ export default function ClientManagement() {
             <div className="relative flex-1 max-w-sm">
               <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Rechercher un client..."
+                placeholder={t('clientManagement.rechercherUnClient')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -366,9 +368,9 @@ export default function ClientManagement() {
               onChange={(e) => setClientTypeFilter(e.target.value as "all" | "new" | "regular" | "vip")}
               className="px-3 py-2 border rounded-md"
             >
-              <option value="all">Tous les clients</option>
+              <option value="all">{t('clientManagement.tousLesClients')}</option>
               <option value="vip">Clients VIP</option>
-              <option value="regular">Clients réguliers</option>
+              <option value="regular">{t('clientManagement.clientsReguliers')}</option>
               <option value="new">Nouveaux clients</option>
             </select>
             <Filter className="w-4 h-4 text-muted-foreground" />
@@ -429,18 +431,18 @@ export default function ClientManagement() {
 
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Commandes:</span>
+                    <span className="text-sm text-muted-foreground">{t('clientManagement.commandes')}</span>
                     <span className="font-semibold">{orderCount}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Total dépensé:</span>
+                    <span className="text-sm text-muted-foreground">{t('clientManagement.totalDepense')}</span>
                     <span className="font-semibold text-vendeur-primary">
                       {fc(clientRevenue)}
                     </span>
                   </div>
                   {lastOrder && (
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Dernière commande:</span>
+                      <span className="text-sm text-muted-foreground">{t('clientManagement.derniereCommande')}</span>
                       <span className="text-sm">
                         {lastOrder.toLocaleDateString('fr-FR')}
                       </span>
@@ -456,7 +458,7 @@ export default function ClientManagement() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-4 pt-4 border-t">
                   <Button size="sm" variant="outline" onClick={() => {
                     const email = client.email || client.profile?.email;
                     if (email) {
@@ -512,7 +514,7 @@ export default function ClientManagement() {
           <CardContent className="p-12">
             <div className="text-center">
               <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Aucun client trouvé</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('clientManagement.aucunClientTrouve')}</h3>
               <p className="text-muted-foreground">
                 {searchTerm || clientTypeFilter !== 'all'
                   ? 'Aucun client ne correspond aux critères de recherche.'
@@ -527,7 +529,7 @@ export default function ClientManagement() {
       <Dialog open={showClientDialog} onOpenChange={setShowClientDialog}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Profil client détaillé</DialogTitle>
+            <DialogTitle>{t('clientManagement.profilClientDetaille')}</DialogTitle>
           </DialogHeader>
           {selectedClient && (
             <div className="space-y-6">
@@ -546,7 +548,7 @@ export default function ClientManagement() {
                     <p className="font-medium">{selectedClient.email || selectedClient.profile?.email || 'Non renseigné'}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Téléphone</label>
+                    <label className="text-sm font-medium text-muted-foreground">{t('clientManagement.telephone')}</label>
                     <p className="font-medium">{selectedClient.phone || selectedClient.profile?.phone || 'Non renseigné'}</p>
                   </div>
                   <div>
@@ -556,7 +558,7 @@ export default function ClientManagement() {
                     </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Origine du contact</label>
+                    <label className="text-sm font-medium text-muted-foreground">{t('clientManagement.origineDuContact')}</label>
                     <p className="font-medium">{getClientSourceLabel(selectedClient)}</p>
                   </div>
                 </div>
@@ -565,18 +567,18 @@ export default function ClientManagement() {
               {/* Statistiques */}
               <div>
                 <h4 className="font-semibold mb-4">Statistiques</h4>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   <div className="text-center p-4 bg-accent rounded-lg">
                     <p className="text-2xl font-bold text-vendeur-primary">
                       {selectedClient.total_orders}
                     </p>
-                    <p className="text-sm text-muted-foreground">Commandes</p>
+                    <p className="text-sm text-muted-foreground">{t('clientManagement.commandes2')}</p>
                   </div>
                   <div className="text-center p-4 bg-accent rounded-lg">
                     <p className="text-2xl font-bold text-[#ff4000]">
                       {selectedClient.total_spent.toLocaleString()}
                     </p>
-                    <p className="text-sm text-muted-foreground">GNF dépensés</p>
+                    <p className="text-sm text-muted-foreground">{t('clientManagement.gnfDepenses')}</p>
                   </div>
                   <div className="text-center p-4 bg-accent rounded-lg">
                     <p className="text-2xl font-bold text-blue-600">
@@ -591,7 +593,7 @@ export default function ClientManagement() {
 
               {/* Historique des commandes */}
               <div>
-                <h4 className="font-semibold mb-4">Historique des commandes</h4>
+                <h4 className="font-semibold mb-4">{t('clientManagement.historiqueDesCommandes')}</h4>
                 <div className="space-y-2">
                   {selectedClient.orders.length > 0 ? selectedClient.orders.slice(0, 5).map((order) => (
                     <div key={order.id} className="flex justify-between items-center p-3 bg-accent rounded-lg">
@@ -626,7 +628,7 @@ export default function ClientManagement() {
       <Dialog open={showContactsDialog} onOpenChange={setShowContactsDialog}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Contacts clients collectés</DialogTitle>
+            <DialogTitle>{t('clientManagement.contactsClientsCollectes')}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-6">
@@ -639,13 +641,13 @@ export default function ClientManagement() {
               </Card>
               <Card>
                 <CardContent className="p-4">
-                  <p className="text-sm text-muted-foreground">Emails collectés</p>
+                  <p className="text-sm text-muted-foreground">{t('clientManagement.emailsCollectes')}</p>
                   <p className="text-2xl font-bold">{clientsWithEmails.length}</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4">
-                  <p className="text-sm text-muted-foreground">Numéros collectés</p>
+                  <p className="text-sm text-muted-foreground">{t('clientManagement.numerosCollectes')}</p>
                   <p className="text-2xl font-bold">{clientsWithPhones.length}</p>
                 </CardContent>
               </Card>
@@ -675,7 +677,7 @@ export default function ClientManagement() {
                         <p className="font-medium break-all">{email || 'Non renseigné'}</p>
                       </div>
                       <div className="rounded-md bg-muted/40 p-3">
-                        <p className="text-xs text-muted-foreground mb-1">Numéro</p>
+                        <p className="text-xs text-muted-foreground mb-1">{t('clientManagement.numero')}</p>
                         <p className="font-medium break-all">{phone || 'Non renseigné'}</p>
                       </div>
                     </div>
@@ -712,19 +714,19 @@ export default function ClientManagement() {
       <Dialog open={showBroadcastDialog} onOpenChange={setShowBroadcastDialog}>
         <DialogContent className="max-w-lg max-h-[88vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Send className="h-4 w-4 text-primary" /> Envoyer un message à tous</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><Send className="h-4 w-4 text-primary" /> {t('clientManagement.envoyerUnMessageATous')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="bc-msg">Votre message</Label>
+              <Label htmlFor="bc-msg">{t('clientManagement.votreMessage')}</Label>
               <Textarea id="bc-msg" autoFocus rows={5} maxLength={2000}
                 value={bcMessage} onChange={(e) => setBcMessage(e.target.value)}
-                placeholder="Tapez le texte à envoyer à tous les clients…" />
+                placeholder={t('clientManagement.tapezLeTexteAEnvoyer')} />
               <p className="text-xs text-muted-foreground">{bcMessage.length}/2000 — SMS tronqué à 140 caractères.</p>
             </div>
 
             <div className="space-y-1.5">
-              <Label>Envoyer à</Label>
+              <Label>{t('clientManagement.envoyerA')}</Label>
               <div className="flex gap-2">
                 {([
                   ['email', 'Tous les emails', `${clientsWithEmails.length}`, <Mail key="m" className="h-4 w-4" />],
@@ -742,8 +744,8 @@ export default function ClientManagement() {
 
             {(bcChannel === 'email' || bcChannel === 'both') && (
               <div className="space-y-1.5">
-                <Label htmlFor="bc-subj">Objet de l'email</Label>
-                <Input id="bc-subj" value={bcSubject} onChange={(e) => setBcSubject(e.target.value)} placeholder="Ex : Nouvelle promotion !" maxLength={200} />
+                <Label htmlFor="bc-subj">{t('clientManagement.objetDeLEmail')}</Label>
+                <Input id="bc-subj" value={bcSubject} onChange={(e) => setBcSubject(e.target.value)} placeholder={t('clientManagement.exNouvellePromotion')} maxLength={200} />
               </div>
             )}
 
@@ -772,7 +774,7 @@ export default function ClientManagement() {
 
             {bcResult && (
               <div className="rounded-md border p-3 text-sm space-y-1">
-                <p className="font-medium">Résultat</p>
+                <p className="font-medium">{t('clientManagement.resultat')}</p>
                 <p>📧 Email : {bcResult.email_sent} envoyé(s){bcResult.email_failed ? `, ${bcResult.email_failed} échec(s)` : ''} / {bcResult.email_targeted}</p>
                 {bcResult.email_error && <p className="text-[11px] text-destructive">⚠️ {bcResult.email_error}</p>}
                 <p>📱 SMS : {bcResult.sms_sent} envoyé(s){bcResult.sms_failed ? `, ${bcResult.sms_failed} échec(s)` : ''} / {bcResult.sms_targeted}</p>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +27,7 @@ const notificationColors: Record<string, string> = {
 const INITIAL_VISIBLE_COUNT = 3;
 
 export function VendorNotificationsPanel() {
+  const { t } = useTranslation();
   const { notifications, unreadCount, loading, markAsRead, markAllAsRead } = useVendorNotifications();
   const [showAll, setShowAll] = useState(false);
 
@@ -99,7 +101,7 @@ export function VendorNotificationsPanel() {
         {notifications.length === 0 && (
           <Card className="p-12 text-center">
             <Bell className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">Aucune notification</p>
+            <p className="text-muted-foreground">{t('vendorNotificationsPanel.aucuneNotification')}</p>
           </Card>
         )}
 

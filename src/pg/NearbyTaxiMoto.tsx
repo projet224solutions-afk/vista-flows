@@ -17,6 +17,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -91,6 +92,7 @@ function areDriversEqual(prev: TaxiDriver[], next: TaxiDriver[]): boolean {
 // ============================================================================
 
 export default function NearbyTaxiMoto() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   // ===========================================================================
@@ -452,8 +454,8 @@ export default function NearbyTaxiMoto() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="text-white">
-                <h3 className="font-semibold">Réserver un Taxi</h3>
-                <p className="text-sm opacity-90">Voiture ou Moto — le plus proche vous répond</p>
+                <h3 className="font-semibold">{t('nearbyTaxiMoto.reserverUnTaxi')}</h3>
+                <p className="text-sm opacity-90">{t('nearbyTaxiMoto.voitureOuMotoLePlus')}</p>
               </div>
               <Button
                 onClick={handleBookNow}

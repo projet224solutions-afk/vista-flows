@@ -243,7 +243,7 @@ const BroadcastNotificationBanner: React.FC<BroadcastNotificationBannerProps> = 
 
       {/* Dialog pour voir le message complet */}
       <Dialog open={!!selectedBroadcast} onOpenChange={() => setSelectedBroadcast(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center gap-2 mb-2">
               {selectedBroadcast && getPriorityIcon(selectedBroadcast.priority)}

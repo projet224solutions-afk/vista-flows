@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { bureauFetch } from '@/lib/bureauApi';
 
 export interface RealtimeStats {
   total_drivers: number;
@@ -52,20 +53,17 @@ export function useBureauRealtimeStats(bureauId: string | null) {
     if (!bureauId) return;
 
     try {
-      // Fetch stats using the RPC function
-      const { data: statsData, error: statsError } = await supabase
-        .rpc('get_bureau_realtime_stats', { p_bureau_id: bureauId });
-
-      if (statsError) throw statsError;
-
-      if (statsData && statsData.length > 0) {
+      // Stats via le BACKEND (JWT bureau) — le bureau_id vient du token, jamais du client.
+      const res = await bureauFetch<any>('/api/v2/bureau/stats');
+      const s = res.success ? (res as any).stats : null;
+      if (s) {
         setStats({
-          total_drivers: Number(statsData[0].total_drivers) || 0,
-          online_drivers: Number(statsData[0].online_drivers) || 0,
-          on_trip_drivers: Number(statsData[0].on_trip_drivers) || 0,
-          today_rides: Number(statsData[0].today_rides) || 0,
-          today_earnings: Number(statsData[0].today_earnings) || 0,
-          active_sos: Number(statsData[0].active_sos) || 0
+          total_drivers: Number(s.total_drivers) || 0,
+          online_drivers: Number(s.online_drivers) || 0,
+          on_trip_drivers: Number(s.on_trip_drivers) || 0,
+          today_rides: Number(s.today_rides) || 0,
+          today_earnings: Number(s.today_earnings) || 0,
+          active_sos: Number(s.active_sos) || 0
         });
       }
 

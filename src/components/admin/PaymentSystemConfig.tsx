@@ -6,6 +6,7 @@
 // build: force-recompile
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from '@/integrations/supabase/client';
 import {
   Card,
@@ -30,6 +31,7 @@ interface ConfigItem {
 }
 
 export function PaymentSystemConfig() {
+  const { t } = useTranslation();
   const [configs, setConfigs] = useState<ConfigItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -51,7 +53,7 @@ export function PaymentSystemConfig() {
       setConfigs(data || []);
     } catch (error) {
       console.error('Error fetching configs:', error);
-      toast.error('Erreur lors du chargement de la configuration');
+      toast.error(t('paymentSystemConfig.erreurLorsDuChargementDe'));
     } finally {
       setLoading(false);
     }
@@ -71,7 +73,7 @@ export function PaymentSystemConfig() {
 
   const handleSave = async () => {
     if (Object.keys(changes).length === 0) {
-      toast.info('Aucun changement à sauvegarder');
+      toast.info(t('paymentSystemConfig.aucunChangementASauvegarder'));
       return;
     }
 
@@ -94,7 +96,7 @@ export function PaymentSystemConfig() {
         if (error) throw error;
       }
 
-      toast.success('Configuration mise à jour', {
+      toast.success(t('paymentSystemConfig.configurationMiseAJour'), {
         description: `${Object.keys(changes).length} paramètre(s) modifié(s)`,
       });
 
@@ -103,7 +105,7 @@ export function PaymentSystemConfig() {
 
     } catch (error) {
       console.error('Error saving configs:', error);
-      toast.error('Erreur lors de la sauvegarde');
+      toast.error(t('paymentSystemConfig.erreurLorsDeLaSauvegarde'));
     } finally {
       setSaving(false);
     }
@@ -111,7 +113,7 @@ export function PaymentSystemConfig() {
 
   const handleReset = () => {
     setChanges({});
-    toast.info('Changements annulés');
+    toast.info(t('paymentSystemConfig.changementsAnnules'));
   };
 
   if (loading) {
@@ -157,9 +159,9 @@ export function PaymentSystemConfig() {
       <Tabs defaultValue="trust-score" className="w-full">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="trust-score">Trust Score</TabsTrigger>
-          <TabsTrigger value="delays">Délais</TabsTrigger>
+          <TabsTrigger value="delays">{t('paymentSystemConfig.delais')}</TabsTrigger>
           <TabsTrigger value="blocking">Blocages</TabsTrigger>
-          <TabsTrigger value="random">Contrôle aléatoire</TabsTrigger>
+          <TabsTrigger value="random">{t('paymentSystemConfig.controleAleatoire')}</TabsTrigger>
           <TabsTrigger value="other">Autre</TabsTrigger>
         </TabsList>
 
@@ -167,7 +169,7 @@ export function PaymentSystemConfig() {
         <TabsContent value="trust-score">
           <Card>
             <CardHeader>
-              <CardTitle>Paramètres du Trust Score</CardTitle>
+              <CardTitle>{t('paymentSystemConfig.parametresDuTrustScore')}</CardTitle>
               <CardDescription>
                 Ajuster les seuils et pondérations du calcul de confiance (0-100)
               </CardDescription>
@@ -175,7 +177,7 @@ export function PaymentSystemConfig() {
             <CardContent className="space-y-6">
               {/* Seuils */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Seuils de décision</h3>
+                <h3 className="text-lg font-semibold">{t('paymentSystemConfig.seuilsDeDecision')}</h3>
 
                 <div className="grid gap-4">
                   <div className="grid gap-2">
@@ -212,11 +214,11 @@ export function PaymentSystemConfig() {
 
               {/* Pondérations */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Pondération des facteurs</h3>
+                <h3 className="text-lg font-semibold">{t('paymentSystemConfig.ponderationDesFacteurs')}</h3>
 
                 <div className="grid gap-4">
                   <div className="grid gap-2">
-                    <Label>Âge utilisateur (max points)</Label>
+                    <Label>{t('paymentSystemConfig.ageUtilisateurMaxPoints')}</Label>
                     <Input
                       type="number"
                       min="0"
@@ -238,7 +240,7 @@ export function PaymentSystemConfig() {
                   </div>
 
                   <div className="grid gap-2">
-                    <Label>KYC vendeur (max points)</Label>
+                    <Label>{t('paymentSystemConfig.kycVendeurMaxPoints')}</Label>
                     <Input
                       type="number"
                       min="0"
@@ -249,7 +251,7 @@ export function PaymentSystemConfig() {
                   </div>
 
                   <div className="grid gap-2">
-                    <Label>Montant normal (max points)</Label>
+                    <Label>{t('paymentSystemConfig.montantNormalMaxPoints')}</Label>
                     <Input
                       type="number"
                       min="0"
@@ -260,7 +262,7 @@ export function PaymentSystemConfig() {
                   </div>
 
                   <div className="grid gap-2">
-                    <Label>Pas de chargeback (max points)</Label>
+                    <Label>{t('paymentSystemConfig.pasDeChargebackMaxPoints')}</Label>
                     <Input
                       type="number"
                       min="0"
@@ -286,7 +288,7 @@ export function PaymentSystemConfig() {
         <TabsContent value="delays">
           <Card>
             <CardHeader>
-              <CardTitle>Délais de libération (Smart Delay)</CardTitle>
+              <CardTitle>{t('paymentSystemConfig.delaisDeLiberationSmartDelay')}</CardTitle>
               <CardDescription>
                 Configurer les délais selon le Trust Score
               </CardDescription>
@@ -294,36 +296,36 @@ export function PaymentSystemConfig() {
             <CardContent className="space-y-4">
               <div className="grid gap-4">
                 <div className="grid gap-2">
-                  <Label>Trust Score ≥ 90 (délai en minutes)</Label>
+                  <Label>{t('paymentSystemConfig.trustScore90DelaiEn')}</Label>
                   <Input
                     type="number"
                     min="1"
                     value={getValue('release_delay.trust_90_plus', 30)}
                     onChange={(e) => handleChange('release_delay.trust_90_plus', e.target.value)}
                   />
-                  <p className="text-sm text-muted-foreground">Défaut: 30 minutes</p>
+                  <p className="text-sm text-muted-foreground">{t('paymentSystemConfig.defaut30Minutes')}</p>
                 </div>
 
                 <div className="grid gap-2">
-                  <Label>Trust Score ≥ 80 (délai en minutes)</Label>
+                  <Label>{t('paymentSystemConfig.trustScore80DelaiEn')}</Label>
                   <Input
                     type="number"
                     min="1"
                     value={getValue('release_delay.trust_80_plus', 60)}
                     onChange={(e) => handleChange('release_delay.trust_80_plus', e.target.value)}
                   />
-                  <p className="text-sm text-muted-foreground">Défaut: 60 minutes</p>
+                  <p className="text-sm text-muted-foreground">{t('paymentSystemConfig.defaut60Minutes')}</p>
                 </div>
 
                 <div className="grid gap-2">
-                  <Label>Trust Score ≥ 70 (délai en minutes)</Label>
+                  <Label>{t('paymentSystemConfig.trustScore70DelaiEn')}</Label>
                   <Input
                     type="number"
                     min="1"
                     value={getValue('release_delay.trust_70_plus', 90)}
                     onChange={(e) => handleChange('release_delay.trust_70_plus', e.target.value)}
                   />
-                  <p className="text-sm text-muted-foreground">Défaut: 90 minutes</p>
+                  <p className="text-sm text-muted-foreground">{t('paymentSystemConfig.defaut90Minutes')}</p>
                 </div>
 
                 <div className="grid gap-2">
@@ -334,7 +336,7 @@ export function PaymentSystemConfig() {
                     value={getValue('release_delay.trust_below_70', 120)}
                     onChange={(e) => handleChange('release_delay.trust_below_70', e.target.value)}
                   />
-                  <p className="text-sm text-muted-foreground">Défaut: 120 minutes</p>
+                  <p className="text-sm text-muted-foreground">{t('paymentSystemConfig.defaut120Minutes')}</p>
                 </div>
               </div>
             </CardContent>
@@ -366,7 +368,7 @@ export function PaymentSystemConfig() {
 
               <div className="grid gap-4">
                 <div className="grid gap-2">
-                  <Label>Vendeur récent (jours)</Label>
+                  <Label>{t('paymentSystemConfig.vendeurRecentJours')}</Label>
                   <Input
                     type="number"
                     min="0"
@@ -379,7 +381,7 @@ export function PaymentSystemConfig() {
                 </div>
 
                 <div className="grid gap-2">
-                  <Label>Multiplicateur montant</Label>
+                  <Label>{t('paymentSystemConfig.multiplicateurMontant')}</Label>
                   <Input
                     type="number"
                     min="1"
@@ -400,7 +402,7 @@ export function PaymentSystemConfig() {
         <TabsContent value="random">
           <Card>
             <CardHeader>
-              <CardTitle>Contrôle aléatoire</CardTitle>
+              <CardTitle>{t('paymentSystemConfig.controleAleatoire')}</CardTitle>
               <CardDescription>
                 Forcer un pourcentage de paiements en review manuelle
               </CardDescription>
@@ -408,7 +410,7 @@ export function PaymentSystemConfig() {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Activer contrôle aléatoire</Label>
+                  <Label>{t('paymentSystemConfig.activerControleAleatoire')}</Label>
                   <p className="text-sm text-muted-foreground">
                     Forcer des paiements AUTO_APPROVED en ADMIN_REVIEW
                   </p>
@@ -440,7 +442,7 @@ export function PaymentSystemConfig() {
         <TabsContent value="other">
           <Card>
             <CardHeader>
-              <CardTitle>Autres paramètres</CardTitle>
+              <CardTitle>{t('paymentSystemConfig.autresParametres')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Notifications */}
@@ -456,7 +458,7 @@ export function PaymentSystemConfig() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <Label>Notifier vendeur (fonds en attente)</Label>
+                  <Label>{t('paymentSystemConfig.notifierVendeurFondsEnAttente')}</Label>
                   <Switch
                     checked={getValue('notifications.send_on_hold', true)}
                     onCheckedChange={(checked) => handleChange('notifications.send_on_hold', checked)}
@@ -464,7 +466,7 @@ export function PaymentSystemConfig() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <Label>Notifier vendeur (libération)</Label>
+                  <Label>{t('paymentSystemConfig.notifierVendeurLiberation')}</Label>
                   <Switch
                     checked={getValue('notifications.send_on_release', true)}
                     onCheckedChange={(checked) => handleChange('notifications.send_on_release', checked)}
@@ -474,10 +476,10 @@ export function PaymentSystemConfig() {
 
               {/* Double vérification */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Double vérification Stripe</h3>
+                <h3 className="text-lg font-semibold">{t('paymentSystemConfig.doubleVerificationStripe')}</h3>
 
                 <div className="flex items-center justify-between">
-                  <Label>Activer double vérification</Label>
+                  <Label>{t('paymentSystemConfig.activerDoubleVerification')}</Label>
                   <Switch
                     checked={getValue('double_verification.enabled', true)}
                     onCheckedChange={(checked) => handleChange('double_verification.enabled', checked)}

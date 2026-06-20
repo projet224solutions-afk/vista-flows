@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from '@/integrations/supabase/client';
 import {
   Card,
@@ -69,6 +70,7 @@ interface PendingPayment {
 }
 
 export function PaymentReviewQueue() {
+  const { t } = useTranslation();
   const [payments, setPayments] = useState<PendingPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPayment, setSelectedPayment] = useState<PendingPayment | null>(null);
@@ -98,7 +100,7 @@ export function PaymentReviewQueue() {
       setPayments(data || []);
     } catch (error) {
       console.error('Error fetching pending payments:', error);
-      toast.error('Erreur lors du chargement des paiements');
+      toast.error(t('paymentReviewQueue.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -123,7 +125,7 @@ export function PaymentReviewQueue() {
 
       if (response.error) throw response.error;
 
-      toast.success('Paiement approuvé et fonds libérés', {
+      toast.success(t('paymentReviewQueue.paiementApprouveEtFondsLiberes'), {
         description: `${(selectedPayment.seller_net_amount / 100).toFixed(2)} XOF crédités`,
       });
 
@@ -134,7 +136,7 @@ export function PaymentReviewQueue() {
 
     } catch (error) {
       console.error('Error approving payment:', error);
-      toast.error('Erreur lors de l\'approbation');
+      toast.error(t('paymentReviewQueue.erreurLorsDeLApprobation'));
     } finally {
       setActionLoading(false);
     }
@@ -142,7 +144,7 @@ export function PaymentReviewQueue() {
 
   const handleReject = async () => {
     if (!selectedPayment || !rejectionReason.trim()) {
-      toast.error('Veuillez fournir une raison de rejet');
+      toast.error(t('paymentReviewQueue.veuillezFournirUneRaisonDe'));
       return;
     }
 
@@ -162,7 +164,7 @@ export function PaymentReviewQueue() {
 
       if (response.error) throw response.error;
 
-      toast.success('Paiement rejeté et remboursement initié', {
+      toast.success(t('paymentReviewQueue.paiementRejeteEtRemboursementInitie'), {
         description: 'L\'acheteur sera remboursé sous 5-10 jours',
       });
 
@@ -173,7 +175,7 @@ export function PaymentReviewQueue() {
 
     } catch (error) {
       console.error('Error rejecting payment:', error);
-      toast.error('Erreur lors du rejet');
+      toast.error(t('paymentReviewQueue.erreurLorsDuRejet'));
     } finally {
       setActionLoading(false);
     }
@@ -240,17 +242,17 @@ export function PaymentReviewQueue() {
           {payments.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
               <CheckCircle className="h-16 w-16 mb-4" />
-              <p className="text-lg font-medium">Aucun paiement en attente</p>
-              <p className="text-sm">Tous les paiements ont été traités</p>
+              <p className="text-lg font-medium">{t('paymentReviewQueue.aucunPaiementEnAttente')}</p>
+              <p className="text-sm">{t('paymentReviewQueue.tousLesPaiementsOntEte')}</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Date</TableHead>
-                  <TableHead>Vendeur</TableHead>
+                  <TableHead>{t('paymentReviewQueue.vendeur')}</TableHead>
                   <TableHead>Acheteur</TableHead>
-                  <TableHead className="text-right">Montant</TableHead>
+                  <TableHead className="text-right">{t('paymentReviewQueue.montant')}</TableHead>
                   <TableHead>Trust Score</TableHead>
                   <TableHead>Risque</TableHead>
                   <TableHead>KYC</TableHead>
@@ -346,7 +348,7 @@ export function PaymentReviewQueue() {
                           {payment.unresolved_fraud_signals} signal{payment.unresolved_fraud_signals > 1 ? 'aux' : ''}
                         </Badge>
                       ) : (
-                        <span className="text-muted-foreground text-sm">Aucun</span>
+                        <span className="text-muted-foreground text-sm">{t('paymentReviewQueue.aucun')}</span>
                       )}
                     </TableCell>
 
@@ -389,7 +391,7 @@ export function PaymentReviewQueue() {
       <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Approuver le paiement</DialogTitle>
+            <DialogTitle>{t('paymentReviewQueue.approuverLePaiement')}</DialogTitle>
             <DialogDescription>
               Les fonds seront immédiatement libérés sur le wallet du vendeur.
             </DialogDescription>
@@ -399,7 +401,7 @@ export function PaymentReviewQueue() {
             <div className="space-y-4">
               <div className="bg-muted p-4 rounded-lg space-y-2">
                 <div className="flex justify-between">
-                  <span className="font-medium">Montant:</span>
+                  <span className="font-medium">{t('paymentReviewQueue.montant2')}</span>
                   <span className="font-bold">
                     {(selectedPayment.seller_net_amount / 100).toFixed(2)} XOF
                   </span>
@@ -411,7 +413,7 @@ export function PaymentReviewQueue() {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium">Vendeur:</span>
+                  <span className="font-medium">{t('paymentReviewQueue.vendeur2')}</span>
                   <span>{selectedPayment.seller_name}</span>
                 </div>
               </div>
@@ -421,7 +423,7 @@ export function PaymentReviewQueue() {
                 <Textarea
                   value={approvalNotes}
                   onChange={(e) => setApprovalNotes(e.target.value)}
-                  placeholder="Raison de l'approbation manuelle..."
+                  placeholder={t('paymentReviewQueue.raisonDeLApprobationManuelle')}
                   rows={3}
                 />
               </div>
@@ -450,7 +452,7 @@ export function PaymentReviewQueue() {
       <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Rejeter le paiement</DialogTitle>
+            <DialogTitle>{t('paymentReviewQueue.rejeterLePaiement')}</DialogTitle>
             <DialogDescription>
               Un remboursement sera automatiquement initié via Stripe.
             </DialogDescription>
@@ -460,7 +462,7 @@ export function PaymentReviewQueue() {
             <div className="space-y-4">
               <div className="bg-destructive/10 p-4 rounded-lg space-y-2">
                 <div className="flex justify-between">
-                  <span className="font-medium">Montant à rembourser:</span>
+                  <span className="font-medium">{t('paymentReviewQueue.montantARembourser')}</span>
                   <span className="font-bold">
                     {(selectedPayment.amount / 100).toFixed(2)} XOF
                   </span>
@@ -478,7 +480,7 @@ export function PaymentReviewQueue() {
                 <Textarea
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
-                  placeholder="Expliquez pourquoi ce paiement est rejeté (fraude suspectée, montant anormal, etc.)..."
+                  placeholder={t('paymentReviewQueue.expliquezPourquoiCePaiementEst')}
                   rows={4}
                   required
                 />

@@ -1,5 +1,5 @@
-// @ts-nocheck
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { Button } from "@/components/ui/button";
@@ -113,6 +113,7 @@ const statusLabels = {
 };
 
 export default function PaymentProcessor() {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const { user: authUser } = useAuth();
   const { userId: vendorUserId, isAgent } = useCurrentVendor();
@@ -296,14 +297,14 @@ export default function PaymentProcessor() {
     .reduce((sum, t) => sum + t.amount, 0);
   const successRate = totalTransactions > 0 ? (completedTransactions / totalTransactions) * 100 : 0;
 
-  if (loading) return <div className="p-4">Chargement du processeur de paiement...</div>;
+  if (loading) return <div className="p-4">{t('paymentProcessor.chargementDuProcesseurDePaiement')}</div>;
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Processeur de Paiement</h2>
-          <p className="text-muted-foreground">Interface de paiement style Alibaba pour vos clients</p>
+          <h2 className="text-2xl font-bold">{t('paymentProcessor.processeurDePaiement')}</h2>
+          <p className="text-muted-foreground">{t('paymentProcessor.interfaceDePaiementStyleAlibaba')}</p>
         </div>
         <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
           <DialogTrigger asChild>
@@ -312,22 +313,22 @@ export default function PaymentProcessor() {
               Nouveau paiement
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Traiter un paiement</DialogTitle>
+              <DialogTitle>{t('paymentProcessor.traiterUnPaiement')}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="order">Commande</Label>
+                <Label htmlFor="order">{t('paymentProcessor.commande')}</Label>
                 <Input
                   id="order"
-                  placeholder="Numéro de commande"
+                  placeholder={t('paymentProcessor.numeroDeCommande')}
                   value={selectedOrder}
                   onChange={(e) => setSelectedOrder(e.target.value)}
                 />
               </div>
               <div>
-                <Label htmlFor="amount">Montant (GNF)</Label>
+                <Label htmlFor="amount">{t('paymentProcessor.montantGnf')}</Label>
                 <Input
                   id="amount"
                   type="number"
@@ -337,10 +338,10 @@ export default function PaymentProcessor() {
                 />
               </div>
               <div>
-                <Label htmlFor="method">Méthode de paiement</Label>
+                <Label htmlFor="method">{t('paymentProcessor.methodeDePaiement')}</Label>
                 <Select value={paymentData.method} onValueChange={(value) => setPaymentData(prev => ({ ...prev, method: value }))}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner une méthode" />
+                    <SelectValue placeholder={t('paymentProcessor.selectionnerUneMethode')} />
                   </SelectTrigger>
                   <SelectContent>
                     {paymentMethods.filter(m => m.available).map((method) => (
@@ -352,11 +353,11 @@ export default function PaymentProcessor() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="email">Email client</Label>
+                <Label htmlFor="email">{t('paymentProcessor.emailClient')}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="client@example.com"
+                  placeholder={t('paymentProcessor.clientExampleCom')}
                   value={paymentData.customer_email}
                   onChange={(e) => setPaymentData(prev => ({ ...prev, customer_email: e.target.value }))}
                 />
@@ -365,7 +366,7 @@ export default function PaymentProcessor() {
                 <Label htmlFor="notes">Notes (optionnel)</Label>
                 <Input
                   id="notes"
-                  placeholder="Notes sur le paiement"
+                  placeholder={t('paymentProcessor.notesSurLePaiement')}
                   value={paymentData.notes}
                   onChange={(e) => setPaymentData(prev => ({ ...prev, notes: e.target.value }))}
                 />
@@ -401,7 +402,7 @@ export default function PaymentProcessor() {
             <div className="flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-[#ff4000]" />
               <div>
-                <p className="text-sm text-muted-foreground">Réussies</p>
+                <p className="text-sm text-muted-foreground">{t('paymentProcessor.reussies')}</p>
                 <p className="text-2xl font-bold text-[#ff4000]">{completedTransactions}</p>
               </div>
             </div>
@@ -412,7 +413,7 @@ export default function PaymentProcessor() {
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 bg-[#ff4000] rounded-full" />
               <div>
-                <p className="text-sm text-muted-foreground">Montant total</p>
+                <p className="text-sm text-muted-foreground">{t('paymentProcessor.montantTotal')}</p>
                 <p className="text-2xl font-bold">{fc(totalAmount)}</p>
               </div>
             </div>
@@ -423,7 +424,7 @@ export default function PaymentProcessor() {
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-orange-600" />
               <div>
-                <p className="text-sm text-muted-foreground">Taux de réussite</p>
+                <p className="text-sm text-muted-foreground">{t('paymentProcessor.tauxDeReussite')}</p>
                 <p className="text-2xl font-bold">{successRate.toFixed(1)}%</p>
               </div>
             </div>
@@ -434,7 +435,7 @@ export default function PaymentProcessor() {
       {/* Méthodes de paiement disponibles */}
       <Card>
         <CardHeader>
-          <CardTitle>Méthodes de paiement disponibles</CardTitle>
+          <CardTitle>{t('paymentProcessor.methodesDePaiementDisponibles')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -465,7 +466,7 @@ export default function PaymentProcessor() {
       {/* Transactions récentes */}
       <Card>
         <CardHeader>
-          <CardTitle>Transactions récentes</CardTitle>
+          <CardTitle>{t('paymentProcessor.transactionsRecentes')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -518,7 +519,7 @@ export default function PaymentProcessor() {
           {transactions.length === 0 && (
             <div className="text-center py-8">
               <CreditCard className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Aucune transaction</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('paymentProcessor.aucuneTransaction')}</h3>
               <p className="text-muted-foreground">
                 Vous n'avez pas encore traité de paiements.
               </p>

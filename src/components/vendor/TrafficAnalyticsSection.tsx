@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslation } from "@/hooks/useTranslation";
 import { useTrafficAnalytics } from "@/hooks/useTrafficAnalytics";
 import { Eye, Users, MousePointer, Store, TrendingUp, Smartphone, Globe, MapPin } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell } from 'recharts';
@@ -7,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', '#ff4000', '#ff4000', '#ff4000', '#04439e'];
 
 export function TrafficAnalyticsSection() {
+  const { t } = useTranslation();
   const { stats, loading, error } = useTrafficAnalytics();
 
   if (loading) {
@@ -45,7 +47,7 @@ export function TrafficAnalyticsSection() {
       <Card>
         <CardContent className="p-6 text-center">
           <Eye className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">Aucune donnée de trafic disponible</p>
+          <p className="text-muted-foreground">{t('trafficAnalyticsSection.aucuneDonneeDeTraficDisponible')}</p>
           <p className="text-sm text-muted-foreground mt-2">
             Les statistiques apparaîtront ici une fois que les visiteurs commenceront à consulter vos produits.
           </p>
@@ -92,7 +94,7 @@ export function TrafficAnalyticsSection() {
                 <Eye className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Vues produits</p>
+                <p className="text-sm text-muted-foreground">{t('trafficAnalyticsSection.vuesProduits')}</p>
                 <p className="text-2xl font-bold">{stats.totalProductViews.toLocaleString()}</p>
                 <p className="text-xs text-muted-foreground">
                   Aujourd'hui: {stats.todayProductViews}
@@ -124,7 +126,7 @@ export function TrafficAnalyticsSection() {
                 <Store className="w-5 h-5 text-[#04439e]" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Visites boutique</p>
+                <p className="text-sm text-muted-foreground">{t('trafficAnalyticsSection.visitesBoutique')}</p>
                 <p className="text-2xl font-bold">{stats.totalShopVisits.toLocaleString()}</p>
                 <p className="text-xs text-muted-foreground">
                   Aujourd'hui: {stats.todayShopVisits}
@@ -290,7 +292,7 @@ export function TrafficAnalyticsSection() {
         <Card className="bg-muted/50">
           <CardContent className="p-6 text-center">
             <Eye className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-lg font-medium">Pas encore de données de trafic</p>
+            <p className="text-lg font-medium">{t('trafficAnalyticsSection.pasEncoreDeDonneesDe')}</p>
             <p className="text-sm text-muted-foreground mt-2">
               Les statistiques de vues et visites apparaîtront ici une fois que les visiteurs commenceront à consulter votre boutique et vos produits.
             </p>

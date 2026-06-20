@@ -1,11 +1,13 @@
 ﻿import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export default function AffiliateRedirect() {
+  const { t } = useTranslation();
   const { vendorId } = useParams<{ vendorId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -46,7 +48,7 @@ export default function AffiliateRedirect() {
       if (userIdError) throw userIdError;
 
       if (!userIdData) {
-        toast.error('Vendeur introuvable');
+        toast.error(t('affiliateRedirect.vendeurIntrouvable'));
         navigate('/marketplace');
         return;
       }
@@ -61,7 +63,7 @@ export default function AffiliateRedirect() {
       if (vendorError) throw vendorError;
 
       if (!vendor) {
-        toast.error('Boutique introuvable');
+        toast.error(t('affiliateRedirect.boutiqueIntrouvable'));
         navigate('/marketplace');
         return;
       }
@@ -106,7 +108,7 @@ export default function AffiliateRedirect() {
 
     } catch (error) {
       console.error('Erreur redirection affiliation:', error);
-      toast.error('Erreur lors du chargement');
+      toast.error(t('affiliateRedirect.erreurLorsDuChargement'));
       navigate('/marketplace');
     } finally {
       setLoading(false);
@@ -118,7 +120,7 @@ export default function AffiliateRedirect() {
       <Card className="w-full max-w-md">
         <CardContent className="flex flex-col items-center justify-center py-12 space-y-4">
           <Loader2 className="w-12 h-12 animate-spin text-primary" />
-          <h2 className="text-xl font-semibold">Chargement de la boutique...</h2>
+          <h2 className="text-xl font-semibold">{t('affiliateRedirect.chargementDeLaBoutique')}</h2>
           <p className="text-sm text-muted-foreground text-center">
             Vous allez être redirigé vers les produits du vendeur
           </p>

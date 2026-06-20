@@ -9,6 +9,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -214,6 +215,7 @@ const mockOrders: SupplierOrder[] = [
 // ==================== MAIN COMPONENT ====================
 
 export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('overview');
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [products, setProducts] = useState<DropshipProduct[]>(mockProducts);
@@ -334,7 +336,7 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
       {stats.syncErrors > 0 && (
         <Alert variant="destructive">
           <AlertTriangle className="w-4 h-4" />
-          <AlertTitle>Erreurs de synchronisation</AlertTitle>
+          <AlertTitle>{t('dropshippingDashboard.erreursDeSynchronisation')}</AlertTitle>
           <AlertDescription>
             {stats.syncErrors} produit(s) n'ont pas pu être synchronisés.
             <Button
@@ -448,7 +450,7 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
           <div className="grid gap-6 md:grid-cols-2 mt-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Derniers produits importés</CardTitle>
+                <CardTitle className="text-lg">{t('dropshippingDashboard.derniersProduitsImportes')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -482,7 +484,7 @@ export function DropshippingDashboard({ vendorId }: DropshippingDashboardProps) 
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Commandes récentes</CardTitle>
+                <CardTitle className="text-lg">{t('dropshippingDashboard.commandesRecentes')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { formatCurrency } from '@/lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,6 +41,7 @@ interface WalletTransaction {
 }
 
 export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransactionsManagementProps) {
+  const { t } = useTranslation();
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [walletBalance, setWalletBalance] = useState(0);
@@ -119,7 +121,7 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
 
     } catch (error: any) {
       console.error('Erreur chargement wallet:', error);
-      toast.error('Erreur lors du chargement');
+      toast.error(t('agentWalletTransactionsManagement.erreurLorsDuChargement'));
     } finally {
       setLoading(false);
     }
@@ -127,18 +129,18 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
 
   const handleTransfer = async () => {
     if (!transferData.recipientId || !transferData.amount) {
-      toast.error('Veuillez remplir tous les champs obligatoires');
+      toast.error(t('agentWalletTransactionsManagement.veuillezRemplirTousLesChamps'));
       return;
     }
 
     const amount = parseFloat(transferData.amount);
     if (isNaN(amount) || amount <= 0) {
-      toast.error('Montant invalide');
+      toast.error(t('agentWalletTransactionsManagement.montantInvalide'));
       return;
     }
 
     if (amount > walletBalance) {
-      toast.error('Solde insuffisant');
+      toast.error(t('agentWalletTransactionsManagement.soldeInsuffisant'));
       return;
     }
 
@@ -155,7 +157,7 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
 
       if (error) throw error;
 
-      toast.success('Transfert effectué avec succès');
+      toast.success(t('agentWalletTransactionsManagement.transfertEffectueAvecSucces'));
       setIsTransferDialogOpen(false);
       setTransferData({ recipientId: '', amount: '', description: '' });
       loadWalletData();
@@ -173,11 +175,11 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge className="bg-orange-100 text-[#ff4000]"><CheckCircle className="w-3 h-3 mr-1" />Complété</Badge>;
+        return <Badge className="bg-orange-100 text-[#ff4000]"><CheckCircle className="w-3 h-3 mr-1" />{t('agentWalletTransactionsManagement.complete')}</Badge>;
       case 'pending':
         return <Badge className="bg-orange-100 text-[#ff4000]"><Clock className="w-3 h-3 mr-1" />En attente</Badge>;
       case 'failed':
-        return <Badge className="bg-orange-100 text-[#ff4000]"><XCircle className="w-3 h-3 mr-1" />Échoué</Badge>;
+        return <Badge className="bg-orange-100 text-[#ff4000]"><XCircle className="w-3 h-3 mr-1" />{t('agentWalletTransactionsManagement.echoue')}</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -222,7 +224,7 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
         <div className="bg-gradient-to-r from-[#ff4000] to-[#ff4000] p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white/80 text-sm mb-1">Solde Disponible</p>
+              <p className="text-white/80 text-sm mb-1">{t('agentWalletTransactionsManagement.soldeDisponible')}</p>
               <p className="text-3xl font-bold text-white">{formatCurrency(walletBalance, walletCurrency)}</p>
             </div>
             <div className="flex items-center gap-2">
@@ -250,15 +252,15 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
                   </DialogHeader>
                   <div className="space-y-4">
                     <div>
-                      <Label>ID du destinataire *</Label>
+                      <Label>{t('agentWalletTransactionsManagement.idDuDestinataire')}</Label>
                       <Input
-                        placeholder="Entrez l'ID public du destinataire"
+                        placeholder={t('agentWalletTransactionsManagement.entrezLIdPublicDu')}
                         value={transferData.recipientId}
                         onChange={(e) => setTransferData({...transferData, recipientId: e.target.value})}
                       />
                     </div>
                     <div>
-                      <Label>Montant (GNF) *</Label>
+                      <Label>{t('agentWalletTransactionsManagement.montantGnf')}</Label>
                       <Input
                         type="number"
                         placeholder="0"
@@ -272,7 +274,7 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
                     <div>
                       <Label>Description (optionnel)</Label>
                       <Input
-                        placeholder="Motif du transfert"
+                        placeholder={t('agentWalletTransactionsManagement.motifDuTransfert')}
                         value={transferData.description}
                         onChange={(e) => setTransferData({...transferData, description: e.target.value})}
                       />
@@ -308,7 +310,7 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
-                  placeholder="Rechercher..."
+                  placeholder={t('agentWalletTransactionsManagement.rechercher')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -320,7 +322,7 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous les types</SelectItem>
+                <SelectItem value="all">{t('agentWalletTransactionsManagement.tousLesTypes')}</SelectItem>
                 {transactionTypes.map(type => (
                   <SelectItem key={type} value={type}>{type}</SelectItem>
                 ))}
@@ -331,10 +333,10 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
                 <SelectValue placeholder="Statut" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous les statuts</SelectItem>
-                <SelectItem value="completed">Complété</SelectItem>
+                <SelectItem value="all">{t('agentWalletTransactionsManagement.tousLesStatuts')}</SelectItem>
+                <SelectItem value="completed">{t('agentWalletTransactionsManagement.complete')}</SelectItem>
                 <SelectItem value="pending">En attente</SelectItem>
-                <SelectItem value="failed">Échoué</SelectItem>
+                <SelectItem value="failed">{t('agentWalletTransactionsManagement.echoue')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -343,7 +345,7 @@ export function AgentWalletTransactionsManagement({ agentId }: AgentWalletTransa
           {filteredTransactions.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Wallet className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>Aucune transaction trouvée</p>
+              <p>{t('agentWalletTransactionsManagement.aucuneTransactionTrouvee')}</p>
             </div>
           ) : (
             <ScrollArea className="h-[400px]">

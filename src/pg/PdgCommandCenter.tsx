@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -23,6 +24,7 @@ import {
   Bell
 } from 'lucide-react';
 import AlertsDashboard from '@/components/pdg/AlertsDashboard';
+import AutoHealingDashboard from '@/components/pdg/AutoHealingDashboard';
 import { useNavigate } from 'react-router-dom';
 
 const normalizeCopilotText = (value: string) => value
@@ -46,6 +48,7 @@ const normalizeCopilotText = (value: string) => value
   .replaceAll('en plus tu corrige tous les texte qui son mal écrit', 'Corrigez également tous les textes mal écrits.');
 
 export default function PdgCommandCenter() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const {
     systemHealth,
@@ -151,7 +154,7 @@ export default function PdgCommandCenter() {
               <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl sm:text-3xl font-bold truncate">Centre de Commande</h1>
+              <h1 className="text-xl sm:text-3xl font-bold truncate">{t('pdgCommandCenter.centreDeCommande')}</h1>
               <p className="text-xs sm:text-sm text-muted-foreground truncate">
                 Surveillance & Debug - 224SOLUTIONS
               </p>
@@ -186,7 +189,7 @@ export default function PdgCommandCenter() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
           <Card>
             <CardHeader className="pb-1 sm:pb-2 p-3 sm:p-6">
-              <CardTitle className="text-xs sm:text-sm font-medium">Santé système</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium">{t('pdgCommandCenter.santeSysteme')}</CardTitle>
             </CardHeader>
             <CardContent className="p-3 sm:p-6 pt-0">
               <div className="flex items-center justify-between">
@@ -252,7 +255,7 @@ export default function PdgCommandCenter() {
               <TabsTrigger value="overview" className="text-xs sm:text-sm px-2 sm:px-3">
                 <Activity className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                 <span className="hidden sm:inline">Vue d'ensemble</span>
-                <span className="sm:hidden">Aperçu</span>
+                <span className="sm:hidden">{t('pdgCommandCenter.apercu')}</span>
               </TabsTrigger>
               <TabsTrigger value="alerts" className="text-xs sm:text-sm px-2 sm:px-3">
                 <Bell className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
@@ -272,6 +275,11 @@ export default function PdgCommandCenter() {
                 <span className="hidden sm:inline">Auto-Fixes</span>
                 <span className="sm:hidden">Fixes</span>
               </TabsTrigger>
+              <TabsTrigger value="auto-healing" className="text-xs sm:text-sm px-2 sm:px-3">
+                <Brain className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">{t('pdgCommandCenter.autoReparation')}</span>
+                <span className="sm:hidden">{t('pdgCommandCenter.autoRep')}</span>
+              </TabsTrigger>
               <TabsTrigger value="copilot" className="text-xs sm:text-sm px-2 sm:px-3">
                 <Brain className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                 IA
@@ -284,7 +292,7 @@ export default function PdgCommandCenter() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>État des services</CardTitle>
+                  <CardTitle>{t('pdgCommandCenter.etatDesServices')}</CardTitle>
                   <CardDescription>
                     Dernière vérification : {new Date(systemHealth.lastCheck).toLocaleString('fr-FR')}
                   </CardDescription>
@@ -314,7 +322,7 @@ export default function PdgCommandCenter() {
               <Card>
                 <CardHeader>
                   <CardTitle>Actions Rapides</CardTitle>
-                  <CardDescription>Outils de diagnostic et correction</CardDescription>
+                  <CardDescription>{t('pdgCommandCenter.outilsDeDiagnosticEtCorrection')}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <Button
@@ -356,7 +364,7 @@ export default function PdgCommandCenter() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>État des services</CardTitle>
+                  <CardTitle>{t('pdgCommandCenter.etatDesServices')}</CardTitle>
                   <CardDescription>
                     Dernière vérification : {new Date(systemHealth.lastCheck).toLocaleString('fr-FR')}
                   </CardDescription>
@@ -386,7 +394,7 @@ export default function PdgCommandCenter() {
               <Card>
                 <CardHeader>
                   <CardTitle>Actions Rapides</CardTitle>
-                  <CardDescription>Outils de diagnostic et correction</CardDescription>
+                  <CardDescription>{t('pdgCommandCenter.outilsDeDiagnosticEtCorrection')}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <Button
@@ -422,8 +430,8 @@ export default function PdgCommandCenter() {
           <TabsContent value="services">
             <Card>
               <CardHeader>
-                <CardTitle>Monitoring des Services</CardTitle>
-                <CardDescription>État détaillé de tous les services connectés</CardDescription>
+                <CardTitle>{t('pdgCommandCenter.monitoringDesServices')}</CardTitle>
+                <CardDescription>{t('pdgCommandCenter.etatDetailleDeTousLes')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-[400px]">
@@ -460,8 +468,8 @@ export default function PdgCommandCenter() {
           <TabsContent value="interfaces">
             <Card>
               <CardHeader>
-                <CardTitle>Métriques des interfaces utilisateur</CardTitle>
-                <CardDescription>Performance et utilisation par interface</CardDescription>
+                <CardTitle>{t('pdgCommandCenter.metriquesDesInterfacesUtilisateur')}</CardTitle>
+                <CardDescription>{t('pdgCommandCenter.performanceEtUtilisationParInterface')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <ScrollArea className="h-[400px]">
@@ -516,7 +524,7 @@ export default function PdgCommandCenter() {
               {/* Erreurs récentes à analyser */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Erreurs récentes - Analyse IA</CardTitle>
+                  <CardTitle>{t('pdgCommandCenter.erreursRecentesAnalyseIa')}</CardTitle>
                   <CardDescription>
                     Cliquez sur "Analyser avec IA" pour obtenir une solution automatique
                   </CardDescription>
@@ -625,6 +633,11 @@ export default function PdgCommandCenter() {
             </div>
           </TabsContent>
 
+          {/* Auto-Réparation supervisée (dual-IA) */}
+          <TabsContent value="auto-healing">
+            <AutoHealingDashboard />
+          </TabsContent>
+
           {/* IA Copilote */}
           <TabsContent value="copilot">
             <Card>
@@ -640,7 +653,7 @@ export default function PdgCommandCenter() {
               <CardContent className="space-y-4">
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Ex : Quelles sont les erreurs les plus fréquentes ?"
+                    placeholder={t('pdgCommandCenter.exQuellesSontLesErreurs')}
                     value={aiQuery}
                     onChange={(e) => setAiQuery(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleAskAI()}
@@ -665,7 +678,7 @@ export default function PdgCommandCenter() {
                 )}
 
                 <div className="space-y-2">
-                  <p className="text-sm font-medium">Questions suggérées :</p>
+                  <p className="text-sm font-medium">{t('pdgCommandCenter.questionsSuggerees')}</p>
                   <div className="flex flex-wrap gap-2">
                     {[
                       'Quel est l\'état global du système ?',

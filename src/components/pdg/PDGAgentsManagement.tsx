@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
@@ -80,6 +81,7 @@ const COUNTRY_OPTIONS = [
 ];
 
 export default function PDGAgentsManagement() {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const { agents, pdgProfile, loading, stats, refetch } = usePDGAgentsData();
   const {
@@ -206,12 +208,12 @@ export default function PDGAgentsManagement() {
     }
 
     if (!formData.name || !formData.email || !formData.phone) {
-      toast.error('Veuillez remplir tous les champs obligatoires');
+      toast.error(t('pDGAgentsManagement.veuillezRemplirTousLesChamps'));
       return;
     }
 
     if (!editingAgent && (!formData.password || formData.password.length < 8)) {
-      toast.error('Le mot de passe doit contenir au moins 8 caractères');
+      toast.error(t('pDGAgentsManagement.leMotDePasseDoit'));
       return;
     }
 
@@ -419,7 +421,7 @@ export default function PDGAgentsManagement() {
     if (!resetPasswordAgent || !newPassword) return;
 
     if (newPassword.length < 8) {
-      toast.error('Le mot de passe doit contenir au moins 8 caractères');
+      toast.error(t('pDGAgentsManagement.leMotDePasseDoit'));
       return;
     }
 
@@ -572,7 +574,7 @@ export default function PDGAgentsManagement() {
           }
         } catch (error: any) {
           console.error('Erreur chargement utilisateurs:', error);
-          toast.error('Erreur lors du chargement des utilisateurs');
+          toast.error(t('pDGAgentsManagement.erreurLorsDuChargementDes'));
         } finally {
           setLoadingUsersMap({ ...loadingUsersMap, [agent.id]: false });
         }
@@ -624,7 +626,7 @@ export default function PDGAgentsManagement() {
           setAgentSubAgentsMap({ ...agentSubAgentsMap, [agent.id]: subAgentsWithCounts });
         } catch (error: any) {
           console.error('Erreur chargement sous-agents:', error);
-          toast.error('Erreur lors du chargement des sous-agents');
+          toast.error(t('pDGAgentsManagement.erreurLorsDuChargementDes2'));
         } finally {
           setLoadingSubAgentsMap({ ...loadingSubAgentsMap, [agent.id]: false });
         }
@@ -637,7 +639,7 @@ export default function PDGAgentsManagement() {
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Chargement des agents...</p>
+          <p className="text-muted-foreground">{t('pDGAgentsManagement.chargementDesAgents')}</p>
         </div>
       </div>
     );
@@ -656,7 +658,7 @@ export default function PDGAgentsManagement() {
       {/* En-tête */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Gestion des Agents</h2>
+          <h2 className="text-3xl font-bold tracking-tight">{t('pDGAgentsManagement.gestionDesAgents')}</h2>
           <p className="text-muted-foreground mt-1">
             Gérez votre réseau d'agents - {pdgProfile?.name || 'PDG'}
           </p>
@@ -729,7 +731,7 @@ export default function PDGAgentsManagement() {
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="phone">Téléphone *</Label>
+                            <Label htmlFor="phone">{t('pDGAgentsManagement.telephone')}</Label>
                             <Input
                               id="phone"
                               required
@@ -760,11 +762,11 @@ export default function PDGAgentsManagement() {
                               onValueChange={(value) => setFormData({ ...formData, type_agent: value })}
                             >
                               <SelectTrigger>
-                                <SelectValue placeholder="Sélectionner un type" />
+                                <SelectValue placeholder={t('pDGAgentsManagement.selectionnerUnType')} />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="principal">Agent Principal</SelectItem>
-                                <SelectItem value="agent_regional">Agent Régional</SelectItem>
+                                <SelectItem value="agent_regional">{t('pDGAgentsManagement.agentRegional')}</SelectItem>
                                 <SelectItem value="agent_local">Agent Local</SelectItem>
                               </SelectContent>
                             </Select>
@@ -783,7 +785,7 @@ export default function PDGAgentsManagement() {
                         </div>
 
                         <div className="space-y-3 border-t pt-4">
-                          <Label>Permissions de base</Label>
+                          <Label>{t('pDGAgentsManagement.permissionsDeBase')}</Label>
                           <div className="grid grid-cols-2 gap-2">
                             <div className="flex items-center space-x-2">
                               <Checkbox
@@ -796,7 +798,7 @@ export default function PDGAgentsManagement() {
                                   }))
                                 }
                               />
-                              <label htmlFor="create_users" className="text-sm">Créer des utilisateurs</label>
+                              <label htmlFor="create_users" className="text-sm">{t('pDGAgentsManagement.creerDesUtilisateurs')}</label>
                             </div>
                             <div className="flex items-center space-x-2">
                               <Checkbox
@@ -809,7 +811,7 @@ export default function PDGAgentsManagement() {
                                   }))
                                 }
                               />
-                              <label htmlFor="create_sub_agents" className="text-sm">Créer des sous-agents</label>
+                              <label htmlFor="create_sub_agents" className="text-sm">{t('pDGAgentsManagement.creerDesSousAgents')}</label>
                             </div>
                             <div className="flex items-center space-x-2">
                               <Checkbox
@@ -822,7 +824,7 @@ export default function PDGAgentsManagement() {
                                   }))
                                 }
                               />
-                              <label htmlFor="view_reports" className="text-sm">Voir les rapports</label>
+                              <label htmlFor="view_reports" className="text-sm">{t('pDGAgentsManagement.voirLesRapports')}</label>
                             </div>
                             <div className="flex items-center space-x-2">
                               <Checkbox
@@ -835,7 +837,7 @@ export default function PDGAgentsManagement() {
                                   }))
                                 }
                               />
-                              <label htmlFor="manage_commissions" className="text-sm">Gérer les commissions</label>
+                              <label htmlFor="manage_commissions" className="text-sm">{t('pDGAgentsManagement.gererLesCommissions')}</label>
                             </div>
                             <div className="flex items-center space-x-2">
                               <Checkbox
@@ -848,7 +850,7 @@ export default function PDGAgentsManagement() {
                                   }))
                                 }
                               />
-                              <label htmlFor="manage_users" className="text-sm">Gérer les utilisateurs</label>
+                              <label htmlFor="manage_users" className="text-sm">{t('pDGAgentsManagement.gererLesUtilisateurs')}</label>
                             </div>
                             <div className="flex items-center space-x-2">
                               <Checkbox
@@ -861,7 +863,7 @@ export default function PDGAgentsManagement() {
                                   }))
                                 }
                               />
-                              <label htmlFor="manage_products" className="text-sm">Gérer les produits</label>
+                              <label htmlFor="manage_products" className="text-sm">{t('pDGAgentsManagement.gererLesProduits')}</label>
                             </div>
                           </div>
                         </div>
@@ -892,7 +894,7 @@ export default function PDGAgentsManagement() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="phone">Téléphone *</Label>
+                        <Label htmlFor="phone">{t('pDGAgentsManagement.telephone')}</Label>
                         <Input
                           id="phone"
                           required
@@ -916,7 +918,7 @@ export default function PDGAgentsManagement() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="password">Mot de passe * (min. 8 caractères)</Label>
+                      <Label htmlFor="password">{t('pDGAgentsManagement.motDePasseMin8')}</Label>
                       <Input
                         id="password"
                         type="password"
@@ -940,7 +942,7 @@ export default function PDGAgentsManagement() {
                         }}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Sélectionner un pays..." />
+                          <SelectValue placeholder={t('pDGAgentsManagement.selectionnerUnPays')} />
                         </SelectTrigger>
                         <SelectContent>
                           {COUNTRY_OPTIONS.map((c) => (
@@ -965,11 +967,11 @@ export default function PDGAgentsManagement() {
                           onValueChange={(value) => setFormData({ ...formData, type_agent: value })}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Sélectionner un type" />
+                            <SelectValue placeholder={t('pDGAgentsManagement.selectionnerUnType')} />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="principal">Agent Principal</SelectItem>
-                            <SelectItem value="agent_regional">Agent Régional</SelectItem>
+                            <SelectItem value="agent_regional">{t('pDGAgentsManagement.agentRegional')}</SelectItem>
                             <SelectItem value="agent_local">Agent Local</SelectItem>
                           </SelectContent>
                         </Select>
@@ -988,7 +990,7 @@ export default function PDGAgentsManagement() {
                     </div>
 
                     <div className="space-y-3 border-t pt-4">
-                      <Label>Permissions de base</Label>
+                      <Label>{t('pDGAgentsManagement.permissionsDeBase')}</Label>
                       <div className="grid grid-cols-2 gap-2">
                         <div className="flex items-center space-x-2">
                           <Checkbox
@@ -1001,7 +1003,7 @@ export default function PDGAgentsManagement() {
                               }))
                             }
                           />
-                          <label htmlFor="create_users_new" className="text-sm">Créer des utilisateurs</label>
+                          <label htmlFor="create_users_new" className="text-sm">{t('pDGAgentsManagement.creerDesUtilisateurs')}</label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox
@@ -1014,7 +1016,7 @@ export default function PDGAgentsManagement() {
                               }))
                             }
                           />
-                          <label htmlFor="create_sub_agents_new" className="text-sm">Créer des sous-agents</label>
+                          <label htmlFor="create_sub_agents_new" className="text-sm">{t('pDGAgentsManagement.creerDesSousAgents')}</label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox
@@ -1027,7 +1029,7 @@ export default function PDGAgentsManagement() {
                               }))
                             }
                           />
-                          <label htmlFor="view_reports_new" className="text-sm">Voir les rapports</label>
+                          <label htmlFor="view_reports_new" className="text-sm">{t('pDGAgentsManagement.voirLesRapports')}</label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox
@@ -1040,7 +1042,7 @@ export default function PDGAgentsManagement() {
                               }))
                             }
                           />
-                          <label htmlFor="manage_commissions_new" className="text-sm">Gérer les commissions</label>
+                          <label htmlFor="manage_commissions_new" className="text-sm">{t('pDGAgentsManagement.gererLesCommissions')}</label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox
@@ -1053,7 +1055,7 @@ export default function PDGAgentsManagement() {
                               }))
                             }
                           />
-                          <label htmlFor="manage_users_new" className="text-sm">Gérer les utilisateurs</label>
+                          <label htmlFor="manage_users_new" className="text-sm">{t('pDGAgentsManagement.gererLesUtilisateurs')}</label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Checkbox
@@ -1066,7 +1068,7 @@ export default function PDGAgentsManagement() {
                               }))
                             }
                           />
-                          <label htmlFor="manage_products_new" className="text-sm">Gérer les produits</label>
+                          <label htmlFor="manage_products_new" className="text-sm">{t('pDGAgentsManagement.gererLesProduits')}</label>
                         </div>
                       </div>
                     </div>
@@ -1176,7 +1178,7 @@ export default function PDGAgentsManagement() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
-              placeholder="Rechercher un agent par nom ou email..."
+              placeholder={t('pDGAgentsManagement.rechercherUnAgentParNom')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -1340,7 +1342,7 @@ export default function PDGAgentsManagement() {
                                         className="h-6 w-6 p-0"
                                         onClick={() => {
                                           navigator.clipboard.writeText(`${window.location.origin}/agent/${subAgent.access_token}`);
-                                          toast.success('Lien copié!');
+                                          toast.success(t('pDGAgentsManagement.lienCopie'));
                                         }}
                                       >
                                         <Copy className="w-3 h-3" />
@@ -1362,7 +1364,7 @@ export default function PDGAgentsManagement() {
                 )}
 
                 <div className="flex items-center justify-between text-sm pb-3">
-                  <span className="text-muted-foreground">Commissions gagnées:</span>
+                  <span className="text-muted-foreground">{t('pDGAgentsManagement.commissionsGagnees')}</span>
                   <span className="font-medium">{fc(agent.total_commissions_earned || 0)}</span>
                 </div>
 
@@ -1384,7 +1386,7 @@ export default function PDGAgentsManagement() {
                           variant="outline"
                           onClick={() => {
                             navigator.clipboard.writeText(`${window.location.origin}/agent/${agent.access_token}`);
-                            toast.success('Lien copié!');
+                            toast.success(t('pDGAgentsManagement.lienCopie'));
                           }}
                         >
                           <Copy className="w-3.5 h-3.5" />
@@ -1489,7 +1491,7 @@ export default function PDGAgentsManagement() {
 
       {/* Dialog changement de devise agent */}
       <Dialog open={currencyDialog.open} onOpenChange={open => setCurrencyDialog(d => ({ ...d, open }))}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Globe className="w-5 h-5" />
@@ -1499,9 +1501,9 @@ export default function PDGAgentsManagement() {
           <div className="space-y-4 py-2">
             <p className="text-sm text-muted-foreground">Agent : <strong>{currencyDialog.agent?.name}</strong></p>
             <div className="space-y-2">
-              <Label>Pays de résidence</Label>
+              <Label>{t('pDGAgentsManagement.paysDeResidence')}</Label>
               <Select value={currencyDialog.selectedCountry} onValueChange={v => setCurrencyDialog(d => ({ ...d, selectedCountry: v, error: null }))}>
-                <SelectTrigger><SelectValue placeholder="Sélectionner un pays..." /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder={t('pDGAgentsManagement.selectionnerUnPays')} /></SelectTrigger>
                 <SelectContent>
                   {COUNTRY_OPTIONS.map(c => (
                     <SelectItem key={c.code} value={c.code}>{c.flag} {c.name} — {c.currency}</SelectItem>
@@ -1514,7 +1516,7 @@ export default function PDGAgentsManagement() {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCurrencyDialog(d => ({ ...d, open: false }))}>Annuler</Button>
+            <Button variant="outline" onClick={() => setCurrencyDialog(d => ({ ...d, open: false }))}>{t('pDGAgentsManagement.annuler')}</Button>
             <Button onClick={handleAgentCurrencyChange} disabled={!currencyDialog.selectedCountry || currencyDialog.saving}>
               {currencyDialog.saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />En cours...</> : 'Confirmer'}
             </Button>
@@ -1526,14 +1528,14 @@ export default function PDGAgentsManagement() {
       <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Réinitialiser le mot de passe</DialogTitle>
+            <DialogTitle>{t('pDGAgentsManagement.reinitialiserLeMotDePasse')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
               Définir un nouveau mot de passe pour <strong>{resetPasswordAgent?.name}</strong>
             </p>
             <div className="space-y-2">
-              <Label htmlFor="new_password">Nouveau mot de passe</Label>
+              <Label htmlFor="new_password">{t('pDGAgentsManagement.nouveauMotDePasse')}</Label>
               <Input
                 id="new_password"
                 type="password"
@@ -1567,7 +1569,7 @@ export default function PDGAgentsManagement() {
       <Dialog open={isChangeEmailDialogOpen} onOpenChange={setIsChangeEmailDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Changer l'email de l'agent</DialogTitle>
+            <DialogTitle>{t('pDGAgentsManagement.changerLEmailDeL')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
@@ -1590,11 +1592,11 @@ export default function PDGAgentsManagement() {
                 type="email"
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
-                placeholder="nouveau@email.com"
+                placeholder={t('pDGAgentsManagement.nouveauEmailCom')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email_password">Mot de passe de l'agent (optionnel)</Label>
+              <Label htmlFor="email_password">{t('pDGAgentsManagement.motDePasseDeL')}</Label>
               <Input
                 id="email_password"
                 type="password"

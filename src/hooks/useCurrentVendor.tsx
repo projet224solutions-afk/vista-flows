@@ -217,7 +217,10 @@ export const useCurrentVendor = () => {
 
   return {
     vendorId: vendorData?.vendorId || null,
-    userId: vendorData?.userId || null, // L'ID auth.users - pour vendor_expenses
+    // ⚡ Exposer l'userId IMMÉDIATEMENT (= auth.users.id, connu de façon synchrone) sans
+    // attendre la requête `vendors` : permet aux hooks dépendants (stats…) de peindre
+    // depuis le cache tout de suite au lieu d'attendre ~1,5 s le réseau.
+    userId: vendorData?.userId || authUserId || null, // L'ID auth.users - pour vendor_expenses
     isAgent: vendorData?.isAgent || false,
     agentPermissions: vendorData?.agentPermissions,
     user: vendorData?.user,

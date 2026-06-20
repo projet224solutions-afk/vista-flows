@@ -5,6 +5,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -35,6 +36,7 @@ export function WalletDisplay({
   onWithdraw,
   compact = false
 }: WalletDisplayProps) {
+  const { t } = useTranslation();
   const {
     wallet,
     loading,
@@ -93,7 +95,7 @@ export function WalletDisplay({
             <Wallet className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <p className="text-sm font-medium">Solde disponible</p>
+            <p className="text-sm font-medium">{t('walletDisplay.soldeDisponible')}</p>
             <p className="text-2xl font-bold">
               {showBalance ? formatAmount(balance, currency) : '••••••'}
             </p>
@@ -117,7 +119,7 @@ export function WalletDisplay({
           <div>
             <CardTitle className="flex items-center space-x-2">
               <Wallet className="w-5 h-5" />
-              <span>Mon Portefeuille</span>
+              <span>{t('walletDisplay.monPortefeuille')}</span>
             </CardTitle>
             <CardDescription>
               Gérez vos fonds et transactions
@@ -149,18 +151,18 @@ export function WalletDisplay({
               {currency.toUpperCase()}
             </span>
           </div>
-          <p className="text-sm text-muted-foreground">Solde disponible</p>
+          <p className="text-sm text-muted-foreground">{t('walletDisplay.soldeDisponible')}</p>
         </div>
 
         <Separator />
 
         {/* Détails des soldes */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {/* Reçu */}
           <div className="space-y-1">
             <div className="flex items-center space-x-1 text-muted-foreground">
               <TrendingUp className="w-4 h-4" />
-              <span className="text-xs">Reçu</span>
+              <span className="text-xs">{t('walletDisplay.recu')}</span>
             </div>
             <p className="text-lg font-semibold">
               {showBalance ? formatAmount((wallet as any).total_received || 0, currency) : '•••'}
@@ -171,7 +173,7 @@ export function WalletDisplay({
           <div className="space-y-1">
             <div className="flex items-center space-x-1 text-muted-foreground">
               <Clock className="w-4 h-4" />
-              <span className="text-xs">Envoyé</span>
+              <span className="text-xs">{t('walletDisplay.envoye')}</span>
             </div>
             <p className="text-lg font-semibold">
               {showBalance ? formatAmount((wallet as any).total_sent || 0, currency) : '•••'}
@@ -182,7 +184,7 @@ export function WalletDisplay({
           <div className="space-y-1">
             <div className="flex items-center space-x-1 text-muted-foreground">
               <Lock className="w-4 h-4" />
-              <span className="text-xs">Solde</span>
+              <span className="text-xs">{t('walletDisplay.solde')}</span>
             </div>
             <p className="text-lg font-semibold">
               {showBalance ? formatAmount(balance, currency) : '•••'}

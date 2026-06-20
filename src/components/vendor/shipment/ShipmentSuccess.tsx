@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
@@ -43,6 +44,7 @@ interface ShipmentDetails {
 }
 
 export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onEdit }: ShipmentSuccessProps) {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const [shipment, setShipment] = useState<ShipmentDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -64,7 +66,7 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
       setShipment(data as any);
     } catch (error) {
       console.error('Error loading shipment:', error);
-      toast.error('Erreur lors du chargement des détails');
+      toast.error(t('shipmentSuccess.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -72,7 +74,7 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
 
   const copyTrackingNumber = () => {
     navigator.clipboard.writeText(trackingNumber);
-    toast.success('Numéro de suivi copié !');
+    toast.success(t('shipmentSuccess.numeroDeSuiviCopie'));
   };
 
   if (loading || !shipment) {
@@ -94,11 +96,11 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
             <CheckCircle className="h-10 w-10 text-[#ff4000] animate-in zoom-in duration-300" />
           </div>
           <h2 className="text-2xl font-bold text-[#ff4000] mb-2">下单成功 !</h2>
-          <p className="text-[#ff4000] mb-6">Commande d'expédition créée avec succès</p>
+          <p className="text-[#ff4000] mb-6">{t('shipmentSuccess.commandeDExpeditionCreeeAvec')}</p>
 
           {/* Numéro de suivi */}
           <div className="bg-white rounded-lg p-4 mb-4 border-2 border-orange-300">
-            <p className="text-sm text-muted-foreground mb-1">Numéro de suivi</p>
+            <p className="text-sm text-muted-foreground mb-1">{t('shipmentSuccess.numeroDeSuivi')}</p>
             <div className="flex items-center justify-center gap-2">
               <p className="text-2xl font-bold text-[#ff4000] tracking-wider">{trackingNumber}</p>
               <Button
@@ -133,7 +135,7 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium text-orange-600">
               <User className="h-4 w-4" />
-              <span>Expéditeur</span>
+              <span>{t('shipmentSuccess.expediteur')}</span>
             </div>
             <div className="ml-6 space-y-1">
               <p className="font-medium">{shipment.sender_name}</p>
@@ -159,7 +161,7 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium text-blue-600">
               <Package className="h-4 w-4" />
-              <span>Informations du colis</span>
+              <span>{t('shipmentSuccess.informationsDuColis')}</span>
             </div>
             <div className="ml-6 grid grid-cols-2 gap-4">
               <div>
@@ -167,7 +169,7 @@ export function ShipmentSuccess({ shipmentId, trackingNumber, onNewShipment, onE
                 <p className="font-medium">{shipment.weight} kg</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Nombre de pièces</p>
+                <p className="text-sm text-muted-foreground">{t('shipmentSuccess.nombreDePieces')}</p>
                 <p className="font-medium">{shipment.pieces_count}</p>
               </div>
               {shipment.item_type && (

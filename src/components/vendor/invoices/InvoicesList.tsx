@@ -97,6 +97,7 @@ export default function InvoicesList() {
       try {
         const { backendFetch } = await import('@/services/backendApi');
         const resp = await backendFetch<any>('/api/documents/invoice-pdf', {
+          method: 'POST',
           body: { invoice_id: invoice.id, ref: invoice.ref }
         });
 

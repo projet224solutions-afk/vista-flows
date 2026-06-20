@@ -4,6 +4,7 @@
  */
 
 import { ReactNode, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -39,6 +40,7 @@ interface DriverLayoutProps {
 }
 
 export function DriverLayout({ children, currentPage = 'dashboard' }: DriverLayoutProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
   const { driver, stats } = useDriver();
@@ -59,9 +61,9 @@ export function DriverLayout({ children, currentPage = 'dashboard' }: DriverLayo
     try {
       await signOut();
       navigate('/auth');
-      toast.success('Déconnexion réussie');
+      toast.success(t('driverLayout.deconnexionReussie'));
     } catch (_error) {
-      toast.error('Erreur lors de la déconnexion');
+      toast.error(t('driverLayout.erreurLorsDeLaDeconnexion'));
     }
   };
 
@@ -85,7 +87,7 @@ export function DriverLayout({ children, currentPage = 'dashboard' }: DriverLayo
             <img src="/logo-224solutions.png" alt="224Solutions" className="h-8 w-8 rounded-lg object-contain" />
             <div className="hidden sm:block">
               <h1 className="text-lg font-bold">224Solutions Livreur</h1>
-              <p className="text-xs text-muted-foreground">Interface de livraison</p>
+              <p className="text-xs text-muted-foreground">{t('driverLayout.interfaceDeLivraison')}</p>
             </div>
           </div>
 
@@ -170,7 +172,7 @@ export function DriverLayout({ children, currentPage = 'dashboard' }: DriverLayo
                   <NavigationIcon className="h-4 w-4 text-primary" />
                   <p className="text-xs font-medium">GPS Tracking</p>
                 </div>
-                <p className="text-xs text-muted-foreground">Position mise à jour</p>
+                <p className="text-xs text-muted-foreground">{t('driverLayout.positionMiseAJour')}</p>
               </div>
               <Button
                 variant="outline"

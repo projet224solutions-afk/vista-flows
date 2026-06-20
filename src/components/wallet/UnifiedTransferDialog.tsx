@@ -35,6 +35,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { InternationalTransferConfirmation, type InternationalPreviewData } from './InternationalTransferConfirmation';
 import { previewWalletTransfer, transferToWallet } from '@/services/walletBackendService';
 import { WalletPinPromptDialog } from './WalletPinDialogs';
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface UnifiedTransferDialogProps {
   senderCode: string; // Le code de l'expéditeur (USR0001, etc.)
@@ -82,6 +83,7 @@ export function UnifiedTransferDialog({
   onSuccess,
   currency: propCurrency
 }: UnifiedTransferDialogProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -132,13 +134,13 @@ export function UnifiedTransferDialog({
 
   const handlePreview = async () => {
     if (!amount || !recipientCode || !description) {
-      toast.error('Veuillez remplir tous les champs');
+      toast.error(t('unifiedTransferDialog.veuillezRemplirTousLesChamps'));
       return;
     }
 
     const transferAmount = parseFloat(amount);
     if (isNaN(transferAmount) || transferAmount <= 0) {
-      toast.error('Montant invalide');
+      toast.error(t('unifiedTransferDialog.montantInvalide'));
       return;
     }
 
@@ -233,7 +235,7 @@ export function UnifiedTransferDialog({
     }
 
     console.log('✅ Transfert réussi:', result);
-    toast.success('✅ Transfert réussi !', { duration: 5000 });
+    toast.success(t('unifiedTransferDialog.transfertReussi'), { duration: 5000 });
 
     setAmount('');
     setRecipientCode('');
@@ -280,7 +282,7 @@ export function UnifiedTransferDialog({
       throw new Error(errorMessage);
     }
 
-    toast.success('🌍 Transfert international réussi !', { duration: 5000 });
+    toast.success(t('unifiedTransferDialog.transfertInternationalReussi'), { duration: 5000 });
     setAmount('');
     setRecipientCode('');
     setRecipientUserId(null);
@@ -346,7 +348,7 @@ export function UnifiedTransferDialog({
             {showText && <span>Transfert rapide</span>}
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Wallet className="w-5 h-5 text-primary" />
@@ -361,7 +363,7 @@ export function UnifiedTransferDialog({
             {/* Code expéditeur (affiché) */}
             <div className="p-3 bg-muted rounded-lg">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Votre code :</span>
+                <span className="text-sm text-muted-foreground">{t('unifiedTransferDialog.votreCode')}</span>
                 <Badge variant="default" className="font-mono text-base">
                   {senderCode}
                 </Badge>
@@ -378,7 +380,7 @@ export function UnifiedTransferDialog({
                 }}
                 onUserSelect={(userId) => setRecipientUserId(userId)}
                 label="Destinataire"
-                placeholder="ID, email ou téléphone"
+                placeholder={t('unifiedTransferDialog.idEmailOuTelephone')}
               />
             </div>
 
@@ -404,10 +406,10 @@ export function UnifiedTransferDialog({
 
             {/* Description */}
             <div className="space-y-2">
-              <Label htmlFor="description">Motif du transfert *</Label>
+              <Label htmlFor="description">{t('unifiedTransferDialog.motifDuTransfert')}</Label>
               <Input
                 id="description"
-                placeholder="Ex: Paiement produit, Remboursement..."
+                placeholder={t('unifiedTransferDialog.exPaiementProduitRemboursement')}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 disabled={loading}
@@ -445,7 +447,7 @@ export function UnifiedTransferDialog({
                   <div className="space-y-1 text-sm">
                     <p><strong>Nom:</strong> {preview?.receiver.name}</p>
                     <p><strong>Email:</strong> {preview?.receiver.email}</p>
-                    <p><strong>Téléphone:</strong> {preview?.receiver.phone}</p>
+                    <p><strong>{t('unifiedTransferDialog.telephone')}</strong> {preview?.receiver.phone}</p>
                     <p><strong>ID:</strong> <Badge variant="outline" className="font-mono">{preview?.receiver.custom_id}</Badge></p>
                   </div>
                 </div>
@@ -453,7 +455,7 @@ export function UnifiedTransferDialog({
                 {/* Détails du transfert */}
                 <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">💰 Montant à transférer</span>
+                    <span className="text-sm font-medium">{t('unifiedTransferDialog.montantATransferer')}</span>
                     <span className="text-lg font-bold">{preview?.amount?.toLocaleString()} {walletCurrency}</span>
                   </div>
                   <div className="flex justify-between items-center text-orange-600 dark:text-orange-400">
@@ -461,20 +463,20 @@ export function UnifiedTransferDialog({
                     <span className="text-lg font-bold">{preview?.fee_amount?.toLocaleString()} {walletCurrency}</span>
                   </div>
                   <div className="border-t pt-3 flex justify-between items-center">
-                    <span className="text-sm font-medium">📉 Total débité de votre compte</span>
+                    <span className="text-sm font-medium">{t('unifiedTransferDialog.totalDebiteDeVotreCompte')}</span>
                     <span className="text-xl font-bold text-[#ff4000] dark:text-[#ff4000]">{preview?.total_debit?.toLocaleString()} {walletCurrency}</span>
                   </div>
                   <div className="flex justify-between items-center text-[#ff4000] dark:text-[#ff4000]">
-                    <span className="text-sm font-medium">📈 Montant net reçu par le destinataire</span>
+                    <span className="text-sm font-medium">{t('unifiedTransferDialog.montantNetRecuParLe')}</span>
                     <span className="text-lg font-bold">{preview?.amount_received?.toLocaleString()} {walletCurrency}</span>
                   </div>
                 </div>
 
                 <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                   <p className="text-sm">
-                    <strong>Solde actuel:</strong> {preview?.current_balance?.toLocaleString()} {walletCurrency}
+                    <strong>{t('unifiedTransferDialog.soldeActuel')}</strong> {preview?.current_balance?.toLocaleString()} {walletCurrency}
                     <br />
-                    <strong>Solde après transfert:</strong> {preview?.balance_after?.toLocaleString()} {walletCurrency}
+                    <strong>{t('unifiedTransferDialog.soldeApresTransfert')}</strong> {preview?.balance_after?.toLocaleString()} {walletCurrency}
                   </p>
                 </div>
 
@@ -485,7 +487,7 @@ export function UnifiedTransferDialog({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={loading}>Non, annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={loading}>{t('unifiedTransferDialog.nonAnnuler')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirm} disabled={loading}>
               {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Oui, confirmer

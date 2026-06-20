@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -111,6 +112,7 @@ export function SupplierFormDialog({
   isSaving,
   editingSupplier,
 }: SupplierFormDialogProps) {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
@@ -390,8 +392,8 @@ export function SupplierFormDialog({
                     <User className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold">Informations générales</h3>
-                    <p className="text-sm text-muted-foreground">Identité et type du fournisseur</p>
+                    <h3 className="font-semibold">{t('supplierFormDialog.informationsGenerales')}</h3>
+                    <p className="text-sm text-muted-foreground">{t('supplierFormDialog.identiteEtTypeDuFournisseur')}</p>
                   </div>
                 </div>
 
@@ -404,7 +406,7 @@ export function SupplierFormDialog({
                       id="name"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="Ex: Société ABC Import"
+                      placeholder={t('supplierFormDialog.exSocieteAbcImport')}
                       className="h-11"
                     />
                   </div>
@@ -418,7 +420,7 @@ export function SupplierFormDialog({
                       onValueChange={(v) => setFormData({ ...formData, category: v })}
                     >
                       <SelectTrigger className="h-11">
-                        <SelectValue placeholder="Sélectionner un type..." />
+                        <SelectValue placeholder={t('supplierFormDialog.selectionnerUnType')} />
                       </SelectTrigger>
                       <SelectContent>
                         {SUPPLIER_CATEGORIES.map((cat) => (
@@ -449,14 +451,14 @@ export function SupplierFormDialog({
                     <Phone className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold">Coordonnées</h3>
-                    <p className="text-sm text-muted-foreground">Informations de contact</p>
+                    <h3 className="font-semibold">{t('supplierFormDialog.coordonnees')}</h3>
+                    <p className="text-sm text-muted-foreground">{t('supplierFormDialog.informationsDeContact')}</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="phone" className="text-sm font-medium">Téléphone</Label>
+                    <Label htmlFor="phone" className="text-sm font-medium">{t('supplierFormDialog.telephone')}</Label>
                     <Input
                       id="phone"
                       type="tel"
@@ -489,7 +491,7 @@ export function SupplierFormDialog({
                     id="address"
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    placeholder="Ex: Quartier Almamya, Kaloum, Conakry, Guinée"
+                    placeholder={t('supplierFormDialog.exQuartierAlmamyaKaloumConakry')}
                     className="h-11"
                   />
                 </div>
@@ -505,8 +507,8 @@ export function SupplierFormDialog({
                   <Package className="h-5 w-5 text-primary" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold">Catalogue produits</h3>
-                  <p className="text-sm text-muted-foreground">Associez des produits à ce fournisseur</p>
+                  <h3 className="font-semibold">{t('supplierFormDialog.catalogueProduits')}</h3>
+                  <p className="text-sm text-muted-foreground">{t('supplierFormDialog.associezDesProduitsACe')}</p>
                 </div>
                 {formData.linkedProducts.length > 0 && (
                   <Badge variant="secondary" className="text-sm">
@@ -519,16 +521,16 @@ export function SupplierFormDialog({
                 {/* Colonne gauche: Recherche et sélection */}
                 <div className="flex flex-col space-y-4">
                   <div className="space-y-3">
-                    <Label className="text-sm font-medium">Filtrer par catégorie</Label>
+                    <Label className="text-sm font-medium">{t('supplierFormDialog.filtrerParCategorie')}</Label>
                     <Select
                       value={selectedCategoryId}
                       onValueChange={setSelectedCategoryId}
                     >
                       <SelectTrigger className="h-10">
-                        <SelectValue placeholder="Toutes les catégories..." />
+                        <SelectValue placeholder={t('supplierFormDialog.toutesLesCategories')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Toutes les catégories</SelectItem>
+                        <SelectItem value="all">{t('supplierFormDialog.toutesLesCategories2')}</SelectItem>
                         {categories.map((cat) => (
                           <SelectItem key={cat.id} value={cat.id}>
                             {cat.name}
@@ -539,11 +541,11 @@ export function SupplierFormDialog({
                   </div>
 
                   <div className="space-y-3">
-                    <Label className="text-sm font-medium">Rechercher un produit</Label>
+                    <Label className="text-sm font-medium">{t('supplierFormDialog.rechercherUnProduit')}</Label>
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
-                        placeholder="Nom ou SKU du produit..."
+                        placeholder={t('supplierFormDialog.nomOuSkuDuProduit')}
                         value={productSearch}
                         onChange={(e) => setProductSearch(e.target.value)}
                         className="pl-10 h-10"
@@ -626,7 +628,7 @@ export function SupplierFormDialog({
                     ) : (
                       <div className="h-64 flex flex-col items-center justify-center border rounded-lg bg-muted/20">
                         <Package className="h-10 w-10 text-muted-foreground/50 mb-2" />
-                        <p className="text-sm text-muted-foreground">Aucun produit trouvé</p>
+                        <p className="text-sm text-muted-foreground">{t('supplierFormDialog.aucunProduitTrouve')}</p>
                       </div>
                     )}
                   </div>
@@ -738,7 +740,7 @@ export function SupplierFormDialog({
                   {formData.linkedProducts.length > 0 && (
                     <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">Total estimé</span>
+                        <span className="text-sm font-medium">{t('supplierFormDialog.totalEstime')}</span>
                         <span className="text-lg font-bold text-primary">
                           {fc(formData.linkedProducts
                             .reduce((sum, lp) => sum + (lp.unitPrice || 0) * lp.quantity, 0))}

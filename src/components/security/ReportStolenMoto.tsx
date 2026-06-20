@@ -5,6 +5,7 @@
  */
 
 import React, { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,6 +38,7 @@ export default function ReportStolenMoto({
     onSuccess,
     className
 }: ReportStolenMotoProps) {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -85,7 +87,7 @@ export default function ReportStolenMoto({
 
             if (result.success) {
                 setSuccess(true);
-                toast.success('✅ Moto signalée volée avec succès', {
+                toast.success(t('reportStolenMoto.motoSignaleeVoleeAvecSucces'), {
                     description: `Alerte créée: ${result.alert.id}`,
                     duration: 8000
                 });
@@ -104,7 +106,7 @@ export default function ReportStolenMoto({
                 }
             } else {
                 setError(result.error || 'Erreur lors de la déclaration');
-                toast.error('❌ Erreur lors de la déclaration', {
+                toast.error(t('reportStolenMoto.erreurLorsDeLaDeclaration'), {
                     description: result.error
                 });
             }
@@ -112,7 +114,7 @@ export default function ReportStolenMoto({
         } catch (error) {
             console.error('❌ Erreur déclaration vol:', error);
             setError('Erreur de connexion au serveur');
-            toast.error('❌ Erreur de connexion');
+            toast.error(t('reportStolenMoto.erreurDeConnexion'));
         } finally {
             setLoading(false);
         }
@@ -235,7 +237,7 @@ export default function ReportStolenMoto({
                             id="description"
                             value={formData.description}
                             onChange={(e) => handleInputChange('description', e.target.value)}
-                            placeholder="Décrivez les circonstances du vol, lieu exact, heure approximative..."
+                            placeholder={t('reportStolenMoto.decrivezLesCirconstancesDuVol')}
                             className="mt-1"
                             rows={3}
                         />
@@ -249,10 +251,10 @@ export default function ReportStolenMoto({
                                     Important - Sécurité
                                 </h4>
                                 <ul className="text-sm text-[#ff4000] space-y-1">
-                                    <li>• Cette déclaration sera vérifiée par les bureaux syndicats</li>
-                                    <li>• Toute tentative d'enregistrement de cette moto sera bloquée</li>
-                                    <li>• Les autorités compétentes seront informées</li>
-                                    <li>• Votre déclaration sera tracée et auditable</li>
+                                    <li>{t('reportStolenMoto.cetteDeclarationSeraVerifieePar')}</li>
+                                    <li>{t('reportStolenMoto.touteTentativeDEnregistrementDe')}</li>
+                                    <li>{t('reportStolenMoto.lesAutoritesCompetentesSerontInformees')}</li>
+                                    <li>{t('reportStolenMoto.votreDeclarationSeraTraceeEt')}</li>
                                 </ul>
                             </div>
                         </div>

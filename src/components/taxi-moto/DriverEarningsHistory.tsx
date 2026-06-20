@@ -4,6 +4,7 @@
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Money } from "@/components/Money";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -34,6 +35,7 @@ interface DriverEarningsHistoryProps {
 }
 
 export function DriverEarningsHistory({ rides, todayEarnings, todayRides }: DriverEarningsHistoryProps) {
+  const { t } = useTranslation();
   // Calculer les statistiques par période
   const stats = useMemo(() => {
     const now = new Date();
@@ -158,7 +160,7 @@ export function DriverEarningsHistory({ rides, todayEarnings, todayRides }: Driv
       <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center justify-between text-base">
-            <span>Historique des courses</span>
+            <span>{t('driverEarningsHistory.historiqueDesCourses')}</span>
             <Badge>{rides.length}</Badge>
           </CardTitle>
         </CardHeader>
@@ -166,7 +168,7 @@ export function DriverEarningsHistory({ rides, todayEarnings, todayRides }: Driv
           {rides.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Clock className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>Aucune course terminée</p>
+              <p>{t('driverEarningsHistory.aucuneCourseTerminee')}</p>
             </div>
           ) : (
             <div className="space-y-3 max-h-[400px] overflow-y-auto">

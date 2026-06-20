@@ -4,6 +4,7 @@
  */
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +18,7 @@ import { useDriver } from '@/hooks/useDriver';
 import { DriverLayout } from '@/components/driver/DriverLayout';
 
 export default function DriverProfile() {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const { profile } = useAuth();
   const { driver, stats } = useDriver();
@@ -27,10 +29,10 @@ export default function DriverProfile() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Mon Profil</h1>
-            <p className="text-muted-foreground">Gérez vos informations personnelles</p>
+            <h1 className="text-3xl font-bold">{t('driverProfile.monProfil')}</h1>
+            <p className="text-muted-foreground">{t('driverProfile.gerezVosInformationsPersonnelles')}</p>
           </div>
-          <Button>Modifier le profil</Button>
+          <Button>{t('driverProfile.modifierLeProfil')}</Button>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
@@ -38,7 +40,7 @@ export default function DriverProfile() {
           <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle>Informations personnelles</CardTitle>
-              <CardDescription>Vos données de livreur professionnel</CardDescription>
+              <CardDescription>{t('driverProfile.vosDonneesDeLivreurProfessionnel')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Avatar & Nom */}
@@ -90,7 +92,7 @@ export default function DriverProfile() {
                   Informations véhicule
                 </Label>
                 <div className="grid gap-2 md:grid-cols-2">
-                  <Input placeholder="Type de véhicule" value="Moto" disabled />
+                  <Input placeholder={t('driverProfile.typeDeVehicule')} value="Moto" disabled />
                   <Input placeholder="ID Livreur" value={driver?.id.slice(0, 8) || ''} disabled />
                 </div>
               </div>
@@ -121,7 +123,7 @@ export default function DriverProfile() {
                 </div>
                 <Separator />
                 <div>
-                  <p className="text-xs text-muted-foreground">Taux de commission</p>
+                  <p className="text-xs text-muted-foreground">{t('driverProfile.tauxDeCommission')}</p>
                   <p className="text-2xl font-bold">{driver?.commission_rate || 0}%</p>
                 </div>
               </CardContent>
@@ -149,21 +151,21 @@ export default function DriverProfile() {
         {/* Documents */}
         <Card>
           <CardHeader>
-            <CardTitle>Documents et certifications</CardTitle>
-            <CardDescription>Vos documents professionnels</CardDescription>
+            <CardTitle>{t('driverProfile.documentsEtCertifications')}</CardTitle>
+            <CardDescription>{t('driverProfile.vosDocumentsProfessionnels')}</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-3">
             <div className="p-4 border rounded-lg">
-              <p className="font-medium">Permis de conduire</p>
-              <Badge variant="outline" className="mt-2">À jour</Badge>
+              <p className="font-medium">{t('driverProfile.permisDeConduire')}</p>
+              <Badge variant="outline" className="mt-2">{t('driverProfile.aJour')}</Badge>
             </div>
             <div className="p-4 border rounded-lg">
-              <p className="font-medium">Assurance véhicule</p>
-              <Badge variant="outline" className="mt-2">À jour</Badge>
+              <p className="font-medium">{t('driverProfile.assuranceVehicule')}</p>
+              <Badge variant="outline" className="mt-2">{t('driverProfile.aJour')}</Badge>
             </div>
             <div className="p-4 border rounded-lg">
-              <p className="font-medium">Contrôle technique</p>
-              <Badge variant="destructive" className="mt-2">Expire bientôt</Badge>
+              <p className="font-medium">{t('driverProfile.controleTechnique')}</p>
+              <Badge variant="destructive" className="mt-2">{t('driverProfile.expireBientot')}</Badge>
             </div>
           </CardContent>
         </Card>

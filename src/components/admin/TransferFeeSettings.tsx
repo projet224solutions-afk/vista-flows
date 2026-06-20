@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Settings, Save, RefreshCw, TrendingUp } from "lucide-react";
 
 export default function TransferFeeSettings() {
+  const { t } = useTranslation();
   const [currentFee, setCurrentFee] = useState<number>(1.5);
   const [newFee, setNewFee] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -31,7 +33,7 @@ export default function TransferFeeSettings() {
       setNewFee(fee.toString());
     } catch (e: any) {
       console.error('Erreur lors du chargement du taux:', e);
-      toast.error('Erreur lors du chargement du taux de commission');
+      toast.error(t('transferFeeSettings.erreurLorsDuChargementDu'));
     } finally {
       setLoading(false);
     }
@@ -74,7 +76,7 @@ export default function TransferFeeSettings() {
     const fee = parseFloat(newFee);
 
     if (isNaN(fee) || fee < 0 || fee > 100) {
-      toast.error('Taux invalide. Doit être entre 0 et 100%');
+      toast.error(t('transferFeeSettings.tauxInvalideDoitEtreEntre'));
       return;
     }
 
@@ -129,7 +131,7 @@ export default function TransferFeeSettings() {
           <div className="p-4 bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg border border-orange-200">
             <div className="flex items-center gap-2 mb-1">
               <TrendingUp className="w-4 h-4 text-[#ff4000]" />
-              <p className="text-sm text-[#ff4000] font-medium">Total Frais Collectés</p>
+              <p className="text-sm text-[#ff4000] font-medium">{t('transferFeeSettings.totalFraisCollectes')}</p>
             </div>
             <p className="text-2xl font-bold text-[#ff4000]">
               {formatPrice(totalFees)}
@@ -160,7 +162,7 @@ export default function TransferFeeSettings() {
         <div className="space-y-4">
           <div className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="new-fee">Nouveau taux de commission (%)</Label>
+              <Label htmlFor="new-fee">{t('transferFeeSettings.nouveauTauxDeCommission')}</Label>
               <div className="flex gap-2">
                 <Input
                   id="new-fee"
@@ -208,21 +210,21 @@ export default function TransferFeeSettings() {
             <h4 className="font-medium mb-2">📊 Exemples de calcul avec {parseFloat(newFee || "1.5")}%</h4>
             <div className="grid gap-2 text-sm">
               <div className="flex justify-between items-center p-2 bg-white rounded">
-                <span className="text-muted-foreground">Transfert de 10,000 GNF</span>
+                <span className="text-muted-foreground">{t('transferFeeSettings.transfertDe10000Gnf')}</span>
                 <div className="text-right">
                   <p className="font-semibold">Frais: {Math.round(10000 * parseFloat(newFee || "1.5") / 100).toLocaleString()} GNF</p>
                   <p className="text-xs text-orange-600">Total débité: {(10000 + Math.round(10000 * parseFloat(newFee || "1.5") / 100)).toLocaleString()} GNF</p>
                 </div>
               </div>
               <div className="flex justify-between items-center p-2 bg-white rounded">
-                <span className="text-muted-foreground">Transfert de 100,000 GNF</span>
+                <span className="text-muted-foreground">{t('transferFeeSettings.transfertDe100000Gnf')}</span>
                 <div className="text-right">
                   <p className="font-semibold">Frais: {Math.round(100000 * parseFloat(newFee || "1.5") / 100).toLocaleString()} GNF</p>
                   <p className="text-xs text-orange-600">Total débité: {(100000 + Math.round(100000 * parseFloat(newFee || "1.5") / 100)).toLocaleString()} GNF</p>
                 </div>
               </div>
               <div className="flex justify-between items-center p-2 bg-white rounded">
-                <span className="text-muted-foreground">Transfert de 1,000,000 GNF</span>
+                <span className="text-muted-foreground">{t('transferFeeSettings.transfertDe1000000')}</span>
                 <div className="text-right">
                   <p className="font-semibold">Frais: {Math.round(1000000 * parseFloat(newFee || "1.5") / 100).toLocaleString()} GNF</p>
                   <p className="text-xs text-orange-600">Total débité: {(1000000 + Math.round(1000000 * parseFloat(newFee || "1.5") / 100)).toLocaleString()} GNF</p>
@@ -232,13 +234,13 @@ export default function TransferFeeSettings() {
           </div>
 
           <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <h4 className="font-medium text-blue-900 mb-2">💡 Fonctionnement du système</h4>
+            <h4 className="font-medium text-blue-900 mb-2">{t('transferFeeSettings.fonctionnementDuSysteme')}</h4>
             <ul className="text-sm space-y-1 text-blue-800 list-disc list-inside">
-              <li>Les frais sont calculés automatiquement lors de chaque transfert</li>
-              <li>L'expéditeur paie le montant + les frais</li>
-              <li>Le destinataire reçoit le montant net (sans frais)</li>
-              <li>Les frais sont crédités au compte PDG</li>
-              <li>Une prévisualisation est affichée avant chaque transfert</li>
+              <li>{t('transferFeeSettings.lesFraisSontCalculesAutomatiquement')}</li>
+              <li>{t('transferFeeSettings.lExpediteurPaieLeMontant')}</li>
+              <li>{t('transferFeeSettings.leDestinataireRecoitLeMontant')}</li>
+              <li>{t('transferFeeSettings.lesFraisSontCreditesAu')}</li>
+              <li>{t('transferFeeSettings.unePrevisualisationEstAfficheeAvant')}</li>
             </ul>
           </div>
 

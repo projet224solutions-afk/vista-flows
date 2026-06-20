@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,6 +44,7 @@ interface UserProfile {
 }
 
 export function AgentUsersModule({ agentId, canManage = false }: AgentUsersModuleProps) {
+  const { t } = useTranslation();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,7 +107,7 @@ export function AgentUsersModule({ agentId, canManage = false }: AgentUsersModul
       setUsers(normalizedProfiles);
     } catch (error) {
       console.error('Erreur chargement utilisateurs:', error);
-      toast.error('Erreur lors du chargement');
+      toast.error(t('agentUsersModule.erreurLorsDuChargement'));
     } finally {
       setLoading(false);
     }
@@ -133,7 +135,7 @@ export function AgentUsersModule({ agentId, canManage = false }: AgentUsersModul
 
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
     if (!canManage) {
-      toast.error('Permission refusée');
+      toast.error(t('agentUsersModule.permissionRefusee'));
       return;
     }
 
@@ -148,7 +150,7 @@ export function AgentUsersModule({ agentId, canManage = false }: AgentUsersModul
       loadUsers();
     } catch (error) {
       console.error('Erreur:', error);
-      toast.error('Erreur lors de la modification');
+      toast.error(t('agentUsersModule.erreurLorsDeLaModification'));
     }
   };
 
@@ -193,8 +195,8 @@ export function AgentUsersModule({ agentId, canManage = false }: AgentUsersModul
                 <Users className="w-6 h-6 text-white" />
               </div>
               <div>
-                <CardTitle className="text-xl">Gestion des Utilisateurs</CardTitle>
-                <CardDescription>Liste complète des utilisateurs de la plateforme</CardDescription>
+                <CardTitle className="text-xl">{t('agentUsersModule.gestionDesUtilisateurs')}</CardTitle>
+                <CardDescription>{t('agentUsersModule.listeCompleteDesUtilisateursDe')}</CardDescription>
               </div>
             </div>
             <Button variant="outline" size="sm" onClick={loadUsers}>
@@ -233,7 +235,7 @@ export function AgentUsersModule({ agentId, canManage = false }: AgentUsersModul
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
-                placeholder="Rechercher par nom, email, ID..."
+                placeholder={t('agentUsersModule.rechercherParNomEmailId')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -242,12 +244,12 @@ export function AgentUsersModule({ agentId, canManage = false }: AgentUsersModul
             <Select value={roleFilter} onValueChange={setRoleFilter}>
               <SelectTrigger className="w-full sm:w-[180px]">
                 <Filter className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="Rôle" />
+                <SelectValue placeholder={t('agentUsersModule.role')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous les rôles</SelectItem>
-                <SelectItem value="client">Client</SelectItem>
-                <SelectItem value="vendeur">Vendeur</SelectItem>
+                <SelectItem value="all">{t('agentUsersModule.tousLesRoles')}</SelectItem>
+                <SelectItem value="client">{t('agentUsersModule.client')}</SelectItem>
+                <SelectItem value="vendeur">{t('agentUsersModule.vendeur')}</SelectItem>
                 <SelectItem value="livreur">Livreur</SelectItem>
                 <SelectItem value="agent">Agent</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
@@ -265,7 +267,7 @@ export function AgentUsersModule({ agentId, canManage = false }: AgentUsersModul
               {filteredUsers.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucun utilisateur trouvé</p>
+                  <p>{t('agentUsersModule.aucunUtilisateurTrouve')}</p>
                 </div>
               ) : (
                 filteredUsers.map((user) => (

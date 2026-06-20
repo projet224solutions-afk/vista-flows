@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -114,6 +115,7 @@ const MESSAGE_TYPES = [
 ];
 
 const BroadcastMessageCenter: React.FC = () => {
+  const { t } = useTranslation();
   const { user, profile } = useAuth();
 
   // Form state
@@ -186,7 +188,7 @@ const BroadcastMessageCenter: React.FC = () => {
   // Envoyer le broadcast
   const handleSend = async () => {
     if (!title.trim() || !content.trim()) {
-      toast.error('Veuillez remplir le titre et le contenu');
+      toast.error(t('broadcastMessageCenter.veuillezRemplirLeTitreEt'));
       return;
     }
 
@@ -244,7 +246,7 @@ const BroadcastMessageCenter: React.FC = () => {
         <CardContent className="pt-6">
           <div className="flex items-center gap-3 text-[#ff4000]">
             <AlertTriangle className="h-6 w-6" />
-            <p>Accès réservé aux administrateurs et PDG</p>
+            <p>{t('broadcastMessageCenter.accesReserveAuxAdministrateursEt')}</p>
           </div>
         </CardContent>
       </Card>
@@ -355,29 +357,29 @@ const BroadcastMessageCenter: React.FC = () => {
             <div className="lg:col-span-2 space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>Rédiger le message</CardTitle>
-                  <CardDescription>Composez votre message de diffusion</CardDescription>
+                  <CardTitle>{t('broadcastMessageCenter.redigerLeMessage')}</CardTitle>
+                  <CardDescription>{t('broadcastMessageCenter.composezVotreMessageDeDiffusion')}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="title">Titre du message *</Label>
+                    <Label htmlFor="title">{t('broadcastMessageCenter.titreDuMessage')}</Label>
                     <Input
                       id="title"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      placeholder="Ex: Nouvelle fonctionnalité disponible !"
+                      placeholder={t('broadcastMessageCenter.exNouvelleFonctionnaliteDisponible')}
                       maxLength={100}
                     />
                     <p className="text-xs text-muted-foreground mt-1">{title.length}/100</p>
                   </div>
 
                   <div>
-                    <Label htmlFor="content">Contenu du message *</Label>
+                    <Label htmlFor="content">{t('broadcastMessageCenter.contenuDuMessage')}</Label>
                     <Textarea
                       id="content"
                       value={content}
                       onChange={(e) => setContent(e.target.value)}
-                      placeholder="Écrivez votre message ici..."
+                      placeholder={t('broadcastMessageCenter.ecrivezVotreMessageIci')}
                       rows={6}
                       maxLength={2000}
                     />
@@ -386,7 +388,7 @@ const BroadcastMessageCenter: React.FC = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="imageUrl">URL de l'image (optionnel)</Label>
+                      <Label htmlFor="imageUrl">{t('broadcastMessageCenter.urlDeLImageOptionnel')}</Label>
                       <div className="flex gap-2">
                         <Image className="h-4 w-4 mt-3 text-muted-foreground" />
                         <Input
@@ -416,7 +418,7 @@ const BroadcastMessageCenter: React.FC = () => {
 
                   {linkUrl && (
                     <div>
-                      <Label htmlFor="linkText">Texte du lien</Label>
+                      <Label htmlFor="linkText">{t('broadcastMessageCenter.texteDuLien')}</Label>
                       <Input
                         id="linkText"
                         value={linkText}
@@ -463,7 +465,7 @@ const BroadcastMessageCenter: React.FC = () => {
                   </div>
 
                   <div>
-                    <Label>Priorité</Label>
+                    <Label>{t('broadcastMessageCenter.priorite')}</Label>
                     <Select value={priority} onValueChange={setPriority}>
                       <SelectTrigger>
                         <SelectValue />
@@ -482,7 +484,7 @@ const BroadcastMessageCenter: React.FC = () => {
                   </div>
 
                   <div>
-                    <Label>Type de message</Label>
+                    <Label>{t('broadcastMessageCenter.typeDeMessage')}</Label>
                     <Select value={messageType} onValueChange={setMessageType}>
                       <SelectTrigger>
                         <SelectValue />
@@ -558,15 +560,15 @@ const BroadcastMessageCenter: React.FC = () => {
         <TabsContent value="history" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Historique des envois</CardTitle>
-              <CardDescription>Messages envoyés récemment</CardDescription>
+              <CardTitle>{t('broadcastMessageCenter.historiqueDesEnvois')}</CardTitle>
+              <CardDescription>{t('broadcastMessageCenter.messagesEnvoyesRecemment')}</CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[500px]">
                 {!dashboardData?.recent_broadcasts?.length ? (
                   <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                     <Megaphone className="h-12 w-12 mb-4 opacity-50" />
-                    <p>Aucun message envoyé</p>
+                    <p>{t('broadcastMessageCenter.aucunMessageEnvoye')}</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -626,15 +628,15 @@ const BroadcastMessageCenter: React.FC = () => {
               <div className="mt-4 p-3 bg-muted rounded-lg">
                 <p><strong>Segment :</strong> {getSegmentInfo(segment).label}</p>
                 <p><strong>Destinataires :</strong> ~{targetCount} utilisateurs</p>
-                <p><strong>Priorité :</strong> {getPriorityInfo(priority).label}</p>
+                <p><strong>{t('broadcastMessageCenter.priorite2')}</strong> {getPriorityInfo(priority).label}</p>
                 {scheduledAt && (
-                  <p><strong>Programmé pour :</strong> {new Date(scheduledAt).toLocaleString('fr-FR')}</p>
+                  <p><strong>{t('broadcastMessageCenter.programmePour')}</strong> {new Date(scheduledAt).toLocaleString('fr-FR')}</p>
                 )}
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel>{t('broadcastMessageCenter.annuler')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleSend} className="bg-primary">
               <Send className="h-4 w-4 mr-2" />
               Confirmer l'envoi
@@ -645,10 +647,10 @@ const BroadcastMessageCenter: React.FC = () => {
 
       {/* Preview Dialog */}
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Aperçu du message</DialogTitle>
-            <DialogDescription>Voici comment votre message apparaîtra</DialogDescription>
+            <DialogTitle>{t('broadcastMessageCenter.apercuDuMessage')}</DialogTitle>
+            <DialogDescription>{t('broadcastMessageCenter.voiciCommentVotreMessageApparaitra')}</DialogDescription>
           </DialogHeader>
           <div className="p-4 border rounded-lg bg-card">
             <div className="flex items-center gap-2 mb-3">

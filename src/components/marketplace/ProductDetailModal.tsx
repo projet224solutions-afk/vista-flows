@@ -386,7 +386,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
       throw new Error("Produit introuvable");
     } catch (error) {
       console.error("Erreur chargement produit:", error);
-      toast.error("Impossible de charger le produit");
+      toast.error(t('marketplace.cannotLoadProduct'));
       onClose();
     } finally {
       setLoading(false);
@@ -398,8 +398,8 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
     // ✅ Si c'est un produit d'affiliation, rediriger vers le fournisseur
     if (product.is_affiliate && product.affiliate_url) {
-      toast.success("Redirection vers le fournisseur...", {
-        description: "Vous allez être redirigé vers la page de paiement du partenaire",
+      toast.success(t('marketplace.redirectingToSupplier'), {
+        description: t('marketplace.redirectingToSupplierDesc'),
         duration: 2000,
       });
 
@@ -414,7 +414,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        toast.error('Veuillez vous connecter pour acheter');
+        toast.error(t('marketplace.loginToBuy'));
         navigate('/auth');
         return;
       }
@@ -424,7 +424,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
       // Déterminer si c'est un produit numérique (product_mode existe = digital_products)
       const isDigital = !!product.product_mode;
 
-      toast.success('Redirection vers le paiement...');
+      toast.success(t('marketplace.redirectingToPayment'));
       navigate(`/payment`, {
         state: {
           productId: product.id,
@@ -438,7 +438,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
       });
     } catch (error) {
       console.error('Erreur lors de l\'achat:', error);
-      toast.error('Erreur lors de la création du paiement');
+      toast.error(t('marketplace.paymentCreationError'));
     }
   };
 
@@ -446,13 +446,13 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
     if (!product) return;
 
     if (product.product_mode) {
-      toast.info('Les produits numériques s’achètent directement via le bouton Acheter.');
+      toast.info(t('marketplace.digitalBuyDirectly'));
       return;
     }
 
     // Pour les produits affiliés, ne pas ajouter au panier mais informer l'utilisateur
     if (product.is_affiliate && product.affiliate_url) {
-      toast.info('Ce produit est vendu par un partenaire. Utilisez "Acheter chez le partenaire" pour être redirigé.');
+      toast.info(t('marketplace.partnerProductInfo'));
       return;
     }
 
@@ -478,7 +478,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
   const handleContact = async () => {
     if (!product?.vendors?.user_id) {
-      toast.error('Informations du vendeur non disponibles');
+      toast.error(t('marketplace.vendorInfoUnavailable'));
       return;
     }
 
@@ -486,7 +486,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        toast.error('Veuillez vous connecter pour contacter le vendeur');
+        toast.error(t('marketplace.loginToContactSeller'));
         navigate('/auth');
         return;
       }
@@ -510,7 +510,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
         if (createError) {
           console.error('Erreur création profil:', createError);
-          toast.error('Impossible de configurer votre profil. Veuillez réessayer.');
+          toast.error(t('marketplace.profileConfigError'));
           return;
         }
       }
@@ -577,7 +577,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
         throw messageError;
       }
 
-      toast.success('Message envoyé au vendeur!');
+      toast.success(t('marketplace.messageSentToSeller'));
 
       // Rediriger vers la page de messagerie
       setTimeout(() => {
@@ -587,7 +587,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
     } catch (error) {
       console.error('Erreur lors du contact:', error);
-      toast.error('Impossible de contacter le vendeur. Veuillez réessayer.');
+      toast.error(t('marketplace.cannotContactSeller'));
     }
   };
 
@@ -596,7 +596,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
       <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="sr-only">Chargement du produit</DialogTitle>
+            <DialogTitle className="sr-only">{t('marketplace.loadingProduct')}</DialogTitle>
           </DialogHeader>
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
@@ -618,7 +618,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
 
         <Tabs defaultValue="details" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-4">
-            <TabsTrigger value="details">Détails du produit</TabsTrigger>
+            <TabsTrigger value="details">{t('marketplace.productDetails')}</TabsTrigger>
             <TabsTrigger value="reviews">Avis clients</TabsTrigger>
           </TabsList>
 
@@ -692,7 +692,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             </div>
 
             {/* Thumbnails - Videos + Images */}
-            <div className="grid grid-cols-6 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
               {/* Video thumbnails */}
               {videos.map((_, index) => (
                 <button
@@ -789,7 +789,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
                       <ExternalLink className="w-3.5 h-3.5 shrink-0" />
                     </button>
                   ) : (
-                    <span className="font-medium text-foreground">Vendeur</span>
+                    <span className="font-medium text-foreground">{t('marketplace.seller')}</span>
                   )}
                 </p>
 
@@ -821,7 +821,7 @@ export default function ProductDetailModal({ productId, open, onClose }: Product
             {/* Quantité - masquer pour les affiliations */}
             {!isAffiliateProduct && (
               <div>
-                <label className="text-sm font-medium mb-2 block">Quantité</label>
+                <label className="text-sm font-medium mb-2 block">{t('marketplace.quantity')}</label>
                 <div className="flex items-center gap-3">
                   <Button
                     variant="outline"

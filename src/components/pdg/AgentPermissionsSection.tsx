@@ -1,4 +1,5 @@
 import { Checkbox } from '@/components/ui/checkbox';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -28,6 +29,7 @@ export function AgentPermissionsSection({
   onPermissionChange,
   loading
 }: AgentPermissionsSectionProps) {
+  const { t } = useTranslation();
   const [openCategories, setOpenCategories] = useState<Set<string>>(new Set(['💰 Finance', '📋 Gestion']));
 
   const toggleCategory = (category: string) => {
@@ -59,7 +61,7 @@ export function AgentPermissionsSection({
 
   return (
     <div className="space-y-2">
-      <Label className="text-base font-semibold">Permissions Avancées</Label>
+      <Label className="text-base font-semibold">{t('agentPermissionsSection.permissionsAvancees')}</Label>
       <p className="text-xs text-muted-foreground mb-3">
         Gérez les accès aux différentes fonctionnalités du système
       </p>

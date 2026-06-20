@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +38,7 @@ interface TicketBatch {
 }
 
 export default function TransportTicketBatchHistory({ bureauId }: { bureauId: string }) {
+  const { t } = useTranslation();
   const [batches, setBatches] = useState<TicketBatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBatch, setSelectedBatch] = useState<TicketBatch | null>(null);
@@ -62,7 +64,7 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
       setBatches((data as TicketBatch[]) || []);
     } catch (error: any) {
       console.error('Erreur chargement historique:', error);
-      toast.error('Erreur lors du chargement de l\'historique');
+      toast.error(t('transportTicketBatchHistory.erreurLorsDuChargementDe'));
     } finally {
       setLoading(false);
     }
@@ -86,10 +88,10 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
       if (error) throw error;
 
       setBatches(prev => prev.filter(b => b.id !== batchId));
-      toast.success('Lot supprimé avec succès');
+      toast.success(t('transportTicketBatchHistory.lotSupprimeAvecSucces'));
     } catch (error: any) {
       console.error('Erreur suppression lot:', error);
-      toast.error('Erreur lors de la suppression du lot');
+      toast.error(t('transportTicketBatchHistory.erreurLorsDeLaSuppression'));
     } finally {
       setIsDeleting(false);
       setDeletingBatchId(null);
@@ -108,10 +110,10 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
       if (error) throw error;
 
       setBatches([]);
-      toast.success('Tout l\'historique a été supprimé');
+      toast.success(t('transportTicketBatchHistory.toutLHistoriqueAEte'));
     } catch (error: any) {
       console.error('Erreur suppression historique:', error);
-      toast.error('Erreur lors de la suppression de l\'historique');
+      toast.error(t('transportTicketBatchHistory.erreurLorsDeLaSuppression2'));
     } finally {
       setIsDeleting(false);
     }
@@ -150,7 +152,7 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
     return (
       <div className="text-center py-12">
         <FileText className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-        <p className="text-gray-500">Aucun lot de tickets généré</p>
+        <p className="text-gray-500">{t('transportTicketBatchHistory.aucunLotDeTicketsGenere')}</p>
         <p className="text-sm text-gray-400 mt-2">
           Utilisez le formulaire pour générer votre premier lot
         </p>
@@ -182,7 +184,7 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+              <AlertDialogTitle>{t('transportTicketBatchHistory.confirmerLaSuppression')}</AlertDialogTitle>
               <AlertDialogDescription>
                 Êtes-vous sûr de vouloir supprimer tout l'historique des tickets ?
                 Cette action est irréversible et supprimera <strong>{batches.length} lot(s)</strong> contenant
@@ -190,7 +192,7 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Annuler</AlertDialogCancel>
+              <AlertDialogCancel>{t('transportTicketBatchHistory.annuler')}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteAllBatches}
                 className="bg-[#ff4000] hover:bg-[#ff4000]"
@@ -212,9 +214,9 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
             <TableHead>N° Lot</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Commune</TableHead>
-            <TableHead>Montant</TableHead>
+            <TableHead>{t('transportTicketBatchHistory.montant')}</TableHead>
             <TableHead>Tickets</TableHead>
-            <TableHead>Date création</TableHead>
+            <TableHead>{t('transportTicketBatchHistory.dateCreation')}</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -273,14 +275,14 @@ export default function TransportTicketBatchHistory({ bureauId }: { bureauId: st
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Supprimer ce lot ?</AlertDialogTitle>
+                        <AlertDialogTitle>{t('transportTicketBatchHistory.supprimerCeLot')}</AlertDialogTitle>
                         <AlertDialogDescription>
                           Voulez-vous supprimer le lot <strong>{batch.batch_number}</strong> ?
                           Cette action est irréversible.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogCancel>{t('transportTicketBatchHistory.annuler')}</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => handleDeleteBatch(batch.id)}
                           className="bg-[#ff4000] hover:bg-[#ff4000]"

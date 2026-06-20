@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useQueryClient } from '@tanstack/react-query';
 import {
   Dialog,
@@ -44,6 +45,7 @@ export default function ProductRatingDialog({
   vendorName,
   onRatingSubmitted
 }: ProductRatingDialogProps) {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   // Produits
@@ -153,7 +155,7 @@ export default function ProductRatingDialog({
       }
     } catch (error) {
       console.error('Erreur chargement produits:', error);
-      toast.error('Erreur lors du chargement des produits');
+      toast.error(t('productRatingDialog.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -161,7 +163,7 @@ export default function ProductRatingDialog({
 
   const handleSubmitRating = async () => {
     if (rating === 0) {
-      toast.error('Veuillez sélectionner une note');
+      toast.error(t('productRatingDialog.veuillezSelectionnerUneNote'));
       return;
     }
 
@@ -243,7 +245,7 @@ export default function ProductRatingDialog({
       }
     } catch (error) {
       console.error('Erreur soumission avis:', error);
-      toast.error("Erreur lors de l'envoi de la note");
+      toast.error(t('productRatingDialog.erreurLorsDeLEnvoi'));
     } finally {
       setSubmitting(false);
     }
@@ -251,7 +253,7 @@ export default function ProductRatingDialog({
 
   const handleSubmitVendorRating = async () => {
     if (vendorRating === 0) {
-      toast.error('Veuillez sélectionner une note pour la boutique');
+      toast.error(t('productRatingDialog.veuillezSelectionnerUneNotePour'));
       return;
     }
 
@@ -282,7 +284,7 @@ export default function ProductRatingDialog({
         onRatingSubmitted?.();
       } else {
         console.error('Erreur notation boutique:', error);
-        toast.error("Erreur lors de la notation de la boutique");
+        toast.error(t('productRatingDialog.erreurLorsDeLaNotation'));
       }
     } finally {
       setSubmittingVendor(false);
@@ -314,7 +316,7 @@ export default function ProductRatingDialog({
   if (loading) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
@@ -327,7 +329,7 @@ export default function ProductRatingDialog({
   if (step === 'done') {
     return (
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Check className="w-5 h-5 text-[#ff4000]" />
@@ -338,7 +340,7 @@ export default function ProductRatingDialog({
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button onClick={handleClose}>Fermer</Button>
+            <Button onClick={handleClose}>{t('productRatingDialog.fermer')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -350,7 +352,7 @@ export default function ProductRatingDialog({
     const vendorLabels = ['', 'Très insatisfait', 'Insatisfait', 'Correct', 'Satisfait', 'Excellent !'];
     return (
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Store className="w-5 h-5 text-primary" />
@@ -397,7 +399,7 @@ export default function ProductRatingDialog({
                 Votre avis sur la boutique (optionnel)
               </label>
               <Textarea
-                placeholder="Délai de livraison, qualité du service, communication..."
+                placeholder={t('productRatingDialog.delaiDeLivraisonQualiteDu')}
                 value={vendorComment}
                 onChange={(e) => setVendorComment(e.target.value)}
                 rows={3}
@@ -437,15 +439,15 @@ export default function ProductRatingDialog({
   if (products.length === 0) {
     return (
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Aucun produit à noter</DialogTitle>
+            <DialogTitle>{t('productRatingDialog.aucunProduitANoter')}</DialogTitle>
             <DialogDescription>
               Impossible de charger les produits de cette commande.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button onClick={handleClose}>Fermer</Button>
+            <Button onClick={handleClose}>{t('productRatingDialog.fermer')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -456,7 +458,7 @@ export default function ProductRatingDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle>Notez vos produits</DialogTitle>
+          <DialogTitle>{t('productRatingDialog.notezVosProduits')}</DialogTitle>
           <DialogDescription>
             Commande chez <strong>{vendorName}</strong> • {ratedCount}/{totalCount} produit(s) noté(s)
           </DialogDescription>
@@ -531,7 +533,7 @@ export default function ProductRatingDialog({
 
           {/* Étoiles */}
           <div className="flex flex-col items-center gap-2">
-            <p className="text-sm text-muted-foreground">Comment évaluez-vous ce produit ?</p>
+            <p className="text-sm text-muted-foreground">{t('productRatingDialog.commentEvaluezVousCeProduit')}</p>
             <div className="flex gap-2">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
@@ -565,9 +567,9 @@ export default function ProductRatingDialog({
 
           {/* Commentaire */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Votre avis (optionnel)</label>
+            <label className="text-sm font-medium">{t('productRatingDialog.votreAvisOptionnel')}</label>
             <Textarea
-              placeholder="Partagez votre expérience..."
+              placeholder={t('productRatingDialog.partagezVotreExperience')}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               rows={2}

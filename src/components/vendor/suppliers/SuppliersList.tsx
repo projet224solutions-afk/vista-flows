@@ -1,5 +1,5 @@
-// @ts-nocheck
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,6 +21,7 @@ interface Supplier {
 }
 
 export function SuppliersList() {
+  const { t } = useTranslation();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -42,14 +43,14 @@ export function SuppliersList() {
       setSuppliers(data || []);
     } catch (error: any) {
       console.error('Erreur chargement fournisseurs:', error);
-      toast.error('Erreur lors du chargement des fournisseurs');
+      toast.error(t('suppliersList.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
   };
 
   if (loading) {
-    return <div className="text-center py-8">Chargement des fournisseurs...</div>;
+    return <div className="text-center py-8">{t('suppliersList.chargementDesFournisseurs')}</div>;
   }
 
   if (suppliers.length === 0) {

@@ -1,5 +1,5 @@
-// @ts-nocheck
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,6 +15,7 @@ interface CreateDebtFormProps {
 }
 
 export function CreateDebtForm({ vendorId, onSuccess }: CreateDebtFormProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -31,13 +32,13 @@ export function CreateDebtForm({ vendorId, onSuccess }: CreateDebtFormProps) {
     e.preventDefault();
 
     if (!user) {
-      toast.error('Vous devez être connecté');
+      toast.error(t('createDebtForm.vousDevezEtreConnecte'));
       return;
     }
 
     // Validation
     if (!formData.customer_name || !formData.customer_phone || !formData.total_amount || !formData.minimum_installment) {
-      toast.error('Veuillez remplir tous les champs obligatoires');
+      toast.error(t('createDebtForm.veuillezRemplirTousLesChamps'));
       return;
     }
 
@@ -45,12 +46,12 @@ export function CreateDebtForm({ vendorId, onSuccess }: CreateDebtFormProps) {
     const minInstallment = parseFloat(formData.minimum_installment);
 
     if (totalAmount <= 0 || minInstallment <= 0) {
-      toast.error('Les montants doivent être supérieurs à 0');
+      toast.error(t('createDebtForm.lesMontantsDoiventEtreSuperieurs'));
       return;
     }
 
     if (minInstallment > totalAmount) {
-      toast.error('La tranche minimale ne peut pas être supérieure au montant total');
+      toast.error(t('createDebtForm.laTrancheMinimaleNePeut'));
       return;
     }
 
@@ -85,7 +86,7 @@ export function CreateDebtForm({ vendorId, onSuccess }: CreateDebtFormProps) {
         'Votre vendeur' // TODO: récupérer le nom du vendeur
       );
 
-      toast.success('Dette créée avec succès');
+      toast.success(t('createDebtForm.detteCreeeAvecSucces'));
 
       // Reset form
       setFormData({
@@ -111,18 +112,18 @@ export function CreateDebtForm({ vendorId, onSuccess }: CreateDebtFormProps) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="customer_name">Nom du client *</Label>
+          <Label htmlFor="customer_name">{t('createDebtForm.nomDuClient')}</Label>
           <Input
             id="customer_name"
             value={formData.customer_name}
             onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
-            placeholder="Nom complet du client"
+            placeholder={t('createDebtForm.nomCompletDuClient')}
             required
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="customer_phone">Numéro du client *</Label>
+          <Label htmlFor="customer_phone">{t('createDebtForm.numeroDuClient')}</Label>
           <Input
             id="customer_phone"
             value={formData.customer_phone}
@@ -133,17 +134,17 @@ export function CreateDebtForm({ vendorId, onSuccess }: CreateDebtFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="customer_id">ID client (optionnel)</Label>
+          <Label htmlFor="customer_id">{t('createDebtForm.idClientOptionnel')}</Label>
           <Input
             id="customer_id"
             value={formData.customer_id}
             onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })}
-            placeholder="ID du client dans le système"
+            placeholder={t('createDebtForm.idDuClientDansLe')}
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="total_amount">Montant total (GNF) *</Label>
+          <Label htmlFor="total_amount">{t('createDebtForm.montantTotalGnf')}</Label>
           <Input
             id="total_amount"
             type="number"
@@ -187,7 +188,7 @@ export function CreateDebtForm({ vendorId, onSuccess }: CreateDebtFormProps) {
           id="description"
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          placeholder="Détails de la dette..."
+          placeholder={t('createDebtForm.detailsDeLaDette')}
           rows={3}
         />
       </div>

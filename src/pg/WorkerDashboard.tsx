@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import CommunicationWidget from '@/components/communication/CommunicationWidget';
 
 export default function WorkerDashboard() {
+  const { t } = useTranslation();
   const { token } = useParams();
   const navigate = useNavigate();
   const [worker, setWorker] = useState<any>(null);
@@ -38,7 +40,7 @@ export default function WorkerDashboard() {
 
       if (workerError) throw workerError;
       if (!workerData) {
-        toast.error('Accès non trouvé');
+        toast.error(t('workerDashboard.accesNonTrouve'));
         navigate('/');
         return;
       }
@@ -87,7 +89,7 @@ export default function WorkerDashboard() {
 
     } catch (error) {
       console.error('Erreur chargement travailleur:', error);
-      toast.error('Erreur lors du chargement des données');
+      toast.error(t('workerDashboard.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -106,10 +108,10 @@ export default function WorkerDashboard() {
       <div className="flex items-center justify-center min-h-screen">
         <Card className="max-w-md">
           <CardHeader>
-            <CardTitle>Accès non trouvé</CardTitle>
+            <CardTitle>{t('workerDashboard.accesNonTrouve')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>Le lien d'accès est invalide ou a expiré.</p>
+            <p>{t('workerDashboard.leLienDAccesEst')}</p>
           </CardContent>
         </Card>
       </div>
@@ -154,7 +156,7 @@ export default function WorkerDashboard() {
         {worker.permissions.view_vehicles && (
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Véhicules</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('workerDashboard.vehicules')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{motos.length}</div>
@@ -222,7 +224,7 @@ export default function WorkerDashboard() {
       {(worker.permissions as any).view_vehicles && (
         <Card>
           <CardHeader>
-            <CardTitle>Véhicules</CardTitle>
+            <CardTitle>{t('workerDashboard.vehicules')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">

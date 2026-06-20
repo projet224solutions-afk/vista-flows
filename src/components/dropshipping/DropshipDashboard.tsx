@@ -4,6 +4,7 @@
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -24,6 +25,7 @@ interface DropshipDashboardProps {
 }
 
 export function DropshipDashboard({ stats, recentOrders }: DropshipDashboardProps) {
+  const { t } = useTranslation();
   const formatCurrency = useFormatCurrency();
 
   const getStatusBadge = (status: string) => {
@@ -47,7 +49,7 @@ export function DropshipDashboard({ stats, recentOrders }: DropshipDashboardProp
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Produits Actifs</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dropshipDashboard.produitsActifs')}</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -60,7 +62,7 @@ export function DropshipDashboard({ stats, recentOrders }: DropshipDashboardProp
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Commandes en Cours</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dropshipDashboard.commandesEnCours')}</CardTitle>
             <ShoppingCart className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
@@ -112,7 +114,7 @@ export function DropshipDashboard({ stats, recentOrders }: DropshipDashboardProp
           {recentOrders.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>Aucune commande dropshipping pour le moment</p>
+              <p>{t('dropshipDashboard.aucuneCommandeDropshippingPourLe')}</p>
               <p className="text-sm mt-1">
                 Les commandes de produits dropshipping apparaîtront ici
               </p>
@@ -180,7 +182,7 @@ export function DropshipDashboard({ stats, recentOrders }: DropshipDashboardProp
                 <CheckCircle className="w-6 h-6 text-[#ff4000]" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Commandes Réussies</p>
+                <p className="text-sm text-muted-foreground">{t('dropshipDashboard.commandesReussies')}</p>
                 <p className="text-2xl font-bold">{stats?.completedOrders || 0}</p>
               </div>
             </div>

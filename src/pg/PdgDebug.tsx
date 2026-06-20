@@ -1,5 +1,6 @@
 ﻿import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -7,6 +8,7 @@ import SurveillanceLogiqueDashboard from '@/components/pdg/SurveillanceLogiqueDa
 import { toast } from 'sonner';
 
 export default function PdgDebug() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { profile } = useAuth();
 
@@ -15,7 +17,7 @@ export default function PdgDebug() {
   useEffect(() => {
     // Vérifier que l'utilisateur est PDG
     if (profile && !hasPdgAccess) {
-      toast.error('Accès refusé - Réservé au PDG');
+      toast.error(t('pdgDebug.accesRefuseReserveAuPdg'));
       navigate('/home');
     }
   }, [profile, navigate, hasPdgAccess]);
@@ -39,7 +41,7 @@ export default function PdgDebug() {
           </Button>
           <div>
             <h1 className="text-3xl font-bold">Surveillance Logique</h1>
-            <p className="text-muted-foreground">Monitez 120 règles métier en temps réel</p>
+            <p className="text-muted-foreground">{t('pdgDebug.monitez120ReglesMetierEn')}</p>
           </div>
         </div>
 

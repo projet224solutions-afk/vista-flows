@@ -5,10 +5,11 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { formatCurrency } from '@/lib/formatters';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -56,6 +57,8 @@ export function VendorShopDashboard({
   businessName,
   onCreateService
 }: VendorShopDashboardProps) {
+  const { t } = useTranslation();
+  const fc = useFormatCurrency(); // convertit GNF → devise du vendeur (taux BCRG)
   const { stats, recentOrders, loading, error, refresh } = useVendorEcommerceStats(vendorId);
   const [activeTab, setActiveTab] = useState('overview');
   const navigate = useNavigate();
@@ -106,7 +109,7 @@ export function VendorShopDashboard({
             <ShoppingCart className="w-7 h-7 text-primary" />
             {businessName || 'Ma Boutique'}
           </h2>
-          <p className="text-muted-foreground">Gérez vos ventes, produits et clients</p>
+          <p className="text-muted-foreground">{t('vendorShopDashboard.gerezVosVentesProduitsEt')}</p>
         </div>
         <Button onClick={refresh} variant="outline" size="sm">
           <RefreshCw className="w-4 h-4 mr-2" />
@@ -118,7 +121,7 @@ export function VendorShopDashboard({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/vendeur/orders')}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Commandes</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('vendorShopDashboard.commandes')}</CardTitle>
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -136,7 +139,7 @@ export function VendorShopDashboard({
 
         <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate('/vendeur/products')}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Produits</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('vendorShopDashboard.produits')}</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -167,7 +170,7 @@ export function VendorShopDashboard({
                   <span className="text-[#ff4000]">+{stats?.clients.newThisMonth} ce mois</span>
                 </>
               ) : (
-                <span className="text-muted-foreground">Aucun nouveau ce mois</span>
+                <span className="text-muted-foreground">{t('vendorShopDashboard.aucunNouveauCeMois')}</span>
               )}
             </div>
           </CardContent>
@@ -180,10 +183,10 @@ export function VendorShopDashboard({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">
-              {formatCurrency(stats?.sales.totalRevenue || 0)}
+              {fc(stats?.sales.totalRevenue || 0)}
             </div>
             <div className="text-xs text-muted-foreground">
-              {formatCurrency(stats?.sales.monthRevenue || 0)} ce mois
+              {fc(stats?.sales.monthRevenue || 0)} ce mois
             </div>
           </CardContent>
         </Card>
@@ -219,8 +222,8 @@ export function VendorShopDashboard({
               <CardContent className="space-y-4">
                 {/* Total */}
                 <div className="flex justify-between items-center p-3 bg-primary/10 rounded-lg">
-                  <span className="text-sm font-medium">Total général</span>
-                  <span className="font-bold text-primary">{formatCurrency(stats?.sales.totalRevenue || 0)}</span>
+                  <span className="text-sm font-medium">{t('vendorShopDashboard.totalGeneral')}</span>
+                  <span className="font-bold text-primary">{fc(stats?.sales.totalRevenue || 0)}</span>
                 </div>
 
                 {/* Séparation POS / Online */}
@@ -230,7 +233,7 @@ export function VendorShopDashboard({
                       <span className="text-xs font-medium text-orange-700">🏪 POS</span>
                     </div>
                     <div className="text-lg font-bold text-orange-600">
-                      {formatCurrency(stats?.salesPos?.totalRevenue || 0)}
+                      {fc(stats?.salesPos?.totalRevenue || 0)}
                     </div>
                   </div>
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -238,22 +241,22 @@ export function VendorShopDashboard({
                       <span className="text-xs font-medium text-blue-700">🌐 En ligne</span>
                     </div>
                     <div className="text-lg font-bold text-blue-600">
-                      {formatCurrency(stats?.salesOnline?.totalRevenue || 0)}
+                      {fc(stats?.salesOnline?.totalRevenue || 0)}
                     </div>
                   </div>
                 </div>
 
                 <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
                   <span className="text-sm">Aujourd'hui</span>
-                  <span className="font-semibold">{formatCurrency(stats?.sales.todayRevenue || 0)}</span>
+                  <span className="font-semibold">{fc(stats?.sales.todayRevenue || 0)}</span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
                   <span className="text-sm">Cette semaine</span>
-                  <span className="font-semibold">{formatCurrency(stats?.sales.weekRevenue || 0)}</span>
+                  <span className="font-semibold">{fc(stats?.sales.weekRevenue || 0)}</span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
                   <span className="text-sm">Ce mois</span>
-                  <span className="font-semibold">{formatCurrency(stats?.sales.monthRevenue || 0)}</span>
+                  <span className="font-semibold">{fc(stats?.sales.monthRevenue || 0)}</span>
                 </div>
               </CardContent>
             </Card>
@@ -312,7 +315,7 @@ export function VendorShopDashboard({
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <CheckCircle className="w-4 h-4 text-[#ff4000]" />
-                      <span className="text-sm">Livrées</span>
+                      <span className="text-sm">{t('vendorShopDashboard.livrees')}</span>
                     </div>
                     <div className="flex gap-2">
                       <Badge variant="outline" className="text-orange-600 border-orange-300 text-xs">
@@ -326,7 +329,7 @@ export function VendorShopDashboard({
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <XCircle className="w-4 h-4 text-[#ff4000]" />
-                      <span className="text-sm">Annulées</span>
+                      <span className="text-sm">{t('vendorShopDashboard.annulees')}</span>
                     </div>
                     <div className="flex gap-2">
                       <Badge variant="outline" className="text-orange-600 border-orange-300 text-xs">
@@ -346,7 +349,7 @@ export function VendorShopDashboard({
         <TabsContent value="orders" className="mt-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Commandes récentes</CardTitle>
+              <CardTitle className="text-lg">{t('vendorShopDashboard.commandesRecentes')}</CardTitle>
               <Button variant="outline" size="sm" onClick={() => navigate('/vendeur/orders')}>
                 <Eye className="w-4 h-4 mr-2" />
                 Voir tout
@@ -356,7 +359,7 @@ export function VendorShopDashboard({
               {recentOrders.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <ShoppingBag className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucune commande pour le moment</p>
+                  <p>{t('vendorShopDashboard.aucuneCommandePourLeMoment')}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -388,7 +391,7 @@ export function VendorShopDashboard({
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="font-semibold">{formatCurrency(order.total_amount)}</div>
+                        <div className="font-semibold">{fc(order.total_amount)}</div>
                       </div>
                     </div>
                   ))}
@@ -401,7 +404,7 @@ export function VendorShopDashboard({
         <TabsContent value="products" className="mt-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Top produits</CardTitle>
+              <CardTitle className="text-lg">{t('vendorShopDashboard.topProduits')}</CardTitle>
               <Button variant="outline" size="sm" onClick={() => navigate('/vendeur/products')}>
                 <Eye className="w-4 h-4 mr-2" />
                 Voir tout
@@ -410,7 +413,7 @@ export function VendorShopDashboard({
             <CardContent>
               <div className="text-center py-8 text-muted-foreground">
                 <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p className="mb-4">Gérez vos produits depuis la section Produits</p>
+                <p className="mb-4">{t('vendorShopDashboard.gerezVosProduitsDepuisLa')}</p>
                 <Button onClick={() => navigate('/vendeur/products')}>
                   <Plus className="w-4 h-4 mr-2" />
                   Ajouter un produit

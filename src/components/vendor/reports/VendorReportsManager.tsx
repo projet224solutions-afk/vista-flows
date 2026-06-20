@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +29,7 @@ interface ReportData {
 const _COLORS = ['#ff4000', '#04439e', '#ff4000', '#ff4000', '#04439e'];
 
 export default function VendorReportsManager() {
+  const { t } = useTranslation();
   const { vendorId, userId } = useCurrentVendor();
   const fc = useFormatCurrency();
   const { convert, userCurrency } = usePriceConverter();
@@ -260,7 +262,7 @@ Généré le: ${new Date().toLocaleString('fr-FR')}
           {period === 'custom' && (
             <div className="flex gap-4 mt-4">
               <div className="flex-1">
-                <label className="text-sm font-medium">Date début</label>
+                <label className="text-sm font-medium">{t('vendorReportsManager.dateDebut')}</label>
                 <Input
                   type="date"
                   value={customRange.start}
@@ -298,7 +300,7 @@ Généré le: ${new Date().toLocaleString('fr-FR')}
             <div className="flex items-center gap-2">
               <ShoppingCart className="w-5 h-5 text-blue-600" />
               <div>
-                <p className="text-xs text-muted-foreground">Commandes</p>
+                <p className="text-xs text-muted-foreground">{t('vendorReportsManager.commandes')}</p>
                 <p className="text-lg font-bold">{reportData.orders}</p>
               </div>
             </div>
@@ -309,7 +311,7 @@ Généré le: ${new Date().toLocaleString('fr-FR')}
             <div className="flex items-center gap-2">
               <TrendingDown className="w-5 h-5 text-[#ff4000]" />
               <div>
-                <p className="text-xs text-muted-foreground">Dépenses</p>
+                <p className="text-xs text-muted-foreground">{t('vendorReportsManager.depenses')}</p>
                 <p className="text-lg font-bold text-[#ff4000]">{reportData.expenses.toLocaleString()}</p>
               </div>
             </div>
@@ -320,7 +322,7 @@ Généré le: ${new Date().toLocaleString('fr-FR')}
             <div className="flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-orange-600" />
               <div>
-                <p className="text-xs text-muted-foreground">Créances</p>
+                <p className="text-xs text-muted-foreground">{t('vendorReportsManager.creances')}</p>
                 <p className="text-lg font-bold text-orange-600">{reportData.creditSales.toLocaleString()}</p>
               </div>
             </div>
@@ -342,7 +344,7 @@ Généré le: ${new Date().toLocaleString('fr-FR')}
             <div className="flex items-center gap-2">
               <TrendingUp className={`w-5 h-5 ${reportData.profit >= 0 ? 'text-[#ff4000]' : 'text-[#ff4000]'}`} />
               <div>
-                <p className="text-xs text-muted-foreground">Bénéfice net</p>
+                <p className="text-xs text-muted-foreground">{t('vendorReportsManager.beneficeNet')}</p>
                 <p className={`text-lg font-bold ${reportData.profit >= 0 ? 'text-[#ff4000]' : 'text-[#ff4000]'}`}>
                   {reportData.profit.toLocaleString()}
                 </p>
@@ -357,7 +359,7 @@ Généré le: ${new Date().toLocaleString('fr-FR')}
         {/* Évolution des ventes */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Évolution des ventes</CardTitle>
+            <CardTitle className="text-lg">{t('vendorReportsManager.evolutionDesVentes')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -381,7 +383,7 @@ Généré le: ${new Date().toLocaleString('fr-FR')}
         {/* Top Produits */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Top 5 Produits</CardTitle>
+            <CardTitle className="text-lg">{t('vendorReportsManager.top5Produits')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">

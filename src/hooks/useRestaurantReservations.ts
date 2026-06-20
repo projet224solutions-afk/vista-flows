@@ -133,13 +133,44 @@ export function useRestaurantReservations(serviceId: string) {
     date: string,
     partySize: number
   ): Promise<TimeSlot[]> => {
-    // Créneaux standards pour un restaurant (service midi et soir)
+    // Créneaux standards (repli si le restaurant n'a pas défini d'horaires).
     const standardSlots = [
       '12:00', '12:30', '13:00', '13:30', '14:00',
       '19:00', '19:30', '20:00', '20:30', '21:00', '21:30'
     ];
 
+    // Génère des créneaux de 30 min entre l'ouverture et la fermeture, en s'arrêtant 1 h avant
+    // la fermeture (dernier service). Gère les horaires passant minuit (ex. 19:00 → 02:00).
+    const slotsFromHours = (open: string, close: string): string[] => {
+      const toMin = (s: string) => { const [h, m] = String(s).split(':').map(Number); return (h || 0) * 60 + (m || 0); };
+      const start = toMin(open);
+      let end = toMin(close);
+      if (end <= start) end += 24 * 60; // fermeture après minuit
+      const out: string[] = [];
+      for (let mins = start; mins <= end - 60; mins += 30) {
+        const h = Math.floor((mins % (24 * 60)) / 60);
+        const m = mins % 60;
+        out.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+      }
+      return out;
+    };
+
     try {
+      // Horaires d'ouverture du restaurant pour le JOUR de la date demandée.
+      const { data: svc } = await supabase
+        .from('professional_services')
+        .select('opening_hours')
+        .eq('id', serviceId)
+        .single();
+      const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const dayKey = dayKeys[new Date(`${date}T00:00:00`).getDay()];
+      const hours = (svc?.opening_hours as any)?.[dayKey];
+      // Fermé ce jour-là → aucun créneau réservable.
+      if (hours && hours.closed === true) return [];
+      const slots = (hours && hours.open && hours.close)
+        ? slotsFromHours(hours.open, hours.close)
+        : standardSlots;
+
       // Récupérer les réservations existantes pour cette date
       const { data: existingReservations } = await supabase
         .from('restaurant_reservations')
@@ -163,8 +194,8 @@ export function useRestaurantReservations(serviceId: string) {
         reservationsPerSlot[time] = (reservationsPerSlot[time] || 0) + r.party_size;
       });
 
-      // Calculer la disponibilité pour chaque créneau
-      return standardSlots.map(time => {
+      // Calculer la disponibilité pour chaque créneau (issus des horaires réels)
+      return slots.map(time => {
         const bookedCapacity = reservationsPerSlot[time] || 0;
         const remainingCapacity = totalCapacity - bookedCapacity;
         const available = remainingCapacity >= partySize;

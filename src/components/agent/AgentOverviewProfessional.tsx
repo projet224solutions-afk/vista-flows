@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useWallet } from '@/hooks/useWallet';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -50,6 +51,7 @@ export function AgentOverviewProfessional({
   walletBalance,
   onNavigate
 }: AgentOverviewProfessionalProps) {
+  const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
   const { wallet } = useWallet();
 
@@ -155,7 +157,7 @@ export function AgentOverviewProfessional({
           <CardContent className="p-5">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-orange-100 text-sm font-medium">Solde Total</p>
+                <p className="text-orange-100 text-sm font-medium">{t('agentOverviewProfessional.soldeTotal')}</p>
                 <h3 className="text-2xl lg:text-3xl font-bold mt-1">
                   {formatCurrency(walletBalance)}
                 </h3>
@@ -289,7 +291,7 @@ export function AgentOverviewProfessional({
               </div>
               <div>
                 <CardTitle className="text-base">Performance Mensuelle</CardTitle>
-                <CardDescription>Vos objectifs et progrès</CardDescription>
+                <CardDescription>{t('agentOverviewProfessional.vosObjectifsEtProgres')}</CardDescription>
               </div>
             </div>
             <Button variant="outline" size="sm" className="text-xs">
@@ -341,7 +343,7 @@ export function AgentOverviewProfessional({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-[#04439e]" />
-                <span className="text-sm font-medium text-slate-700">Taux d'Activité</span>
+                <span className="text-sm font-medium text-slate-700">{t('agentOverviewProfessional.tauxDActivite')}</span>
               </div>
               <span className="text-sm font-bold text-slate-900">
                 {stats.performance || 100}%

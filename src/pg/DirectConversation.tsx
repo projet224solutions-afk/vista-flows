@@ -16,9 +16,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useWebRTCCallContext } from "@/components/communication/WebRTCCallProvider";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { signMessagesFileUrls, resolveCommunicationFileUrl } from "@/lib/communication/fileUrls";
 import { format, isToday, isYesterday } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useTranslation } from "@/hooks/useTranslation";
+import { AutoTranslatedMessageBubble } from "@/components/messaging/AutoTranslatedMessageBubble";
+import { useChatLanguage } from "@/hooks/useChatLanguage";
+import { ChatLanguageSelector } from "@/components/messaging/ChatLanguageSelector";
 
 interface Message {
   id: string;
@@ -67,6 +71,7 @@ export default function DirectConversation() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useTranslation();
+  const { chatLanguage } = useChatLanguage();
   const { callState, startCall } = useWebRTCCallContext();
 
   const [recipient, setRecipient] = useState<Profile | null>(null);
@@ -113,7 +118,7 @@ export default function DirectConversation() {
         );
       } catch (error) {
         console.error('Erreur chargement profil:', error);
-        toast.error("Erreur lors du chargement");
+        toast.error(t('directConversation.erreurLorsDuChargement'));
         navigate("/messages");
       } finally {
         setLoading(false);
@@ -232,7 +237,7 @@ export default function DirectConversation() {
       try {
         const { data, error } = await supabase
           .from('messages')
-          .select('id, content, sender_id, created_at, type, file_url')
+          .select('id, content, sender_id, created_at, type, file_url, translated_text, original_language, target_language')
           .or(`and(sender_id.eq.${user.id},recipient_id.eq.${userId}),and(sender_id.eq.${userId},recipient_id.eq.${user.id})`)
           .order('created_at', { ascending: true });
 
@@ -240,7 +245,8 @@ export default function DirectConversation() {
         const msgs = data || [];
         // Initialiser le set anti-doublon
         messageIdsRef.current = new Set(msgs.map(m => m.id));
-        setMessages(msgs);
+        // 🔐 Signer les pièces jointes (bucket privé)
+        setMessages(await signMessagesFileUrls(msgs));
       } catch (error) {
         console.error('Erreur chargement messages:', error);
       }
@@ -267,7 +273,14 @@ export default function DirectConversation() {
           if (messageIdsRef.current.has(msg.id)) return;
           messageIdsRef.current.add(msg.id);
 
-          setMessages(prev => [...prev, msg]);
+          // 🔐 Signer la pièce jointe éventuelle (bucket privé)
+          if (msg.file_url) {
+            resolveCommunicationFileUrl(msg.file_url).then((signed) => {
+              setMessages(prev => [...prev, { ...msg, file_url: signed || msg.file_url }]);
+            });
+          } else {
+            setMessages(prev => [...prev, msg]);
+          }
         }
       )
       .subscribe();
@@ -316,7 +329,7 @@ export default function DirectConversation() {
       inputRef.current?.focus();
     } catch (error) {
       console.error('Erreur envoi message:', error);
-      toast.error("Erreur lors de l'envoi");
+      toast.error(t('directConversation.erreurLorsDeLEnvoi'));
     } finally {
       setSending(false);
     }
@@ -354,7 +367,7 @@ export default function DirectConversation() {
   if (!user) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-        <p className="text-muted-foreground mb-4">Veuillez vous connecter pour envoyer des messages</p>
+        <p className="text-muted-foreground mb-4">{t('directConversation.veuillezVousConnecterPourEnvoyer')}</p>
         <Button onClick={() => navigate('/auth')}>Se connecter</Button>
       </div>
     );
@@ -407,6 +420,8 @@ export default function DirectConversation() {
         </div>
 
         <div className="flex items-center gap-1">
+          {/* Choix de la langue de réception des messages (changeable à tout moment) */}
+          <ChatLanguageSelector />
           {/* Bouton d'appel RÉELLEMENT branché */}
           <Button
             variant="ghost"
@@ -441,7 +456,7 @@ export default function DirectConversation() {
             <p className="font-semibold text-lg text-foreground mb-1">
               {recipient.first_name} {recipient.last_name}
             </p>
-            <p className="text-sm text-muted-foreground">Commencez la conversation</p>
+            <p className="text-sm text-muted-foreground">{t('directConversation.commencezLaConversation')}</p>
           </div>
         ) : (
           <>
@@ -467,7 +482,11 @@ export default function DirectConversation() {
                           <img loading="lazy" src={msg.file_url} alt="Image" className="rounded-lg max-w-full mb-2" />
                         )}
                         {msg.content && (
-                          <p className="text-sm leading-relaxed break-words">{msg.content}</p>
+                          <AutoTranslatedMessageBubble
+                            message={msg as any}
+                            userLanguage={chatLanguage as any}
+                            isOwn={isOwn}
+                          />
                         )}
                         <div className={cn(
                           "flex items-center justify-end gap-1 mt-1",

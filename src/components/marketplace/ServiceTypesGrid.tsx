@@ -34,6 +34,8 @@ import {
   LucideIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/hooks/useTranslation';
+import { localizeServiceField } from '@/config/serviceTypesConfig';
 
 interface ServiceType {
   id: string;
@@ -186,6 +188,7 @@ interface ServiceTypesGridProps {
 }
 
 export function ServiceTypesGrid({ onBack, searchQuery, country = 'all', city = 'all' }: ServiceTypesGridProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -321,14 +324,14 @@ export function ServiceTypesGrid({ onBack, searchQuery, country = 'all', city = 
       {/* Header avec bouton retour */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold">Services Professionnels</h2>
+          <h2 className="text-xl font-bold">{t('serviceGrid.title')}</h2>
           <p className="text-sm text-muted-foreground">
-            {filteredTypes.length} types de services disponibles
+            {filteredTypes.length} {t('serviceGrid.typesAvailable')}
           </p>
         </div>
         {onBack && (
           <Button variant="outline" size="sm" onClick={onBack}>
-            Retour aux produits
+            {t('serviceGrid.backToProducts')}
           </Button>
         )}
       </div>
@@ -380,17 +383,17 @@ export function ServiceTypesGrid({ onBack, searchQuery, country = 'all', city = 
 
                 <div className="p-4 sm:p-6">
                   <h3 className="mb-1 line-clamp-1 text-sm font-semibold transition-colors group-hover:text-white sm:text-base">
-                    {serviceType.name}
+                    {localizeServiceField(t, serviceType.code, 'name', serviceType.name)}
                   </h3>
 
                   <p className="mb-3 line-clamp-2 text-xs text-muted-foreground transition-colors group-hover:text-white">
-                    {serviceType.description}
+                    {localizeServiceField(t, serviceType.code, 'description', serviceType.description)}
                   </p>
 
                   <div className="flex items-center justify-between">
                     <Badge variant="secondary" className="text-xs transition-colors group-hover:bg-transparent group-hover:text-white">
                       <Users className="mr-1 h-3 w-3" />
-                      {count} {count > 1 ? 'prestataires' : 'prestataire'}
+                      {count} {count > 1 ? t('serviceGrid.providers') : t('serviceGrid.provider')}
                     </Badge>
                     <ArrowRight
                       className="h-4 w-4 transition-all group-hover:translate-x-1 group-hover:text-white"
@@ -407,7 +410,7 @@ export function ServiceTypesGrid({ onBack, searchQuery, country = 'all', city = 
       {filteredTypes.length === 0 && (
         <div className="text-center py-12">
           <Briefcase className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">Aucun service trouvé</p>
+          <p className="text-muted-foreground">{t('serviceGrid.noService')}</p>
         </div>
       )}
     </div>

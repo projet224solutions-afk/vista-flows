@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
@@ -18,6 +19,7 @@ interface LocationCoordinates {
 }
 
 export default function TaxiTrackingPage() {
+  const { t } = useTranslation();
   const { rideId } = useParams<{ rideId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -149,8 +151,8 @@ export default function TaxiTrackingPage() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-xl font-bold">Suivi de course</h1>
-              <p className="text-sm text-muted-foreground">En temps réel</p>
+              <h1 className="text-xl font-bold">{t('taxiTrackingPage.suiviDeCourse')}</h1>
+              <p className="text-sm text-muted-foreground">{t('taxiTrackingPage.enTempsReel')}</p>
             </div>
           </div>
         </div>
@@ -161,7 +163,7 @@ export default function TaxiTrackingPage() {
           <div className="flex items-center justify-center py-24">
             <div className="flex flex-col items-center gap-3">
               <Loader2 className="w-10 h-10 animate-spin text-primary" />
-              <p className="text-muted-foreground">Chargement de votre course...</p>
+              <p className="text-muted-foreground">{t('taxiTrackingPage.chargementDeVotreCourse')}</p>
             </div>
           </div>
         ) : error ? (

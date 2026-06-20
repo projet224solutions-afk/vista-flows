@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,7 @@ interface UserSearchResult {
 }
 
 export default function TransferMoney({ walletId, currentBalance, currency, onTransferComplete, senderUserId }: TransferMoneyProps) {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(null);
@@ -93,7 +95,7 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
 
   const searchUsers = async () => {
     if (!searchQuery || searchQuery.length < 2) {
-      toast.error('Entrez au moins 2 caractères pour rechercher');
+      toast.error(t('transferMoney.entrezAuMoins2Caracteres'));
       return;
     }
 
@@ -295,12 +297,12 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
 
       setSearchResults(uniqueResults);
       if (uniqueResults.length === 0) {
-        toast.info('Aucun utilisateur trouvé avec cet ID ou nom');
+        toast.info(t('transferMoney.aucunUtilisateurTrouveAvecCet'));
       } else {
         toast.success(`${uniqueResults.length} résultat(s) trouvé(s)`);
       }
     } catch (error: any) {
-      toast.error('Erreur lors de la recherche');
+      toast.error(t('transferMoney.erreurLorsDeLaRecherche'));
     } finally {
       setSearching(false);
     }
@@ -308,17 +310,17 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
 
   const handleTransfer = async () => {
     if (!selectedUser) {
-      toast.error('Sélectionnez un destinataire');
+      toast.error(t('transferMoney.selectionnezUnDestinataire'));
       return;
     }
 
     const transferAmount = parseFloat(amount);
     if (isNaN(transferAmount) || transferAmount <= 0) {
-      toast.error('Montant invalide');
+      toast.error(t('transferMoney.montantInvalide'));
       return;
     }
     if (transferAmount > currentBalance) {
-      toast.error('Solde insuffisant');
+      toast.error(t('transferMoney.soldeInsuffisant'));
       return;
     }
 
@@ -414,10 +416,10 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
       <CardContent className="space-y-4">
         {/* Recherche */}
         <div className="space-y-2">
-          <Label>Rechercher un destinataire</Label>
+          <Label>{t('transferMoney.rechercherUnDestinataire')}</Label>
           <div className="flex gap-2">
             <Input
-              placeholder="ID (CLT..., VND..., BST..., AGT...) ou nom, téléphone..."
+              placeholder={t('transferMoney.idCltVndBstAgt')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && searchUsers()}
@@ -431,7 +433,7 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
         {/* Résultats */}
         {searchResults.length > 0 && !selectedUser && (
           <div className="space-y-2">
-            <Label>Sélectionnez un destinataire</Label>
+            <Label>{t('transferMoney.selectionnezUnDestinataire')}</Label>
             <div className="max-h-48 overflow-y-auto space-y-1 border rounded-md p-2">
               {searchResults.map((user) => (
                 <button
@@ -492,7 +494,7 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
               <Label htmlFor="agent-transfer-description">Description (optionnelle)</Label>
               <Input
                 id="agent-transfer-description"
-                placeholder="Ex: Paiement pour service..."
+                placeholder={t('transferMoney.exPaiementPourService')}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />
@@ -513,11 +515,11 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
         <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Confirmer le transfert</AlertDialogTitle>
+              <AlertDialogTitle>{t('transferMoney.confirmerLeTransfert')}</AlertDialogTitle>
               <AlertDialogDescription asChild>
                 <div className="space-y-3 my-2 text-sm">
                   <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">Montant envoyé:</span>
+                    <span className="text-muted-foreground">{t('transferMoney.montantEnvoye')}</span>
                     <span className="text-lg font-bold text-foreground">
                       {transferAmount.toLocaleString()} {currency}
                     </span>
@@ -527,7 +529,7 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
                   {previewing && (
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Calcul du taux de change BCRG en cours...</span>
+                      <span>{t('transferMoney.calculDuTauxDeChange')}</span>
                     </div>
                   )}
 
@@ -590,7 +592,7 @@ export default function TransferMoney({ walletId, currentBalance, currency, onTr
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={transferring}>Annuler</AlertDialogCancel>
+              <AlertDialogCancel disabled={transferring}>{t('transferMoney.annuler')}</AlertDialogCancel>
               <AlertDialogAction onClick={handleTransfer} disabled={transferring || previewing}>
                 {transferring ? (
                   <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Transfert en cours...</>

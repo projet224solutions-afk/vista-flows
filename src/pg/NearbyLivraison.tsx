@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, memo, useRef } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -148,6 +149,7 @@ const DriverCard = memo(function DriverCard({ driver, onRequestDelivery }: Drive
 // ============================================================================
 
 export default function NearbyLivraison() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [drivers, setDrivers] = useState<NearbyDriver[]>([]);
   const [loading, setLoading] = useState(true);
@@ -316,7 +318,7 @@ export default function NearbyLivraison() {
         <Card className="border-border/50">
           <CardContent className="p-8 text-center">
             <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-            <h3 className="font-semibold text-foreground mb-2">Erreur de chargement</h3>
+            <h3 className="font-semibold text-foreground mb-2">{t('nearbyLivraison.erreurDeChargement')}</h3>
             <p className="text-sm text-muted-foreground mb-4">{error}</p>
             <Button variant="outline" onClick={loadDrivers}>
               <RefreshCw className="w-4 h-4 mr-2" />
@@ -333,7 +335,7 @@ export default function NearbyLivraison() {
         <Card className="border-border/50">
           <CardContent className="p-8 text-center">
             <Package className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="font-semibold text-foreground mb-2">Aucun livreur disponible</h3>
+            <h3 className="font-semibold text-foreground mb-2">{t('nearbyLivraison.aucunLivreurDisponible')}</h3>
             <p className="text-sm text-muted-foreground mb-4">
               Réessayez dans quelques instants
             </p>
@@ -406,8 +408,8 @@ export default function NearbyLivraison() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="text-white">
-                <h3 className="font-semibold">Demander une livraison</h3>
-                <p className="text-sm opacity-90">Envoyez un colis rapidement</p>
+                <h3 className="font-semibold">{t('nearbyLivraison.demanderUneLivraison')}</h3>
+                <p className="text-sm opacity-90">{t('nearbyLivraison.envoyezUnColisRapidement')}</p>
               </div>
               <Button
                 onClick={handleRequestDelivery}

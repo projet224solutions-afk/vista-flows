@@ -1,16 +1,8 @@
 {
-  "version": 2,
-  "ignoreCommand": "[ \"$VERCEL_ENV\" = \"preview\" ] && exit 0 || exit 1",
-  "builds": [
+  "rewrites": [
     {
-      "src": "api/index.ts",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/api/index.ts"
+      "source": "/(.*)",
+      "destination": "/api/index.js"
     }
   ]
 }

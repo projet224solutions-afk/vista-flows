@@ -3,6 +3,7 @@
  */
 
 import { memo, Suspense, lazy } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { LogOut, Settings } from 'lucide-react';
@@ -23,6 +24,7 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
   sellerCode,
   onSignOut,
 }: DigitalVendorHeaderProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (
@@ -68,7 +70,7 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
               size="icon"
               className="h-9 w-9 rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 sm:h-10 sm:w-10 md:h-11 md:w-11"
               onClick={() => navigate('/vendeur-digital/settings')}
-              aria-label="Paramètres"
+              aria-label={t('digitalVendorHeader.parametres')}
             >
               <Settings className="h-4 w-4 md:h-5 md:w-5" />
             </Button>
@@ -78,7 +80,7 @@ const DigitalVendorHeader = memo(function DigitalVendorHeader({
               size="icon"
               onClick={onSignOut}
               className="h-9 w-9 rounded-2xl border border-[#ffcfb8] bg-[#fff4ee] text-[#ff6a1a] hover:bg-[#ff6a1a] hover:text-white sm:h-10 sm:w-10 md:h-11 md:w-11"
-              aria-label="Se déconnecter"
+              aria-label={t('digitalVendorHeader.seDeconnecter')}
             >
               <LogOut className="h-4 w-4 md:h-5 md:w-5" />
             </Button>

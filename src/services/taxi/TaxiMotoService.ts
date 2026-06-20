@@ -5,6 +5,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { publishLivePosition, ridePositionTopic } from "@/lib/realtime/livePositions";
 import { supabaseCall, withRetry, handleApiError } from "@/utils/apiErrorHandler";
 
 type TaxiTrip = Database['public']['Tables']['taxi_trips']['Row'];
@@ -383,6 +384,12 @@ export class TaxiMotoService {
       console.error('[TaxiMotoService] Error tracking position:', error);
       throw error;
     }
+
+    // 📡 DUAL-MODE scalabilité : diffuse aussi le point en broadcast (hors WAL),
+    // À CÔTÉ de l'insert. Best-effort → n'impacte pas l'écriture en base.
+    publishLivePosition(ridePositionTopic(rideId), {
+      lat, lng, speed: _speed, heading: _heading, accuracy: _accuracy, at: new Date().toISOString(),
+    });
   }
 
   /**

@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 
@@ -15,6 +16,7 @@ export function BureauIdDisplay({
   className = '',
   layout = 'horizontal'
 }: BureauIdDisplayProps) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -49,7 +51,7 @@ export function BureauIdDisplay({
       <span
         className="text-xs font-mono font-bold text-primary cursor-pointer hover:underline"
         onClick={handleCopy}
-        title="Cliquer pour copier"
+        title={t('bureauIdDisplay.cliquerPourCopier')}
       >
         {bureauCode}
       </span>

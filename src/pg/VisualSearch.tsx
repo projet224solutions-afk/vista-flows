@@ -1,5 +1,5 @@
-﻿// @ts-nocheck
-import { useState, useRef, useEffect } from "react";
+﻿import { useState, useRef, useEffect } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Camera, Upload, ArrowLeft, Search, Loader2, X, ImageIcon, _Zap, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ interface AnalysisResult {
 }
 
 export default function VisualSearch() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -62,7 +63,7 @@ export default function VisualSearch() {
       setShowCamera(true);
     } catch (error) {
       console.error('Erreur caméra:', error);
-      toast.error("Impossible d'accéder à la caméra");
+      toast.error(t('visualSearch.impossibleDAccederALa'));
     }
   };
 
@@ -94,7 +95,7 @@ export default function VisualSearch() {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      toast.error("Veuillez sélectionner une image");
+      toast.error(t('visualSearch.veuillezSelectionnerUneImage'));
       return;
     }
 
@@ -107,7 +108,7 @@ export default function VisualSearch() {
 
   const searchByImage = async () => {
     if (!capturedImage) {
-      toast.error("Veuillez d'abord capturer ou télécharger une image");
+      toast.error(t('visualSearch.veuillezDAbordCapturerOu'));
       return;
     }
 
@@ -131,14 +132,14 @@ export default function VisualSearch() {
         if (data.results?.length > 0) {
           toast.success(`${data.results.length} produits similaires trouvés !`);
         } else {
-          toast.info("Aucun produit similaire trouvé. Essayez une autre image.");
+          toast.info(t('visualSearch.aucunProduitSimilaireTrouveEssayez'));
         }
       } else {
         throw new Error(data.error || 'Erreur de recherche');
       }
     } catch (error: any) {
       console.error('Erreur recherche:', error);
-      toast.error("Erreur lors de la recherche visuelle");
+      toast.error(t('visualSearch.erreurLorsDeLaRecherche'));
 
       // Fallback: recherche basique si l'IA échoue
       try {
@@ -179,7 +180,7 @@ export default function VisualSearch() {
           </Button>
           <div>
             <h1 className="text-lg font-bold text-foreground">Recherche Visuelle</h1>
-            <p className="text-xs text-muted-foreground">Trouvez des produits par image</p>
+            <p className="text-xs text-muted-foreground">{t('visualSearch.trouvezDesProduitsParImage')}</p>
           </div>
         </div>
       </header>
@@ -194,7 +195,7 @@ export default function VisualSearch() {
                   <ImageIcon className="w-10 h-10 text-primary" />
                 </div>
                 <div className="text-center">
-                  <h2 className="font-semibold text-foreground">Rechercher par image</h2>
+                  <h2 className="font-semibold text-foreground">{t('visualSearch.rechercherParImage')}</h2>
                   <p className="text-sm text-muted-foreground mt-1">
                     Prenez une photo ou téléchargez une image pour trouver des produits similaires
                   </p>
@@ -254,7 +255,7 @@ export default function VisualSearch() {
             <CardContent className="p-0 relative">
               <img
                 src={capturedImage}
-                alt="Image capturée"
+                alt={t('visualSearch.imageCapturee')}
                 className="w-full aspect-[4/3] object-cover"
               />
               <Button

@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Bell, BellOff, BellRing, Loader2 } from 'lucide-react';
@@ -31,6 +32,7 @@ export function PushNotificationButton({
   className = '',
   unreadCount = 0
 }: PushNotificationButtonProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const {
     isSupported,
@@ -86,10 +88,10 @@ export function PushNotificationButton({
         size={size}
         className={className}
         disabled
-        title="Notifications non supportées"
+        title={t('pushNotificationButton.notificationsNonSupportees')}
       >
         {getIcon()}
-        {showText && <span className="ml-2">Non supporté</span>}
+        {showText && <span className="ml-2">{t('pushNotificationButton.nonSupporte')}</span>}
       </Button>
     );
   }

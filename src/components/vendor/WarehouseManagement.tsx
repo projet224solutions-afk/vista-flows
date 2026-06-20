@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +14,7 @@ import { useWarehouseManagement } from '@/hooks/useWarehouseManagement';
 import { useToast } from '@/hooks/use-toast';
 
 export default function WarehouseManagement() {
+  const { t } = useTranslation();
   const {
     warehouses,
     warehouseStocks,
@@ -97,7 +99,7 @@ export default function WarehouseManagement() {
   };
 
   const handleDeleteWarehouse = async (warehouseId: string) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cet entrepôt ?')) return;
+    if (!window.confirm(t('warehouseManagement.etesVousSurDeVouloir'))) return;
 
     try {
       await deleteWarehouse(warehouseId);
@@ -118,7 +120,7 @@ export default function WarehouseManagement() {
     return (
       <div className="flex flex-col items-center justify-center p-12 space-y-4">
         <div className="w-8 h-8 border-4 border-vendeur-primary border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-muted-foreground">Chargement de la gestion des entrepôts...</p>
+        <p className="text-muted-foreground">{t('warehouseManagement.chargementDeLaGestionDes')}</p>
       </div>
     );
   }
@@ -140,7 +142,7 @@ export default function WarehouseManagement() {
               <Warehouse className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Gestion des Entrepôts</h1>
+              <h1 className="text-3xl font-bold text-foreground">{t('warehouseManagement.gestionDesEntrepots')}</h1>
               <p className="text-muted-foreground text-lg">
                 Gérez vos sites de stockage multi-entrepôts • {warehouses.length} entrepôt(s)
               </p>
@@ -156,7 +158,7 @@ export default function WarehouseManagement() {
                 Transférer Stock
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <ArrowRightLeft className="h-5 w-5" />
@@ -169,10 +171,10 @@ export default function WarehouseManagement() {
               <form onSubmit={handleTransferStock} className="space-y-4">
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="product_id" className="text-sm font-medium">ID Produit *</Label>
+                    <Label htmlFor="product_id" className="text-sm font-medium">{t('warehouseManagement.idProduit')}</Label>
                     <Input
                       id="product_id"
-                      placeholder="UUID du produit à transférer"
+                      placeholder={t('warehouseManagement.uuidDuProduitATransferer')}
                       value={transferData.product_id}
                       onChange={(e) => setTransferData(prev => ({ ...prev, product_id: e.target.value }))}
                       className="mt-1"
@@ -182,7 +184,7 @@ export default function WarehouseManagement() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="from_warehouse" className="text-sm font-medium">Entrepôt source *</Label>
+                      <Label htmlFor="from_warehouse" className="text-sm font-medium">{t('warehouseManagement.entrepotSource')}</Label>
                       <select
                         id="from_warehouse"
                         className="w-full mt-1 p-2 border border-input rounded-md bg-background text-sm"
@@ -190,7 +192,7 @@ export default function WarehouseManagement() {
                         onChange={(e) => setTransferData(prev => ({ ...prev, from_warehouse_id: e.target.value }))}
                         required
                       >
-                        <option value="">Sélectionner...</option>
+                        <option value="">{t('warehouseManagement.selectionner')}</option>
                         {warehouses.map((warehouse) => (
                           <option key={warehouse.id} value={warehouse.id}>
                             {warehouse.name}
@@ -200,7 +202,7 @@ export default function WarehouseManagement() {
                     </div>
 
                     <div>
-                      <Label htmlFor="to_warehouse" className="text-sm font-medium">Entrepôt destination *</Label>
+                      <Label htmlFor="to_warehouse" className="text-sm font-medium">{t('warehouseManagement.entrepotDestination')}</Label>
                       <select
                         id="to_warehouse"
                         className="w-full mt-1 p-2 border border-input rounded-md bg-background text-sm"
@@ -208,7 +210,7 @@ export default function WarehouseManagement() {
                         onChange={(e) => setTransferData(prev => ({ ...prev, to_warehouse_id: e.target.value }))}
                         required
                       >
-                        <option value="">Sélectionner...</option>
+                        <option value="">{t('warehouseManagement.selectionner')}</option>
                         {warehouses.map((warehouse) => (
                           <option key={warehouse.id} value={warehouse.id}>
                             {warehouse.name}
@@ -219,12 +221,12 @@ export default function WarehouseManagement() {
                   </div>
 
                   <div>
-                    <Label htmlFor="quantity" className="text-sm font-medium">Quantité *</Label>
+                    <Label htmlFor="quantity" className="text-sm font-medium">{t('warehouseManagement.quantite')}</Label>
                     <Input
                       id="quantity"
                       type="number"
                       min="1"
-                      placeholder="Quantité à transférer"
+                      placeholder={t('warehouseManagement.quantiteATransferer')}
                       value={transferData.quantity}
                       onChange={(e) => setTransferData(prev => ({ ...prev, quantity: e.target.value }))}
                       className="mt-1"
@@ -236,7 +238,7 @@ export default function WarehouseManagement() {
                     <Label htmlFor="notes" className="text-sm font-medium">Notes (optionnel)</Label>
                     <Textarea
                       id="notes"
-                      placeholder="Raison du transfert, instructions spéciales..."
+                      placeholder={t('warehouseManagement.raisonDuTransfertInstructionsSpeciales')}
                       value={transferData.notes}
                       onChange={(e) => setTransferData(prev => ({ ...prev, notes: e.target.value }))}
                       className="mt-1 min-h-[80px]"
@@ -263,7 +265,7 @@ export default function WarehouseManagement() {
                 Nouvel Entrepôt
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <Warehouse className="h-5 w-5" />
@@ -276,10 +278,10 @@ export default function WarehouseManagement() {
               <form onSubmit={handleCreateWarehouse} className="space-y-4">
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="name" className="text-sm font-medium">Nom de l'entrepôt *</Label>
+                    <Label htmlFor="name" className="text-sm font-medium">{t('warehouseManagement.nomDeLEntrepot')}</Label>
                     <Input
                       id="name"
-                      placeholder="Ex: Entrepôt Central Conakry"
+                      placeholder={t('warehouseManagement.exEntrepotCentralConakry')}
                       value={newWarehouse.name}
                       onChange={(e) => setNewWarehouse(prev => ({ ...prev, name: e.target.value }))}
                       className="mt-1"
@@ -288,10 +290,10 @@ export default function WarehouseManagement() {
                   </div>
 
                   <div>
-                    <Label htmlFor="address" className="text-sm font-medium">Adresse complète</Label>
+                    <Label htmlFor="address" className="text-sm font-medium">{t('warehouseManagement.adresseComplete')}</Label>
                     <Textarea
                       id="address"
-                      placeholder="Adresse complète avec ville, quartier..."
+                      placeholder={t('warehouseManagement.adresseCompleteAvecVilleQuartier')}
                       value={newWarehouse.address}
                       onChange={(e) => setNewWarehouse(prev => ({ ...prev, address: e.target.value }))}
                       className="mt-1 min-h-[80px]"
@@ -303,14 +305,14 @@ export default function WarehouseManagement() {
                       <Label htmlFor="contact_person" className="text-sm font-medium">Responsable</Label>
                       <Input
                         id="contact_person"
-                        placeholder="Nom du responsable"
+                        placeholder={t('warehouseManagement.nomDuResponsable')}
                         value={newWarehouse.contact_person}
                         onChange={(e) => setNewWarehouse(prev => ({ ...prev, contact_person: e.target.value }))}
                         className="mt-1"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="contact_phone" className="text-sm font-medium">Téléphone</Label>
+                      <Label htmlFor="contact_phone" className="text-sm font-medium">{t('warehouseManagement.telephone')}</Label>
                       <Input
                         id="contact_phone"
                         placeholder="+224 xxx xxx xxx"
@@ -420,7 +422,7 @@ export default function WarehouseManagement() {
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-vendeur-gradient flex items-center justify-center shadow-glow">
                 <Warehouse className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Aucun entrepôt configuré</h3>
+              <h3 className="text-xl font-semibold mb-2">{t('warehouseManagement.aucunEntrepotConfigure')}</h3>
               <p className="text-muted-foreground text-center mb-6 max-w-md">
                 Commencez par créer votre premier entrepôt pour gérer vos stocks de manière professionnelle
               </p>
@@ -472,7 +474,7 @@ export default function WarehouseManagement() {
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-vendeur-accent/50 flex items-center justify-center">
                 <Package className="h-8 w-8 text-vendeur-primary opacity-50" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Aucun mouvement de stock</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('warehouseManagement.aucunMouvementDeStock')}</h3>
               <p className="text-muted-foreground">
                 Les transferts et ajustements de stock s'afficheront ici
               </p>
@@ -482,9 +484,9 @@ export default function WarehouseManagement() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/30">
-                    <TableHead className="font-semibold">Type de Mouvement</TableHead>
-                    <TableHead className="font-semibold">Produit</TableHead>
-                    <TableHead className="font-semibold">Quantité</TableHead>
+                    <TableHead className="font-semibold">{t('warehouseManagement.typeDeMouvement')}</TableHead>
+                    <TableHead className="font-semibold">{t('warehouseManagement.produit')}</TableHead>
+                    <TableHead className="font-semibold">{t('warehouseManagement.quantite2')}</TableHead>
                     <TableHead className="font-semibold">Date</TableHead>
                     <TableHead className="font-semibold">Notes</TableHead>
                   </TableRow>

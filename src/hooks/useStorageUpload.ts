@@ -17,9 +17,7 @@ export type StorageFolder =
   | 'restaurant'
   | 'digital-products'
   | 'travel'
-  | 'misc'
-  | 'kyc'
-  | 'sos';
+  | 'misc';
 
 // Mapping des folders vers les buckets Supabase pour le fallback
 const SUPABASE_BUCKET_MAP: Record<StorageFolder, string> = {
@@ -33,8 +31,6 @@ const SUPABASE_BUCKET_MAP: Record<StorageFolder, string> = {
   'digital-products': 'digital-products',
   travel: 'communication-files',
   misc: 'communication-files',
-  kyc: 'kyc-documents',
-  sos: 'sos-recordings',
 };
 
 interface UploadOptions {
@@ -73,8 +69,6 @@ const ALLOWED_TYPES: Record<StorageFolder, string[]> = {
   'digital-products': ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'application/zip'],
   travel: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
   misc: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'],
-  kyc: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'],
-  sos: ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4', 'audio/webm', 'audio/aac', 'audio/x-m4a', 'video/mp4', 'video/webm'],
 };
 
 // Taille max par catégorie (en bytes)
@@ -89,8 +83,6 @@ const MAX_SIZES: Record<StorageFolder, number> = {
   'digital-products': 5 * 1024 * 1024 * 1024, // 5 GB
   travel: 10 * 1024 * 1024, // 10 MB
   misc: 10 * 1024 * 1024, // 10 MB
-  kyc: 5 * 1024 * 1024, // 5 MB — aligné avec le bucket Supabase kyc-documents
-  sos: 50 * 1024 * 1024, // 50 MB — aligné avec le bucket Supabase sos-recordings
 };
 
 function formatMaxSizeLabel(sizeInBytes: number): string {
@@ -194,7 +186,7 @@ export function useStorageUpload(): UseStorageUploadReturn {
     if (folder === 'audio') {
       const baseType = file.type.split(';')[0].trim().toLowerCase();
       const isAudioValid = baseType.startsWith('audio/') ||
-                           file.name.match(/\.(mp3|wav|ogg|m4a|mp4|webm|aac|opus)$/i);
+        file.name.match(/\.(mp3|wav|ogg|m4a|mp4|webm|aac|opus)$/i);
 
       if (!isAudioValid) {
         return {
@@ -239,16 +231,30 @@ export function useStorageUpload(): UseStorageUploadReturn {
 
     console.log(`[useStorageUpload] Uploading to Supabase bucket: ${bucket}, path: ${filePath}`);
 
-    const { data: _uploadData, error: uploadError } = await supabase.storage
-      .from(bucket)
-      .upload(filePath, file, {
-        contentType,
-        upsert: true
-      });
+    // Upload avec 1 nouvelle tentative en cas d'erreur réseau transitoire ("Failed to fetch")
+    let uploadErr: any = null;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const res = await supabase.storage
+          .from(bucket)
+          .upload(filePath, file, { contentType, upsert: true });
+        uploadErr = res.error;
+        if (!uploadErr) { uploadErr = null; break; }
+      } catch (netErr: any) {
+        // supabase-js peut throw une TypeError "Failed to fetch" sur coupure réseau
+        uploadErr = netErr;
+      }
+      if (attempt < 2) await new Promise((r) => setTimeout(r, 800));
+    }
 
-    if (uploadError) {
-      console.error('[useStorageUpload] Supabase upload error:', uploadError);
-      throw new Error(uploadError.message);
+    if (uploadErr) {
+      console.error('[useStorageUpload] Supabase upload error:', uploadErr);
+      const msg = String(uploadErr?.message || uploadErr);
+      throw new Error(
+        /failed to fetch|network|load failed/i.test(msg)
+          ? "Réseau indisponible pour l'upload. Vérifie ta connexion, ou désactive un éventuel bloqueur de pubs / l'extension qui coupe les requêtes de stockage."
+          : msg
+      );
     }
 
     const { data: publicUrlData } = supabase.storage
@@ -286,9 +292,12 @@ export function useStorageUpload(): UseStorageUploadReturn {
     setProgress(0);
 
     try {
-      // Si preferSupabase est true, utiliser directement Supabase
-      if (preferSupabase) {
-        console.log('[useStorageUpload] Using Supabase Storage (preferSupabase=true)');
+      // ⚠️ On uploade TOUJOURS sur Supabase Storage (buckets publics, fiable). Le chemin
+      // GCS (Edge Function gcs-signed-url) était un point de panne : en prod, l'upload
+      // « réussissait » mais l'URL GCS ne s'affichait pas (bucket non public / non configuré),
+      // et en dev il était bloqué par CORS. Supabase = lecture publique garantie partout.
+      if (preferSupabase || import.meta.env.DEV || true) {
+        console.log('[useStorageUpload] Using Supabase Storage (forced — public buckets)');
         const result = await uploadToSupabase(file, folder, subfolder, onProgress);
         setProgress(100);
         return result;
@@ -340,9 +349,9 @@ export function useStorageUpload(): UseStorageUploadReturn {
 
         // Check for errors - both invoke errors AND error responses from the function
         const hasError = signedUrlError ||
-                        signedUrlData?.error ||
-                        signedUrlData?.fallback ||
-                        !signedUrlData?.signedUrl;
+          signedUrlData?.error ||
+          signedUrlData?.fallback ||
+          !signedUrlData?.signedUrl;
 
         if (hasError) {
           console.warn('[useStorageUpload] GCS signed URL failed, falling back to Supabase:',

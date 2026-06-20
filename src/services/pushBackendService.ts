@@ -15,3 +15,18 @@ export async function sendLocateRequest(targetUserId: string, driverName?: strin
     body: { target_user_id: targetUserId, driver_name: driverName },
   });
 }
+
+/**
+ * Notifie un destinataire d'un appel entrant (push FCM) pour qu'il ouvre l'app
+ * même si elle est fermée. Une fois ouverte, l'offre WebRTC (réémise) fait sonner.
+ */
+export async function sendCallNotification(
+  targetUserId: string,
+  callerName?: string,
+  mode: 'audio' | 'video' = 'audio'
+) {
+  return backendFetch<{ delivered?: boolean; reason?: string }>('/api/v2/push/call-notify', {
+    method: 'POST',
+    body: { target_user_id: targetUserId, caller_name: callerName, mode },
+  });
+}

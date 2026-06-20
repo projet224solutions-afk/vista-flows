@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +17,7 @@ interface SyndicateTreasuryManagementProps {
 }
 
 export default function SyndicateTreasuryManagement({ bureauId }: SyndicateTreasuryManagementProps) {
+    const { t } = useTranslation();
     const fc = useFormatCurrency();
     const [treasuryData, _setTreasuryData] = useState({
         balance: 1850000,
@@ -33,7 +35,7 @@ export default function SyndicateTreasuryManagement({ bureauId }: SyndicateTreas
                         <div className="text-2xl font-bold text-[#ff4000]">
                             {fc(treasuryData.balance, 'GNF')}
                         </div>
-                        <div className="text-sm text-muted-foreground">Solde de Caisse</div>
+                        <div className="text-sm text-muted-foreground">{t('syndicateTreasuryManagement.soldeDeCaisse')}</div>
                     </CardContent>
                 </Card>
 
@@ -53,7 +55,7 @@ export default function SyndicateTreasuryManagement({ bureauId }: SyndicateTreas
                         <div className="text-2xl font-bold text-[#ff4000]">
                             {fc(treasuryData.monthlyExpenses, 'GNF')}
                         </div>
-                        <div className="text-sm text-muted-foreground">Dépenses ce mois</div>
+                        <div className="text-sm text-muted-foreground">{t('syndicateTreasuryManagement.depensesCeMois')}</div>
                     </CardContent>
                 </Card>
 
@@ -70,7 +72,7 @@ export default function SyndicateTreasuryManagement({ bureauId }: SyndicateTreas
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Gestion de la Caisse Syndicale</CardTitle>
+                    <CardTitle>{t('syndicateTreasuryManagement.gestionDeLaCaisseSyndicale')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="text-center py-8">
@@ -83,7 +85,7 @@ export default function SyndicateTreasuryManagement({ bureauId }: SyndicateTreas
                         </p>
                         <div className="space-y-2">
                             <Badge variant="outline">Cotisations automatiques</Badge>
-                            <Badge variant="outline">Paiements Mobile Money</Badge>
+                            <Badge variant="outline">{t('syndicateTreasuryManagement.paiementsMobileMoney')}</Badge>
                             <Badge variant="outline">Rapports financiers</Badge>
                             <Badge variant="outline">Audit automatique</Badge>
                         </div>

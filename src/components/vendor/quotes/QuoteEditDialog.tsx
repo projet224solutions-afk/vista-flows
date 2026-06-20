@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Input } from '@/components/ui/input';
@@ -58,6 +59,7 @@ export default function QuoteEditDialog({
   onOpenChange,
   onSuccess,
 }: QuoteEditDialogProps) {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
@@ -125,7 +127,7 @@ export default function QuoteEditDialog({
     if (!quote) return;
 
     if (!clientName.trim() || items.some((item) => !item.name.trim())) {
-      toast.error('Veuillez remplir tous les champs obligatoires');
+      toast.error(t('quoteEditDialog.veuillezRemplirTousLesChamps'));
       return;
     }
 
@@ -154,12 +156,12 @@ export default function QuoteEditDialog({
 
       if (error) throw error;
 
-      toast.success('Devis modifié avec succès');
+      toast.success(t('quoteEditDialog.devisModifieAvecSucces'));
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
       console.error('Erreur modification devis:', error);
-      toast.error('Erreur lors de la modification du devis');
+      toast.error(t('quoteEditDialog.erreurLorsDeLaModification'));
     } finally {
       setSaving(false);
     }
@@ -180,10 +182,10 @@ export default function QuoteEditDialog({
         <div className="space-y-6">
           {/* Informations client */}
           <div className="space-y-4">
-            <h3 className="font-semibold">Informations client</h3>
+            <h3 className="font-semibold">{t('quoteEditDialog.informationsClient')}</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Nom du client *</Label>
+                <Label>{t('quoteEditDialog.nomDuClient')}</Label>
                 <Input
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
@@ -200,7 +202,7 @@ export default function QuoteEditDialog({
                 />
               </div>
               <div>
-                <Label>Téléphone</Label>
+                <Label>{t('quoteEditDialog.telephone')}</Label>
                 <Input
                   value={clientPhone}
                   onChange={(e) => setClientPhone(e.target.value)}
@@ -212,7 +214,7 @@ export default function QuoteEditDialog({
                 <Input
                   value={clientAddress}
                   onChange={(e) => setClientAddress(e.target.value)}
-                  placeholder="Adresse complète"
+                  placeholder={t('quoteEditDialog.adresseComplete')}
                 />
               </div>
             </div>
@@ -233,7 +235,7 @@ export default function QuoteEditDialog({
                 <div className="flex items-start gap-3">
                   <div className="flex-1 space-y-3">
                     <div>
-                      <Label>Désignation *</Label>
+                      <Label>{t('quoteEditDialog.designation')}</Label>
                       <Input
                         value={item.name}
                         onChange={(e) => {
@@ -244,9 +246,9 @@ export default function QuoteEditDialog({
                         placeholder="Nom du produit/service"
                       />
                     </div>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       <div>
-                        <Label>Quantité</Label>
+                        <Label>{t('quoteEditDialog.quantite')}</Label>
                         <Input
                           type="number"
                           min="1"
@@ -292,7 +294,7 @@ export default function QuoteEditDialog({
           {/* Totaux */}
           <div className="space-y-4">
             <h3 className="font-semibold">Totaux</h3>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <div>
                 <Label>Remise (GNF)</Label>
                 <Input
@@ -312,7 +314,7 @@ export default function QuoteEditDialog({
                 />
               </div>
               <div>
-                <Label>Validité jusqu'au</Label>
+                <Label>{t('quoteEditDialog.validiteJusquAu')}</Label>
                 <Input
                   type="date"
                   value={validUntil}

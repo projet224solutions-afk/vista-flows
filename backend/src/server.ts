@@ -29,6 +29,8 @@ import { closeRedis } from './config/redis.js';
 import { jobQueue } from './jobs/jobQueue.js';
 import { metrics } from './services/metrics.service.js';
 import { surveillance24x7Service } from './services/surveillance24x7.service.js';
+import { dropshipSyncScheduler } from './services/dropship/dropshipSync.service.js';
+import { medicationReminderScheduler } from './services/medicationReminder.service.js';
 
 // Routes TypeScript
 import healthRoutes from './routes/health.routes.js';
@@ -37,6 +39,11 @@ import paymentRoutes from './routes/payments.routes.js';
 import walletRoutesV2 from './routes/wallet.v2.routes.js';
 import deliveryRoutes from './routes/delivery.routes.js';
 import taxiRoutes from './routes/taxi.routes.js';
+import restaurantRoutes from './routes/restaurant.routes.js';
+import pharmacyRoutes from './routes/pharmacy.routes.js';
+import notificationDispatchRoutes from './routes/notificationDispatch.routes.js';
+import countryPricingRoutes from './routes/countryPricing.routes.js';
+import authFailoverRoutes from './routes/auth.failover.routes.js';
 import realtimeRoutes from './routes/realtime.routes.js';
 import shareholderRoutes from './routes/shareholders.routes.js';
 import adminRoutes from './routes/admin.routes.js';
@@ -47,6 +54,23 @@ import agentRoutes from './routes/agents.routes.js';
 import documentsRoutes from './routes/documents.routes.js';
 import productRoutes from './routes/products.routes.js';
 import orderRoutes from './routes/orders.routes.js';
+import digitalRoutes from './routes/digital.routes.js';
+import dropshipRoutes from './routes/dropship.routes.js';
+import bureauRoutes from './routes/bureau.routes.js';
+import guard224Routes from './routes/guard224.routes.js';
+import artisanRoutes from './routes/artisan.routes.js';
+import bookingsRoutes from './routes/bookings.routes.js';
+import copilotRoutes from './routes/copilot.routes.js';
+import beautyRoutes from './routes/beauty.routes.js';
+import groupBuyRoutes from './routes/groupbuy.routes.js';
+import constructionRoutes from './routes/construction.routes.js';
+import educationRoutes from './routes/education.routes.js';
+import realestateRoutes from './routes/realestate.routes.js';
+import quotesRoutes from './routes/quotes.routes.js';
+import contractsRoutes from './routes/contracts.routes.js';
+import returnsRoutes from './routes/returns.routes.js';
+import vendorAffiliateRoutes from './routes/vendorAffiliate.routes.js';
+import mobilityRoutes from './routes/mobility.routes.js';
 import posRoutes from './routes/pos.routes.js';
 import inventoryRoutes from './routes/inventory.routes.js';
 import affiliateRoutes from './routes/affiliate.routes.js';
@@ -235,6 +259,11 @@ app.use('/media', mediaRoutes);
 app.use('/api/v2/wallet', walletRoutesV2);
 app.use('/api/v2/delivery', deliveryRoutes);
 app.use('/api/v2/taxi', taxiRoutes);
+app.use('/api/v2/restaurant', restaurantRoutes);
+app.use('/api/v2/pharmacy', pharmacyRoutes);
+app.use('/api/v2/notifications', notificationDispatchRoutes);
+app.use('/api/v2/country-pricing', countryPricingRoutes);
+app.use('/api/auth/failover', authFailoverRoutes);
 app.use('/api/v2/realtime', realtimeRoutes);
 app.use('/api/shareholders', shareholderRoutes);
 app.use('/api/admin', adminRoutes);
@@ -250,8 +279,25 @@ app.use('/api/agents', agentRoutes);
 app.use('/api/documents', documentsRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/v2/digital', digitalRoutes);
+app.use('/api/v2/dropship', dropshipRoutes);
+app.use('/api/v2/bureau', bureauRoutes);
+app.use('/api/v2/guard224', guard224Routes);
+app.use('/api/v2/artisan', artisanRoutes);
+app.use('/api/v2/bookings', bookingsRoutes);
+app.use('/api/v2/copilot', copilotRoutes);
+app.use('/api/v2/beauty', beautyRoutes);
+app.use('/api/v2/group-buy', groupBuyRoutes);
+app.use('/api/v2/construction', constructionRoutes);
+app.use('/api/v2/education', educationRoutes);
+app.use('/api/v2/realestate', realestateRoutes);
+app.use('/api/v2/quotes', quotesRoutes);
+app.use('/api/contracts', contractsRoutes);
+app.use('/api/returns', returnsRoutes);
+app.use('/api/v2/mobility', mobilityRoutes);
 app.use('/api/pos', posRoutes);
 app.use('/api/affiliate', affiliateRoutes);
+app.use('/api/affiliate-program', vendorAffiliateRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/payment-links', paymentLinksRoutes);
 app.use('/api/marketplace-visibility', marketplaceVisibilityRoutes);
@@ -277,10 +323,22 @@ async function bootstrapBackgroundServices() {
   logger.info(`📍 Environment: ${env.NODE_ENV}`);
   logger.info(`🔐 CORS Origins: ${env.corsOrigins.join(', ')}`);
 
+  // ⚖️ Scaling horizontal : ne lancer les tâches de fond que sur le WORKER
+  // (RUN_BACKGROUND_JOBS=true). Sur les conteneurs WEB (=false) on sert uniquement
+  // les requêtes HTTP → pas de jobs/surveillance dupliqués entre instances.
+  if (!env.RUN_BACKGROUND_JOBS) {
+    logger.info('🌐 Mode WEB (stateless) : tâches de fond désactivées (RUN_BACKGROUND_JOBS=false)');
+    logger.info(`✅ Ready to handle requests`);
+    return;
+  }
+
+  logger.info('🛠️  Mode WORKER : initialisation des tâches de fond (jobs + surveillance 24/7)');
   // Initialize job queues (non-blocking, graceful failure)
   await jobQueue.init();
   await jobQueue.scheduleRecurring();
   surveillance24x7Service.start();
+  dropshipSyncScheduler.start();
+  medicationReminderScheduler.start();
 
   logger.info(`✅ Ready to handle requests`);
 }
@@ -305,6 +363,8 @@ const gracefulShutdown = async (signal: string) => {
   server.close(async () => {
     logger.info('HTTP server closed');
     surveillance24x7Service.stop();
+    dropshipSyncScheduler.stop();
+    medicationReminderScheduler.stop();
     await jobQueue.shutdown();
     await closeRedis();
     await metrics.flushToDB();

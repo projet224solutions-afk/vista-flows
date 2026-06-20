@@ -4,6 +4,7 @@
  */
 
 import { ProductRecommendationSection } from './ProductRecommendationSection';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   usePersonalizedRecommendations,
   useSimilarProducts,
@@ -30,6 +31,7 @@ export function RecommendationsWidget({
   onAddToCart,
   className
 }: RecommendationsWidgetProps) {
+  const { t } = useTranslation();
   useTrackProductView(currentProductId);
 
   const { data: personalized, isLoading: loadingPersonalized, error: personalizedError } = usePersonalizedRecommendations(12);
@@ -45,7 +47,7 @@ export function RecommendationsWidget({
     <div className={className}>
       {showPersonalized && (
         <ProductRecommendationSection
-          title="Sélection pour vous"
+          title={t('recommendationsWidget.selectionPourVous')}
           icon="sparkles"
           products={(personalized || []).map(p => ({ ...p, reason: p.reason }))}
           loading={loadingPersonalized}
@@ -56,8 +58,8 @@ export function RecommendationsWidget({
 
       {showSimilar && currentProductId && (
         <ProductRecommendationSection
-          title="Produits similaires"
-          subtitle="Vous pourriez aussi aimer"
+          title={t('recommendationsWidget.produitsSimilaires')}
+          subtitle={t('recommendationsWidget.vousPourriezAussiAimer')}
           icon="star"
           products={similar || []}
           loading={loadingSimilar}
@@ -68,8 +70,8 @@ export function RecommendationsWidget({
 
       {showAlsoBought && currentProductId && (
         <ProductRecommendationSection
-          title="Les clients ont aussi acheté"
-          subtitle="Souvent achetés ensemble"
+          title={t('recommendationsWidget.lesClientsOntAussiAchete')}
+          subtitle={t('recommendationsWidget.souventAchetesEnsemble')}
           icon="shopping"
           products={alsoBought || []}
           loading={loadingAlsoBought}

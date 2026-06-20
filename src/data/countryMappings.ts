@@ -369,6 +369,75 @@ export function getLanguageForCountry(countryCode: string): string {
 }
 
 /**
+ * Mapping code ISO-2 → nom de pays FR (tel que stocké dans vendors.country).
+ * Sert à présélectionner le bon « chip » pays quand on ne connaît que le code détecté (IP).
+ */
+export const COUNTRY_CODE_TO_NAME: Record<string, string> = {
+  GN: 'Guinée', SN: 'Sénégal', ML: 'Mali', CI: "Côte d'Ivoire", BF: 'Burkina Faso',
+  NE: 'Niger', TG: 'Togo', BJ: 'Bénin', GW: 'Guinée-Bissau', SL: 'Sierra Leone',
+  LR: 'Liberia', GM: 'Gambie', NG: 'Nigeria', GH: 'Ghana', CM: 'Cameroun',
+  GA: 'Gabon', TD: 'Tchad', CG: 'Congo', CD: 'RD Congo', MA: 'Maroc',
+  TN: 'Tunisie', DZ: 'Algérie', EG: 'Égypte', KE: 'Kenya', TZ: 'Tanzanie',
+  UG: 'Ouganda', RW: 'Rwanda', ET: 'Éthiopie', ZA: 'Afrique du Sud', FR: 'France',
+  BE: 'Belgique', CH: 'Suisse', CA: 'Canada', US: 'États-Unis', GB: 'Royaume-Uni',
+  CN: 'Chine', JP: 'Japon', IN: 'Inde', BR: 'Brésil', TR: 'Turquie',
+};
+
+/** Nom de pays FR (minuscule) → code ISO-2 (inverse de COUNTRY_CODE_TO_NAME, pour les drapeaux). */
+const COUNTRY_NAME_TO_CODE: Record<string, string> = Object.fromEntries(
+  Object.entries(COUNTRY_CODE_TO_NAME).flatMap(([code, name]) => [
+    [name.toLowerCase(), code],
+  ])
+);
+// Alias supplémentaires (variantes d'écriture rencontrées en base)
+Object.assign(COUNTRY_NAME_TO_CODE, {
+  'guinea': 'GN', 'senegal': 'SN', 'cote d\'ivoire': 'CI', 'ivory coast': 'CI',
+  'benin': 'BJ', 'guinea-bissau': 'GW', 'libéria': 'LR', 'gambia': 'GM',
+  'nigéria': 'NG', 'cameroon': 'CM', 'chad': 'TD', 'rdc': 'CD', 'congo-kinshasa': 'CD',
+  'morocco': 'MA', 'tunisia': 'TN', 'algeria': 'DZ', 'egypt': 'EG', 'tanzania': 'TZ',
+  'uganda': 'UG', 'ethiopia': 'ET', 'south africa': 'ZA', 'belgium': 'BE',
+  'switzerland': 'CH', 'united states': 'US', 'usa': 'US', 'united kingdom': 'GB',
+  'uk': 'GB', 'china': 'CN', 'japan': 'JP', 'india': 'IN', 'brazil': 'BR', 'turkey': 'TR',
+});
+
+/** code ISO-2 → nom FR du pays (ou null si inconnu). */
+export function getCountryNameFromCode(code?: string): string | null {
+  if (!code || code.length !== 2) return null;
+  return COUNTRY_CODE_TO_NAME[code.toUpperCase()] || null;
+}
+
+/**
+ * Emoji drapeau d'un pays, à partir d'un code ISO-2 OU d'un nom (FR/EN).
+ * Renvoie '' si on ne peut pas déterminer le pays (l'appelant peut alors ne rien afficher).
+ */
+export function getFlagEmoji(countryNameOrCode?: string): string {
+  if (!countryNameOrCode) return '';
+  const raw = countryNameOrCode.trim();
+  let code: string | undefined;
+  if (raw.length === 2 && /^[a-zA-Z]{2}$/.test(raw)) {
+    code = raw.toUpperCase();
+  } else {
+    code = COUNTRY_NAME_TO_CODE[raw.replace(/\s+/g, ' ').toLowerCase()];
+  }
+  if (!code || code.length !== 2) return '';
+  // Lettres → indicateurs régionaux Unicode (🇬🇳, etc.)
+  return code.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0)));
+}
+
+/**
+ * Code ISO-2 (minuscule) d'un pays à partir d'un code OU d'un nom (FR/EN).
+ * Utile pour construire une URL d'image de drapeau (ex. flagcdn).
+ * Renvoie null si indéterminé.
+ */
+export function getCountryCode2(countryNameOrCode?: string): string | null {
+  if (!countryNameOrCode) return null;
+  const raw = countryNameOrCode.trim();
+  if (raw.length === 2 && /^[a-zA-Z]{2}$/.test(raw)) return raw.toLowerCase();
+  const code = COUNTRY_NAME_TO_CODE[raw.replace(/\s+/g, ' ').toLowerCase()];
+  return code ? code.toLowerCase() : null;
+}
+
+/**
  * Liste des langues RTL (Right-to-Left)
  */
 export const RTL_LANGUAGES = ['ar', 'he', 'fa', 'ur'];

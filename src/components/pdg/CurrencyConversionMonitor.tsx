@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -58,6 +59,7 @@ function timeAgo(iso: string): string {
 }
 
 export default function CurrencyConversionMonitor() {
+  const { t } = useTranslation();
   const [logs, setLogs] = useState<ConversionLog[]>([]);
   const [stats, setStats] = useState<Stats>({
     total: 0, success: 0, errors: 0, skipped: 0,
@@ -142,7 +144,7 @@ export default function CurrencyConversionMonitor() {
           setLogs(prev => [newLog, ...prev.slice(0, 99)]);
 
           if (newLog.status === 'error') {
-            toast.error('Erreur de conversion devise détectée', {
+            toast.error(t('currencyConversionMonitor.erreurDeConversionDeviseDetectee'), {
               description: `${newLog.from_currency} → ${newLog.to_currency} : ${newLog.error_message}`,
               duration: 8000,
             });
@@ -193,7 +195,7 @@ export default function CurrencyConversionMonitor() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {statusIcon}
-          <span className="font-semibold">Système de conversion</span>
+          <span className="font-semibold">{t('currencyConversionMonitor.systemeDeConversion')}</span>
           <Badge variant={statusVariant}>{statusLabel}</Badge>
           {realtimeActive && (
             <Badge variant="outline" className="text-xs text-[#ff4000] border-[#ff4000]">
@@ -253,7 +255,7 @@ export default function CurrencyConversionMonitor() {
         </Card>
         <Card>
           <CardContent className="p-3">
-            <p className="text-xs text-muted-foreground">Taux de succès</p>
+            <p className="text-xs text-muted-foreground">{t('currencyConversionMonitor.tauxDeSucces')}</p>
             <p className={`text-2xl font-bold ${stats.successRate >= 95 ? 'text-[#ff4000]' : stats.successRate >= 80 ? 'text-[#ff4000]' : 'text-[#ff4000]'}`}>
               {stats.successRate}%
             </p>
@@ -297,14 +299,14 @@ export default function CurrencyConversionMonitor() {
             <ArrowRightLeft className="h-4 w-4" />
             Mouvements de conversion — {logs.length} enregistrements
           </CardTitle>
-          <CardDescription className="text-xs">Chaque achat marketplace génère une entrée</CardDescription>
+          <CardDescription className="text-xs">{t('currencyConversionMonitor.chaqueAchatMarketplaceGenereUne')}</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {logs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
               <TrendingUp className="h-8 w-8 mb-2 opacity-30" />
-              <p className="text-sm">Aucune conversion enregistrée</p>
-              <p className="text-xs mt-1">Les achats marketplace apparaîtront ici</p>
+              <p className="text-sm">{t('currencyConversionMonitor.aucuneConversionEnregistree')}</p>
+              <p className="text-xs mt-1">{t('currencyConversionMonitor.lesAchatsMarketplaceApparaitrontIci')}</p>
             </div>
           ) : (
             <div className="divide-y max-h-96 overflow-y-auto">

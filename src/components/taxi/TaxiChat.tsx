@@ -3,6 +3,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,6 +37,7 @@ export default function TaxiChat({
   recipientRole,
   currentStatus
 }: TaxiChatProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -90,10 +92,10 @@ export default function TaxiChat({
 
       setNewMessage('');
       loadMessages();
-      toast.success('Message envoyé');
+      toast.success(t('taxiChat.messageEnvoye'));
     } catch (error) {
       console.error('Erreur envoi message:', error);
-      toast.error('Erreur lors de l\'envoi');
+      toast.error(t('taxiChat.erreurLorsDeLEnvoi'));
     } finally {
       setLoading(false);
     }
@@ -200,8 +202,8 @@ export default function TaxiChat({
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <Navigation className="h-12 w-12 mb-2 opacity-50" />
-            <p>Aucun message pour cette course</p>
-            <p className="text-sm">Utilisez les messages rapides ci-dessus</p>
+            <p>{t('taxiChat.aucunMessagePourCetteCourse')}</p>
+            <p className="text-sm">{t('taxiChat.utilisezLesMessagesRapidesCi')}</p>
           </div>
         ) : (
           messages.map((message) => {
@@ -244,7 +246,7 @@ export default function TaxiChat({
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Écrivez votre message..."
+            placeholder={t('taxiChat.ecrivezVotreMessage')}
             disabled={loading}
           />
           <Button type="submit" disabled={loading || !newMessage.trim()}>

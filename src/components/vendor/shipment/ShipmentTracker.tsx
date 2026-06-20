@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -50,6 +51,7 @@ interface TrackingEvent {
 }
 
 export function ShipmentTracker({ shipmentId, onBack }: ShipmentTrackerProps) {
+  const { t } = useTranslation();
   const [shipment, setShipment] = useState<ShipmentDetails | null>(null);
   const [trackingHistory, setTrackingHistory] = useState<TrackingEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,7 +75,7 @@ export function ShipmentTracker({ shipmentId, onBack }: ShipmentTrackerProps) {
           console.log('Shipment updated:', payload);
           if (payload.new) {
             setShipment(payload.new as any);
-            toast.success('📦 Statut mis à jour en temps réel');
+            toast.success(t('shipmentTracker.statutMisAJourEn'));
           }
         }
       )
@@ -89,7 +91,7 @@ export function ShipmentTracker({ shipmentId, onBack }: ShipmentTrackerProps) {
           console.log('New tracking event:', payload);
           if (payload.new) {
             setTrackingHistory(prev => [payload.new as any, ...prev]);
-            toast.info('🗺️ Nouvelle mise à jour de position');
+            toast.info(t('shipmentTracker.nouvelleMiseAJourDe'));
           }
         }
       )
@@ -126,7 +128,7 @@ export function ShipmentTracker({ shipmentId, onBack }: ShipmentTrackerProps) {
       setTrackingHistory(trackingData as any || []);
     } catch (error) {
       console.error('Error loading shipment:', error);
-      toast.error('Erreur lors du chargement des données');
+      toast.error(t('shipmentTracker.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -136,13 +138,13 @@ export function ShipmentTracker({ shipmentId, onBack }: ShipmentTrackerProps) {
     setRefreshing(true);
     await loadShipmentData();
     setRefreshing(false);
-    toast.success('Données actualisées');
+    toast.success(t('shipmentTracker.donneesActualisees'));
   };
 
   const copyTrackingNumber = () => {
     if (shipment) {
       navigator.clipboard.writeText(shipment.tracking_number);
-      toast.success('Numéro de suivi copié');
+      toast.success(t('shipmentTracker.numeroDeSuiviCopie'));
     }
   };
 
@@ -275,15 +277,15 @@ export function ShipmentTracker({ shipmentId, onBack }: ShipmentTrackerProps) {
                 <p className="font-medium">{shipment.weight} kg</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Pièces</p>
+                <p className="text-muted-foreground">{t('shipmentTracker.pieces')}</p>
                 <p className="font-medium">{shipment.pieces_count}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Créé le</p>
+                <p className="text-muted-foreground">{t('shipmentTracker.creeLe')}</p>
                 <p className="font-medium">{format(new Date(shipment.created_at), 'dd/MM/yyyy')}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Mis à jour</p>
+                <p className="text-muted-foreground">{t('shipmentTracker.misAJour')}</p>
                 <p className="font-medium">{format(new Date(shipment.updated_at), 'HH:mm')}</p>
               </div>
             </div>

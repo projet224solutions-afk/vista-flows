@@ -7,7 +7,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
-import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { publishLivePosition, deliveryPositionTopic } from '@/lib/realtime/livePositions';
+import {
+  acceptDeliveryBackend,
+  startDeliveryBackend,
+  cancelDeliveryBackend,
+  trackDeliveryPositionBackend,
+} from '@/services/deliveryBackendService';
 
 interface Delivery {
   id: string;
@@ -62,7 +68,6 @@ interface TrackingPoint {
 }
 
 export function useDelivery() {
-  const fc = useFormatCurrency();
   const { user } = useAuth();
   const [currentDelivery, setCurrentDelivery] = useState<Delivery | null>(null);
   const [deliveryHistory, setDeliveryHistory] = useState<Delivery[]>([]);
@@ -208,146 +213,65 @@ export function useDelivery() {
     }
   }, []);
 
-  // Accepter une livraison
+  // Accepter une livraison — claim ATOMIQUE côté backend (anti double-affectation + autorisation).
   const acceptDelivery = useCallback(async (deliveryId: string) => {
     if (!user) return;
 
     try {
-      console.log('🎯 [useDelivery] Accepting delivery:', deliveryId);
-
-      // Vérifier disponibilité avant acceptation
-      const { data: checkDelivery, error: checkError } = await supabase
-        .from('deliveries')
-        .select('id, status, driver_id')
-        .eq('id', deliveryId)
-        .single();
-
-      if (checkError) {
-        throw checkError;
-      }
-
-      if (checkDelivery.status !== 'pending' || checkDelivery.driver_id) {
-        toast.error('Cette livraison n\'est plus disponible');
+      const result = await acceptDeliveryBackend(deliveryId);
+      if (!result.success) {
+        toast.error(result.error || 'Cette livraison n\'est plus disponible');
         await findNearbyDeliveries(0, 0, 99999);
         return;
       }
 
-      const { data, error } = await supabase
-        .from('deliveries')
-        .update({
-          driver_id: user.id,
-          status: 'assigned',
-          accepted_at: new Date().toISOString()
-        })
-        .eq('id', deliveryId)
-        .eq('status', 'pending')
-        .is('driver_id', null)
-        .select()
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      console.log('✅ Delivery accepted successfully');
-      setCurrentDelivery(data);
+      if (result.data) setCurrentDelivery(result.data);
+      else await loadCurrentDelivery();
       setNearbyDeliveries(prev => prev.filter(d => d.id !== deliveryId));
       toast.success('Livraison acceptée !');
-
-      return data;
+      return result.data;
     } catch (error: any) {
       console.error('❌ Error accepting delivery:', error);
       toast.error('Erreur lors de l\'acceptation');
       throw error;
     }
-  }, [user, findNearbyDeliveries]);
+  }, [user, findNearbyDeliveries, loadCurrentDelivery]);
 
-  // Démarrer une livraison
+  // Démarrer une livraison — transition validée côté backend (seul le livreur assigné).
   const startDelivery = useCallback(async (deliveryId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('deliveries')
-        .update({
-          status: 'picked_up',
-          started_at: new Date().toISOString()
-        })
-        .eq('id', deliveryId)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setCurrentDelivery(data);
+      const result = await startDeliveryBackend(deliveryId);
+      if (!result.success) {
+        toast.error(result.error || 'Démarrage impossible');
+        return;
+      }
+      if (result.data) setCurrentDelivery(result.data);
+      else await loadCurrentDelivery();
       toast.success('Livraison démarrée !');
-
-      return data;
+      return result.data;
     } catch (error: any) {
       console.error('Erreur démarrage livraison:', error);
       toast.error('Erreur lors du démarrage');
       throw error;
     }
-  }, []);
+  }, [loadCurrentDelivery]);
 
-  // Compléter une livraison
-  const completeDelivery = useCallback(async (deliveryId: string, proofUrl?: string, signature?: string) => {
-    try {
-      // Calculer les gains du driver (98.5% des frais)
-      const { data: delivery } = await supabase
-        .from('deliveries')
-        .select('delivery_fee')
-        .eq('id', deliveryId)
-        .single();
+  // ⚠️ La complétion de livraison N'EST PAS gérée ici : elle DOIT passer par le backend
+  // atomique (`completeDeliveryBackend` via useDeliveryActions → /api/v2/delivery) qui
+  // calcule la commission et CRÉDITE le wallet du livreur de façon sécurisée. L'ancienne
+  // implémentation locale (commission `* 0.985` côté client + écriture directe sans crédit
+  // wallet) a été retirée pour éviter tout contournement du flux argent.
 
-      const driverEarning = delivery ? delivery.delivery_fee * 0.985 : 0;
-
-      const { data, error } = await supabase
-        .from('deliveries')
-        .update({
-          status: 'delivered',
-          completed_at: new Date().toISOString(),
-          driver_earning: driverEarning,
-          proof_photo_url: proofUrl,
-          client_signature: signature
-        })
-        .eq('id', deliveryId)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setCurrentDelivery(null);
-      await loadDeliveryHistory();
-      toast.success('Livraison terminée !');
-
-      return data;
-    } catch (error: any) {
-      console.error('Erreur completion livraison:', error);
-      toast.error('Erreur lors de la finalisation');
-      throw error;
-    }
-  }, [loadDeliveryHistory]);
-
-  // Annuler une livraison
+  // Annuler une livraison — autorisation + transition validées côté backend.
   const cancelDelivery = useCallback(async (deliveryId: string, reason: string) => {
     try {
-      const { data, error } = await supabase
-        .from('deliveries')
-        .update({
-          status: 'cancelled',
-          cancelled_at: new Date().toISOString(),
-          cancel_reason: reason,
-          driver_id: null
-        })
-        .eq('id', deliveryId)
-        .select()
-        .single();
-
-      if (error) throw error;
-
+      const result = await cancelDeliveryBackend(deliveryId, reason);
+      if (!result.success) {
+        toast.error(result.error || 'Annulation impossible');
+        return;
+      }
       setCurrentDelivery(null);
       toast.success('Livraison annulée');
-
-      return data;
     } catch (error: any) {
       console.error('Erreur annulation livraison:', error);
       toast.error('Erreur lors de l\'annulation');
@@ -355,7 +279,8 @@ export function useDelivery() {
     }
   }, []);
 
-  // Tracker la position
+  // Tracker la position : l'ÉCRITURE EN BASE passe par le backend (validée : seul le livreur
+  // assigné, livraison active). Le broadcast reste émis côté client pour la basse latence.
   const trackPosition = useCallback(async (
     deliveryId: string,
     latitude: number,
@@ -366,21 +291,14 @@ export function useDelivery() {
   ) => {
     if (!user) return;
 
-    try {
-      const { error } = await supabase
-        .from('delivery_tracking')
-        .insert({
-          delivery_id: deliveryId,
-          driver_id: user.id,
-          latitude,
-          longitude,
-          speed,
-          heading,
-          accuracy,
-          recorded_at: new Date().toISOString()
-        });
+    // Broadcast immédiat (best-effort, hors WAL) pour un suivi fluide côté client.
+    publishLivePosition(deliveryPositionTopic(deliveryId), {
+      lat: latitude, lng: longitude, speed, heading, accuracy, at: new Date().toISOString(),
+    });
 
-      if (error) throw error;
+    // Persistance sécurisée (source de vérité) via le backend. Non bloquant.
+    try {
+      await trackDeliveryPositionBackend(deliveryId, latitude, longitude, speed, heading, accuracy);
     } catch (error) {
       console.error('Erreur tracking position:', error);
     }
@@ -389,14 +307,17 @@ export function useDelivery() {
   // Charger le tracking
   const loadTracking = useCallback(async (deliveryId: string) => {
     try {
+      // Scale : ne charge que les colonnes GPS utiles (pas SELECT *) + plafond — un trajet
+      // peut contenir des milliers de points ; ici on n'en affiche que le nombre/la trace.
       const { data, error } = await supabase
         .from('delivery_tracking')
-        .select('*')
+        .select('latitude, longitude, recorded_at')
         .eq('delivery_id', deliveryId)
-        .order('recorded_at', { ascending: true });
+        .order('recorded_at', { ascending: true })
+        .limit(1000);
 
       if (error) throw error;
-      setTrackingPoints(data || []);
+      setTrackingPoints((data || []) as any);
     } catch (error) {
       console.error('Erreur chargement tracking:', error);
     }
@@ -421,35 +342,8 @@ export function useDelivery() {
     };
   }, []);
 
-  // Traiter le paiement
-  const processPayment = useCallback(async (deliveryId: string, _paymentMethod: string = 'cash') => {
-    try {
-      // Vérifier que la livraison est terminée
-      const { data: delivery } = await supabase
-        .from('deliveries')
-        .select('status, driver_earning')
-        .eq('id', deliveryId)
-        .single();
-
-      if (!delivery || delivery.status !== 'delivered') {
-        throw new Error('La livraison doit être terminée pour traiter le paiement');
-      }
-
-      // Marquer le paiement comme traité
-      toast.success(`Paiement de ${fc(delivery.driver_earning)} reçu !`);
-
-      return {
-        success: true,
-        amount: delivery.driver_earning
-      };
-    } catch (error: any) {
-      console.error('Erreur traitement paiement:', error);
-      return {
-        success: false,
-        error: error.message
-      };
-    }
-  }, []);
+  // (Le règlement du livreur est effectué atomiquement côté backend à la complétion —
+  // voir useDeliveryActions/completeDeliveryBackend. Pas de "processPayment" cosmétique ici.)
 
   // Charger au montage
   useEffect(() => {
@@ -469,12 +363,10 @@ export function useDelivery() {
     findNearbyDeliveries,
     acceptDelivery,
     startDelivery,
-    completeDelivery,
     cancelDelivery,
     trackPosition,
     loadTracking,
     subscribeToTracking,
-    processPayment,
     loadDeliveryHistory,
     loadCurrentDelivery
   };

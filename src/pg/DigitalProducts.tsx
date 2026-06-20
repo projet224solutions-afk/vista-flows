@@ -177,7 +177,7 @@ export default function DigitalProducts() {
 
     // Si le profil est encore en chargement, attendre
     if (!profile) {
-      toast.info('Chargement de votre profil en cours...');
+      toast.info(t('digitalProducts.chargementDeVotreProfilEn'));
       return;
     }
 
@@ -403,7 +403,7 @@ export default function DigitalProducts() {
                     </div>
 
                     <div className="mt-2 flex items-center justify-between rounded-lg bg-slate-50 px-2.5 py-2 text-[11px] font-medium text-slate-600 transition-colors group-hover:bg-slate-100 group-hover:text-[#04439e]">
-                      <span>Appuyer pour ouvrir</span>
+                      <span>{t('digitalProducts.appuyerPourOuvrir')}</span>
                       <ExternalLink className="h-3.5 w-3.5" />
                     </div>
                   </CardContent>
@@ -479,8 +479,8 @@ export default function DigitalProducts() {
           {/* Modules Grid */}
           <section className="px-4 pb-6">
             <div className="mb-4 text-center">
-              <h3 className="text-base sm:text-lg font-semibold text-slate-900">Modules de vente</h3>
-              <p className="mt-0.5 text-xs sm:text-sm text-slate-500">Explorez nos modules de vente digitale</p>
+              <h3 className="text-base sm:text-lg font-semibold text-slate-900">{t('digitalProducts.modulesDeVente')}</h3>
+              <p className="mt-0.5 text-xs sm:text-sm text-slate-500">{t('digitalProducts.explorezNosModulesDeVente')}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">

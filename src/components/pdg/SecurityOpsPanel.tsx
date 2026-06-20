@@ -1,5 +1,6 @@
 // 🛡️ Security Operations Panel - Système de défense et riposte
 import React, { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Shield, AlertTriangle, Ban, Activity, Lock, FileText, Zap, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,6 +14,7 @@ import SecurityForensics from './SecurityForensics';
 import _SecurityPlaybooks from './SecurityPlaybooks';
 
 const SecurityOpsPanel: React.FC = () => {
+  const { t } = useTranslation();
   const {
     incidents,
     alerts,
@@ -110,7 +112,7 @@ const SecurityOpsPanel: React.FC = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">IPs Bloquées</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('securityOpsPanel.ipsBloquees')}</CardTitle>
             <Ban className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
@@ -166,7 +168,7 @@ const SecurityOpsPanel: React.FC = () => {
               <Badge variant="default" className="ml-2">{stats.pending_alerts}</Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="blocked">IPs Bloquées</TabsTrigger>
+          <TabsTrigger value="blocked">{t('securityOpsPanel.ipsBloquees')}</TabsTrigger>
           <TabsTrigger value="forensics">Forensique</TabsTrigger>
         </TabsList>
 
@@ -175,8 +177,8 @@ const SecurityOpsPanel: React.FC = () => {
             {/* Recent Incidents */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Incidents Récents</CardTitle>
-                <CardDescription>Derniers incidents détectés</CardDescription>
+                <CardTitle className="text-lg">{t('securityOpsPanel.incidentsRecents')}</CardTitle>
+                <CardDescription>{t('securityOpsPanel.derniersIncidentsDetectes')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
@@ -205,8 +207,8 @@ const SecurityOpsPanel: React.FC = () => {
             {/* Recent Alerts */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Alertes Récentes</CardTitle>
-                <CardDescription>Dernières alertes générées</CardDescription>
+                <CardTitle className="text-lg">{t('securityOpsPanel.alertesRecentes')}</CardTitle>
+                <CardDescription>{t('securityOpsPanel.dernieresAlertesGenerees')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">

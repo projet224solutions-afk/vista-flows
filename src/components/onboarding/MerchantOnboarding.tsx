@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -41,6 +42,7 @@ const merchantSetupSchema = z.object({
 type MerchantSetupFormData = z.infer<typeof merchantSetupSchema>;
 
 export default function MerchantOnboarding() {
+  const { t } = useTranslation();
   const { user, profile, loading, profileLoading } = useAuth();
 
   const [open, setOpen] = useState(false);
@@ -70,9 +72,9 @@ export default function MerchantOnboarding() {
         navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
       });
       setGpsCoords({ lat: position.coords.latitude, lng: position.coords.longitude });
-      toast.success('Position GPS capturée !');
+      toast.success(t('merchantOnboarding.positionGpsCapturee'));
     } catch {
-      toast.error('Impossible de capturer la position GPS');
+      toast.error(t('merchantOnboarding.impossibleDeCapturerLaPosition'));
     } finally {
       setGpsLoading(false);
     }
@@ -104,7 +106,7 @@ export default function MerchantOnboarding() {
       if (error) {
         // Ne pas bloquer l'interface si RLS / autre — mais informer.
         console.error("Erreur chargement vendor:", error);
-        toast.error("Impossible de charger votre profil marchand.");
+        toast.error(t('merchantOnboarding.impossibleDeChargerVotreProfil'));
         return;
       }
 
@@ -185,7 +187,7 @@ export default function MerchantOnboarding() {
           .eq("id", currentVendorId);
       }
 
-      toast.success("Profil marchand enregistré avec succès !");
+      toast.success(t('merchantOnboarding.profilMarchandEnregistreAvecSucces'));
       setOpen(false);
 
       // Rediriger vers le dashboard vendeur pour voir le module
@@ -222,10 +224,10 @@ export default function MerchantOnboarding() {
               name="business_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nom de la boutique *</FormLabel>
+                  <FormLabel>{t('merchantOnboarding.nomDeLaBoutique')}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Ex: Boutique Diallo..."
+                      placeholder={t('merchantOnboarding.exBoutiqueDiallo')}
                       {...field}
                       disabled={submitting}
                       className="h-11"
@@ -241,10 +243,10 @@ export default function MerchantOnboarding() {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description de la boutique</FormLabel>
+                  <FormLabel>{t('merchantOnboarding.descriptionDeLaBoutique')}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Décrivez votre boutique, vos produits, vos services…"
+                      placeholder={t('merchantOnboarding.decrivezVotreBoutiqueVosProduits')}
                       rows={3}
                       {...field}
                       disabled={submitting}
@@ -262,7 +264,7 @@ export default function MerchantOnboarding() {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Téléphone *</FormLabel>
+                    <FormLabel>{t('merchantOnboarding.telephone')}</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="+224 6xx xxx xxx"
@@ -284,7 +286,7 @@ export default function MerchantOnboarding() {
                     <FormLabel>Ville *</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Conakry, Kindia, Labé..."
+                        placeholder={t('merchantOnboarding.conakryKindiaLabe')}
                         {...field}
                         disabled={submitting}
                         className="h-11"
@@ -304,7 +306,7 @@ export default function MerchantOnboarding() {
                   <FormLabel>Adresse</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Quartier, Commune, Repères..."
+                      placeholder={t('merchantOnboarding.quartierCommuneReperes')}
                       {...field}
                       disabled={submitting}
                       className="h-11"

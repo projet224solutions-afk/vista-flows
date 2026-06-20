@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 export function DisputesList() {
+  const { t } = useTranslation();
   const { profile } = useAuth();
   const [disputes, setDisputes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,7 +70,7 @@ export function DisputesList() {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Chargement des litiges...</div>;
+    return <div className="text-center py-8">{t('disputesList.chargementDesLitiges')}</div>;
   }
 
   if (disputes.length === 0) {
@@ -102,14 +104,14 @@ export function DisputesList() {
 
             {dispute.vendor_response && (
               <div className="bg-muted p-3 rounded-lg mb-4">
-                <p className="text-sm font-medium mb-1">Réponse du vendeur:</p>
+                <p className="text-sm font-medium mb-1">{t('disputesList.reponseDuVendeur')}</p>
                 <p className="text-sm text-muted-foreground">{dispute.vendor_response}</p>
               </div>
             )}
 
             {dispute.ai_justification && (
               <div className="bg-primary/5 p-3 rounded-lg mb-4 border border-primary/20">
-                <p className="text-sm font-medium mb-1">Décision IA:</p>
+                <p className="text-sm font-medium mb-1">{t('disputesList.decisionIa')}</p>
                 <p className="text-sm text-muted-foreground">{dispute.ai_justification}</p>
                 {dispute.ai_confidence && (
                   <p className="text-xs text-muted-foreground mt-1">
@@ -121,7 +123,7 @@ export function DisputesList() {
 
             {dispute.resolution && (
               <div className="bg-success/5 p-3 rounded-lg mb-4 border border-success/20">
-                <p className="text-sm font-medium mb-1">Résolution:</p>
+                <p className="text-sm font-medium mb-1">{t('disputesList.resolution')}</p>
                 <p className="text-sm text-muted-foreground">{dispute.resolution}</p>
               </div>
             )}

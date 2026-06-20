@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +29,7 @@ interface Props {
 }
 
 export function AddProfessionalDialog({ open, onClose, onSubmit, saving }: Props) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     name: '', phone: '', email: '', specialty: '', experience_years: '',
     city: '', hourly_rate: '', description: '',
@@ -51,7 +53,7 @@ export function AddProfessionalDialog({ open, onClose, onSubmit, saving }: Props
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>👷 Ajouter un professionnel</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{t('addProfessionalDialog.ajouterUnProfessionnel')}</DialogTitle></DialogHeader>
         <div className="grid gap-4 py-2">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
@@ -59,7 +61,7 @@ export function AddProfessionalDialog({ open, onClose, onSubmit, saving }: Props
               <Input placeholder="Mamadou Diallo" value={form.name} onChange={e => update('name', e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Spécialité *</Label>
+              <Label>{t('addProfessionalDialog.specialite')}</Label>
               <Select value={form.specialty} onValueChange={v => update('specialty', v)}>
                 <SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger>
                 <SelectContent>{SPECIALTIES.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
@@ -68,7 +70,7 @@ export function AddProfessionalDialog({ open, onClose, onSubmit, saving }: Props
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Téléphone</Label>
+              <Label>{t('addProfessionalDialog.telephone')}</Label>
               <Input placeholder="+224 6XX XX XX XX" value={form.phone} onChange={e => update('phone', e.target.value)} />
             </div>
             <div className="space-y-2">
@@ -76,9 +78,9 @@ export function AddProfessionalDialog({ open, onClose, onSubmit, saving }: Props
               <Input type="email" placeholder="email@exemple.com" value={form.email} onChange={e => update('email', e.target.value)} />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div className="space-y-2">
-              <Label>Expérience (ans)</Label>
+              <Label>{t('addProfessionalDialog.experienceAns')}</Label>
               <Input type="number" placeholder="5" value={form.experience_years} onChange={e => update('experience_years', e.target.value)} />
             </div>
             <div className="space-y-2">
@@ -92,11 +94,11 @@ export function AddProfessionalDialog({ open, onClose, onSubmit, saving }: Props
           </div>
           <div className="space-y-2">
             <Label>Description</Label>
-            <Textarea placeholder="Compétences, spécialités..." rows={2} value={form.description} onChange={e => update('description', e.target.value)} />
+            <Textarea placeholder={t('addProfessionalDialog.competencesSpecialites')} rows={2} value={form.description} onChange={e => update('description', e.target.value)} />
           </div>
         </div>
         <div className="flex justify-end gap-3 pt-2">
-          <Button variant="outline" onClick={onClose}>Annuler</Button>
+          <Button variant="outline" onClick={onClose}>{t('addProfessionalDialog.annuler')}</Button>
           <Button onClick={handleSubmit} disabled={saving || !form.name || !form.specialty}>
             {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
             Ajouter

@@ -7,7 +7,12 @@ import { useCallback } from 'react';
 import { toast } from 'sonner';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { supabase } from '@/integrations/supabase/client';
-import { completeDelivery as completeDeliveryBackend } from '@/services/deliveryBackendService';
+import {
+  completeDelivery as completeDeliveryBackend,
+  acceptDeliveryBackend,
+  startDeliveryBackend,
+  cancelDeliveryBackend,
+} from '@/services/deliveryBackendService';
 
 interface UseDeliveryActionsProps {
   driverId: string | null;
@@ -36,30 +41,12 @@ export function useDeliveryActions({
     }
 
     try {
-      const { data: delivery, error: fetchError } = await supabase
-        .from('deliveries')
-        .select('*')
-        .eq('id', deliveryId)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      if (delivery.status !== 'pending') {
-        toast.error('Cette livraison n\'est plus disponible');
+      // Claim ATOMIQUE côté backend (anti double-affectation + autorisation par JWT).
+      const result = await acceptDeliveryBackend(deliveryId);
+      if (!result.success) {
+        toast.error(result.error || 'Cette livraison n\'est plus disponible');
         return;
       }
-
-      const { error: updateError } = await supabase
-        .from('deliveries')
-        .update({
-          driver_id: driverId,
-          status: 'assigned',
-          accepted_at: new Date().toISOString(),
-        })
-        .eq('id', deliveryId);
-
-      if (updateError) throw updateError;
-
       toast.success('Livraison acceptée! Direction le point de collecte.');
       onDeliveryAccepted?.();
     } catch (error) {
@@ -79,29 +66,12 @@ export function useDeliveryActions({
     }
 
     try {
-      const { data: delivery, error: fetchError } = await supabase
-        .from('deliveries')
-        .select('*')
-        .eq('id', deliveryId)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      if (delivery.status !== 'assigned') {
-        toast.error('Cette livraison n\'est pas dans le bon état');
+      // Transition validée côté backend (seul le livreur assigné, état 'assigned').
+      const result = await startDeliveryBackend(deliveryId);
+      if (!result.success) {
+        toast.error(result.error || 'Cette livraison n\'est pas dans le bon état');
         return;
       }
-
-      const { error: updateError } = await supabase
-        .from('deliveries')
-        .update({
-          status: 'picked_up',
-          started_at: new Date().toISOString(),
-        })
-        .eq('id', deliveryId);
-
-      if (updateError) throw updateError;
-
       toast.success('Livraison démarrée! En route vers le client.');
       onDeliveryStarted?.();
     } catch (error) {
@@ -110,43 +80,6 @@ export function useDeliveryActions({
       throw error;
     }
   }, [driverId, onDeliveryStarted]);
-
-  /**
-   * Mettre à jour le statut d'une livraison
-   */
-  const updateDeliveryStatus = useCallback(async (
-    deliveryId: string,
-    status: 'in_transit' | 'delivered' | 'cancelled'
-  ) => {
-    if (!driverId) {
-      toast.error('Vous devez être connecté');
-      return;
-    }
-
-    try {
-      const updateData: any = { status };
-
-      if (status === 'delivered') {
-        updateData.completed_at = new Date().toISOString();
-      }
-
-      const { error } = await supabase
-        .from('deliveries')
-        .update(updateData)
-        .eq('id', deliveryId)
-        .eq('driver_id', driverId);
-
-      if (error) throw error;
-
-      if (status === 'delivered') {
-        toast.success('🎉 Livraison terminée avec succès!');
-      }
-    } catch (error) {
-      console.error('Error updating delivery status:', error);
-      toast.error('Impossible de mettre à jour le statut');
-      throw error;
-    }
-  }, [driverId]);
 
   /**
    * Annuler une livraison
@@ -158,18 +91,12 @@ export function useDeliveryActions({
     }
 
     try {
-      const { error } = await supabase
-        .from('deliveries')
-        .update({
-          status: 'cancelled',
-          driver_notes: reason,
-          completed_at: new Date().toISOString(),
-        })
-        .eq('id', deliveryId)
-        .eq('driver_id', driverId);
-
-      if (error) throw error;
-
+      // Autorisation + transition validées côté backend.
+      const result = await cancelDeliveryBackend(deliveryId, reason);
+      if (!result.success) {
+        toast.error(result.error || 'Impossible d\'annuler la livraison');
+        return;
+      }
       toast.info('Livraison annulée');
       onDeliveryCancelled?.();
     } catch (error) {
@@ -254,17 +181,8 @@ export function useDeliveryActions({
     if (!driverId) return;
 
     try {
-      // 1) Trace sur la livraison
-      const { error } = await supabase
-        .from('deliveries')
-        .update({
-          driver_notes: problem,
-        })
-        .eq('id', deliveryId);
-
-      if (error) throw error;
-
-      // 2) Crée un vrai ticket support (visible côté support/PDG)
+      // Le signalement = un vrai ticket support (visible côté support/PDG). On n'écrit plus
+      // `driver_notes` en direct sur la livraison (écritures conducteur réservées au backend).
       const { error: ticketError } = await supabase
         .from('support_tickets')
         .insert({
@@ -292,7 +210,6 @@ export function useDeliveryActions({
   return {
     acceptDelivery,
     startDelivery,
-    updateDeliveryStatus,
     cancelDelivery,
     completeDeliveryWithProof,
     reportProblem,

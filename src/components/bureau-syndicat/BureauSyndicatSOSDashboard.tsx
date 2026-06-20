@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,7 @@ interface BureauSyndicatSOSDashboardProps {
 }
 
 export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashboardProps) {
+  const { t } = useTranslation();
   const [sosAlerts, setSosAlerts] = useState<SOSAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [autoRefresh] = useState(true); // Toujours actif pour sécurité - pas de toggle
@@ -33,7 +35,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
       console.log('📢 Alertes SOS chargées:', alerts.length, alerts);
     } catch (error) {
       console.error('Erreur chargement SOS:', error);
-      toast.error('Erreur de chargement des alertes');
+      toast.error(t('bureauSyndicatSOSDashboard.erreurDeChargementDesAlertes'));
     } finally {
       setLoading(false);
     }
@@ -181,7 +183,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
     const success = await taxiMotoSOSService.updateSOSStatus(sosId, 'EN_INTERVENTION');
     if (success) {
       loadSOSAlerts();
-      toast.success('Intervention démarrée');
+      toast.success(t('bureauSyndicatSOSDashboard.interventionDemarree'));
     }
   };
 
@@ -189,7 +191,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
     const success = await taxiMotoSOSService.updateSOSStatus(sosId, 'RESOLU', bureauId);
     if (success) {
       loadSOSAlerts();
-      toast.success('SOS résolu avec succès');
+      toast.success(t('bureauSyndicatSOSDashboard.sosResoluAvecSucces'));
     }
   };
 
@@ -241,7 +243,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
       <div className="flex items-center justify-center p-12">
         <div className="text-center space-y-3">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#ff4000] mx-auto" />
-          <p className="text-muted-foreground">Chargement des alertes SOS...</p>
+          <p className="text-muted-foreground">{t('bureauSyndicatSOSDashboard.chargementDesAlertesSos')}</p>
         </div>
       </div>
     );
@@ -317,8 +319,8 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
           <CardContent className="py-12">
             <div className="text-center text-muted-foreground">
               <CheckCircle className="w-16 h-16 mx-auto mb-4 text-[#ff4000]" />
-              <p className="text-lg font-medium">Aucune alerte SOS active</p>
-              <p className="text-sm mt-2">Tous les conducteurs sont en sécurité</p>
+              <p className="text-lg font-medium">{t('bureauSyndicatSOSDashboard.aucuneAlerteSosActive')}</p>
+              <p className="text-sm mt-2">{t('bureauSyndicatSOSDashboard.tousLesConducteursSontEn')}</p>
             </div>
           </CardContent>
         </Card>
@@ -345,11 +347,11 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
                 {/* Informations */}
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="font-medium">📞 Téléphone:</span>
+                    <span className="font-medium">{t('bureauSyndicatSOSDashboard.telephone')}</span>
                     <p className="text-foreground">{sos.driver_phone || 'Non renseigné'}</p>
                   </div>
                   <div>
-                    <span className="font-medium">⏱️ Déclenché:</span>
+                    <span className="font-medium">{t('bureauSyndicatSOSDashboard.declenche')}</span>
                     <p className="text-foreground">{formatTimeSince(sos.triggered_at)}</p>
                   </div>
                   <div>
@@ -359,7 +361,7 @@ export function BureauSyndicatSOSDashboard({ bureauId }: BureauSyndicatSOSDashbo
                     </p>
                   </div>
                   <div>
-                    <span className="font-medium">🎯 Précision:</span>
+                    <span className="font-medium">{t('bureauSyndicatSOSDashboard.precision')}</span>
                     <p className="text-foreground">
                       {sos.accuracy ? `${Math.round(sos.accuracy)}m` : 'N/A'}
                     </p>

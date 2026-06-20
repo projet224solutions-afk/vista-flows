@@ -9,6 +9,7 @@ import { initMonitoring } from "./lib/monitoring";
 import { initializeSecurity } from "./lib/security";
 import { initFrontendObserver } from "./services/monitoring/FrontendObserver";
 import { backendConfig, resolveBackendUrl } from "./config/backend";
+import { startGuard224, isGuard224EnabledPref } from "./224guard";
 
 function safeGetLocalStorageItem(key: string): string | null {
   try {
@@ -115,7 +116,7 @@ async function recoverFromStaleCache(trigger: string, err?: unknown) {
     sessionStorage.setItem(RECOVERY_FLAG, "1");
     sessionStorage.removeItem("page_reloaded_for_chunk");
 
-    console.warn("🧹 [Recovery] Tentative de récupération (cache/SW)", { trigger, err });
+    console.warn("­ƒº╣ [Recovery] Tentative de r├®cup├®ration (cache/SW)", { trigger, err });
 
     // Unregister ALL service workers for this origin
     if ("serviceWorker" in navigator) {
@@ -134,7 +135,7 @@ async function recoverFromStaleCache(trigger: string, err?: unknown) {
     url.searchParams.set("__reload", Date.now().toString());
     window.location.replace(url.toString());
   } catch (e) {
-    console.warn("🧹 [Recovery] Échec récupération", e);
+    console.warn("­ƒº╣ [Recovery] ├ëchec r├®cup├®ration", e);
     // As a last resort, hard reload
     window.location.reload();
   }
@@ -143,6 +144,13 @@ async function recoverFromStaleCache(trigger: string, err?: unknown) {
 function initializeNonCriticalStartup() {
   runSafeStartupStep('backend bridge', () => {
     installBackendRequestBridge();
+  });
+
+  // 224Guard APRÈS le pont backend (qui override fetch légitimement) → 224Guard
+  // l'enveloppe sans fausse alerte de tamper. Surveille storage/réseau/WS/DOM en live.
+  runSafeStartupStep('224guard', () => {
+    // Respecte la préférence PDG (interrupteur du dashboard). Défaut = activé.
+    if (isGuard224EnabledPref()) startGuard224();
   });
 
   void runSafeStartupStepAsync('monitoring', async () => {
@@ -224,9 +232,9 @@ const showError = (rootElement: HTMLElement, error: unknown) => {
   rootElement.innerHTML = `
     <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: #f8f9fa; font-family: system-ui, -apple-system, sans-serif;">
       <div style="max-width: 500px; text-align: center;">
-        <div style="font-size: 64px; margin-bottom: 16px;">⚠️</div>
-        <h1 style="color: #ff4000; font-size: 24px; margin-bottom: 16px;">Erreur de chargement</h1>
-        <p style="color: #666; margin-bottom: 16px;">L'application n'a pas pu démarrer.</p>
+        <div style="font-size: 64px; margin-bottom: 16px;">ÔÜá´©Å</div>
+        <h1 style="color: #e74c3c; font-size: 24px; margin-bottom: 16px;">Erreur de chargement</h1>
+        <p style="color: #666; margin-bottom: 16px;">L'application n'a pas pu d├®marrer.</p>
         <pre style="text-align: left; background: #fff; padding: 16px; border-radius: 8px; border: 1px solid #ddd; overflow-x: auto; font-size: 12px; color: #c0392b; margin-bottom: 24px; white-space: pre-wrap;">${safeErrorMessage}</pre>
         <button onclick="location.reload()" style="padding: 12px 24px; background: #3498db; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">Recharger</button>
       </div>
@@ -234,13 +242,13 @@ const showError = (rootElement: HTMLElement, error: unknown) => {
   `;
 };
 
-// PWA Diagnostic Logger - helps debug production vs preview differences
+// PWA Diagnostic Logger ÔÇö helps debug production vs preview differences
 function logPwaDiagnostics() {
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches
     || (navigator as any).standalone === true;
   const swSupported = 'serviceWorker' in navigator;
 
-  console.info('📱 [PWA Diagnostics]', {
+  console.info('­ƒô▒ [PWA Diagnostics]', {
     mode: isStandalone ? 'standalone (installed)' : 'browser',
     hostname: location.hostname,
     protocol: location.protocol,
@@ -252,7 +260,7 @@ function logPwaDiagnostics() {
   // Check SW registration
   if (swSupported) {
     navigator.serviceWorker.getRegistrations().then(regs => {
-      console.info('📱 [PWA SW]', {
+      console.info('­ƒô▒ [PWA SW]', {
         registrations: regs.length,
         active: regs.map(r => r.active?.scriptURL || 'none'),
       });
@@ -265,8 +273,8 @@ function logPwaDiagnostics() {
       const ct = r.headers.get('content-type') || '';
       const isJson = ct.includes('application/json');
       let body: any = null;
-      try { body = await r.json(); } catch {}
-      console.info('📱 [PWA healthz]', {
+      try { body = await r.json(); } catch { }
+      console.info('­ƒô▒ [PWA healthz]', {
         status: r.status,
         contentType: ct,
         isRealJson: isJson && body?.status === 'ok',
@@ -274,35 +282,40 @@ function logPwaDiagnostics() {
       });
     })
     .catch(err => {
-      console.warn('📱 [PWA healthz] FAILED', err.message);
+      console.warn('­ƒô▒ [PWA healthz] FAILED', err.message);
     });
 }
 
-// 🚀 Warm up ALL Supabase domains at startup (TCP+TLS handshake)
+// 🚀 Warm up ALL Supabase domains at startup (DNS + TCP + TLS handshake).
+// On utilise `preconnect` (indices de ressource) et NON des fetch HEAD : les anciennes requêtes
+// vers /rest/v1/, /auth/v1/settings, /storage/v1/, /health-check répondaient 401/404 (endpoints
+// non sollicitables sans contexte) → erreurs rouges inutiles dans la console à chaque page.
+// `preconnect` ouvre la connexion en amont SANS aucune requête HTTP → même gain, zéro erreur.
 function warmUpConnections() {
+  if (typeof document === 'undefined') return;
   const supabaseRef = 'uakkxaibujzxdiqzpnpr';
-  const base = `https://${supabaseRef}.supabase.co`;
-  const edgeDomain = `https://${supabaseRef}.functions.supabase.co`;
-
-  // Fire-and-forget warm-up requests in parallel
-  const warmOpts: RequestInit = { method: 'HEAD', mode: 'no-cors', keepalive: true, cache: 'no-store' };
-
-  Promise.allSettled([
-    fetch(`${edgeDomain}/health-check`, warmOpts),   // Edge Functions (~584ms → ~100ms on 2nd call)
-    fetch(`${base}/rest/v1/`, warmOpts),               // DB / REST API
-    fetch(`${base}/auth/v1/settings`, warmOpts),       // Auth service
-    fetch(`${base}/storage/v1/`, warmOpts),             // Storage service
-  ]).catch(() => {});
+  const hosts = [
+    `https://${supabaseRef}.supabase.co`,            // DB / REST / Auth / Storage
+    `https://${supabaseRef}.functions.supabase.co`,  // Edge Functions
+  ];
+  for (const href of hosts) {
+    if (document.head.querySelector(`link[rel="preconnect"][href="${href}"]`)) continue;
+    const link = document.createElement('link');
+    link.rel = 'preconnect';
+    link.href = href;
+    link.crossOrigin = 'anonymous';
+    document.head.appendChild(link);
+  }
 }
 
 // Initialize app
 
 const initApp = () => {
-  console.log("🚀 224Solutions - Starting...");
+  console.log("­ƒÜÇ 224Solutions - Starting...");
   const rootElement = document.getElementById("root");
 
   if (!rootElement) {
-    console.error("✕ Root element not found");
+    console.error("ÔØî Root element not found");
     return;
   }
 
@@ -318,8 +331,8 @@ const initApp = () => {
         </HelmetProvider>
       </React.StrictMode>
     );
-    console.log("[DEBUG] Après rendu React");
-    console.log("✓ React app mounted");
+    console.log("[DEBUG] Apr├¿s rendu React");
+    console.log("Ô£à React app mounted");
     // Hide loader after React renders
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -339,7 +352,7 @@ const initApp = () => {
     });
   } catch (error) {
     rootElement.setAttribute('data-app-mounted', 'error');
-    console.error("✕ React render error:", error);
+    console.error("ÔØî React render error:", error);
     showError(rootElement, error);
   }
 };
@@ -351,7 +364,7 @@ initApp();
 window.addEventListener('error', (event) => {
   console.error('Erreur globale:', event.error || event.message);
 
-  // Auto-récupération sur erreurs typiques de cache/SW (écran blanc)
+  // Auto-r├®cup├®ration sur erreurs typiques de cache/SW (├®cran blanc)
   const err = (event as any).error ?? event.message;
   if (isLikelyChunkOrAssetLoadError(err)) {
     recoverFromStaleCache("window.error", err);
@@ -359,7 +372,7 @@ window.addEventListener('error', (event) => {
 });
 
 window.addEventListener('unhandledrejection', (event) => {
-  console.error('Promise rejetée:', event.reason);
+  console.error('Promise rejet├®e:', event.reason);
 
   if (isLikelyChunkOrAssetLoadError(event.reason)) {
     recoverFromStaleCache("unhandledrejection", event.reason);

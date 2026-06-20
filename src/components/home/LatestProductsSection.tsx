@@ -75,9 +75,9 @@ export function LatestProductsSection({
       {timedOut ? (
         <div className="rounded-xl border border-border bg-card p-5 md:p-6">
           <div className="flex flex-col items-center text-center gap-3">
-            <p className="text-base font-semibold text-foreground">Impossible de charger les produits</p>
+            <p className="text-base font-semibold text-foreground">{t('common.productsLoadError')}</p>
             <p className="text-sm text-muted-foreground">
-              Le chargement prend trop de temps. Vérifiez votre connexion puis réessayez.
+              {t('common.productsLoadErrorDesc')}
             </p>
             <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
               <Button

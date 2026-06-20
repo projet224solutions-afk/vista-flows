@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +49,7 @@ const ROLE_LABELS: Record<RoleType, string> = {
 };
 
 export function IdReorganizationPanel() {
+  const { t } = useTranslation();
   const [stats, setStats] = useState<RoleStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [reorganizing, setReorganizing] = useState<RoleType | 'all' | null>(null);
@@ -104,7 +106,7 @@ export function IdReorganizationPanel() {
 
   const handleReorganizeAll = async () => {
     setReorganizing('all');
-    toast.info('Réorganisation de tous les IDs...');
+    toast.info(t('idReorganizationPanel.reorganisationDeTousLesIds'));
 
     try {
       const results = await reorganizeAllIds();
@@ -129,7 +131,7 @@ export function IdReorganizationPanel() {
       if (totalErrors === 0 && totalReorganized > 0) {
         toast.success(`${totalReorganized} ID(s) réorganisé(s) au total`);
       } else if (totalErrors === 0) {
-        toast.info('Aucun ID supplémentaire à réorganiser.');
+        toast.info(t('idReorganizationPanel.aucunIdSupplementaireAReorganiser'));
       } else {
         toast.warning(detailedErrors[0] ?? `${totalReorganized} réorganisé(s), ${totalErrors} erreur(s)`);
       }
@@ -218,7 +220,7 @@ export function IdReorganizationPanel() {
               <Alert className="mb-4 border-[#ff4000]/40 bg-[#ff4000]/5">
                 <AlertTriangle className="h-4 w-4 text-[#ff4000]" />
                 <AlertDescription>
-                  Des IDs utilisent encore un ancien préfixe (`CLI` / `SYN`). Le correctif d’alignement `CLT` / `BST` doit être appliqué côté base pour que <strong>Tout réorganiser</strong> les corrige définitivement.
+                  Des IDs utilisent encore un ancien préfixe (`CLI` / `SYN`). Le correctif d’alignement `CLT` / `BST` doit être appliqué côté base pour que <strong>{t('idReorganizationPanel.toutReorganiser')}</strong> les corrige définitivement.
                 </AlertDescription>
               </Alert>
             )}
@@ -226,9 +228,9 @@ export function IdReorganizationPanel() {
             <Tabs defaultValue="overview" className="w-full">
               <TabsList className="mb-4">
                 <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
-                <TabsTrigger value="details">Détails par rôle</TabsTrigger>
+                <TabsTrigger value="details">{t('idReorganizationPanel.detailsParRole')}</TabsTrigger>
                 {lastResults.length > 0 && (
-                  <TabsTrigger value="history">Dernières modifications</TabsTrigger>
+                  <TabsTrigger value="history">{t('idReorganizationPanel.dernieresModifications')}</TabsTrigger>
                 )}
               </TabsList>
 

@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -51,6 +52,7 @@ interface Order {
 }
 
 export function AgentOrdersModule({ agentId, canManage = false }: AgentOrdersModuleProps) {
+  const { t } = useTranslation();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -134,7 +136,7 @@ export function AgentOrdersModule({ agentId, canManage = false }: AgentOrdersMod
       });
     } catch (error) {
       console.error('Erreur chargement commandes:', error);
-      toast.error('Erreur lors du chargement');
+      toast.error(t('agentOrdersModule.erreurLorsDuChargement'));
     } finally {
       setLoading(false);
     }
@@ -196,8 +198,8 @@ export function AgentOrdersModule({ agentId, canManage = false }: AgentOrdersMod
                 <ShoppingCart className="w-6 h-6 text-white" />
               </div>
               <div>
-                <CardTitle className="text-xl">Gestion des Commandes</CardTitle>
-                <CardDescription>Suivi et gestion des commandes de la plateforme</CardDescription>
+                <CardTitle className="text-xl">{t('agentOrdersModule.gestionDesCommandes')}</CardTitle>
+                <CardDescription>{t('agentOrdersModule.suiviEtGestionDesCommandes')}</CardDescription>
               </div>
             </div>
             <Button variant="outline" size="sm" onClick={loadOrders}>
@@ -227,7 +229,7 @@ export function AgentOrdersModule({ agentId, canManage = false }: AgentOrdersMod
             <div className="bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl p-4 text-center">
               <CheckCircle className="w-5 h-5 text-[#ff4000] mx-auto mb-1" />
               <p className="text-xl font-bold text-[#ff4000]">{stats.completed}</p>
-              <p className="text-xs text-[#ff4000]">Terminées</p>
+              <p className="text-xs text-[#ff4000]">{t('agentOrdersModule.terminees')}</p>
             </div>
             <div className="bg-gradient-to-br from-blue-100 to-orange-200 rounded-xl p-4 text-center">
               <DollarSign className="w-5 h-5 text-[#04439e] mx-auto mb-1" />
@@ -240,7 +242,7 @@ export function AgentOrdersModule({ agentId, canManage = false }: AgentOrdersMod
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
-              placeholder="Rechercher par numéro, client, vendeur..."
+              placeholder={t('agentOrdersModule.rechercherParNumeroClientVendeur')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -250,11 +252,11 @@ export function AgentOrdersModule({ agentId, canManage = false }: AgentOrdersMod
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="w-full">
-              <TabsTrigger value="all" className="flex-1">Toutes</TabsTrigger>
+              <TabsTrigger value="all" className="flex-1">{t('agentOrdersModule.toutes')}</TabsTrigger>
               <TabsTrigger value="pending" className="flex-1">En attente</TabsTrigger>
               <TabsTrigger value="processing" className="flex-1">En cours</TabsTrigger>
-              <TabsTrigger value="completed" className="flex-1">Terminées</TabsTrigger>
-              <TabsTrigger value="cancelled" className="flex-1">Annulées</TabsTrigger>
+              <TabsTrigger value="completed" className="flex-1">{t('agentOrdersModule.terminees')}</TabsTrigger>
+              <TabsTrigger value="cancelled" className="flex-1">{t('agentOrdersModule.annulees')}</TabsTrigger>
             </TabsList>
           </Tabs>
         </CardContent>
@@ -268,7 +270,7 @@ export function AgentOrdersModule({ agentId, canManage = false }: AgentOrdersMod
               {filteredOrders.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <ShoppingCart className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucune commande trouvée</p>
+                  <p>{t('agentOrdersModule.aucuneCommandeTrouvee')}</p>
                 </div>
               ) : (
                 filteredOrders.map((order) => (
@@ -319,7 +321,7 @@ export function AgentOrdersModule({ agentId, canManage = false }: AgentOrdersMod
 
       {/* Detail Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ShoppingCart className="w-5 h-5 text-primary" />
@@ -335,28 +337,28 @@ export function AgentOrdersModule({ agentId, canManage = false }: AgentOrdersMod
                   {getStatusBadge(selectedOrder.status)}
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Montant</p>
+                  <p className="text-sm text-muted-foreground">{t('agentOrdersModule.montant')}</p>
                   <p className="font-bold text-lg">{formatAmount(selectedOrder.total_amount)}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Client</p>
+                  <p className="text-sm text-muted-foreground">{t('agentOrdersModule.client')}</p>
                   <p className="font-medium">
                     {selectedOrder.profiles?.first_name} {selectedOrder.profiles?.last_name}
                   </p>
                   <p className="text-xs text-muted-foreground">{selectedOrder.profiles?.email}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Vendeur</p>
+                  <p className="text-sm text-muted-foreground">{t('agentOrdersModule.vendeur')}</p>
                   <p className="font-medium">{selectedOrder.vendors?.business_name || 'N/A'}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Créée le</p>
+                  <p className="text-sm text-muted-foreground">{t('agentOrdersModule.creeeLe')}</p>
                   <p className="font-medium">
                     {format(new Date(selectedOrder.created_at), 'dd MMM yyyy HH:mm', { locale: fr })}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Mise à jour</p>
+                  <p className="text-sm text-muted-foreground">{t('agentOrdersModule.miseAJour')}</p>
                   <p className="font-medium">
                     {format(new Date(selectedOrder.updated_at), 'dd MMM yyyy HH:mm', { locale: fr })}
                   </p>

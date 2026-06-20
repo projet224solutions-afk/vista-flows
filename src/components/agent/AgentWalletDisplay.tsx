@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent } from '@/components/ui/card';
 import { Wallet, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,7 @@ export function AgentWalletDisplay({
   className = '',
   compact = false
 }: AgentWalletDisplayProps) {
+  const { t } = useTranslation();
   const [balance, setBalance] = useState<number>(0);
   const [currency, setCurrency] = useState<string>('GNF');
   const [loading, setLoading] = useState(true);
@@ -129,7 +131,7 @@ export function AgentWalletDisplay({
         <CardContent className={compact ? "py-2 px-3" : "py-3 px-4"}>
           <div className="flex items-center gap-2">
             <Wallet className="w-4 h-4 text-orange-600" />
-            <span className="text-xs text-orange-600 font-medium">Wallet non créé</span>
+            <span className="text-xs text-orange-600 font-medium">{t('agentWalletDisplay.walletNonCree')}</span>
           </div>
         </CardContent>
       </Card>

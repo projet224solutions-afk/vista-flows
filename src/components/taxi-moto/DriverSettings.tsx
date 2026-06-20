@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -44,6 +45,7 @@ interface DriverProfile {
 }
 
 export function DriverSettings({ driverId }: DriverSettingsProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -117,7 +119,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
       }
     } catch (error) {
       console.error('Error loading driver data:', error);
-      toast.error('Erreur lors du chargement des données');
+      toast.error(t('driverSettings.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -173,11 +175,11 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
         if (driverError) throw driverError;
       }
 
-      toast.success('✅ Paramètres enregistrés');
+      toast.success(t('driverSettings.parametresEnregistres'));
       loadDriverData();
     } catch (error) {
       console.error('Error saving settings:', error);
-      toast.error('Erreur lors de l\'enregistrement');
+      toast.error(t('driverSettings.erreurLorsDeLEnregistrement'));
     } finally {
       setSaving(false);
     }
@@ -186,11 +188,11 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
-      toast.success('Déconnexion réussie');
+      toast.success(t('driverSettings.deconnexionReussie'));
       navigate('/login');
     } catch (error) {
       console.error('Error logging out:', error);
-      toast.error('Erreur lors de la déconnexion');
+      toast.error(t('driverSettings.erreurLorsDeLaDeconnexion'));
     }
   };
 
@@ -225,7 +227,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
   if (!profile) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        <p>Impossible de charger le profil</p>
+        <p>{t('driverSettings.impossibleDeChargerLeProfil')}</p>
       </div>
     );
   }
@@ -261,7 +263,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
               {profile.kyc_verified && (
                 <div className="flex items-center gap-1 text-[#ff4000] text-sm mt-1">
                   <Shield className="w-4 h-4" />
-                  <span>Vérifié</span>
+                  <span>{t('driverSettings.verifie')}</span>
                 </div>
               )}
             </div>
@@ -272,7 +274,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
           {/* Informations de contact */}
           <div className="space-y-3">
             <div>
-              <Label htmlFor="first_name" className="text-sm">Prénom</Label>
+              <Label htmlFor="first_name" className="text-sm">{t('driverSettings.prenom')}</Label>
               <Input
                 id="first_name"
                 value={profile.first_name}
@@ -331,7 +333,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
 
             {/* Sélection catégorie taxi */}
             <div>
-              <Label className="text-sm">Type de taxi</Label>
+              <Label className="text-sm">{t('driverSettings.typeDeTaxi')}</Label>
               <div className="grid grid-cols-2 gap-2 mt-1">
                 <Button
                   type="button"
@@ -372,7 +374,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
             {profile.taxi_category === 'car' && (
               <>
                 <div>
-                  <Label htmlFor="vehicle_brand" className="text-sm">Marque & modèle</Label>
+                  <Label htmlFor="vehicle_brand" className="text-sm">{t('driverSettings.marqueModele')}</Label>
                   <Input
                     id="vehicle_brand"
                     value={profile.vehicle_brand || ''}
@@ -382,7 +384,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="vehicle_seats" className="text-sm">Nombre de places passagers</Label>
+                  <Label htmlFor="vehicle_seats" className="text-sm">{t('driverSettings.nombreDePlacesPassagers')}</Label>
                   <select
                     id="vehicle_seats"
                     value={profile.vehicle_seats}
@@ -401,7 +403,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
             {profile.taxi_category === 'motorcycle' && (
               <>
                 <div>
-                  <Label htmlFor="moto_serial_number" className="text-sm">Numéro de série de la moto</Label>
+                  <Label htmlFor="moto_serial_number" className="text-sm">{t('driverSettings.numeroDeSerieDeLa')}</Label>
                   <Input
                     id="moto_serial_number"
                     value={profile.moto_serial_number || ''}
@@ -411,7 +413,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="gilet_number" className="text-sm">Numéro de gilet</Label>
+                  <Label htmlFor="gilet_number" className="text-sm">{t('driverSettings.numeroDeGilet')}</Label>
                   <Input
                     id="gilet_number"
                     value={profile.gilet_number || ''}
@@ -502,7 +504,7 @@ export function DriverSettings({ driverId }: DriverSettingsProps) {
 
           {/* Prix minimum */}
           <div className="space-y-3">
-            <h3 className="font-semibold text-sm text-gray-700">Prix minimum accepté</h3>
+            <h3 className="font-semibold text-sm text-gray-700">{t('driverSettings.prixMinimumAccepte')}</h3>
             <div className="flex items-center gap-4">
               <input
                 type="number"

@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -127,6 +128,7 @@ const PREFIX_TO_ROLE: Record<string, string> = {
 const PIE_COLORS = ['#04439e', '#ff4000', '#ff4000', '#04439e', '#ff4000', '#ff4000'];
 
 export default function IdNormalizationAudit() {
+  const { t } = useTranslation();
   const [logs, setLogs] = useState<NormalizationLog[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -238,7 +240,7 @@ export default function IdNormalizationAudit() {
       }
     } catch (error: any) {
       console.error('Erreur chargement utilisateurs non-standard:', error);
-      toast.error('Erreur lors du chargement des utilisateurs non-standard');
+      toast.error(t('idNormalizationAudit.erreurLorsDuChargementDes'));
     } finally {
       setLoadingNonStandard(false);
     }
@@ -348,7 +350,7 @@ export default function IdNormalizationAudit() {
 
     } catch (error: any) {
       console.error('Erreur recherche ID:', error);
-      toast.error('Erreur lors de la recherche');
+      toast.error(t('idNormalizationAudit.erreurLorsDeLaRecherche'));
       setSearchError('Erreur lors de la recherche dans la base de données');
     } finally {
       setSearching(false);
@@ -491,7 +493,7 @@ export default function IdNormalizationAudit() {
   // Correct all non-standard IDs - one by one to avoid conflicts
   const handleCorrectAllIds = async () => {
     if (nonStandardUsers.length === 0) {
-      toast.info('Aucun ID à corriger');
+      toast.info(t('idNormalizationAudit.aucunIdACorriger'));
       return;
     }
 
@@ -501,7 +503,7 @@ export default function IdNormalizationAudit() {
     });
 
     if (toCorrect.length === 0) {
-      toast.error('Aucun ID ne peut être corrigé (rôles non reconnus)');
+      toast.error(t('idNormalizationAudit.aucunIdNePeutEtre'));
       return;
     }
 
@@ -600,7 +602,7 @@ export default function IdNormalizationAudit() {
       });
     } catch (error: any) {
       console.error('Erreur chargement stats:', error);
-      toast.error('Erreur lors du chargement des statistiques');
+      toast.error(t('idNormalizationAudit.erreurLorsDuChargementDes2'));
     }
   }, []);
 
@@ -640,7 +642,7 @@ export default function IdNormalizationAudit() {
       setTotalPages(Math.ceil((count || 0) / limit));
     } catch (error: any) {
       console.error('Erreur chargement logs:', error);
-      toast.error('Erreur lors du chargement des logs');
+      toast.error(t('idNormalizationAudit.erreurLorsDuChargementDes3'));
     } finally {
       setLoading(false);
     }
@@ -659,7 +661,7 @@ export default function IdNormalizationAudit() {
     loadLogs();
     loadAllUserIds();
     loadNonStandardUsers();
-    toast.success('Données actualisées');
+    toast.success(t('idNormalizationAudit.donneesActualisees'));
   };
 
   const getRoleBadge = (role: string) => {
@@ -842,12 +844,12 @@ export default function IdNormalizationAudit() {
             </TabsTrigger>
             <TabsTrigger value="reorganize" className="gap-1 px-2 py-1.5 text-xs sm:text-sm sm:px-3 sm:py-2 whitespace-nowrap">
               <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Réorganiser</span>
-              <span className="sm:hidden">Réorg</span>
+              <span className="hidden sm:inline">{t('idNormalizationAudit.reorganiser')}</span>
+              <span className="sm:hidden">{t('idNormalizationAudit.reorg')}</span>
             </TabsTrigger>
             <TabsTrigger value="activity" className="gap-1 px-2 py-1.5 text-xs sm:text-sm sm:px-3 sm:py-2 whitespace-nowrap">
               <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Activité</span>
+              <span className="hidden sm:inline">{t('idNormalizationAudit.activite')}</span>
               <span className="sm:hidden">Act</span>
             </TabsTrigger>
             <TabsTrigger value="wallet-audit" className="gap-1 px-2 py-1.5 text-xs sm:text-sm sm:px-3 sm:py-2 whitespace-nowrap">
@@ -857,7 +859,7 @@ export default function IdNormalizationAudit() {
             </TabsTrigger>
             <TabsTrigger value="search" className="gap-1 px-2 py-1.5 text-xs sm:text-sm sm:px-3 sm:py-2 whitespace-nowrap">
               <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Rechercher ID</span>
+              <span className="hidden sm:inline">{t('idNormalizationAudit.rechercherId')}</span>
               <span className="sm:hidden">Rech</span>
             </TabsTrigger>
             <TabsTrigger value="logs" className="gap-1 px-2 py-1.5 text-xs sm:text-sm sm:px-3 sm:py-2 whitespace-nowrap">
@@ -922,11 +924,11 @@ export default function IdNormalizationAudit() {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-32">ID Actuel</TableHead>
-                        <TableHead>Problème</TableHead>
+                        <TableHead>{t('idNormalizationAudit.probleme')}</TableHead>
                         <TableHead>Utilisateur</TableHead>
                         <TableHead>Email</TableHead>
-                        <TableHead>Rôle</TableHead>
-                        <TableHead>Date création</TableHead>
+                        <TableHead>{t('idNormalizationAudit.role')}</TableHead>
+                        <TableHead>{t('idNormalizationAudit.dateCreation')}</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -984,7 +986,7 @@ export default function IdNormalizationAudit() {
                             </TableCell>
                             <TableCell>
                               {item.profile?.role ? getRoleBadge(item.profile.role) : (
-                                <Badge variant="outline" className="text-gray-500">Non défini</Badge>
+                                <Badge variant="outline" className="text-gray-500">{t('idNormalizationAudit.nonDefini')}</Badge>
                               )}
                             </TableCell>
                             <TableCell className="text-sm text-muted-foreground">
@@ -1080,7 +1082,7 @@ export default function IdNormalizationAudit() {
             <CardContent className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="flex-1 space-y-2">
-                  <Label htmlFor="search-id">ID à rechercher</Label>
+                  <Label htmlFor="search-id">{t('idNormalizationAudit.idARechercher')}</Label>
                   <Input
                     id="search-id"
                     placeholder="Ex: VND0001, CLT0123, AGT0045..."
@@ -1167,7 +1169,7 @@ export default function IdNormalizationAudit() {
                           )}
                           {searchResult.created_at && (
                             <div>
-                              <p className="text-xs text-muted-foreground">Date création</p>
+                              <p className="text-xs text-muted-foreground">{t('idNormalizationAudit.dateCreation')}</p>
                               <p className="font-medium">
                                 {format(new Date(searchResult.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
                               </p>
@@ -1234,7 +1236,7 @@ export default function IdNormalizationAudit() {
               {searchResult?.found && searchResult.profile && (
                 <Card className="mt-4 border-primary/20">
                   <CardContent className="p-4">
-                    <h5 className="font-semibold mb-2 text-sm">Détails du profil</h5>
+                    <h5 className="font-semibold mb-2 text-sm">{t('idNormalizationAudit.detailsDuProfil')}</h5>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       {searchResult.profile.full_name && (
                         <div>
@@ -1333,7 +1335,7 @@ export default function IdNormalizationAudit() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="flex-1">
                   <Input
-                    placeholder="Rechercher un ID (ex: VND0001)..."
+                    placeholder={t('idNormalizationAudit.rechercherUnIdExVnd0001')}
                     value={filters.search}
                     onChange={(e) => setFilters(f => ({ ...f, search: e.target.value.toUpperCase() }))}
                     className="w-full font-mono uppercase"
@@ -1344,12 +1346,12 @@ export default function IdNormalizationAudit() {
                   onValueChange={(v) => setFilters(f => ({ ...f, roleType: v }))}
                 >
                   <SelectTrigger className="w-full sm:w-40">
-                    <SelectValue placeholder="Rôle" />
+                    <SelectValue placeholder={t('idNormalizationAudit.role')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tous les rôles</SelectItem>
-                    <SelectItem value="vendor">Vendeur (VND)</SelectItem>
-                    <SelectItem value="client">Client (CLT)</SelectItem>
+                    <SelectItem value="all">{t('idNormalizationAudit.tousLesRoles')}</SelectItem>
+                    <SelectItem value="vendor">{t('idNormalizationAudit.vendeurVnd')}</SelectItem>
+                    <SelectItem value="client">{t('idNormalizationAudit.clientClt')}</SelectItem>
                     <SelectItem value="agent">Agent (AGT)</SelectItem>
                     <SelectItem value="driver">Chauffeur (DRV)</SelectItem>
                     <SelectItem value="taxi">Taxi-Moto (TAX)</SelectItem>
@@ -1368,7 +1370,7 @@ export default function IdNormalizationAudit() {
                     <SelectValue placeholder="Raison" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Toutes les raisons</SelectItem>
+                    <SelectItem value="all">{t('idNormalizationAudit.toutesLesRaisons')}</SelectItem>
                     {Object.entries(REASONS_MAP).map(([value, info]) => (
                       <SelectItem key={value} value={value}>{info.label}</SelectItem>
                     ))}
@@ -1386,9 +1388,9 @@ export default function IdNormalizationAudit() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Date</TableHead>
-                      <TableHead>Rôle</TableHead>
+                      <TableHead>{t('idNormalizationAudit.role')}</TableHead>
                       <TableHead>ID Original</TableHead>
-                      <TableHead>ID Corrigé</TableHead>
+                      <TableHead>{t('idNormalizationAudit.idCorrige')}</TableHead>
                       <TableHead>Raison</TableHead>
                       <TableHead>Provider</TableHead>
                     </TableRow>
@@ -1478,7 +1480,7 @@ export default function IdNormalizationAudit() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Tendances (7 derniers jours)</CardTitle>
-                <CardDescription>Nombre de corrections par jour</CardDescription>
+                <CardDescription>{t('idNormalizationAudit.nombreDeCorrectionsParJour')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-64">
@@ -1504,8 +1506,8 @@ export default function IdNormalizationAudit() {
             {/* Répartition par rôle */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Répartition par rôle</CardTitle>
-                <CardDescription>Distribution des corrections</CardDescription>
+                <CardTitle className="text-lg">{t('idNormalizationAudit.repartitionParRole')}</CardTitle>
+                <CardDescription>{t('idNormalizationAudit.distributionDesCorrections')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-64">
@@ -1535,8 +1537,8 @@ export default function IdNormalizationAudit() {
             {/* Répartition par raison */}
             <Card className="lg:col-span-2">
               <CardHeader>
-                <CardTitle className="text-lg">Répartition par raison</CardTitle>
-                <CardDescription>Types de corrections effectuées</CardDescription>
+                <CardTitle className="text-lg">{t('idNormalizationAudit.repartitionParRaison')}</CardTitle>
+                <CardDescription>{t('idNormalizationAudit.typesDeCorrectionsEffectuees')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-64">

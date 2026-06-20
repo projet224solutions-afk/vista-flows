@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -88,6 +89,7 @@ interface CreateUserFormProps {
 }
 
 export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated }: CreateUserFormProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -127,7 +129,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
 
     // Validation du mot de passe
     if (!formData.password || formData.password.length < 8) {
-      toast.error('Le mot de passe doit contenir au moins 8 caractères');
+      toast.error(t('createUserForm.leMotDePasseDoit'));
       setIsSubmitting(false);
       return;
     }
@@ -187,7 +189,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
       console.log('📥 [CreateUserForm] Résultat:', result);
 
       if (result.success) {
-        toast.success('✅ Utilisateur créé avec succès!');
+        toast.success(t('createUserForm.utilisateurCreeAvecSucces'));
         // Reset form
         setFormData({
           firstName: '',
@@ -238,9 +240,9 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
           Créer un Utilisateur
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl w-[95vw] h-[80vh] flex flex-col p-0 top-[10%] translate-y-0">
+      <DialogContent className="max-w-4xl w-[95vw] h-[80vh] flex flex-col p-0 top-[10%] translate-y-0 max-h-[90vh] overflow-y-auto">
         <DialogHeader className="flex-shrink-0 bg-gradient-to-r from-[#ff4000] to-[#ff4000] text-white p-4 rounded-t-lg">
-          <DialogTitle className="text-lg font-bold">Créer un Nouvel Utilisateur</DialogTitle>
+          <DialogTitle className="text-lg font-bold">{t('createUserForm.creerUnNouvelUtilisateur')}</DialogTitle>
           <DialogDescription className="text-orange-100">
             Sélectionnez le type d'utilisateur et remplissez les informations
           </DialogDescription>
@@ -297,7 +299,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                   required
                   value={formData.firstName}
                   onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                  placeholder="Prénom"
+                  placeholder={t('createUserForm.prenom')}
                   className="h-9"
                 />
               </div>
@@ -359,7 +361,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                   minLength={8}
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder="Minimum 8 caractères"
+                  placeholder={t('createUserForm.minimum8Caracteres')}
                   className="h-9 pr-10"
                 />
                 <button
@@ -386,7 +388,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                   onValueChange={(code) => setFormData({ ...formData, country_code: code })}
                 >
                   <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Sélectionner..." />
+                    <SelectValue placeholder={t('createUserForm.selectionner')} />
                   </SelectTrigger>
                   <SelectContent>
                     {COUNTRY_OPTIONS.map((c) => (
@@ -418,7 +420,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
             <div className="space-y-3 p-4 bg-orange-50 dark:bg-[#ff4000]/20 rounded-lg border-2 border-orange-200 dark:border-[#ff4000]">
               <div className="flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-[#ff4000]" />
-                <h3 className="font-semibold text-[#ff4000] dark:text-orange-100">Informations du Bureau Syndical</h3>
+                <h3 className="font-semibold text-[#ff4000] dark:text-orange-100">{t('createUserForm.informationsDuBureauSyndical')}</h3>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -434,7 +436,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="prefecture" className="text-sm">Préfecture *</Label>
+                  <Label htmlFor="prefecture" className="text-sm">{t('createUserForm.prefecture')}</Label>
                   <Input
                     id="prefecture"
                     required
@@ -461,7 +463,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                     id="full_location"
                     value={formData.full_location}
                     onChange={(e) => setFormData({ ...formData, full_location: e.target.value })}
-                    placeholder="Ex: Près du marché"
+                    placeholder={t('createUserForm.exPresDuMarche')}
                     className="h-9"
                   />
                 </div>
@@ -474,12 +476,12 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
             <div className="space-y-3 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border-2 border-blue-200 dark:border-blue-800">
               <div className="flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5 text-blue-600" />
-                <h3 className="font-semibold text-blue-900 dark:text-blue-100">Informations de l'Entreprise</h3>
+                <h3 className="font-semibold text-blue-900 dark:text-blue-100">{t('createUserForm.informationsDeLEntreprise')}</h3>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="service_type" className="text-sm">Type de service *</Label>
+                  <Label htmlFor="service_type" className="text-sm">{t('createUserForm.typeDeService')}</Label>
                   <select
                     id="service_type"
                     className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
@@ -487,7 +489,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                     onChange={(e) => setFormData({ ...formData, service_type: e.target.value })}
                     required
                   >
-                    <option value="">Sélectionnez…</option>
+                    <option value="">{t('createUserForm.selectionnez')}</option>
                     {VENDOR_SERVICE_TYPES.map((t) => (
                       <option key={t.value} value={t.value}>{t.label}</option>
                     ))}
@@ -495,35 +497,35 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="business_name" className="text-sm">Nom de l'entreprise *</Label>
+                  <Label htmlFor="business_name" className="text-sm">{t('createUserForm.nomDeLEntreprise')}</Label>
                   <Input
                     id="business_name"
                     required
                     value={formData.business_name}
                     onChange={(e) => setFormData({ ...formData, business_name: e.target.value })}
-                    placeholder="Ex: Boutique centrale"
+                    placeholder={t('createUserForm.exBoutiqueCentrale')}
                     className="h-9"
                   />
                 </div>
 
                 <div className="space-y-1.5 md:col-span-2">
-                  <Label htmlFor="business_description" className="text-sm">Description de l'activité</Label>
+                  <Label htmlFor="business_description" className="text-sm">{t('createUserForm.descriptionDeLActivite')}</Label>
                   <Input
                     id="business_description"
                     value={formData.business_description}
                     onChange={(e) => setFormData({ ...formData, business_description: e.target.value })}
-                    placeholder="Ex: Vente de produits alimentaires"
+                    placeholder={t('createUserForm.exVenteDeProduitsAlimentaires')}
                     className="h-9"
                   />
                 </div>
 
                 <div className="space-y-1.5 md:col-span-2">
-                  <Label htmlFor="business_address" className="text-sm">Adresse de l'entreprise</Label>
+                  <Label htmlFor="business_address" className="text-sm">{t('createUserForm.adresseDeLEntreprise')}</Label>
                   <Input
                     id="business_address"
                     value={formData.business_address}
                     onChange={(e) => setFormData({ ...formData, business_address: e.target.value })}
-                    placeholder="Ex: Marché Madina, Conakry"
+                    placeholder={t('createUserForm.exMarcheMadinaConakry')}
                     className="h-9"
                   />
                 </div>
@@ -536,12 +538,12 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
             <div className="space-y-3 p-4 bg-orange-50 dark:bg-[#ff4000]/20 rounded-lg border-2 border-orange-200 dark:border-[#ff4000]">
               <div className="flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-[#ff4000]" />
-                <h3 className="font-semibold text-[#ff4000] dark:text-orange-100">Informations du Service</h3>
+                <h3 className="font-semibold text-[#ff4000] dark:text-orange-100">{t('createUserForm.informationsDuService')}</h3>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="service_type_prest" className="text-sm">Type de service *</Label>
+                  <Label htmlFor="service_type_prest" className="text-sm">{t('createUserForm.typeDeService')}</Label>
                   <select
                     id="service_type_prest"
                     className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
@@ -549,20 +551,20 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                     onChange={(e) => setFormData({ ...formData, service_type: e.target.value })}
                     required
                   >
-                    <option value="">Sélectionnez…</option>
+                    <option value="">{t('createUserForm.selectionnez')}</option>
                     {VENDOR_SERVICE_TYPES.map((t) => (
                       <option key={t.value} value={t.value}>{t.label}</option>
                     ))}
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="business_name_prest" className="text-sm">Nom du service *</Label>
+                  <Label htmlFor="business_name_prest" className="text-sm">{t('createUserForm.nomDuService')}</Label>
                   <Input
                     id="business_name_prest"
                     required
                     value={formData.business_name}
                     onChange={(e) => setFormData({ ...formData, business_name: e.target.value })}
-                    placeholder="Ex: Salon de coiffure Aminata"
+                    placeholder={t('createUserForm.exSalonDeCoiffureAminata')}
                     className="h-9"
                   />
                 </div>
@@ -572,7 +574,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                     id="business_description_prest"
                     value={formData.business_description}
                     onChange={(e) => setFormData({ ...formData, business_description: e.target.value })}
-                    placeholder="Décrivez votre service..."
+                    placeholder={t('createUserForm.decrivezVotreService')}
                     className="h-9"
                   />
                 </div>
@@ -605,7 +607,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="license_number" className="text-sm">Numéro de permis *</Label>
+                  <Label htmlFor="license_number" className="text-sm">{t('createUserForm.numeroDePermis')}</Label>
                   <Input
                     id="license_number"
                     required
@@ -616,7 +618,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="vehicle_type" className="text-sm">Type de véhicule *</Label>
+                  <Label htmlFor="vehicle_type" className="text-sm">{t('createUserForm.typeDeVehicule')}</Label>
                   <select
                     id="vehicle_type"
                     className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm"
@@ -643,7 +645,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="vehicle_model" className="text-sm">Modèle</Label>
+                  <Label htmlFor="vehicle_model" className="text-sm">{t('createUserForm.modele')}</Label>
                   <Input
                     id="vehicle_model"
                     value={formData.vehicle_model}
@@ -653,7 +655,7 @@ export function CreateUserForm({ agentId, agentCode, accessToken, onUserCreated 
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="vehicle_year" className="text-sm">Année</Label>
+                  <Label htmlFor="vehicle_year" className="text-sm">{t('createUserForm.annee')}</Label>
                   <Input
                     id="vehicle_year"
                     value={formData.vehicle_year}

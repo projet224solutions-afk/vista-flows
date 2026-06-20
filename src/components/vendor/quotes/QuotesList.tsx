@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Badge } from '@/components/ui/badge';
@@ -45,6 +46,7 @@ interface Quote {
 }
 
 export default function QuotesList({ refresh }: { refresh?: number }) {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const { vendorId } = useVendorId();
   const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -78,7 +80,7 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
       }
     } catch (error: any) {
       console.error('Erreur chargement devis:', error);
-      toast.error('Erreur lors du chargement des devis');
+      toast.error(t('quotesList.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -125,16 +127,16 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      toast.success('Téléchargement démarré');
+      toast.success(t('quotesList.telechargementDemarre'));
     } catch (error) {
       console.error('Erreur téléchargement:', error);
 
       // Fallback fiable (évite CORS): ouvrir le PDF dans un nouvel onglet
       const opened = window.open(pdfUrl, '_blank', 'noopener,noreferrer');
       if (opened) {
-        toast.success('PDF ouvert dans un nouvel onglet');
+        toast.success(t('quotesList.pdfOuvertDansUnNouvel'));
       } else {
-        toast.error("Téléchargement bloqué: autorisez les popups puis réessayez.");
+        toast.error(t('quotesList.telechargementBloqueAutorisezLesPopups'));
       }
     }
   };
@@ -174,12 +176,13 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
       if (newInvoice) {
         const { backendFetch } = await import('@/services/backendApi');
         const pdfResp = await backendFetch<any>('/api/documents/invoice-pdf', {
+          method: 'POST',
           body: { invoice_id: newInvoice.id, ref: invoiceRef }
         });
 
         if (!pdfResp.success) {
           console.error('Erreur génération PDF facture:', pdfResp.error);
-          toast.error('Facture créée mais PDF non généré');
+          toast.error(t('quotesList.factureCreeeMaisPdfNon'));
         }
       }
 
@@ -189,12 +192,12 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
         .update({ status: 'accepted' })
         .eq('id', quoteId);
 
-      toast.success('Devis converti en facture avec PDF !');
+      toast.success(t('quotesList.devisConvertiEnFactureAvec'));
       setShowDetails(false);
       loadQuotes();
     } catch (error: any) {
       console.error('Erreur conversion:', error);
-      toast.error('Erreur lors de la conversion');
+      toast.error(t('quotesList.erreurLorsDeLaConversion'));
     }
   };
 
@@ -220,13 +223,13 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
 
       if (error) throw error;
 
-      toast.success('Devis supprimé avec succès');
+      toast.success(t('quotesList.devisSupprimeAvecSucces'));
       setDeleteDialogOpen(false);
       setQuoteToDelete(null);
       loadQuotes();
     } catch (error: any) {
       console.error('Erreur suppression:', error);
-      toast.error('Erreur lors de la suppression');
+      toast.error(t('quotesList.erreurLorsDeLaSuppression'));
     }
   };
 
@@ -254,7 +257,7 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
           {quotes.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>Aucun devis créé</p>
+              <p>{t('quotesList.aucunDevisCree')}</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -399,7 +402,7 @@ export default function QuotesList({ refresh }: { refresh?: number }) {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogTitle>{t('quotesList.confirmerLaSuppression')}</AlertDialogTitle>
             <AlertDialogDescription>
               Êtes-vous sûr de vouloir supprimer ce devis ? Cette action est irréversible et supprimera également le PDF associé.
             </AlertDialogDescription>

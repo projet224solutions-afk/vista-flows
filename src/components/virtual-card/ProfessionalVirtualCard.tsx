@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -52,7 +53,39 @@ interface WalletData {
   currency: string;
 }
 
+// ── Génération sécurisée (crypto) d'un numéro de carte Luhn-valide ──
+function secureRandomInt(max: number): number {
+  const arr = new Uint32Array(1);
+  crypto.getRandomValues(arr);
+  // Rejet du biais modulo pour une distribution uniforme
+  const limit = Math.floor(0xffffffff / max) * max;
+  while (arr[0] >= limit) crypto.getRandomValues(arr);
+  return arr[0] % max;
+}
+
+function luhnCheckDigit(partial: string): number {
+  let sum = 0;
+  let double = true; // le chiffre de contrôle sera ajouté à droite
+  for (let i = partial.length - 1; i >= 0; i--) {
+    let d = partial.charCodeAt(i) - 48;
+    if (double) { d *= 2; if (d > 9) d -= 9; }
+    sum += d;
+    double = !double;
+  }
+  return (10 - (sum % 10)) % 10;
+}
+
+function generateSecureCardNumber(): string {
+  // BIN interne 224PAY (préfixe Mastercard-like, carte FICTIVE interne) + corps aléatoire + Luhn
+  const bin = '524500';
+  let body = '';
+  for (let i = 0; i < 9; i++) body += secureRandomInt(10).toString();
+  const partial = bin + body; // 15 chiffres
+  return partial + luhnCheckDigit(partial).toString(); // 16 chiffres, Luhn-valide
+}
+
 export const ProfessionalVirtualCard = () => {
+  const { t } = useTranslation();
   const { user, profile } = useAuth();
   const { loadStats, toggleCardStatus, stats } = useVirtualCard();
   const [card, setCard] = useState<VirtualCardData | null>(null);
@@ -74,11 +107,19 @@ export const ProfessionalVirtualCard = () => {
     if (!user) return;
     setLoading(true);
     try {
+      // La carte opère sur le wallet GNF (devise de base débitée par process_card_payment).
+      // On affiche/utilise donc CE wallet pour que l'écran reflète la réalité du débit.
       const [walletRes, cardRes] = await Promise.all([
-        supabase.from('wallets').select('id, balance, currency').eq('user_id', user.id).maybeSingle(),
+        supabase.from('wallets').select('id, balance, currency').eq('user_id', user.id).eq('currency', 'GNF').maybeSingle(),
         supabase.from('virtual_cards').select('*').eq('user_id', user.id).maybeSingle()
       ]);
-      setWallet(walletRes.data);
+      // Repli : si pas de wallet GNF, prendre n'importe quel wallet (affichage seulement)
+      let walletData = walletRes.data;
+      if (!walletData) {
+        const { data: anyWallet } = await supabase.from('wallets').select('id, balance, currency').eq('user_id', user.id).maybeSingle();
+        walletData = anyWallet;
+      }
+      setWallet(walletData);
       setCard(cardRes.data);
 
       // Charger les stats si la carte existe
@@ -94,13 +135,13 @@ export const ProfessionalVirtualCard = () => {
 
   const createCard = async () => {
     if (!user || !wallet) {
-      toast.error('Un wallet actif est requis');
+      toast.error(t('professionalVirtualCard.unWalletActifEstRequis'));
       return;
     }
     setCreating(true);
     try {
-      const cardNumber = '5245' + Math.floor(Math.random() * 1000000000000).toString().padStart(12, '0');
-      const cvv = Math.floor(Math.random() * 900 + 100).toString();
+      const cardNumber = generateSecureCardNumber();
+      const cvv = secureRandomInt(1000).toString().padStart(3, '0');
       const expiry = new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000);
       const holderName = profile?.first_name && profile?.last_name
         ? `${profile.first_name} ${profile.last_name}`.toUpperCase()
@@ -118,11 +159,11 @@ export const ProfessionalVirtualCard = () => {
       });
 
       if (error) throw error;
-      toast.success('Carte virtuelle créée avec succès !');
+      toast.success(t('professionalVirtualCard.carteVirtuelleCreeeAvecSucces'));
       await loadData();
     } catch (error) {
       console.error('Error creating card:', error);
-      toast.error('Erreur lors de la création');
+      toast.error(t('professionalVirtualCard.erreurLorsDeLaCreation'));
     } finally {
       setCreating(false);
     }
@@ -146,6 +187,7 @@ export const ProfessionalVirtualCard = () => {
   const getStatusConfig = (status: string) => {
     const configs: Record<string, { color: string; icon: React.ReactNode; label: string }> = {
       active: { color: 'bg-[#ff4000]', icon: <CheckCircle2 className="w-3 h-3" />, label: 'Active' },
+      inactive: { color: 'bg-blue-500', icon: <Snowflake className="w-3 h-3" />, label: 'Gelée' },
       frozen: { color: 'bg-blue-500', icon: <Snowflake className="w-3 h-3" />, label: 'Gelée' },
       blocked: { color: 'bg-[#ff4000]', icon: <AlertTriangle className="w-3 h-3" />, label: 'Bloquée' }
     };
@@ -177,7 +219,7 @@ export const ProfessionalVirtualCard = () => {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-lg p-0 overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <DialogContent className="max-w-lg p-0 overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 max-h-[90vh] overflow-y-auto">
         <div className="p-6 space-y-6">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
@@ -241,7 +283,7 @@ export const ProfessionalVirtualCard = () => {
                       {/* Card Number */}
                       <div className="space-y-2 relative z-10">
                         <div className="flex items-center gap-2">
-                          <p className="text-white/60 text-xs font-medium tracking-wider">NUMÉRO DE CARTE</p>
+                          <p className="text-white/60 text-xs font-medium tracking-wider">{t('professionalVirtualCard.numeroDeCarte')}</p>
                           {showDetails && (
                             <Button
                               size="sm"
@@ -328,7 +370,7 @@ export const ProfessionalVirtualCard = () => {
                       <div className="px-6 pb-4 flex items-center justify-between">
                         <div className="text-white/60 text-xs">
                           <Lock className="w-3 h-3 inline mr-1" />
-                          Sécurisée par Stripe
+                          Sécurisée par 224PAY
                         </div>
                         <div className="text-white/60 text-xs">224SOLUTIONS</div>
                       </div>
@@ -351,9 +393,9 @@ export const ProfessionalVirtualCard = () => {
                           <Zap className="w-5 h-5 text-[#ff4000]" />
                         </div>
                         <div>
-                          <p className="text-white/60 text-xs">Solde disponible</p>
+                          <p className="text-white/60 text-xs">{t('professionalVirtualCard.soldeDisponible')}</p>
                           <p className="text-white font-bold text-xl">
-                            {wallet.balance.toLocaleString('fr-FR')} <span className="text-sm text-white/60">{wallet.currency}</span>
+                            <Money amount={wallet.balance} from={wallet.currency || 'GNF'} />
                           </p>
                         </div>
                       </div>
@@ -369,7 +411,7 @@ export const ProfessionalVirtualCard = () => {
               <div className="grid grid-cols-2 gap-3">
                 <Card className="bg-white/5 border-white/10">
                   <CardContent className="p-3">
-                    <p className="text-white/60 text-xs mb-1">Dépensé aujourd'hui</p>
+                    <p className="text-white/60 text-xs mb-1">{t('professionalVirtualCard.depenseAujourdHui')}</p>
                     <p className="text-white font-semibold">
                       <Money amount={stats?.daily_spent || card.daily_spent || 0} from="GNF" />
                     </p>
@@ -388,7 +430,7 @@ export const ProfessionalVirtualCard = () => {
                 </Card>
                 <Card className="bg-white/5 border-white/10">
                   <CardContent className="p-3">
-                    <p className="text-white/60 text-xs mb-1">Dépensé ce mois</p>
+                    <p className="text-white/60 text-xs mb-1">{t('professionalVirtualCard.depenseCeMois')}</p>
                     <p className="text-white font-semibold">
                       <Money amount={stats?.monthly_spent || card.monthly_spent || 0} from="GNF" />
                     </p>
@@ -420,7 +462,7 @@ export const ProfessionalVirtualCard = () => {
                 <Button
                   variant="outline"
                   onClick={async () => {
-                    const newStatus = card.status === 'active' ? 'frozen' : 'active';
+                    const newStatus = card.status === 'active' ? 'inactive' : 'active';
                     const success = await toggleCardStatus(card.id, newStatus);
                     if (success) loadData();
                   }}
@@ -461,7 +503,7 @@ export const ProfessionalVirtualCard = () => {
                   <Card className="bg-white/5 border-white/10">
                     <CardContent className="p-4 space-y-3">
                       <div className="flex justify-between text-sm">
-                        <span className="text-white/60">Total dépensé</span>
+                        <span className="text-white/60">{t('professionalVirtualCard.totalDepense')}</span>
                         <span className="text-white font-medium">
                           <Money amount={stats?.total_spent || card.total_spent || 0} from="GNF" />
                         </span>
@@ -476,10 +518,10 @@ export const ProfessionalVirtualCard = () => {
                         <span className="text-white/60">Statut</span>
                         <Badge className={cn(
                           card.status === 'active' ? 'bg-[#ff4000]' :
-                          card.status === 'frozen' ? 'bg-blue-500' : 'bg-[#ff4000]'
+                          (card.status === 'frozen' || card.status === 'inactive') ? 'bg-blue-500' : 'bg-[#ff4000]'
                         )}>
                           {card.status === 'active' ? 'Active' :
-                           card.status === 'frozen' ? 'Gelée' : 'Bloquée'}
+                           (card.status === 'frozen' || card.status === 'inactive') ? 'Gelée' : 'Bloquée'}
                         </Badge>
                       </div>
                     </CardContent>
@@ -500,7 +542,7 @@ export const ProfessionalVirtualCard = () => {
                     <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/10 flex items-center justify-center">
                       <Plus className="w-8 h-8 text-white/40" />
                     </div>
-                    <p className="text-white/60 text-sm">Créez votre carte virtuelle</p>
+                    <p className="text-white/60 text-sm">{t('professionalVirtualCard.creezVotreCarteVirtuelle')}</p>
                   </div>
                   <div className="flex items-end justify-between">
                     <div className="text-white/30 text-sm">•••• •••• •••• ••••</div>
@@ -516,19 +558,19 @@ export const ProfessionalVirtualCard = () => {
               <div className="space-y-3">
                 <div className="flex items-center gap-3 text-white/80">
                   <CheckCircle2 className="w-5 h-5 text-[#ff4000]" />
-                  <span className="text-sm">Paiements en ligne sécurisés</span>
+                  <span className="text-sm">{t('professionalVirtualCard.paiementsEnLigneSecurises')}</span>
                 </div>
                 <div className="flex items-center gap-3 text-white/80">
                   <CheckCircle2 className="w-5 h-5 text-[#ff4000]" />
-                  <span className="text-sm">Limite journalière : 1 000 000 GNF</span>
+                  <span className="text-sm">{t('professionalVirtualCard.limiteJournaliere1000000')}</span>
                 </div>
                 <div className="flex items-center gap-3 text-white/80">
                   <CheckCircle2 className="w-5 h-5 text-[#ff4000]" />
-                  <span className="text-sm">Activation instantanée</span>
+                  <span className="text-sm">{t('professionalVirtualCard.activationInstantanee')}</span>
                 </div>
                 <div className="flex items-center gap-3 text-white/80">
                   <CheckCircle2 className="w-5 h-5 text-[#ff4000]" />
-                  <span className="text-sm">Débit automatique du wallet</span>
+                  <span className="text-sm">{t('professionalVirtualCard.debitAutomatiqueDuWallet')}</span>
                 </div>
               </div>
 

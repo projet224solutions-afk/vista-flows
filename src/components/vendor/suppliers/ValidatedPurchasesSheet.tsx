@@ -3,6 +3,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -61,6 +62,7 @@ interface Purchase {
 type PeriodFilter = 'today' | 'week' | 'month' | 'year' | 'all';
 
 export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurchase }: ValidatedPurchasesSheetProps) {
+  const { t } = useTranslation();
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
   const [deletePurchase, setDeletePurchase] = useState<Purchase | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -182,13 +184,13 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurch
 
       if (error) throw error;
 
-      toast.success('Achat supprimé avec succès');
+      toast.success(t('validatedPurchasesSheet.achatSupprimeAvecSucces'));
       queryClient.invalidateQueries({ queryKey: ['validated-purchases'] });
       queryClient.invalidateQueries({ queryKey: ['validated-purchases-stats'] });
       queryClient.invalidateQueries({ queryKey: ['stock-purchases'] });
     } catch (error) {
       console.error('Error deleting purchase:', error);
-      toast.error('Erreur lors de la suppression');
+      toast.error(t('validatedPurchasesSheet.erreurLorsDeLaSuppression'));
     } finally {
       setIsDeleting(false);
       setDeletePurchase(null);
@@ -210,7 +212,7 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurch
   return (
     <>
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent className="w-full sm:max-w-xl">
+        <SheetContent className="w-full sm:max-w-xl max-h-[90vh] overflow-y-auto">
           <SheetHeader className="pb-4">
             <SheetTitle className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-[#ff4000]" />
@@ -232,7 +234,7 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurch
             </Tabs>
 
             {/* Stats résumé */}
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               <Card className="bg-primary/5 border-primary/20">
                 <CardContent className="p-3 text-center">
                   <p className="text-2xl font-bold">{currentStats.count}</p>
@@ -248,7 +250,7 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurch
               <Card className="bg-[#ff4000]/10 border-[#ff4000]/20">
                 <CardContent className="p-3 text-center">
                   <p className="text-lg font-bold text-[#ff4000]">{formatCurrency(currentStats.totalProfit)}</p>
-                  <p className="text-xs text-muted-foreground">Profit estimé</p>
+                  <p className="text-xs text-muted-foreground">{t('validatedPurchasesSheet.profitEstime')}</p>
                 </CardContent>
               </Card>
             </div>
@@ -260,7 +262,7 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurch
               ) : purchases.length === 0 ? (
                 <div className="text-center py-12">
                   <ShoppingCart className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-                  <p className="text-muted-foreground">Aucun achat validé pour cette période</p>
+                  <p className="text-muted-foreground">{t('validatedPurchasesSheet.aucunAchatValidePourCette')}</p>
                 </div>
               ) : (
                 <div className="space-y-2 pr-4">
@@ -287,7 +289,7 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurch
                                 variant="ghost"
                                 size="icon"
                                 className="h-8 w-8"
-                                title="Voir les détails"
+                                title={t('validatedPurchasesSheet.voirLesDetails')}
                                 onClick={() => {
                                   onViewPurchase(purchase.id);
                                   onClose();
@@ -300,7 +302,7 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurch
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8"
-                              title="Supprimer l'achat"
+                              title={t('validatedPurchasesSheet.supprimerLAchat')}
                               onClick={() => setDeletePurchase(purchase)}
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />
@@ -321,14 +323,14 @@ export function ValidatedPurchasesSheet({ vendorId, isOpen, onClose, onViewPurch
       <AlertDialog open={!!deletePurchase} onOpenChange={() => setDeletePurchase(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer cet achat ?</AlertDialogTitle>
+            <AlertDialogTitle>{t('validatedPurchasesSheet.supprimerCetAchat')}</AlertDialogTitle>
             <AlertDialogDescription>
               Êtes-vous sûr de vouloir supprimer l'achat <strong>{deletePurchase?.purchase_number}</strong> ?
               Cette action est irréversible et supprimera également tous les articles associés.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>{t('validatedPurchasesSheet.annuler')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeletePurchase}
               disabled={isDeleting}

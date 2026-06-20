@@ -15,6 +15,7 @@ interface WebRTCCallContextType {
   rejectCall: WebRTCCallActions['rejectCall'];
   endCall: WebRTCCallActions['endCall'];
   toggleMute: WebRTCCallActions['toggleMute'];
+  toggleVideo: WebRTCCallActions['toggleVideo'];
 }
 
 const WebRTCCallContext = createContext<WebRTCCallContextType | null>(null);
@@ -39,12 +40,17 @@ export function useWebRTCCallContext() {
         remoteUserInfo: null,
         connectionState: null,
         iceConnectionState: null,
+        callMode: 'audio',
+        isVideoEnabled: false,
+        localStream: null,
+        remoteStream: null,
       },
       startCall: async () => { console.warn('WebRTCCallProvider not mounted'); },
       acceptCall: async () => {},
       rejectCall: () => {},
       endCall: () => {},
       toggleMute: () => {},
+      toggleVideo: () => {},
     } as WebRTCCallContextType;
   }
   return context;

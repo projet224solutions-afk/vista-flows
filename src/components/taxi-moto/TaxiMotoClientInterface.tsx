@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card } from "@/components/ui/card";
 import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 
 export function TaxiMotoClientInterface() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const {
     currentRide,
@@ -48,7 +50,7 @@ export function TaxiMotoClientInterface() {
         },
         (error) => {
           console.error('Geolocation error:', error);
-          toast.error('Impossible d\'obtenir votre position');
+          toast.error(t('taxiMotoClientInterface.impossibleDObtenirVotrePosition'));
         }
       );
     }
@@ -57,7 +59,7 @@ export function TaxiMotoClientInterface() {
   // Calculer le tarif estimé
   const handleCalculateFare = async () => {
     if (!pickupAddress || !dropoffAddress) {
-      toast.error('Veuillez renseigner les adresses');
+      toast.error(t('taxiMotoClientInterface.veuillezRenseignerLesAdresses'));
       return;
     }
 
@@ -68,17 +70,17 @@ export function TaxiMotoClientInterface() {
 
       const fare = await TaxiMotoService.calculateFare(distanceKm, durationMin);
       setEstimatedFare(fare);
-      toast.success('Tarif calculé');
+      toast.success(t('taxiMotoClientInterface.tarifCalcule'));
     } catch (error) {
       console.error('Error calculating fare:', error);
-      toast.error('Erreur lors du calcul du tarif');
+      toast.error(t('taxiMotoClientInterface.erreurLorsDuCalculDu'));
     }
   };
 
   // Créer une demande de course
   const handleRequestRide = async () => {
     if (!currentLocation || !estimatedFare) {
-      toast.error('Veuillez d\'abord calculer le tarif');
+      toast.error(t('taxiMotoClientInterface.veuillezDAbordCalculerLe'));
       return;
     }
 
@@ -91,7 +93,7 @@ export function TaxiMotoClientInterface() {
       const availableDrivers = await findNearbyDrivers(pickupLat, pickupLng, 10);
 
       if (!availableDrivers || availableDrivers.length === 0) {
-        toast.error('Aucun conducteur disponible actuellement. Veuillez réessayer plus tard.', {
+        toast.error(t('taxiMotoClientInterface.aucunConducteurDisponibleActuellementVeu'), {
           duration: 5000,
           description: 'Les conducteurs ne sont pas en ligne dans votre zone.'
         });
@@ -117,7 +119,7 @@ export function TaxiMotoClientInterface() {
       toast.success(`Course demandée! ${availableDrivers.length} conducteur(s) notifié(s).`);
     } catch (error) {
       console.error('Error requesting ride:', error);
-      toast.error('Erreur lors de la demande de course');
+      toast.error(t('taxiMotoClientInterface.erreurLorsDeLaDemande'));
     }
   };
 
@@ -125,7 +127,7 @@ export function TaxiMotoClientInterface() {
   const handleCancelRide = async () => {
     if (!currentRide) return;
 
-    const confirmed = window.confirm('Voulez-vous vraiment annuler cette course?');
+    const confirmed = window.confirm(t('taxiMotoClientInterface.voulezVousVraimentAnnulerCette'));
     if (!confirmed) return;
 
     try {
@@ -162,7 +164,7 @@ export function TaxiMotoClientInterface() {
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="font-medium">Montant:</span>
+              <span className="font-medium">{t('taxiMotoClientInterface.montant')}</span>
               <span className="text-lg font-bold"><Money amount={(currentRide as any).estimated_price || (currentRide as any).price_total || 0} from="GNF" /></span>
             </div>
 
@@ -185,7 +187,7 @@ export function TaxiMotoClientInterface() {
       {/* Demande de course */}
       {!currentRide && (
         <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Nouvelle course</h2>
+          <h2 className="text-xl font-semibold mb-4">{t('taxiMotoClientInterface.nouvelleCourse')}</h2>
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium mb-2 flex items-center gap-2">
@@ -195,7 +197,7 @@ export function TaxiMotoClientInterface() {
               <Input
                 value={pickupAddress}
                 onChange={(e) => setPickupAddress(e.target.value)}
-                placeholder="Adresse de départ"
+                placeholder={t('taxiMotoClientInterface.adresseDeDepart')}
               />
             </div>
 
@@ -207,7 +209,7 @@ export function TaxiMotoClientInterface() {
               <Input
                 value={dropoffAddress}
                 onChange={(e) => setDropoffAddress(e.target.value)}
-                placeholder="Adresse d'arrivée"
+                placeholder={t('taxiMotoClientInterface.adresseDArrivee')}
               />
             </div>
 
@@ -215,11 +217,11 @@ export function TaxiMotoClientInterface() {
               <Card className="p-4 bg-muted">
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span>Distance estimée:</span>
+                    <span>{t('taxiMotoClientInterface.distanceEstimee')}</span>
                     <span className="font-semibold">5 km</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Durée estimée:</span>
+                    <span>{t('taxiMotoClientInterface.dureeEstimee')}</span>
                     <span className="font-semibold">15 min</span>
                   </div>
                   <div className="flex justify-between text-lg font-bold pt-2 border-t">
@@ -248,7 +250,7 @@ export function TaxiMotoClientInterface() {
       {/* Chauffeurs à proximité */}
       {nearbyDrivers.length > 0 && (
         <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Chauffeurs à proximité</h2>
+          <h2 className="text-xl font-semibold mb-4">{t('taxiMotoClientInterface.chauffeursAProximite')}</h2>
           <div className="space-y-3">
             {nearbyDrivers.slice(0, 5).map((driver) => (
               <div
@@ -284,7 +286,7 @@ export function TaxiMotoClientInterface() {
           amount={(currentRide as any).estimated_price || (currentRide as any).price_total || 0}
           onPaymentSuccess={() => {
             setShowPaymentModal(false);
-            toast.success('Paiement effectué!');
+            toast.success(t('taxiMotoClientInterface.paiementEffectue'));
           }}
         />
       )}

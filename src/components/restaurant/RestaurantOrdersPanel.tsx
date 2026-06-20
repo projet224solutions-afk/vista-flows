@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
@@ -70,6 +71,7 @@ interface RestaurantOrdersPanelProps {
 }
 
 export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps) {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const [orders, setOrders] = useState<RestaurantOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,7 +98,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
       console.log('✅ Commandes restaurant chargées:', data?.length || 0);
     } catch (err) {
       console.error('Erreur chargement commandes:', err);
-      toast.error('Erreur lors du chargement des commandes');
+      toast.error(t('restaurantOrdersPanel.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
       setIsRefreshing(false);
@@ -180,13 +182,16 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
       }
     } catch (err) {
       console.error('Erreur mise à jour statut:', err);
-      toast.error('Erreur lors de la mise à jour');
+      toast.error(t('restaurantOrdersPanel.erreurLorsDeLaMise'));
     }
   };
 
-  // Filtrer par onglet
-  const pendingOrders = orders.filter(o => o.status === 'pending');
-  const activeOrders = orders.filter(o => ['confirmed', 'preparing', 'ready'].includes(o.status));
+  // Les ventes de CAISSE comptoir (source 'pos'/'pos_offline') sont finalisées/encaissées par le
+  // restaurateur → elles n'ont rien à faire dans la file « à traiter ». On les exclut de « en attente »
+  // et « en cours » (elles restent visibles dans « terminées »/analytics).
+  const isClientOrder = (o: RestaurantOrder) => !['pos', 'pos_offline'].includes(o.source as string);
+  const pendingOrders = orders.filter(o => o.status === 'pending' && isClientOrder(o));
+  const activeOrders = orders.filter(o => ['confirmed', 'preparing', 'ready'].includes(o.status) && isClientOrder(o));
   const completedOrders = orders.filter(o => ['delivered', 'completed', 'cancelled'].includes(o.status));
 
   const getTabOrders = () => {
@@ -222,7 +227,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
                 <span className="ml-1">{status.label}</span>
               </Badge>
               {order.payment_status === 'paid' && (
-                <Badge className="bg-[#ff4000]">Payé</Badge>
+                <Badge className="bg-[#ff4000]">{t('restaurantOrdersPanel.paye')}</Badge>
               )}
             </div>
             <span className="text-xs text-muted-foreground">
@@ -353,7 +358,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Bell className="w-5 h-5 text-primary" />
-          <h2 className="text-lg font-bold">Commandes</h2>
+          <h2 className="text-lg font-bold">{t('restaurantOrdersPanel.commandes')}</h2>
           {pendingOrders.length > 0 && (
             <Badge className="bg-[#ff4000] animate-pulse">{pendingOrders.length} nouvelle(s)</Badge>
           )}
@@ -431,15 +436,15 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
               <Card>
                 <CardContent className="p-4 space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Numéro</span>
+                    <span className="text-muted-foreground">{t('restaurantOrdersPanel.numero')}</span>
                     <span className="font-bold">{selectedOrder.order_number}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Client</span>
+                    <span className="text-muted-foreground">{t('restaurantOrdersPanel.client')}</span>
                     <span>{selectedOrder.customer_name}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Téléphone</span>
+                    <span className="text-muted-foreground">{t('restaurantOrdersPanel.telephone')}</span>
                     <a href={`tel:${selectedOrder.customer_phone}`} className="flex items-center gap-1 text-primary">
                       <Phone className="w-4 h-4" />
                       {selectedOrder.customer_phone}
@@ -468,7 +473,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Paiement</span>
+                    <span className="text-muted-foreground">{t('restaurantOrdersPanel.paiement')}</span>
                     <span className="flex items-center gap-1">
                       {paymentMethodIcons[selectedOrder.payment_method]}
                       {selectedOrder.payment_method === 'cash' ? 'Espèces' :
@@ -481,7 +486,7 @@ export function RestaurantOrdersPanel({ serviceId }: RestaurantOrdersPanelProps)
               {/* Items */}
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Articles commandés</CardTitle>
+                  <CardTitle className="text-sm">{t('restaurantOrdersPanel.articlesCommandes')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {Array.isArray(selectedOrder.items) && selectedOrder.items.map((item: any, i: number) => (

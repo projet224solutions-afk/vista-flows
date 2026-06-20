@@ -1,5 +1,6 @@
 ﻿import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -119,6 +120,7 @@ async function resolveVendorDisplayId(options: {
 }
 
 export default function Payment() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -141,6 +143,7 @@ export default function Payment() {
 
   // États pour le paiement
   const [paymentOpen, setPaymentOpen] = useState(false);
+  const [walletTab, setWalletTab] = useState('history');
   const [recipientId, setRecipientId] = useState('');
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentDescription, setPaymentDescription] = useState('');
@@ -1401,9 +1404,9 @@ export default function Payment() {
                   <Wallet className="h-8 w-8 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Solde disponible</p>
+                  <p className="text-sm text-muted-foreground">{t('payment.soldeDisponible')}</p>
                   <h2 className="text-3xl font-bold">
-                    {loading ? '...' : formatCurrency(walletBalance)}
+                    {loading ? '...' : formatCurrency(walletBalance, walletCurrency)}
                   </h2>
                 </div>
               </div>
@@ -1430,14 +1433,14 @@ export default function Payment() {
                     {paymentStep === 'form' ? (
                       <>
                         <DialogHeader>
-                          <DialogTitle>Effectuer un paiement</DialogTitle>
+                          <DialogTitle>{t('payment.effectuerUnPaiement')}</DialogTitle>
                           <DialogDescription>
                             Payez facilement avec votre wallet 224SOLUTIONS
                           </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4">
                           <div className="space-y-2">
-                            <Label htmlFor="recipient-id">ID du destinataire *</Label>
+                            <Label htmlFor="recipient-id">{t('payment.idDuDestinataire')}</Label>
                             <Input
                               id="recipient-id"
                               placeholder={searchParams.get('productId') !== null || location.state?.productId || location.state?.fromCart
@@ -1476,7 +1479,7 @@ export default function Payment() {
                           <div className="space-y-2">
                             <Input
                               id="payment-description"
-                              placeholder="Achat de produits..."
+                              placeholder={t('payment.achatDeProduits')}
                               value={paymentDescription}
                               onChange={(e) => setPaymentDescription(e.target.value)}
                               readOnly={searchParams.get('productId') !== null || location.state?.productId}
@@ -1756,7 +1759,7 @@ export default function Payment() {
             {recentTransactions.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <Receipt className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>Aucune transaction récente</p>
+                <p>{t('payment.aucuneTransactionRecente')}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -1796,16 +1799,16 @@ export default function Payment() {
         </Card>
 
         {/* Tabs pour plus d'options */}
-        <Tabs defaultValue="history" className="w-full">
+        <Tabs value={walletTab} onValueChange={setWalletTab} className="w-full" id="wallet-tabs">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="history">Historique complet</TabsTrigger>
-            <TabsTrigger value="cards">Moyens de paiement</TabsTrigger>
+            <TabsTrigger value="cards">{t('payment.moyensDePaiement')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="history" className="mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Historique des transactions</CardTitle>
+                <CardTitle>{t('payment.historiqueDesTransactions')}</CardTitle>
                 <CardDescription>
                   Toutes vos transactions détaillées
                 </CardDescription>
@@ -1869,7 +1872,7 @@ export default function Payment() {
                 <div className="space-y-4 pt-4 max-h-[60vh] overflow-y-auto pr-2">
                   <div className="bg-muted/50 rounded-lg p-4 space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">💰 Montant</span>
+                      <span className="text-sm text-muted-foreground">{t('payment.montant')}</span>
                       <span className="text-lg font-bold">{paymentPreview?.amount?.toLocaleString()} {paymentPreview?.currency_sent || 'GNF'}</span>
                     </div>
                     <div className="flex justify-between items-center border-t pt-2">
@@ -1877,21 +1880,21 @@ export default function Payment() {
                       <span className="text-lg font-bold">{paymentPreview?.fee_amount?.toLocaleString()} {paymentPreview?.currency_sent || 'GNF'}</span>
                     </div>
                     <div className="flex justify-between items-center border-t pt-2 bg-orange-50 dark:bg-[#ff4000] -mx-4 px-4 py-2 rounded">
-                      <span className="text-sm font-bold">💳 Total à débiter</span>
+                      <span className="text-sm font-bold">{t('payment.totalADebiter')}</span>
                       <span className="text-xl font-bold text-destructive">{paymentPreview?.total_debit?.toLocaleString()} {paymentPreview?.currency_sent || 'GNF'}</span>
                     </div>
                     <div className="flex justify-between items-center border-t pt-2 bg-orange-50 dark:bg-[#ff4000] -mx-4 px-4 py-2 rounded">
-                      <span className="text-sm font-medium">✓ Le destinataire recevra</span>
+                      <span className="text-sm font-medium">{t('payment.leDestinataireRecevra')}</span>
                       <span className="text-lg font-bold text-success">{paymentPreview?.amount_received?.toLocaleString()} {paymentPreview?.currency_received || paymentPreview?.currency_sent || 'GNF'}</span>
                     </div>
                   </div>
 
                   <div className="text-sm space-y-1 text-muted-foreground">
                     <p>
-                      <strong>Solde actuel:</strong> {paymentPreview?.current_balance?.toLocaleString()} {paymentPreview?.currency_sent || 'GNF'}
+                      <strong>{t('payment.soldeActuel')}</strong> {paymentPreview?.current_balance?.toLocaleString()} {paymentPreview?.currency_sent || 'GNF'}
                     </p>
                     <p>
-                      <strong>Solde après paiement:</strong> {paymentPreview?.balance_after?.toLocaleString()} {paymentPreview?.currency_sent || 'GNF'}
+                      <strong>{t('payment.soldeApresPaiement')}</strong> {paymentPreview?.balance_after?.toLocaleString()} {paymentPreview?.currency_sent || 'GNF'}
                     </p>
                   </div>
 
@@ -1902,7 +1905,7 @@ export default function Payment() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="flex-shrink-0 mt-4">
-              <AlertDialogCancel disabled={processing}>Annuler</AlertDialogCancel>
+              <AlertDialogCancel disabled={processing}>{t('payment.annuler')}</AlertDialogCancel>
               <AlertDialogAction onClick={handleConfirmPayment} disabled={processing}>
                 {processing ? 'Traitement...' : 'Confirmer le paiement'}
               </AlertDialogAction>

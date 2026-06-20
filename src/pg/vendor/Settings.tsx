@@ -1,5 +1,6 @@
 ﻿import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from '@/integrations/supabase/client';
 import VendorBusinessSettings from '@/components/vendor/settings/VendorBusinessSettings';
 import VendorLocationSettings from '@/components/vendor/settings/VendorLocationSettings';
@@ -13,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Building2, User, Bell, Truck, MapPin, ImageIcon, Shield, Globe } from 'lucide-react';
 
 export default function VendorSettings() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [vendorId, setVendorId] = useState<string | null>(null);
@@ -78,7 +80,7 @@ export default function VendorSettings() {
   return (
     <div className="container max-w-4xl mx-auto py-8 px-4">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Paramètres</h1>
+        <h1 className="text-3xl font-bold">{t('settings.parametres')}</h1>
         <p className="text-muted-foreground mt-2">
           Gérez les paramètres de votre compte et de votre entreprise
         </p>
@@ -100,7 +102,7 @@ export default function VendorSettings() {
           </TabsTrigger>
           <TabsTrigger value="delivery" className="gap-2">
             <Truck className="w-4 h-4" />
-            <span className="hidden sm:inline">Livraison</span>
+            <span className="hidden sm:inline">{t('settings.livraison')}</span>
           </TabsTrigger>
           <TabsTrigger value="kyc" className="gap-2">
             <Shield className="w-4 h-4" />
@@ -112,7 +114,7 @@ export default function VendorSettings() {
           </TabsTrigger>
           <TabsTrigger value="profile" className="gap-2">
             <User className="w-4 h-4" />
-            <span className="hidden sm:inline">Profil</span>
+            <span className="hidden sm:inline">{t('settings.profil')}</span>
           </TabsTrigger>
           <TabsTrigger value="notifications" className="gap-2">
             <Bell className="w-4 h-4" />

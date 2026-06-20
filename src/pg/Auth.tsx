@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { AlertCircle, Loader2, Store, ArrowLeft, Eye, EyeOff, Search, ChevronDown, Check, RefreshCw, Zap, LogIn, UserPlus, Briefcase, CheckCircle2, Laptop, ShoppingBag, Bike, Truck, Utensils, Scissors, Car, Wrench, Sparkles, Dumbbell, Building2, Camera, Heart, Home, Phone, Lock, Mail } from "lucide-react";
+import { AlertCircle, Loader2, Store, ArrowLeft, Eye, EyeOff, Search, ChevronDown, Check, RefreshCw, Zap, LogIn, UserPlus, Briefcase, CheckCircle2, Laptop, ShoppingBag, Bike, Truck, Utensils, Scissors, Car, Wrench, Sparkles, Dumbbell, Building2, Camera, Heart, Home, Phone, Lock, Mail, Square, Hammer, Flame, Pill } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Separator } from "@/components/ui/separator";
@@ -90,10 +90,22 @@ const PROFESSIONAL_SERVICE_OPTIONS: ServiceSelectionOption[] = [
   { id: 'location', name: 'Immobilier', desc: 'Location & vente', icon: Building2, image: 'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80', logoImage: '/service-icons/logo-immobilier.jpeg' },
   { id: 'media', name: 'Photo & Vidéo', desc: 'Événements', icon: Camera, image: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/icon-photo-video.png' },
   { id: 'construction', name: 'Construction & BTP', desc: 'Bâtiment', icon: Building2, image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/logo-construction-btp.jpeg' },
+  { id: 'plomberie', name: 'Plomberie', desc: 'Fuites, sanitaires & urgence', icon: Wrench, image: 'https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/logo-plomberie.svg' },
+  { id: 'vitrerie', name: 'Vitrerie', desc: 'Vitres, miroirs & double vitrage', icon: Square, image: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/logo-vitrerie.svg' },
+  { id: 'menuiserie', name: 'Menuiserie', desc: 'Bois sur mesure & pose', icon: Hammer, image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/logo-menuiserie.svg' },
+  { id: 'soudure', name: 'Soudure & Métallerie', desc: 'Portails, ferronnerie & métal', icon: Flame, image: 'https://images.unsplash.com/photo-1565952511394-1e3e5f1f2f3d?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/logo-soudure.svg' },
   { id: 'agriculture', name: 'Agriculture', desc: 'Produits locaux', icon: ShoppingBag, image: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/icon-agriculture.png' },
   { id: 'freelance', name: 'Administratif', desc: 'Secrétariat', icon: Briefcase, image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/icon-administratif.png' },
-  { id: 'sante', name: 'Santé & Bien-être', desc: 'Pharmacie & soins', icon: Heart, image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/icon-sante.png' },
+  // « Santé & Bien-être » = catégorie : au clic, un sous-menu propose Pharmacie / Clinique.
+  { id: 'sante', name: 'Santé & Bien-être', desc: 'Pharmacie & clinique', icon: Heart, image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/icon-sante.png' },
   { id: 'maison', name: 'Maison & Déco', desc: 'Intérieur', icon: Home, image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/icon-maison.png' },
+];
+
+// Sous-types du domaine « Santé & Bien-être » affichés dans le sous-menu à l'inscription :
+// UNIQUEMENT Pharmacie et Clinique. Chaque id = un code service_types.
+const HEALTH_SUBTYPE_OPTIONS: ServiceSelectionOption[] = [
+  { id: 'pharmacie', name: 'Pharmacie', desc: 'Médicaments & ordonnances', icon: Pill, image: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/icon-sante.png' },
+  { id: 'clinique', name: 'Clinique', desc: 'Consultations & analyses', icon: Building2, image: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=800&q=80', logoImage: '/service-icons/icon-sante.png' },
 ];
 
 export default function Auth() {
@@ -186,6 +198,8 @@ export default function Auth() {
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [showSignup, setShowSignup] = useState(false);
   const [selectedServiceType, setSelectedServiceType] = useState<string | null>(null);
+  // Sous-menu de la catégorie « Santé & Bien-être » (Pharmacie / Clinique / Soins).
+  const [healthDialogOpen, setHealthDialogOpen] = useState(false);
   const [showServiceSelection, setShowServiceSelection] = useState(false);
   const [showRoleSelectionModal, setShowRoleSelectionModal] = useState(false);
   const [vendorShopType, setVendorShopType] = useState<'physical' | 'digital' | null>(null);
@@ -918,26 +932,64 @@ export default function Auth() {
         // 🔑 ÉTAPE 2: Synchroniser avec Supabase Auth (pour RLS/DB)
         // Supabase est le système principal - sync Cloud SQL en arrière-plan
 
-        // 🔑 Signup Supabase directement
-        const { data: authData, error } = await supabase.auth.signUp({
-          email: validatedData.email,
-          password: validatedData.password,
-          options: {
-            data: {
-              first_name: validatedData.firstName,
-              last_name: validatedData.lastName,
-              role: validatedData.role,
-              phone: `${phoneCode} ${formData.phone}`,
-              country: formData.country,
-              city: validatedData.city,
-              custom_id: userCustomId,
-              cognito_user_id: undefined,
-              business_name: validatedData.role === 'vendeur' ? (formData.businessName?.trim() || `${validatedData.firstName} ${validatedData.lastName}`) : null,
-              service_type: validatedData.role === 'prestataire' ? selectedServiceType : null
-            },
-            emailRedirectTo: `${window.location.origin}/`
+        // 🔑 Signup Supabase directement (principal). En cas de PANNE réseau, signUp peut throw.
+        let authData: any = null;
+        let error: any = null;
+        try {
+          const r = await supabase.auth.signUp({
+            email: validatedData.email,
+            password: validatedData.password,
+            options: {
+              data: {
+                first_name: validatedData.firstName,
+                last_name: validatedData.lastName,
+                role: validatedData.role,
+                phone: `${phoneCode} ${formData.phone}`,
+                country: formData.country,
+                city: validatedData.city,
+                custom_id: userCustomId,
+                cognito_user_id: undefined,
+                business_name: (validatedData.role === 'vendeur' || validatedData.role === 'prestataire')
+                  ? (formData.businessName?.trim() || `${validatedData.firstName} ${validatedData.lastName}`)
+                  : null,
+                service_type: validatedData.role === 'prestataire' ? selectedServiceType : null
+              },
+              emailRedirectTo: `${window.location.origin}/`
+            }
+          });
+          authData = r.data; error = r.error;
+        } catch (netErr) {
+          error = netErr; // panne réseau Supabase → traité comme indisponibilité ci-dessous
+        }
+
+        // 🔁 FAILOVER COGNITO (inscription) : si Supabase est INDISPONIBLE (réseau/5xx/timeout),
+        // Cognito prend le relais pour ne pas perdre l'inscription. On NE bascule PAS sur une
+        // erreur métier normale (email déjà pris…) → celle-ci suit le flux Supabase habituel.
+        const isOutage = !!error && /failed to fetch|networkerror|load failed|timeout|fetch error|503|502|504|500|service unavailable|gateway|temporar|injoignable|indisponible/i.test(String(error?.message || error).toLowerCase());
+        if (isOutage) {
+          try {
+            const { backendFetch } = await import('@/services/backendApi');
+            const fo = await backendFetch<any>('/api/auth/failover/register', {
+              method: 'POST', allowAnonymous: true,
+              body: {
+                email: validatedData.email, password: validatedData.password, role: selectedRole,
+                firstName: validatedData.firstName, lastName: validatedData.lastName,
+                serviceType: validatedData.role === 'prestataire' ? selectedServiceType : null,
+                phone: `${phoneCode} ${formData.phone}`, city: validatedData.city, country: formData.country,
+              },
+            });
+            if (fo.success) {
+              setSuccess('Compte créé en mode secours (service momentanément indisponible). Vous pourrez vous connecter dans quelques instants.');
+              toast({ title: 'Compte créé (mode secours)', description: 'Connexion disponible dès le rétablissement du service.' });
+              setLoading(false);
+              return;
+            }
+            if ((fo as any).code === 'USER_EXISTS') throw new Error('Cette adresse e-mail est déjà inscrite. Veuillez vous connecter.');
+          } catch (foErr: any) {
+            if (foErr?.message?.includes('déjà inscrite')) throw foErr;
+            // Relais Cognito indisponible → on laisse l'erreur Supabase suivre son cours normal.
           }
-        });
+        }
 
         // Si c'est un taxi-motard, créer son profil conducteur et le lier à son bureau
         if (!error && authData.user && validatedData.role === 'taxi') {
@@ -1034,6 +1086,15 @@ export default function Auth() {
 
         // ✓ NOUVEAU: Si c'est un prestataire de service, créer le professional_service SANS vendor
         if (!error && authData.user && validatedData.role === 'prestataire' && selectedServiceType) {
+          // Filet : si la confirmation email est active, l'insert ci-dessous est bloqué par RLS
+          // (pas de session avant confirmation). On mémorise le type de service pour que useAuth
+          // (re)crée le professional_services au 1er chargement authentifié (idempotent).
+          localStorage.setItem('oauth_service_type', selectedServiceType);
+          // Mémoriser le nom de l'établissement (pharmacie/clinique…) pour que le filet useAuth
+          // le réutilise si l'insert ci-dessous est bloqué par RLS (confirmation email = pas de session).
+          if (formData.businessName?.trim()) {
+            localStorage.setItem('oauth_business_name', formData.businessName.trim());
+          }
           try {
             const businessName = formData.businessName?.trim() || `${validatedData.firstName} ${validatedData.lastName}`;
             console.log('🔧 Création du professional_service pour prestataire:', selectedServiceType);
@@ -1054,6 +1115,7 @@ export default function Auth() {
                   user_id: authData.user.id,
                   service_type_id: serviceType.id,
                   business_name: businessName,
+                  city: validatedData.city,
                   address: validatedData.city,
                   phone: `${phoneCode} ${formData.phone}`,
                   email: validatedData.email,
@@ -1062,12 +1124,22 @@ export default function Auth() {
                 });
 
               if (professionalServiceError) {
-                console.error('✕ Erreur création professional_service:', professionalServiceError);
-                toast({
-                  title: "Erreur de création du service professionnel",
-                  description: professionalServiceError.message || "Le service n'a pas pu être créé.",
-                  variant: "destructive"
-                });
+                // Pas de session (confirmation email active) → l'insert est bloqué par RLS.
+                // Ce n'est PAS un échec : le filet useAuth (re)crée le service au 1er login
+                // (avec le nom mémorisé). On n'alarme donc pas l'utilisateur dans ce cas.
+                const code = (professionalServiceError as { code?: string }).code;
+                const isRlsNoSession = code === '42501'
+                  || /row-level security|permission denied|jwt|not authenticated/i.test(professionalServiceError.message || '');
+                if (isRlsNoSession) {
+                  console.warn('ℹ️ Service prestataire sera créé au 1er login (pas de session à l\'inscription).');
+                } else {
+                  console.error('✕ Erreur création professional_service:', professionalServiceError);
+                  toast({
+                    title: "Erreur de création du service professionnel",
+                    description: professionalServiceError.message || "Le service n'a pas pu être créé.",
+                    variant: "destructive"
+                  });
+                }
               } else {
                 console.log('✓ Professional service créé pour prestataire:', selectedServiceType);
               }
@@ -1273,6 +1345,24 @@ export default function Auth() {
           error = direct.error;
         }
 
+        // 🔁 FAILOVER COGNITO (login) : si Supabase échoue (panne) OU si le compte a été créé en
+        // relais Cognito pendant une panne (absent de Supabase), on vérifie via Cognito et on
+        // réconcilie vers Supabase, puis on réessaie le login Supabase normal. Pas de masquage :
+        // le backend ne réconcilie que si les identifiants sont RÉELLEMENT valides dans Cognito.
+        if (error && !String(error.message || '').includes('Email not confirmed')) {
+          try {
+            const { backendFetch } = await import('@/services/backendApi');
+            const fo = await backendFetch<any>('/api/auth/failover/login', {
+              method: 'POST', allowAnonymous: true,
+              body: { email: validatedData.email, password: validatedData.password },
+            });
+            if (fo.success && (fo as any).reconciled) {
+              const retry = await supabase.auth.signInWithPassword({ email: validatedData.email, password: validatedData.password });
+              if (!retry.error && retry.data?.user) { data = retry.data; error = null; }
+            }
+          } catch { /* failover indisponible → on garde l'erreur Supabase d'origine */ }
+        }
+
         if (error) {
           const msg = String(error.message || '');
           if (msg.includes('Email not confirmed')) {
@@ -1429,6 +1519,12 @@ export default function Auth() {
       return;
     }
 
+    // « Santé & Bien-être » est une CATÉGORIE → ouvrir le sous-menu (Pharmacie / Clinique / Soins).
+    if (serviceTypeId === 'sante') {
+      setHealthDialogOpen(true);
+      return;
+    }
+
     // ✓ NOUVEAU: Les services professionnels utilisent le rôle 'prestataire' (PAS 'vendeur')
     setSelectedServiceType(serviceTypeId);
     setSelectedRole('prestataire');
@@ -1436,6 +1532,17 @@ export default function Auth() {
     setShowServiceSelection(false);
     setShowSignup(true);
     console.log('🔧 [Auth] Service sélectionné:', serviceTypeId, '→ rôle: prestataire (indépendant du vendeur)');
+  };
+
+  // Sélection d'un sous-type santé (pharmacie / clinique / sante) → prestataire.
+  const handleHealthSubtypeSelect = (code: string) => {
+    setHealthDialogOpen(false);
+    setSelectedServiceType(code);
+    setSelectedRole('prestataire');
+    setVendorShopType(null);
+    setShowServiceSelection(false);
+    setShowSignup(true);
+    console.log('🔧 [Auth] Sous-type santé sélectionné:', code, '→ rôle: prestataire');
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -2041,9 +2148,48 @@ export default function Auth() {
                 </div>
               </div>
 
+              {/* Sous-menu « Santé & Bien-être » : Pharmacie / Clinique / Soins */}
+              <Dialog open={healthDialogOpen} onOpenChange={setHealthDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                  <div className="mb-2 space-y-1">
+                    <h3 className="flex items-center gap-2 text-lg font-bold text-foreground">
+                      <Heart className="h-5 w-5 text-[#ff4000]" /> Santé & Bien-être
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Choisissez votre type d'établissement de santé.
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3">
+                    {HEALTH_SUBTYPE_OPTIONS.map((service) => {
+                      const Icon = service.icon;
+                      return (
+                        <button
+                          key={service.id}
+                          type="button"
+                          onClick={() => handleHealthSubtypeSelect(service.id)}
+                          className="group flex items-center gap-3 rounded-xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white p-3 text-left transition-all hover:border-[#04439e] hover:shadow-lg"
+                        >
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white shadow-sm">
+                            {service.logoImage ? (
+                              <img src={service.logoImage} alt={service.name} className="h-full w-full object-cover" loading="lazy" />
+                            ) : (
+                              <Icon className="h-6 w-6 text-[#04439e]" />
+                            )}
+                          </div>
+                          <div>
+                            <span className="block text-sm font-semibold text-foreground">{service.name}</span>
+                            <span className="block text-[11px] text-muted-foreground">{service.desc}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </DialogContent>
+              </Dialog>
+
               {/* Google OAuth pour inscription service */}
               <div className="mt-4 pt-4 border-t border-border/50">
-                <p className="text-xs text-muted-foreground text-center mb-3">ou créer votre compte professionnel avec</p>
+                <p className="text-xs text-muted-foreground text-center mb-3">{t('auth.orCreateProAccountWith')}</p>
                 <button
                   type="button"
                   onClick={() => {
@@ -2092,7 +2238,7 @@ export default function Auth() {
               <div className="flex flex-col items-center justify-center py-12 space-y-4">
                 <Loader2 className="w-12 h-12 animate-spin text-primary" />
                 <div className="text-center">
-                  <h3 className="text-lg font-semibold text-foreground">Vérification en cours...</h3>
+                  <h3 className="text-lg font-semibold text-foreground">{t('auth.verifyingInProgress')}</h3>
                   <p className="text-sm text-muted-foreground mt-2">
                     Validation de votre lien de réinitialisation
                   </p>
@@ -2184,7 +2330,7 @@ export default function Auth() {
                       <Zap className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-foreground font-semibold text-sm mb-1">Connexion intelligente</p>
+                      <p className="text-foreground font-semibold text-sm mb-1">{t('auth.smartLogin')}</p>
                       <p className="text-muted-foreground text-xs leading-relaxed">
                         Utilisez vos identifiants habituels. Le système reconnaîtra automatiquement votre type de compte.
                       </p>
@@ -2212,8 +2358,8 @@ export default function Auth() {
                     <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
                       <Store className="h-7 w-7 text-primary" />
                     </div>
-                    <h3 className="text-base font-bold text-foreground mb-1">Vendeur classique</h3>
-                    <p className="text-xs text-muted-foreground">Quel type de produits souhaitez-vous vendre ?</p>
+                    <h3 className="text-base font-bold text-foreground mb-1">{t('auth.classicSeller')}</h3>
+                    <p className="text-xs text-muted-foreground">{t('auth.whatProductsToSell')}</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -2235,7 +2381,7 @@ export default function Auth() {
                       </div>
                       <div className="min-w-0">
                         <span className="text-xs sm:text-sm font-bold text-foreground block mb-0.5 sm:mb-1">E-commerce</span>
-                        <span className="text-[10px] sm:text-[11px] leading-tight text-muted-foreground block">Produits physiques, vêtements, électronique...</span>
+                        <span className="text-[10px] sm:text-[11px] leading-tight text-muted-foreground block">{t('auth.physicalProductsExamples')}</span>
                       </div>
                     </button>
 
@@ -2264,7 +2410,7 @@ export default function Auth() {
 
                   {/* Google OAuth pour vendeur classique */}
                   <div className="mt-4 pt-4 border-t border-border/50">
-                    <p className="text-xs text-muted-foreground text-center mb-3">ou créer votre boutique avec</p>
+                    <p className="text-xs text-muted-foreground text-center mb-3">{t('auth.orCreateShopWith')}</p>
                     <button
                       type="button"
                       onClick={() => {
@@ -2300,8 +2446,8 @@ export default function Auth() {
             {showSignupLayout && !showVendorTypeSelection && !selectedRole && (
               <div className="mb-6 bg-gradient-to-br from-muted/20 via-background to-muted/10 border border-border/50 rounded-2xl p-5 shadow-sm">
                 <div className="text-center mb-4">
-                  <h3 className="text-sm font-bold text-foreground mb-1">Choisissez votre profil</h3>
-                  <p className="text-xs text-muted-foreground">Sélectionnez le type de compte qui vous correspond</p>
+                  <h3 className="text-sm font-bold text-foreground mb-1">{t('auth.chooseYourProfile')}</h3>
+                  <p className="text-xs text-muted-foreground">{t('auth.selectMatchingAccount')}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   {/* Vendeur classique - Un seul bouton qui ouvre la page dédiée */}
@@ -2377,7 +2523,7 @@ export default function Auth() {
                   selectedRole === 'client' ? 'text-[#ff4000]' :
                   'text-foreground'
                 }`}>
-                  <strong>Création de compte :</strong> Remplissez les informations ci-dessous pour créer votre compte {selectedRole ? `en tant que ${selectedRole === 'prestataire' ? 'prestataire de service' : selectedRole === 'vendeur' ? 'vendeur e-commerce' : selectedRole}` : ''}.
+                  <strong>{t('auth.createAccount')} :</strong> {t('auth.fillInfoBelow')} {selectedRole ? `en tant que ${selectedRole === 'prestataire' ? 'prestataire de service' : selectedRole === 'vendeur' ? 'vendeur e-commerce' : selectedRole}` : ''}.
                   {selectedServiceType && (
                     <span className={`block mt-2 font-semibold ${
                       selectedRole === 'vendeur' ? 'text-primary' :
@@ -2432,10 +2578,10 @@ export default function Auth() {
                 {resetOtpSent ? (
                   <form onSubmit={handleResetVerifyOtp} className="space-y-4">
                     <p className="text-sm text-muted-foreground">
-                      Code SMS envoyé au <strong>{resetFormattedPhone}</strong>. Entrez le code reçu pour continuer.
+                      {t('auth.smsCodeSentTo')} <strong>{resetFormattedPhone}</strong>. {t('auth.enterCodeToContinue')}
                     </p>
                     <div className="space-y-2">
-                      <Label htmlFor="reset-otp">Code de vérification</Label>
+                      <Label htmlFor="reset-otp">{t('auth.verificationCode')}</Label>
                       <Input
                         id="reset-otp"
                         type="text"
@@ -2455,7 +2601,7 @@ export default function Auth() {
                       </Alert>
                     )}
                     <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={loading || resetOtpCode.length < 4}>
-                      {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Vérification...</> : 'Vérifier le code'}
+                      {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('auth.checking')}</> : t('auth.verifyCode')}
                     </Button>
                     <button
                       type="button"
@@ -2474,11 +2620,11 @@ export default function Auth() {
                   <p className="text-sm text-muted-foreground mb-4">
                     Entrez votre email ou numéro de téléphone pour réinitialiser votre mot de passe.
                   </p>
-                  <Label htmlFor="reset-email">Email ou numéro de téléphone</Label>
+                  <Label htmlFor="reset-email">{t('auth.emailOrPhone')}</Label>
                   <Input
                     id="reset-email"
                     type="text"
-                    placeholder="Email ou numéro de téléphone"
+                    placeholder={t('auth.emailOrPhone')}
                     value={resetEmail}
                     onChange={(e) => { setResetEmail(e.target.value); setPhoneNotFoundReset(false); }}
                     required
@@ -2491,8 +2637,8 @@ export default function Auth() {
                     <div className="flex items-start gap-2">
                       <AlertCircle className="h-4 w-4 text-[#ff4000] mt-0.5 shrink-0" />
                       <div>
-                        <p className="text-sm font-medium text-[#ff4000]">Numéro non reconnu</p>
-                        <p className="text-xs text-[#ff4000]">Ce numéro n'est lié à aucun compte 224Solutions.</p>
+                        <p className="text-sm font-medium text-[#ff4000]">{t('auth.numberNotRecognized')}</p>
+                        <p className="text-xs text-[#ff4000]">{t('auth.numberNotLinked')}</p>
                       </div>
                     </div>
                     <Button
@@ -2583,12 +2729,12 @@ export default function Auth() {
                     Choisissez votre nouveau mot de passe.
                   </p>
 
-                  <Label htmlFor="new-password">Nouveau mot de passe</Label>
+                  <Label htmlFor="new-password">{t('auth.newPassword')}</Label>
                   <div className="relative">
                     <Input
                       id="new-password"
                       type={showPassword ? "text" : "password"}
-                      placeholder="Minimum 8 caractères"
+                      placeholder={t('auth.minChars')}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       required
@@ -2605,12 +2751,12 @@ export default function Auth() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirm-new-password">Confirmer le mot de passe</Label>
+                  <Label htmlFor="confirm-new-password">{t('auth.confirmPassword')}</Label>
                   <div className="relative">
                     <Input
                       id="confirm-new-password"
                       type={showConfirmPassword ? "text" : "password"}
-                      placeholder="Retapez votre mot de passe"
+                      placeholder={t('auth.retypePassword')}
                       value={confirmNewPassword}
                       onChange={(e) => setConfirmNewPassword(e.target.value)}
                       required
@@ -2698,7 +2844,30 @@ export default function Auth() {
                         type="text"
                         value={formData.businessName}
                         onChange={(e) => handleInputChange('businessName', e.target.value)}
-                        placeholder="Ex : Boutique Fatou, Restaurant Le Délice..."
+                        placeholder={t('auth.businessNameExample')}
+                        required
+                        className="mt-1"
+                      />
+                    </div>
+                  )}
+
+                  {/* Nom de l'établissement de santé — pharmacie / clinique (après nom & prénom) */}
+                  {selectedRole === 'prestataire' && (selectedServiceType === 'pharmacie' || selectedServiceType === 'clinique') && (
+                    <div>
+                      <Label htmlFor="businessName">
+                        {selectedServiceType === 'pharmacie' ? (
+                          <Pill className="inline w-4 h-4 mr-1 text-[#04439e]" />
+                        ) : (
+                          <Building2 className="inline w-4 h-4 mr-1 text-[#04439e]" />
+                        )}
+                        {selectedServiceType === 'pharmacie' ? 'Nom de la pharmacie' : 'Nom de la clinique'}
+                      </Label>
+                      <Input
+                        id="businessName"
+                        type="text"
+                        value={formData.businessName}
+                        onChange={(e) => handleInputChange('businessName', e.target.value)}
+                        placeholder={selectedServiceType === 'pharmacie' ? 'Ex: Pharmacie de la Paix' : 'Ex: Clinique du Centre'}
                         required
                         className="mt-1"
                       />
@@ -2754,9 +2923,9 @@ export default function Auth() {
                       </PopoverTrigger>
                       <PopoverContent className="w-72 p-0 bg-background border shadow-lg z-[100]" align="start">
                         <Command>
-                          <CommandInput placeholder="Rechercher un pays..." className="h-9" />
+                          <CommandInput placeholder={t('auth.searchCountry')} className="h-9" />
                           <CommandList>
-                            <CommandEmpty>Aucun pays trouvé</CommandEmpty>
+                            <CommandEmpty>{t('auth.noCountryFound')}</CommandEmpty>
                             <CommandGroup className="max-h-60 overflow-auto">
                               {WORLD_PHONE_CODES.map((item) => (
                                 <CommandItem
@@ -2801,27 +2970,10 @@ export default function Auth() {
                       )}
                     </div>
 
-                    {/* Pour client, livreur, vendeur et transitaire: saisie manuelle uniquement */}
-                    {(selectedRole === 'client' || selectedRole === 'livreur' || selectedRole === 'vendeur' || selectedRole === 'transitaire') ? (
-                      <Input
-                        id="city"
-                        type="text"
-                        value={formData.city}
-                        onChange={(e) => handleInputChange('city', e.target.value)}
-                        placeholder="Saisissez votre ville"
-                        className="mt-1"
-                      />
-                    ) : manualCityEntry ? (
-                      <Input
-                        id="city"
-                        type="text"
-                        value={formData.city}
-                        onChange={(e) => handleInputChange('city', e.target.value)}
-                        placeholder="Saisissez votre ville"
-                        required
-                        className="mt-1"
-                      />
-                    ) : (
+                    {/* Le MENU DÉROULANT des bureaux syndicaux est réservé au TAXI (qui doit choisir
+                        une commune de bureau pour la synchronisation). TOUS les autres rôles — dont le
+                        prestataire (pharmacie, beauté, santé…) — saisissent LIBREMENT leur ville. */}
+                    {selectedRole === 'taxi' && !manualCityEntry ? (
                       <select
                         id="city"
                         value={formData.city}
@@ -2829,13 +2981,23 @@ export default function Auth() {
                         required
                         className="mt-1 w-full px-3 py-2 border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring z-50"
                       >
-                        <option value="">Sélectionnez votre ville</option>
+                        <option value="">{t('auth.selectYourCity')}</option>
                         {bureaus.map((bureau) => (
                           <option key={bureau.id} value={bureau.commune}>
                             {bureau.commune} - {bureau.prefecture}
                           </option>
                         ))}
                       </select>
+                    ) : (
+                      <Input
+                        id="city"
+                        type="text"
+                        value={formData.city}
+                        onChange={(e) => handleInputChange('city', e.target.value)}
+                        placeholder={t('auth.enterYourCity')}
+                        required
+                        className="mt-1"
+                      />
                     )}
 
                     {selectedRole === 'taxi' && formData.city && !manualCityEntry && (
@@ -2871,7 +3033,7 @@ export default function Auth() {
                               <Bike className="h-4 w-4 text-orange-500" /> Taxi Moto
                             </span>
                           ) : (
-                            <span className="text-muted-foreground">Sélectionner le type de taxi...</span>
+                            <span className="text-muted-foreground">{t('auth.selectTaxiType')}</span>
                           )}
                           <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${taxiDropdownOpen ? 'rotate-180' : ''}`} />
                         </button>
@@ -2922,7 +3084,7 @@ export default function Auth() {
                   </div>
 
                   <div>
-                    <Label htmlFor="phone">Numéro de téléphone</Label>
+                    <Label htmlFor="phone">{t('auth.phoneNumber')}</Label>
                     <div className="flex gap-2 mt-1">
                       {/* Sélecteur d'indicatif pays avec recherche */}
                       <Popover open={phoneCodeOpen} onOpenChange={setPhoneCodeOpen}>
@@ -2941,9 +3103,9 @@ export default function Auth() {
                         </PopoverTrigger>
                         <PopoverContent className="w-64 p-0 bg-background border shadow-lg z-[100]" align="start">
                           <Command>
-                            <CommandInput placeholder="Rechercher un pays..." className="h-9" />
+                            <CommandInput placeholder={t('auth.searchCountry')} className="h-9" />
                             <CommandList>
-                              <CommandEmpty>Aucun pays trouvé</CommandEmpty>
+                              <CommandEmpty>{t('auth.noCountryFound')}</CommandEmpty>
                               <CommandGroup className="max-h-60 overflow-auto">
                                 {WORLD_PHONE_CODES.map((item) => (
                                   <CommandItem
@@ -3007,10 +3169,10 @@ export default function Auth() {
                 <form onSubmit={handleLoginVerifyPhoneOtp} className="space-y-4">
                   <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg p-3">
                     <Phone className="h-4 w-4 text-blue-600 shrink-0" />
-                    <p className="text-sm text-blue-800">Code SMS envoyé au <strong>{loginFormattedPhone}</strong></p>
+                    <p className="text-sm text-blue-800">{t('auth.smsCodeSentTo')} <strong>{loginFormattedPhone}</strong></p>
                   </div>
                   <div>
-                    <Label htmlFor="login-otp" className="flex items-center gap-1"><Lock className="h-3.5 w-3.5" /> Code de vérification</Label>
+                    <Label htmlFor="login-otp" className="flex items-center gap-1"><Lock className="h-3.5 w-3.5" /> {t('auth.verificationCode')}</Label>
                     <Input
                       id="login-otp"
                       type="text"
@@ -3030,7 +3192,7 @@ export default function Auth() {
                     </div>
                   )}
                   <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={loading || loginPhoneOtp.length < 4}>
-                    {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Vérification...</> : 'Se connecter'}
+                    {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('auth.checking')}</> : t('auth.login')}
                   </Button>
                   <button
                     type="button"
@@ -3050,10 +3212,10 @@ export default function Auth() {
                 <form onSubmit={handlePhoneSignupVerify} className="space-y-4">
                   <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 rounded-lg p-3">
                     <Phone className="h-4 w-4 text-[#ff4000] shrink-0" />
-                    <p className="text-sm text-[#ff4000]">Code SMS envoyé au <strong>{phoneSignupPhone}</strong></p>
+                    <p className="text-sm text-[#ff4000]">{t('auth.smsCodeSentTo')} <strong>{phoneSignupPhone}</strong></p>
                   </div>
                   <div>
-                    <Label htmlFor="signup-otp" className="flex items-center gap-1"><Lock className="h-3.5 w-3.5" /> Code de vérification</Label>
+                    <Label htmlFor="signup-otp" className="flex items-center gap-1"><Lock className="h-3.5 w-3.5" /> {t('auth.verificationCode')}</Label>
                     <Input
                       id="signup-otp"
                       type="text"
@@ -3073,7 +3235,7 @@ export default function Auth() {
                     </div>
                   )}
                   <Button type="submit" className="w-full bg-[#ff4000] hover:bg-[#ff4000] text-white" disabled={loading || phoneSignupOtp.length < 4}>
-                    {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Création du compte...</> : 'Créer mon compte'}
+                    {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('auth.creatingAccount')}</> : t('auth.createMyAccount')}
                   </Button>
                   <button
                     type="button"
@@ -3151,7 +3313,7 @@ export default function Auth() {
                 <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 space-y-2">
                   <div className="flex items-start gap-2">
                     <AlertCircle className="h-4 w-4 text-[#ff4000] mt-0.5 shrink-0" />
-                    <p className="text-sm text-[#ff4000]">Ce numéro n'est lié à aucun compte 224Solutions.</p>
+                    <p className="text-sm text-[#ff4000]">{t('auth.numberNotLinked')}</p>
                   </div>
                   <Button
                     type="button"
@@ -3270,7 +3432,7 @@ export default function Auth() {
                   <div className="relative my-6">
                     <Separator />
                     <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-3 text-sm text-muted-foreground">
-                      {showSignup ? "ou s'inscrire avec" : 'ou continuer avec'}
+                      {showSignup ? t('auth.orSignUpWith') : t('auth.orContinueWith')}
                     </span>
                   </div>
 
@@ -3315,7 +3477,7 @@ export default function Auth() {
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                       </svg>
-                      <span>Redirection sécurisée vers Google...</span>
+                      <span>{t('auth.secureGoogleRedirect')}</span>
                     </div>
                   )}
                 </>
@@ -3325,7 +3487,7 @@ export default function Auth() {
               <div className="mt-3 pt-3 border-t border-border/30">
                 {!showSignup ? (
                   <div className="flex items-center justify-center gap-2">
-                    <span className="text-sm text-muted-foreground">Pas de compte ?</span>
+                    <span className="text-sm text-muted-foreground">{t('auth.noAccount')}</span>
                     <button
                       type="button"
                       onClick={() => { setShowRoleSelectionModal(true); setError(null); setSuccess(null); }}
@@ -3337,7 +3499,7 @@ export default function Auth() {
                   </div>
                 ) : (
                   <div className="flex items-center justify-center gap-2">
-                    <span className="text-sm text-muted-foreground">Déjà inscrit ?</span>
+                    <span className="text-sm text-muted-foreground">{t('auth.hasAccount')}</span>
                     <button
                       type="button"
                       onClick={() => {
@@ -3460,7 +3622,7 @@ export default function Auth() {
                     id="modal-firstName"
                     value={formData.firstName}
                     onChange={(e) => handleInputChange('firstName', e.target.value)}
-                    placeholder="Prénom"
+                    placeholder={t('auth.firstName')}
                     className="h-9 text-sm"
                     required
                   />
@@ -3511,9 +3673,9 @@ export default function Auth() {
                     </PopoverTrigger>
                     <PopoverContent className="w-64 p-0 z-[200]" align="start">
                       <Command>
-                        <CommandInput placeholder="Rechercher..." className="h-9" />
+                        <CommandInput placeholder={t('auth.searchEllipsis')} className="h-9" />
                         <CommandList>
-                          <CommandEmpty>Aucun pays trouvé</CommandEmpty>
+                          <CommandEmpty>{t('auth.noCountryFound')}</CommandEmpty>
                           <CommandGroup className="max-h-60 overflow-auto">
                             {WORLD_PHONE_CODES.map((item) => (
                               <CommandItem
@@ -3571,9 +3733,9 @@ export default function Auth() {
                     </PopoverTrigger>
                     <PopoverContent className="w-[240px] p-0 z-[200]" align="start">
                       <Command>
-                        <CommandInput placeholder="Rechercher un pays..." className="h-8 text-sm" />
+                        <CommandInput placeholder={t('auth.searchCountry')} className="h-8 text-sm" />
                         <CommandList className="max-h-[200px]">
-                          <CommandEmpty>Aucun pays trouvé</CommandEmpty>
+                          <CommandEmpty>{t('auth.noCountryFound')}</CommandEmpty>
                           <CommandGroup>
                             {WORLD_PHONE_CODES.map((entry) => (
                               <CommandItem
@@ -3661,7 +3823,7 @@ export default function Auth() {
                 <span className="w-full border-t border-gray-200"></span>
               </div>
               <div className="relative flex justify-center text-xs">
-                <span className="bg-white px-3 text-muted-foreground">ou s'inscrire avec</span>
+                <span className="bg-white px-3 text-muted-foreground">{t('auth.orSignUpWith')}</span>
               </div>
             </div>
 
@@ -3703,7 +3865,7 @@ export default function Auth() {
 
       {/* ===== MODAL SUCCES INSCRIPTION ===== */}
       <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
-        <DialogContent className="sm:max-w-md border-0 shadow-2xl rounded-2xl p-0 overflow-hidden [&>button]:hidden">
+        <DialogContent className="sm:max-w-md border-0 shadow-2xl rounded-2xl p-0 overflow-hidden [&>button]:hidden max-h-[90vh] overflow-y-auto">
           <div className="flex flex-col items-center text-center p-8">
             {/* Cercle animé avec checkmark */}
             <div className="relative mb-6">

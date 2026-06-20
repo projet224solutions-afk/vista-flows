@@ -4,6 +4,7 @@
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,6 +20,7 @@ import {
 import { useDropshippingChina } from '@/hooks/useDropshippingChina';
 
 export function ChinaDashboard() {
+  const { t } = useTranslation();
   const { stats, priceAlerts, chinaProducts, loading, refresh } = useDropshippingChina();
 
   const statCards = [
@@ -148,7 +150,7 @@ export function ChinaDashboard() {
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Produits par Plateforme</CardTitle>
+            <CardTitle className="text-lg">{t('chinaDashboard.produitsParPlateforme')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -194,7 +196,7 @@ export function ChinaDashboard() {
                 </Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm">Délai moyen livraison</span>
+                <span className="text-sm">{t('chinaDashboard.delaiMoyenLivraison')}</span>
                 <Badge variant="outline">
                   {stats?.averageDeliveryDays || 0} jours
                 </Badge>

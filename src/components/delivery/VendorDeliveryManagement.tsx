@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -61,6 +62,7 @@ const statusLabels: Record<string, { label: string; color: string }> = {
 };
 
 export function VendorDeliveryManagement() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [orders, setOrders] = useState<DeliveryOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,13 +98,14 @@ export function VendorDeliveryManagement() {
         .from('deliveries')
         .select('*')
         .eq('vendor_id', vendorId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(200); // plafond de sécurité (liste récente) — évite de scanner tout l'historique
 
       if (error) throw error;
       setOrders((data || []) as DeliveryOrder[]);
     } catch (error) {
       console.error('Error loading orders:', error);
-      toast.error('Erreur lors du chargement');
+      toast.error(t('vendorDeliveryManagement.erreurLorsDuChargement'));
     } finally {
       setLoading(false);
     }
@@ -127,7 +130,7 @@ export function VendorDeliveryManagement() {
             console.log('Delivery update:', payload);
             loadOrders();
             if (payload.eventType === 'INSERT') {
-              toast.info('📦 Nouvelle commande reçue !');
+              toast.info(t('vendorDeliveryManagement.nouvelleCommandeRecue'));
             }
           }
         )
@@ -158,11 +161,11 @@ export function VendorDeliveryManagement() {
 
       if (error) throw error;
 
-      toast.success('✅ Commande prête pour le retrait');
+      toast.success(t('vendorDeliveryManagement.commandePretePourLeRetrait'));
       loadOrders();
     } catch (error) {
       console.error('Error updating order:', error);
-      toast.error('Erreur lors de la mise à jour');
+      toast.error(t('vendorDeliveryManagement.erreurLorsDeLaMise'));
     } finally {
       setGeneratingCode(null);
     }
@@ -208,7 +211,7 @@ export function VendorDeliveryManagement() {
       </div>
 
       {/* Stats rapides */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <Card className="bg-orange-50 dark:bg-[#ff4000]/20">
           <CardContent className="pt-4 text-center">
             <p className="text-2xl font-bold text-[#ff4000]">{pendingOrders.length}</p>
@@ -224,7 +227,7 @@ export function VendorDeliveryManagement() {
         <Card className="bg-orange-50 dark:bg-[#ff4000]/20">
           <CardContent className="pt-4 text-center">
             <p className="text-2xl font-bold text-[#ff4000]">{completedOrders.length}</p>
-            <p className="text-xs text-muted-foreground">Terminées</p>
+            <p className="text-xs text-muted-foreground">{t('vendorDeliveryManagement.terminees')}</p>
           </CardContent>
         </Card>
       </div>
@@ -303,7 +306,7 @@ export function VendorDeliveryManagement() {
                         </DialogTrigger>
                         <DialogContent>
                           <DialogHeader>
-                            <DialogTitle>Code de retrait</DialogTitle>
+                            <DialogTitle>{t('vendorDeliveryManagement.codeDeRetrait')}</DialogTitle>
                           </DialogHeader>
                           <div className="flex flex-col items-center gap-4 py-4">
                             <QRCodeSVG

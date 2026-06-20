@@ -7,6 +7,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { subscribeLivePosition, driverPositionTopic, ridePositionTopic } from '@/lib/realtime/livePositions';
 
 export interface DriverPosition {
   latitude: number;
@@ -192,7 +193,14 @@ export function useDriverTracking(
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    // 📡 DUAL-MODE scalabilité : écoute AUSSI la position en broadcast (hors WAL,
+    // Ably/AWS par flag). Idempotent avec le postgres_changes ci-dessus.
+    const unsubBroadcast = subscribeLivePosition(
+      driverPositionTopic(driverId),
+      (p) => processPosition(p.lat, p.lng, p.heading, p.speed)
+    );
+
+    return () => { supabase.removeChannel(channel); unsubBroadcast(); };
   }, [driverId, processPosition]);
 
   // Abonnement realtime : INSERT sur taxi_ride_tracking → tracé de course détaillé
@@ -218,7 +226,13 @@ export function useDriverTracking(
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    // 📡 DUAL-MODE : tracé de course aussi en broadcast (hors WAL).
+    const unsubBroadcast = subscribeLivePosition(
+      ridePositionTopic(rideId),
+      (p) => processPosition(p.lat, p.lng, p.heading, p.speed)
+    );
+
+    return () => { supabase.removeChannel(channel); unsubBroadcast(); };
   }, [rideId, processPosition]);
 
   return { driverPosition, etaMinutes, isMoving };

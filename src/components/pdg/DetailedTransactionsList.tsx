@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,6 +48,7 @@ interface DetailedTransaction {
 }
 
 export default function DetailedTransactionsList() {
+  const { t } = useTranslation();
   const [transactions, setTransactions] = useState<DetailedTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -142,7 +144,7 @@ export default function DetailedTransactionsList() {
       setTransactions(enrichedTransactions);
     } catch (error: any) {
       console.error('❌ [DetailedTransactions] Erreur:', error);
-      toast.error('Erreur lors du chargement des transactions');
+      toast.error(t('detailedTransactionsList.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -152,7 +154,7 @@ export default function DetailedTransactionsList() {
     setRefreshing(true);
     await fetchDetailedTransactions();
     setRefreshing(false);
-    toast.success('Transactions actualisées');
+    toast.success(t('detailedTransactionsList.transactionsActualisees'));
   };
 
   useEffect(() => {
@@ -261,7 +263,7 @@ export default function DetailedTransactionsList() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Rechercher par ID, type, utilisateur, email..."
+              placeholder={t('detailedTransactionsList.rechercherParIdTypeUtilisateur')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -344,7 +346,7 @@ export default function DetailedTransactionsList() {
                         <div className="flex items-start gap-2 p-3 rounded-lg bg-orange-500/5 border border-orange-500/10">
                           <User className="w-4 h-4 text-orange-500 mt-0.5" />
                           <div className="flex-1 min-w-0">
-                            <div className="text-xs text-muted-foreground">Expéditeur</div>
+                            <div className="text-xs text-muted-foreground">{t('detailedTransactionsList.expediteur')}</div>
                             <div className="font-medium truncate">{transaction.sender_info.name}</div>
                             <div className="text-xs text-muted-foreground truncate">{transaction.sender_info.email}</div>
                           </div>
@@ -390,7 +392,7 @@ export default function DetailedTransactionsList() {
                   {/* Partie droite - Montants */}
                   <div className="text-right space-y-2 min-w-[140px]">
                     <div>
-                      <div className="text-sm text-muted-foreground">Montant</div>
+                      <div className="text-sm text-muted-foreground">{t('detailedTransactionsList.montant')}</div>
                       <div className={`text-2xl font-bold ${
                         transaction.amount > 0 ? 'text-[#ff4000]' : 'text-[#ff4000]'
                       }`}>
@@ -406,7 +408,7 @@ export default function DetailedTransactionsList() {
                       </div>
                     )}
                     <div className="pt-2 border-t border-border/40">
-                      <div className="text-xs text-muted-foreground">Montant Net</div>
+                      <div className="text-xs text-muted-foreground">{t('detailedTransactionsList.montantNet')}</div>
                       <div className="text-sm font-semibold">
                         {formatAmount(transaction.net_amount)}
                       </div>

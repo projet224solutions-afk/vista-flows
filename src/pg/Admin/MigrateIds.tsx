@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,6 +22,7 @@ interface MigrationResult {
 }
 
 export default function MigrateIds() {
+  const { t } = useTranslation();
   const [migrating, setMigrating] = useState(false);
   const [results, setResults] = useState<MigrationResult[]>([]);
   const [stats, setStats] = useState<any>(null);
@@ -74,7 +76,7 @@ export default function MigrateIds() {
       // Recharger les stats
       await loadStats();
     } catch (err: any) {
-      toast.error('Échec migration', {
+      toast.error(t('migrateIds.echecMigration'), {
         description: err.message
       });
     } finally {
@@ -86,7 +88,7 @@ export default function MigrateIds() {
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Migration des IDs</h1>
+          <h1 className="text-3xl font-bold">{t('migrateIds.migrationDesIds')}</h1>
           <p className="text-muted-foreground mt-2">
             Système d'identifiants standardisés 224SOLUTIONS (AAA0001)
           </p>
@@ -149,7 +151,7 @@ export default function MigrateIds() {
       {/* Bouton de migration */}
       <Card>
         <CardHeader>
-          <CardTitle>Lancer la migration</CardTitle>
+          <CardTitle>{t('migrateIds.lancerLaMigration')}</CardTitle>
           <CardDescription>
             Réorganise tous les IDs existants vers le format standardisé AAA0001
           </CardDescription>

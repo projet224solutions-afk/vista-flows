@@ -449,6 +449,22 @@ export async function debitWallet(
  * Transfert atomic entre deux wallets.
  * Utilise le RPC SQL execute_atomic_wallet_transfer si disponible.
  */
+// Traduit une erreur SQL de transfert en message clair pour l'utilisateur.
+function friendlyTransferError(msg: string | undefined): string {
+  const m = msg || '';
+  if (/DAILY_TRANSFER_LIMIT_EXCEEDED/i.test(m)) return 'Plafond de transfert journalier atteint. Vérifiez votre niveau KYC.';
+  if (/MONTHLY_TRANSFER_LIMIT_EXCEEDED/i.test(m)) return 'Plafond de transfert mensuel atteint. Vérifiez votre niveau KYC.';
+  if (/Solde insuffisant|insufficient/i.test(m)) return 'Solde insuffisant';
+  if (/blocked|bloqué/i.test(m)) return 'Wallet bloqué';
+  if (/Montant invalide|invalides/i.test(m)) return 'Montant invalide';
+  if (/not found|introuvable/i.test(m)) return 'Wallet introuvable';
+  return 'Échec du transfert. Réessayez.';
+}
+// Erreur SQL = règle métier (à NE PAS contourner par un fallback) ?
+function isBusinessTransferError(msg: string | undefined): boolean {
+  return /LIMIT_EXCEEDED|Solde insuffisant|insufficient|blocked|bloqué|Montant invalide|invalides|not found|introuvable/i.test(msg || '');
+}
+
 export async function transferBetweenWallets(
   senderId: string,
   receiverId: string,
@@ -481,11 +497,15 @@ export async function transferBetweenWallets(
       return await fail('Transfert bloqué pour activité suspecte');
     }
 
+    // Résilient aux multi-wallets (drift devise) : sélection déterministe (1ʳᵉ ligne) au lieu de
+    // .single() qui LÈVE si plusieurs wallets existent (bloquait le transfert).
     const { data: senderWallet, error: senderErr } = await supabaseAdmin
       .from('wallets')
       .select('id, balance, is_blocked, currency')
       .eq('user_id', senderId)
-      .single();
+      .order('id', { ascending: true })
+      .limit(1)
+      .maybeSingle();
 
     if (senderErr || !senderWallet) return await fail('Wallet expéditeur introuvable');
     if (senderWallet.is_blocked) return await fail('Wallet expéditeur bloqué');
@@ -495,7 +515,9 @@ export async function transferBetweenWallets(
       .from('wallets')
       .select('id, balance, currency')
       .eq('user_id', receiverId)
-      .single();
+      .order('id', { ascending: true })
+      .limit(1)
+      .maybeSingle();
 
     if (receiverErr || !receiverWallet) return await fail('Wallet destinataire introuvable');
 
@@ -558,6 +580,11 @@ export async function transferBetweenWallets(
         return { success: true, transactionId: txId };
       }
 
+      // RÈGLE MÉTIER (limite cumulée, solde, blocage…) → NE PAS contourner par le fallback manuel
+      // (sinon la limite de transfert serait bypassée). On renvoie l'erreur claire.
+      if (isBusinessTransferError(rpcError.message)) {
+        return await fail(friendlyTransferError(rpcError.message));
+      }
       logger.warn(`[Wallet] RPC atomic transfer failed (${rpcError.message}), using manual fallback`);
     } else {
       // Inter-devises (ou montant crédité différent) → RPC FX ATOMIQUE (débit≠crédit en 1 transaction)
@@ -590,7 +617,7 @@ export async function transferBetweenWallets(
       // Le RPC FX a échoué → on libère la clé et on renvoie l'erreur (pas de chemin manuel
       // non-atomique pour le FX : on ne risque pas une perte d'argent sur échec partiel).
       logger.error(`[Wallet] RPC FX transfer failed: ${fxError.message}`);
-      return await fail('Échec du transfert international. Réessayez.');
+      return await fail(friendlyTransferError(fxError.message));
     }
 
     const newSenderBalance = Number(senderWallet.balance) - debitAmount;

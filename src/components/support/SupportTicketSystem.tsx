@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,6 +62,7 @@ const statusConfig = {
 };
 
 export function SupportTicketSystem() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { subscription } = useVendorSubscription();
   const { toast } = useToast();
@@ -251,13 +253,13 @@ export function SupportTicketSystem() {
               Nouveau ticket
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Créer un ticket de support</DialogTitle>
+              <DialogTitle>{t('supportTicketSystem.creerUnTicketDeSupport')}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium">Catégorie</label>
+                <label className="text-sm font-medium">{t('supportTicketSystem.categorie')}</label>
                 <Select
                   value={newTicket.category}
                   onValueChange={(value) => setNewTicket({ ...newTicket, category: value })}
@@ -268,8 +270,8 @@ export function SupportTicketSystem() {
                   <SelectContent>
                     <SelectItem value="technical">Technique</SelectItem>
                     <SelectItem value="billing">Facturation</SelectItem>
-                    <SelectItem value="feature_request">Demande de fonctionnalité</SelectItem>
-                    <SelectItem value="bug_report">Signaler un bug</SelectItem>
+                    <SelectItem value="feature_request">{t('supportTicketSystem.demandeDeFonctionnalite')}</SelectItem>
+                    <SelectItem value="bug_report">{t('supportTicketSystem.signalerUnBug')}</SelectItem>
                     <SelectItem value="account">Compte</SelectItem>
                     <SelectItem value="other">Autre</SelectItem>
                   </SelectContent>
@@ -281,7 +283,7 @@ export function SupportTicketSystem() {
                 <Input
                   value={newTicket.subject}
                   onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })}
-                  placeholder="Résumé du problème"
+                  placeholder={t('supportTicketSystem.resumeDuProbleme')}
                 />
               </div>
 
@@ -290,7 +292,7 @@ export function SupportTicketSystem() {
                 <Textarea
                   value={newTicket.description}
                   onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
-                  placeholder="Décrivez votre problème en détail"
+                  placeholder={t('supportTicketSystem.decrivezVotreProblemeEnDetail')}
                   rows={6}
                 />
               </div>
@@ -368,7 +370,7 @@ export function SupportTicketSystem() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Tickets résolus</CardTitle>
+                <CardTitle className="text-sm">{t('supportTicketSystem.ticketsResolus')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold text-[#ff4000]">
@@ -379,7 +381,7 @@ export function SupportTicketSystem() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Temps de réponse moyen</CardTitle>
+                <CardTitle className="text-sm">{t('supportTicketSystem.tempsDeReponseMoyen')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">
@@ -433,7 +435,7 @@ export function SupportTicketSystem() {
             <Textarea
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Votre message..."
+              placeholder={t('supportTicketSystem.votreMessage')}
               rows={3}
             />
             <Button onClick={sendMessage} disabled={sending || !newMessage.trim()}>

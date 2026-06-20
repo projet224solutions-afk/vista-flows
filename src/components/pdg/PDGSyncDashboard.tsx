@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +26,7 @@ import {
 import { toast } from 'sonner';
 
 export default function PDGSyncDashboard() {
+  const { t } = useTranslation();
   const {
     lastCheck,
     isHealthy,
@@ -88,7 +90,7 @@ export default function PDGSyncDashboard() {
         <CardContent className="flex items-center justify-center py-12">
           <div className="flex items-center gap-3">
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
-            <span className="text-muted-foreground">Analyse de la cohérence des données...</span>
+            <span className="text-muted-foreground">{t('pDGSyncDashboard.analyseDeLaCoherenceDes')}</span>
           </div>
         </CardContent>
       </Card>
@@ -147,7 +149,7 @@ export default function PDGSyncDashboard() {
           {/* Health Score */}
           <div className="mb-6">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium">Score de santé</span>
+              <span className="text-sm font-medium">{t('pDGSyncDashboard.scoreDeSante')}</span>
               <span className={`text-lg font-bold ${
                 healthScore >= 80 ? 'text-[#ff4000]' :
                 healthScore >= 50 ? 'text-[#ff4000]' :
@@ -168,7 +170,7 @@ export default function PDGSyncDashboard() {
               <div className="text-2xl font-bold text-[#ff4000]">
                 {checks.filter(c => c.status === 'ok').length}
               </div>
-              <div className="text-xs text-muted-foreground">Vérifications OK</div>
+              <div className="text-xs text-muted-foreground">{t('pDGSyncDashboard.verificationsOk')}</div>
             </div>
             <div className="p-4 rounded-xl bg-muted/50 text-center">
               <div className="text-2xl font-bold text-[#ff4000]">
@@ -186,7 +188,7 @@ export default function PDGSyncDashboard() {
               <div className="text-2xl font-bold text-primary">
                 {checks.reduce((sum, c) => sum + (c.discrepancies || 0), 0)}
               </div>
-              <div className="text-xs text-muted-foreground">Éléments à sync</div>
+              <div className="text-xs text-muted-foreground">{t('pDGSyncDashboard.elementsASync')}</div>
             </div>
           </div>
         </CardContent>
@@ -196,7 +198,7 @@ export default function PDGSyncDashboard() {
       <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Détails des vérifications</CardTitle>
+            <CardTitle className="text-lg">{t('pDGSyncDashboard.detailsDesVerifications')}</CardTitle>
             <Button
               variant="ghost"
               size="sm"

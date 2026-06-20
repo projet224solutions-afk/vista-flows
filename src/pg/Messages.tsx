@@ -1,5 +1,6 @@
 ﻿import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "@/hooks/useTranslation";
 import { ArrowLeft, User, Search, MessageCircle, Phone, Video, Shield, UserPlus, Loader2, Reply, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,11 +8,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ChatLanguageSelector } from "@/components/messaging/ChatLanguageSelector";
+import { useChatLanguage } from "@/hooks/useChatLanguage";
+import { TranslatedMessageItem } from "@/components/messaging/TranslatedMessageItem";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import QuickFooter from "@/components/QuickFooter";
 import { universalCommunicationService } from "@/services/UniversalCommunicationService";
+import { signMessagesFileUrls } from "@/lib/communication/fileUrls";
+import { useWebRTCCallContext } from "@/components/communication/WebRTCCallProvider";
+import CallDiagnostics from "@/components/communication/CallDiagnostics";
 const AgoraVideoCall = React.lazy(() => import("@/components/communication/AgoraVideoCall"));
 const AgoraAudioCall = React.lazy(() => import("@/components/communication/AgoraAudioCall"));
 import MessageInput from "@/components/communication/MessageInput";
@@ -77,6 +84,7 @@ interface Conversation {
 }
 
 export default function Messages() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const recipientIdParam = searchParams.get('recipientId');
@@ -108,6 +116,23 @@ export default function Messages() {
 
   // Hook de présence
   const { setTyping, subscribeToTyping } = usePresence();
+
+  // Appels WebRTC (audio + vidéo) — overlay global géré par WebRTCCallProvider
+  const { startCall: startWebRTCCall } = useWebRTCCallContext();
+  const { chatLanguage } = useChatLanguage();
+
+  const launchCall = useCallback((mode: 'audio' | 'video') => {
+    if (!selectedConversation) return;
+    startWebRTCCall(
+      selectedConversation,
+      {
+        name: selectedConvData?.other_user_name || 'Utilisateur',
+        avatar: selectedConvData?.other_user_avatar,
+      },
+      mode
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedConversation, startWebRTCCall]);
 
   // 🟢 Hook de présence pour la liste des conversations
   const {
@@ -304,7 +329,7 @@ export default function Messages() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast.error('Veuillez vous connecter');
+        toast.error(t('messages.veuillezVousConnecter'));
         navigate('/auth');
         return;
       }
@@ -452,7 +477,7 @@ export default function Messages() {
       setConversations(sortedConversations);
     } catch (error) {
       console.error('Erreur chargement conversations:', error);
-      toast.error('Erreur lors du chargement des conversations');
+      toast.error(t('messages.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -584,7 +609,9 @@ export default function Messages() {
         };
       }));
 
-      setMessages(messagesWithReplies);
+      // 🔐 Signer les pièces jointes (bucket privé) avant affichage
+      const signedMessages = await signMessagesFileUrls(messagesWithReplies);
+      setMessages(signedMessages);
 
       // Marquer les messages reçus comme lus immédiatement
       const unreadMessages = messagesWithReplies.filter(
@@ -629,7 +656,7 @@ export default function Messages() {
 
     } catch (error) {
       console.error('Erreur chargement messages:', error);
-      toast.error('Erreur lors du chargement des messages');
+      toast.error(t('messages.erreurLorsDuChargementDes2'));
     }
   };
 
@@ -671,7 +698,7 @@ export default function Messages() {
       scrollToBottom();
     } catch (error) {
       console.error('Erreur envoi message:', error);
-      toast.error("Erreur lors de l'envoi du message");
+      toast.error(t('messages.erreurLorsDeLEnvoi'));
     }
   };
 
@@ -692,7 +719,7 @@ export default function Messages() {
 
     try {
       await universalCommunicationService.softDeleteMessage(messageId, currentUser.id, deleteForEveryone);
-      toast.success('Message supprimé');
+      toast.success(t('messages.messageSupprime'));
       if (selectedConversation) {
         loadMessages(selectedConversation);
       }
@@ -705,7 +732,7 @@ export default function Messages() {
 
   const handleSendFile = async (file: File) => {
     if (!selectedConversation || !currentUser) {
-      toast.error('Impossible d\'envoyer le fichier');
+      toast.error(t('messages.impossibleDEnvoyerLeFichier'));
       return;
     }
 
@@ -837,7 +864,7 @@ export default function Messages() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Rechercher..."
+              placeholder={t('messages.rechercher')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 bg-muted/50"
@@ -850,7 +877,7 @@ export default function Messages() {
           {loading ? (
             <div className="p-8 text-center text-muted-foreground">
               <div className="animate-spin w-8 h-8 border-3 border-primary border-t-transparent rounded-full mx-auto mb-3" />
-              <p className="text-sm">Chargement des conversations...</p>
+              <p className="text-sm">{t('messages.chargementDesConversations')}</p>
             </div>
           ) : filteredConversations.length === 0 ? (
             <div className="animate-in fade-in duration-500">
@@ -926,14 +953,14 @@ export default function Messages() {
               ) : loadingContacts ? (
                 <div className="p-8 text-center text-muted-foreground">
                   <div className="animate-spin w-8 h-8 border-3 border-primary border-t-transparent rounded-full mx-auto mb-3" />
-                  <p className="text-sm">Chargement des contacts...</p>
+                  <p className="text-sm">{t('messages.chargementDesContacts')}</p>
                 </div>
               ) : (
                 <div className="p-8 text-center">
                   <div className="bg-primary/5 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
                     <MessageCircle className="w-10 h-10 text-primary" />
                   </div>
-                  <p className="text-lg font-medium text-foreground mb-2">Aucun contact</p>
+                  <p className="text-lg font-medium text-foreground mb-2">{t('messages.aucunContact')}</p>
                   <p className="text-sm text-muted-foreground max-w-xs mx-auto">
                     Visitez le marketplace pour découvrir des vendeurs
                   </p>
@@ -1124,11 +1151,13 @@ export default function Messages() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
+                {/* Langue de réception des messages (changeable à tout moment) */}
+                <ChatLanguageSelector />
                 <Button
                   variant="ghost"
                   size="icon"
                   className="text-muted-foreground"
-                  onClick={() => setShowAudioCall(true)}
+                  onClick={() => launchCall('audio')}
                   title="Appel audio"
                 >
                   <Phone className="w-5 h-5" />
@@ -1137,11 +1166,12 @@ export default function Messages() {
                   variant="ghost"
                   size="icon"
                   className="text-muted-foreground"
-                  onClick={() => setShowVideoCall(true)}
-                  title="Appel vidéo"
+                  onClick={() => launchCall('video')}
+                  title={t('messages.appelVideo')}
                 >
                   <Video className="w-5 h-5" />
                 </Button>
+                <CallDiagnostics />
               </div>
             </header>
 
@@ -1196,7 +1226,7 @@ export default function Messages() {
                           )}>
                             <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted/50 text-muted-foreground italic text-sm">
                               <X className="w-4 h-4" />
-                              <span>Ce message a été supprimé</span>
+                              <span>{t('messages.ceMessageAEteSupprime')}</span>
                             </div>
                           </div>
                         );
@@ -1218,7 +1248,7 @@ export default function Messages() {
                               </div>
                             </div>
                           )}
-                          <MessageItem
+                          <TranslatedMessageItem
                             message={{
                               id: message.id,
                               content: safeType !== 'text' ? '' : message.content,
@@ -1235,6 +1265,10 @@ export default function Messages() {
                               audio_format: message.audio_format,
                               audio_format_ios: message.audio_format_ios
                             }}
+                            rawContent={safeType !== 'text' ? '' : message.content}
+                            isOwn={isOwnMessage}
+                            messageId={message.id}
+                            targetLanguage={chatLanguage}
                             onReply={() => handleReplyToMessage(message)}
                             onDelete={(msgId, deleteForEveryone) => handleDeleteMessage(msgId, deleteForEveryone)}
                           />
@@ -1312,7 +1346,7 @@ export default function Messages() {
           <div className="flex-1 flex items-center justify-center text-muted-foreground">
             <div className="text-center p-8">
               <MessageCircle className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
-              <p className="font-medium">Sélectionnez une conversation</p>
+              <p className="font-medium">{t('messages.selectionnezUneConversation')}</p>
               <p className="text-sm text-muted-foreground/70 mt-1">
                 Choisissez un contact pour commencer à discuter
               </p>
@@ -1329,7 +1363,7 @@ export default function Messages() {
       {/* Dialogs Appels Agora */}
       {showAudioCall && selectedConversation && (
         <Dialog open={showAudioCall} onOpenChange={setShowAudioCall}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Appel Audio</DialogTitle>
             </DialogHeader>
@@ -1350,7 +1384,7 @@ export default function Messages() {
         <Dialog open={showVideoCall} onOpenChange={setShowVideoCall}>
           <DialogContent className="max-w-4xl max-h-[90vh]">
             <DialogHeader>
-              <DialogTitle>Appel Vidéo</DialogTitle>
+              <DialogTitle>{t('messages.appelVideo2')}</DialogTitle>
             </DialogHeader>
             <AgoraVideoCall
               channel={`video_${selectedConversation}_${currentUser?.id}`}
@@ -1367,7 +1401,7 @@ export default function Messages() {
 
       {/* Dialog de recherche d'utilisateurs */}
       <Dialog open={showSearchDialog} onOpenChange={setShowSearchDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserPlus className="w-5 h-5 text-primary" />
@@ -1378,7 +1412,7 @@ export default function Messages() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Nom, email, ID (VND0001) ou téléphone..."
+                placeholder={t('messages.nomEmailIdVnd0001Ou')}
                 value={userSearchQuery}
                 onChange={(e) => {
                   setUserSearchQuery(e.target.value);
@@ -1460,12 +1494,12 @@ export default function Messages() {
               ) : userSearchQuery.trim().length >= 2 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <User className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Aucun utilisateur trouvé</p>
+                  <p className="text-sm">{t('messages.aucunUtilisateurTrouve')}</p>
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <Search className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Tapez au moins 2 caractères</p>
+                  <p className="text-sm">{t('messages.tapezAuMoins2Caracteres')}</p>
                 </div>
               )}
             </ScrollArea>

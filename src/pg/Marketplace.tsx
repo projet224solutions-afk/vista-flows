@@ -1,5 +1,4 @@
-﻿// @ts-nocheck
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Grid, List, ArrowUpDown, Menu, ShoppingCart as ShoppingCartIcon, MapPin, Globe, Share2, Filter, Package, Briefcase, Laptop, Plane, Monitor, GraduationCap, BookOpen, Bot, ShoppingBag, Star, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -60,6 +59,7 @@ const SORT_OPTIONS: { value: string; label: string }[] = [
 
 /** Loading state with 10s timeout ÔÇö prevents infinite skeleton on mobile PWA */
 function MarketplaceLoadingState({ onRetry }: { onRetry: () => void }) {
+  const { t } = useTranslation();
   const [timedOut, setTimedOut] = useState(false);
   
   useEffect(() => {
@@ -71,12 +71,12 @@ function MarketplaceLoadingState({ onRetry }: { onRetry: () => void }) {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-4">
         <div className="text-center space-y-2">
-          <p className="text-sm font-medium text-foreground">Impossible de charger les produits</p>
-          <p className="text-xs text-muted-foreground">V├®rifiez votre connexion internet</p>
+          <p className="text-sm font-medium text-foreground">{t('marketplace.cannotLoadProducts')}</p>
+          <p className="text-xs text-muted-foreground">{t('marketplace.checkConnection')}</p>
         </div>
         <div className="flex gap-2">
           <Button variant="default" size="sm" onClick={onRetry}>
-            R├®essayer
+            {t('common.retry')}
           </Button>
           <Button variant="outline" size="sm" onClick={() => {
             if ('caches' in window) {
@@ -718,7 +718,7 @@ export default function Marketplace() {
                 : 'bg-card border border-border hover:border-primary/50'
             )}
             style={activeTab === 'country' ? { backgroundColor: BRAND_BLUE } : undefined}
-            title="Choisir un pays"
+            title={t('marketplace.chooseCountry')}
           >
             {activeTab === 'country' && selectedCountry !== 'all'
               ? <span className="text-sm leading-none shrink-0" aria-hidden>{getFlagEmoji(selectedCountry) || '📍'}</span>
@@ -962,15 +962,15 @@ export default function Marketplace() {
                 </div>
               </div>
               <div>
-                <label className="text-xs font-medium mb-1.5 block text-foreground">Note minimum</label>
+                <label className="text-xs font-medium mb-1.5 block text-foreground">{t('marketplace.minRating')}</label>
                 <Select onValueChange={(val) => setFilters(prev => ({ ...prev, minRating: parseInt(val) || 0 }))}>
                   <SelectTrigger className="h-9 text-xs w-full">
-                    <SelectValue placeholder="Choisir une note" />
+                    <SelectValue placeholder={t('marketplace.chooseRating')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="4">4+ étoiles</SelectItem>
-                    <SelectItem value="3">3+ étoiles</SelectItem>
-                    <SelectItem value="2">2+ étoiles</SelectItem>
+                    <SelectItem value="4">4+ {t('marketplace.stars')}</SelectItem>
+                    <SelectItem value="3">3+ {t('marketplace.stars')}</SelectItem>
+                    <SelectItem value="2">2+ {t('marketplace.stars')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1030,8 +1030,8 @@ export default function Marketplace() {
           />
 
           <AIRecommendationSection
-            title="À découvrir"
-            subtitle="Des produits que vous n'avez pas encore explorés"
+            title={t('marketplace.discoverTitle')}
+            subtitle={t('marketplace.discoverSubtitle')}
             products={discoveryProductsF}
             isLoading={loadingDiscovery}
             icon="gift"
@@ -1041,8 +1041,8 @@ export default function Marketplace() {
 
           {/* Smart Recommendations base sur scoring produit + preferences utilisateur */}
           <AIRecommendationSection
-            title="Recommandé pour vous"
-            subtitle="Basé sur vos achats et consultations"
+            title={t('marketplace.recommendedTitle')}
+            subtitle={t('marketplace.recommendedSubtitle')}
             products={smartRecsF}
             isLoading={loadingSmartRecs}
             icon="sparkles"
@@ -1052,8 +1052,8 @@ export default function Marketplace() {
 
           {/* Populaire en ce moment ÔÇö bas├® sur product_scores trending */}
           <AIRecommendationSection
-            title="Populaire en ce moment"
-            subtitle="Les produits les plus consult├®s"
+            title={t('marketplace.trendingTitle')}
+            subtitle={t('marketplace.trendingSubtitle')}
             products={trendingProductsF}
             isLoading={loadingTrendingProducts}
             icon="trending"
@@ -1063,8 +1063,8 @@ export default function Marketplace() {
 
           {/* R├®cemment consult├®s */}
           <AIRecommendationSection
-            title="R├®cemment consult├®s"
-            subtitle="Vos derni├¿res visites"
+            title={t('marketplace.recentTitle')}
+            subtitle={t('marketplace.recentSubtitle')}
             products={recentlyViewedF}
             isLoading={loadingRecentlyViewed}
             icon="clock"
@@ -1134,8 +1134,9 @@ export default function Marketplace() {
                     isPremium={item.is_premium || item.is_featured}
                     stock={item.stock}
                     category={item.category_name}
-                    onBuy={() => handleProductClick(item.id)}
+                    onBuy={() => item.external_link ? navigate(item.external_link) : handleProductClick(item.id)}
                     onAddToCart={() => {
+                      if (item.external_link) { navigate(item.external_link); return; }
                       addToCart({
                         id: item.id,
                         name: item.name,

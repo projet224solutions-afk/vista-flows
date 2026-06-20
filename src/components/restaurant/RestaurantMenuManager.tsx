@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ import { useServiceSubscription } from '@/hooks/useServiceSubscription';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useStorageUpload } from '@/hooks/useStorageUpload';
+import { cn } from '@/lib/utils';
 
 interface RestaurantMenuManagerProps {
   serviceId: string;
@@ -43,7 +45,42 @@ const MAX_IMAGES = 5;
 const MAX_VIDEO_SIZE_MB = 50;
 const MAX_VIDEO_DURATION_S = 45;
 
+// Icônes proposées pour les catégories du menu (le restaurateur en choisit une distincte par catégorie).
+const CATEGORY_ICONS = [
+  '🍽️', '🥗', '🍔', '🍕', '🍗', '🍟', '🌮', '🥙', '🧆', '🍲', '🍛', '🍜', '🍝', '🍣', '🍤',
+  '🥩', '🐟', '🍚', '🥘', '🫓', '🥖', '🧀', '🥚', '🍳', '🥞', '🍰', '🍩', '🍦', '🍫', '🍪',
+  '☕', '🍵', '🥤', '🧃', '🥛', '🍹', '🍺', '🍷', '🧊', '🍉',
+];
+
+// Options / suppléments payants d'un plat (ex. « Taille », « Suppléments »).
+interface OptionGroup {
+  id: string;
+  name: string;
+  min: number;   // sélections minimales (0 = facultatif)
+  max: number;   // sélections maximales (1 = choix unique)
+  options: { id: string; name: string; price: number }[];
+}
+
+const uid = () => (globalThis.crypto?.randomUUID?.() || `id-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`);
+
+// Nettoie les variants avant sauvegarde : retire les groupes/options vides, borne les nombres.
+function sanitizeVariants(v: { groups: OptionGroup[] }): { groups: OptionGroup[] } | null {
+  const groups = (v?.groups || [])
+    .map((g) => ({
+      id: g.id || uid(),
+      name: (g.name || '').trim(),
+      min: Math.max(0, Number(g.min) || 0),
+      max: Math.max(1, Number(g.max) || 1),
+      options: (g.options || [])
+        .filter((o) => (o.name || '').trim())
+        .map((o) => ({ id: o.id || uid(), name: o.name.trim(), price: Math.max(0, Number(o.price) || 0) })),
+    }))
+    .filter((g) => g.name && g.options.length > 0);
+  return groups.length ? { groups } : null;
+}
+
 export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps) {
+  const { t } = useTranslation();
   const formatCurrency = useFormatCurrency();
   const { subscription } = useServiceSubscription({ serviceId });
   const { uploadFile } = useStorageUpload();
@@ -83,6 +120,9 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
     image_url: '',
     images: [] as string[],
     video_url: '',
+    stock_quantity: '',   // '' = illimité ; nombre = portions disponibles
+    section: '',          // regroupement libre (ex. « Midi », « Bar »)
+    variants: { groups: [] as OptionGroup[] },
   });
 
   // États du formulaire catégorie
@@ -105,6 +145,9 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
       image_url: '',
       images: [],
       video_url: '',
+      stock_quantity: '',
+      section: '',
+      variants: { groups: [] },
     });
     setEditingItem(null);
   };
@@ -116,7 +159,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
 
   const handleSaveItem = async () => {
     if (!itemForm.name || !itemForm.price) {
-      toast.error('Nom et prix requis');
+      toast.error(t('restaurantMenuManager.nomEtPrixRequis'));
       return;
     }
 
@@ -125,6 +168,12 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
       : itemForm.image_url
         ? [itemForm.image_url]
         : [];
+
+    // STOCK ↔ DISPONIBILITÉ : null = illimité ; sinon le nombre pilote is_available.
+    //  - stock > 0  → disponible (réapprovisionner réactive un plat épuisé)
+    //  - stock = 0  → indisponible (retiré du menu en ligne automatiquement)
+    //  - illimité   → on NE force PAS (on garde l'état du bouton Disponible/Indisponible)
+    const stockVal = itemForm.stock_quantity.trim() === '' ? null : Math.max(0, parseInt(itemForm.stock_quantity) || 0);
 
     try {
       if (editingItem) {
@@ -140,8 +189,12 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
           image_url: allImages[0] || null,
           images: allImages,
           video_url: itemForm.video_url || null,
+          stock_quantity: stockVal,
+          is_available: stockVal === null ? editingItem.is_available : stockVal > 0,
+          section: itemForm.section.trim() || null,
+          variants: sanitizeVariants(itemForm.variants),
         });
-        toast.success('Plat mis à jour');
+        toast.success(t('restaurantMenuManager.platMisAJour'));
       } else {
         await createMenuItem({
           name: itemForm.name,
@@ -155,8 +208,12 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
           image_url: allImages[0] || undefined,
           images: allImages,
           video_url: itemForm.video_url || undefined,
+          stock_quantity: stockVal,
+          is_available: stockVal === null ? true : stockVal > 0,
+          section: itemForm.section.trim() || null,
+          variants: sanitizeVariants(itemForm.variants),
         });
-        toast.success('Plat ajouté');
+        toast.success(t('restaurantMenuManager.platAjoute'));
       }
       setShowItemDialog(false);
       resetItemForm();
@@ -170,10 +227,10 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
     try {
       if (editingCategory) {
         await updateCategory(editingCategory.id, categoryForm);
-        toast.success('Catégorie mise à jour');
+        toast.success(t('restaurantMenuManager.categorieMiseAJour'));
       } else {
         await createCategory(categoryForm);
-        toast.success('Catégorie ajoutée');
+        toast.success(t('restaurantMenuManager.categorieAjoutee'));
       }
       setShowCategoryDialog(false);
       resetCategoryForm();
@@ -196,6 +253,9 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
       image_url: item.image_url || '',
       images: item.images || (item.image_url ? [item.image_url] : []),
       video_url: item.video_url || '',
+      stock_quantity: item.stock_quantity != null ? String(item.stock_quantity) : '',
+      section: (item as any).section || '',
+      variants: { groups: Array.isArray((item as any).variants?.groups) ? (item as any).variants.groups : [] },
     });
     setShowItemDialog(true);
   };
@@ -207,7 +267,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("L'image ne doit pas dépasser 5 MB");
+      toast.error(t('restaurantMenuManager.lImageNeDoitPas'));
       return;
     }
     try {
@@ -219,7 +279,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
         images: [...prev.images, result.publicUrl!],
         image_url: prev.images.length === 0 ? result.publicUrl! : prev.image_url,
       }));
-      toast.success('Image ajoutée !');
+      toast.success(t('restaurantMenuManager.imageAjoutee'));
     } catch (err: any) {
       toast.error("Erreur upload image");
     } finally {
@@ -237,7 +297,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
   const handleVideoUpload = async (file: File) => {
     if (!file) return;
     if (!canUploadVideo) {
-      toast.error('Upload vidéo réservé au plan Premium');
+      toast.error(t('restaurantMenuManager.uploadVideoReserveAuPlan'));
       return;
     }
     if (file.size > MAX_VIDEO_SIZE_MB * 1024 * 1024) {
@@ -257,9 +317,9 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
       const result = await uploadFile(file, { folder: 'videos', subfolder: `restaurant-dishes/${serviceId}` });
       if (!result.success || !result.publicUrl) throw new Error(result.error);
       setItemForm(prev => ({ ...prev, video_url: result.publicUrl! }));
-      toast.success('Vidéo uploadée !');
+      toast.success(t('restaurantMenuManager.videoUploadee'));
     } catch (err: any) {
-      toast.error("Erreur upload vidéo");
+      toast.error(t('restaurantMenuManager.erreurUploadVideo'));
     } finally {
       setUploadingVideo(false);
     }
@@ -272,10 +332,10 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
   };
 
   const handleDeleteItem = async (id: string) => {
-    if (!confirm('Supprimer ce plat ?')) return;
+    if (!confirm(t('restaurantMenuManager.supprimerCePlat'))) return;
     try {
       await deleteMenuItem(id);
-      toast.success('Plat supprimé');
+      toast.success(t('restaurantMenuManager.platSupprime'));
     } catch (err: any) {
       toast.error(err.message);
     }
@@ -307,7 +367,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Rechercher un plat..."
+              placeholder={t('restaurantMenuManager.rechercherUnPlat')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -332,16 +392,28 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                   <Input
                     value={categoryForm.name}
                     onChange={(e) => setCategoryForm(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Ex: Entrées, Plats principaux..."
+                    placeholder={t('restaurantMenuManager.exEntreesPlatsPrincipaux')}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Icône (emoji)</Label>
-                  <Input
-                    value={categoryForm.icon}
-                    onChange={(e) => setCategoryForm(prev => ({ ...prev, icon: e.target.value }))}
-                    placeholder="🍽️"
-                  />
+                  <Label>{t('restaurantMenuManager.iconeDeLaCategorie')}</Label>
+                  <div className="flex flex-wrap gap-1.5 rounded-lg border p-2 max-h-32 overflow-y-auto">
+                    {CATEGORY_ICONS.map((emo) => (
+                      <button
+                        key={emo}
+                        type="button"
+                        onClick={() => setCategoryForm(prev => ({ ...prev, icon: emo }))}
+                        className={cn(
+                          'flex h-9 w-9 items-center justify-center rounded-md text-lg transition-colors',
+                          categoryForm.icon === emo ? 'bg-[#ff4000] ring-2 ring-[#ff4000]' : 'bg-muted hover:bg-muted-foreground/20',
+                        )}
+                        aria-label={`Icône ${emo}`}
+                      >
+                        {emo}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">{t('restaurantMenuManager.choisissezUneIconeDistinctePar')}</p>
                 </div>
                 <div className="space-y-2">
                   <Label>Description</Label>
@@ -352,7 +424,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setShowCategoryDialog(false)}>Annuler</Button>
+                <Button variant="outline" onClick={() => setShowCategoryDialog(false)}>{t('restaurantMenuManager.annuler')}</Button>
                 <Button onClick={handleSaveCategory}>{editingCategory ? 'Mettre à jour' : 'Créer'}</Button>
               </DialogFooter>
             </DialogContent>
@@ -365,21 +437,21 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                 Ajouter un plat
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
+            <DialogContent className="max-w-2xl max-h-[88vh] overflow-y-auto">
+              <DialogHeader className="pb-1">
                 <DialogTitle>{editingItem ? 'Modifier le plat' : 'Nouveau plat'}</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="col-span-2 space-y-2">
-                    <Label>Nom du plat *</Label>
+              <div className="space-y-3 py-1">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2 space-y-1.5">
+                    <Label>{t('restaurantMenuManager.nomDuPlat')}</Label>
                     <Input
                       value={itemForm.name}
                       onChange={(e) => setItemForm(prev => ({ ...prev, name: e.target.value }))}
                       placeholder="Ex: Poulet yassa"
                     />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label>Prix (FG) *</Label>
                     <Input
                       type="number"
@@ -388,8 +460,8 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                       placeholder="50000"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Catégorie</Label>
+                  <div className="space-y-1.5">
+                    <Label>{t('restaurantMenuManager.categorie')}</Label>
                     <Select
                       value={itemForm.category_id}
                       onValueChange={(v) => setItemForm(prev => ({ ...prev, category_id: v }))}
@@ -404,16 +476,51 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                   </div>
                 </div>
 
+                <div className="grid grid-cols-2 gap-3">
+                  {/* 📦 STOCK — compact. Vide = illimité ; à 0 le plat passe indisponible. */}
+                  <div className="flex items-center gap-2 rounded-lg border-2 border-[#ff4000]/30 bg-[#ff4000]/5 px-3 py-2">
+                    <Label className="whitespace-nowrap text-sm font-bold text-[#ff4000]">📦 Stock</Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={itemForm.stock_quantity}
+                      onChange={(e) => setItemForm(prev => ({ ...prev, stock_quantity: e.target.value }))}
+                      placeholder="vide=illimité"
+                      className="h-9 font-semibold"
+                    />
+                  </div>
+                  {/* SECTION — regroupement libre (comme le POS vendeur), en plus de la catégorie. */}
+                  <div className="flex items-center gap-2 rounded-lg border px-3 py-2">
+                    <Label className="whitespace-nowrap text-sm font-medium">Section</Label>
+                    <Input
+                      value={itemForm.section}
+                      onChange={(e) => setItemForm(prev => ({ ...prev, section: e.target.value }))}
+                      placeholder="ex : Midi, Bar"
+                      className="h-9"
+                      list="resto-sections"
+                    />
+                    <datalist id="resto-sections">
+                      {[...new Set(menuItems.map(i => (i as any).section).filter(Boolean))].map(s => <option key={s as string} value={s as string} />)}
+                    </datalist>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label>Description</Label>
                   <Textarea
                     value={itemForm.description}
                     onChange={(e) => setItemForm(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Décrivez le plat..."
+                    placeholder={t('restaurantMenuManager.decrivezLePlat')}
                     rows={2}
                   />
                 </div>
 
+                {/* Médias repliables (photos + vidéo) — raccourcit le formulaire */}
+                <details className="rounded-lg border">
+                  <summary className="cursor-pointer select-none px-3 py-2 text-sm font-medium">
+                    📷 Photos & vidéo du plat (optionnel){itemForm.images.length > 0 ? ` · ${itemForm.images.length} photo${itemForm.images.length > 1 ? 's' : ''}` : ''}
+                  </summary>
+                  <div className="space-y-3 border-t p-3">
                 {/* Multi-images du plat */}
                 <div className="space-y-2">
                   <Label>
@@ -425,7 +532,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                   <div className="border-2 border-dashed rounded-lg p-3 space-y-3">
                     {/* Grille d'images */}
                     {itemForm.images.length > 0 && (
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {itemForm.images.map((url, idx) => (
                           <div key={idx} className="relative group">
                             <img
@@ -451,7 +558,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                     {itemForm.images.length === 0 && (
                       <div className="text-center py-2">
                         <ImageIcon className="w-8 h-8 text-muted-foreground mx-auto mb-1" />
-                        <p className="text-xs text-muted-foreground">Aucune photo</p>
+                        <p className="text-xs text-muted-foreground">{t('restaurantMenuManager.aucunePhoto')}</p>
                       </div>
                     )}
                     {itemForm.images.length < MAX_IMAGES && (
@@ -534,10 +641,12 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                     )}
                   </div>
                 </div>
+                  </div>
+                </details>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Temps de préparation (min)</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>{t('restaurantMenuManager.tempsDePreparationMin')}</Label>
                     <Input
                       type="number"
                       value={itemForm.preparation_time}
@@ -545,15 +654,15 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Niveau épicé (0-3)</Label>
+                    <Label>{t('restaurantMenuManager.niveauEpice03')}</Label>
                     <Select
                       value={itemForm.spicy_level}
                       onValueChange={(v) => setItemForm(prev => ({ ...prev, spicy_level: v }))}
                     >
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="0">Non épicé</SelectItem>
-                        <SelectItem value="1">🌶️ Léger</SelectItem>
+                        <SelectItem value="0">{t('restaurantMenuManager.nonEpice')}</SelectItem>
+                        <SelectItem value="1">{t('restaurantMenuManager.leger')}</SelectItem>
                         <SelectItem value="2">🌶️🌶️ Moyen</SelectItem>
                         <SelectItem value="3">🌶️🌶️🌶️ Fort</SelectItem>
                       </SelectContent>
@@ -594,9 +703,51 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                     onCheckedChange={(v) => setItemForm(prev => ({ ...prev, is_featured: v }))}
                   />
                 </div>
+
+                {/* OPTIONS / SUPPLÉMENTS PAYANTS (repliable) — groupes (ex. « Taille », « Suppléments ») */}
+                <details className="rounded-lg border" open={itemForm.variants.groups.length > 0}>
+                  <summary className="cursor-pointer select-none px-3 py-2 text-sm font-medium">
+                    ⚙️ Options / suppléments (optionnel){itemForm.variants.groups.length > 0 ? ` · ${itemForm.variants.groups.length} groupe${itemForm.variants.groups.length > 1 ? 's' : ''}` : ''}
+                  </summary>
+                  <div className="space-y-3 border-t p-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="font-semibold">Groupes d'options</Label>
+                    <Button type="button" size="sm" variant="outline" onClick={() => setItemForm(prev => ({ ...prev, variants: { groups: [...prev.variants.groups, { id: uid(), name: '', min: 0, max: 1, options: [] }] } }))}>
+                      <Plus className="w-4 h-4 mr-1" /> Groupe
+                    </Button>
+                  </div>
+                  {itemForm.variants.groups.length === 0 && (
+                    <p className="text-xs text-muted-foreground">{t('restaurantMenuManager.aucuneOptionExTailleUnique')}</p>
+                  )}
+                  {itemForm.variants.groups.map((g, gi) => (
+                    <div key={g.id} className="space-y-2 rounded-md bg-muted/40 p-2">
+                      <div className="flex items-center gap-2">
+                        <Input placeholder={t('restaurantMenuManager.nomDuGroupeExTaille')} value={g.name}
+                          onChange={(e) => setItemForm(prev => { const groups = [...prev.variants.groups]; groups[gi] = { ...g, name: e.target.value }; return { ...prev, variants: { groups } }; })} />
+                        <Input type="number" min={1} className="w-16" title="Choix max" value={g.max}
+                          onChange={(e) => setItemForm(prev => { const groups = [...prev.variants.groups]; groups[gi] = { ...g, max: Math.max(1, +e.target.value || 1) }; return { ...prev, variants: { groups } }; })} />
+                        <label className="flex items-center gap-1 text-xs whitespace-nowrap"><input type="checkbox" checked={g.min > 0} onChange={(e) => setItemForm(prev => { const groups = [...prev.variants.groups]; groups[gi] = { ...g, min: e.target.checked ? 1 : 0 }; return { ...prev, variants: { groups } }; })} />Oblig.</label>
+                        <Button type="button" size="icon" variant="ghost" onClick={() => setItemForm(prev => ({ ...prev, variants: { groups: prev.variants.groups.filter((_, i) => i !== gi) } }))}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                      </div>
+                      {g.options.map((o, oi) => (
+                        <div key={o.id} className="flex items-center gap-2 pl-2">
+                          <Input placeholder="Option (ex. Grande)" value={o.name}
+                            onChange={(e) => setItemForm(prev => { const groups = [...prev.variants.groups]; const options = [...g.options]; options[oi] = { ...o, name: e.target.value }; groups[gi] = { ...g, options }; return { ...prev, variants: { groups } }; })} />
+                          <Input type="number" min={0} className="w-24" placeholder="+ GNF" value={o.price}
+                            onChange={(e) => setItemForm(prev => { const groups = [...prev.variants.groups]; const options = [...g.options]; options[oi] = { ...o, price: Math.max(0, +e.target.value || 0) }; groups[gi] = { ...g, options }; return { ...prev, variants: { groups } }; })} />
+                          <Button type="button" size="icon" variant="ghost" onClick={() => setItemForm(prev => { const groups = [...prev.variants.groups]; groups[gi] = { ...g, options: g.options.filter((_, i) => i !== oi) }; return { ...prev, variants: { groups } }; })}><X className="w-4 h-4" /></Button>
+                        </div>
+                      ))}
+                      <Button type="button" size="sm" variant="ghost" className="ml-2" onClick={() => setItemForm(prev => { const groups = [...prev.variants.groups]; groups[gi] = { ...g, options: [...g.options, { id: uid(), name: '', price: 0 }] }; return { ...prev, variants: { groups } }; })}>
+                        <Plus className="w-3.5 h-3.5 mr-1" /> Option
+                      </Button>
+                    </div>
+                  ))}
+                  </div>
+                </details>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setShowItemDialog(false)}>Annuler</Button>
+                <Button variant="outline" onClick={() => setShowItemDialog(false)}>{t('restaurantMenuManager.annuler')}</Button>
                 <Button onClick={handleSaveItem}>{editingItem ? 'Mettre à jour' : 'Créer'}</Button>
               </DialogFooter>
             </DialogContent>
@@ -675,7 +826,7 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                 )}
                 {item.is_new && (
                   <div className="absolute top-2 left-2 z-10">
-                    <Badge variant="secondary">Nouveau</Badge>
+                    <Badge variant="secondary">{t('restaurantMenuManager.nouveau')}</Badge>
                   </div>
                 )}
 
@@ -724,6 +875,16 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                     <Badge variant="outline" className="text-xs">
                       <Clock className="w-3 h-3 mr-1" />{item.preparation_time} min
                     </Badge>
+                    {/* STOCK : nombre disponible (suivi) ou « illimité ». */}
+                    {item.stock_quantity == null ? (
+                      <Badge variant="outline" className="text-xs text-muted-foreground">{t('restaurantMenuManager.stockIllimite')}</Badge>
+                    ) : item.stock_quantity <= 0 ? (
+                      <Badge variant="outline" className="text-xs border-red-300 text-red-600">{t('restaurantMenuManager.epuise')}</Badge>
+                    ) : (
+                      <Badge variant="outline" className={`text-xs ${item.stock_quantity <= 5 ? 'border-orange-300 text-orange-600' : 'border-emerald-300 text-emerald-700'}`}>
+                        {item.stock_quantity} en stock
+                      </Badge>
+                    )}
                     {item.dietary_tags?.map(tag => {
                       const tagInfo = DIETARY_TAGS.find(t => t.value === tag);
                       return tagInfo ? (
@@ -733,7 +894,18 @@ export function RestaurantMenuManager({ serviceId }: RestaurantMenuManagerProps)
                   </div>
 
                   <div className="flex justify-between items-center pt-3 border-t">
-                    <Button variant="ghost" size="sm" onClick={() => toggleItemAvailability(item.id)}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        // On ne peut pas remettre « Disponible » un plat à stock 0 : il faut réapprovisionner.
+                        if (!item.is_available && item.stock_quantity === 0) {
+                          toast.error(t('restaurantMenuManager.stockA0ReapprovisionnezLe'));
+                          return;
+                        }
+                        toggleItemAvailability(item.id);
+                      }}
+                    >
                       {item.is_available ? (
                         <><Eye className="w-4 h-4 mr-1 text-[#ff4000]" /><span className="text-[#ff4000]">Disponible</span></>
                       ) : (

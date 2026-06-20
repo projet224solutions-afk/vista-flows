@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useVendorCurrency } from '@/hooks/useVendorCurrency';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -41,6 +42,7 @@ interface PurchaseExpense {
 }
 
 export function PurchaseExpensesSection({ vendorId }: PurchaseExpensesSectionProps) {
+  const { t } = useTranslation();
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('all');
 
   const getDateFilter = () => {
@@ -199,7 +201,7 @@ export function PurchaseExpensesSection({ vendorId }: PurchaseExpensesSectionPro
             <Card className="bg-destructive/10 border-destructive/20">
               <CardContent className="p-4 text-center">
                 <p className="text-xl font-bold text-destructive">{formatCurrency(currentStats.totalAmount)}</p>
-                <p className="text-sm text-muted-foreground">Total dépensé</p>
+                <p className="text-sm text-muted-foreground">{t('purchaseExpensesSection.totalDepense')}</p>
               </CardContent>
             </Card>
           </div>
@@ -211,7 +213,7 @@ export function PurchaseExpensesSection({ vendorId }: PurchaseExpensesSectionPro
             ) : purchaseExpenses.length === 0 ? (
               <div className="text-center py-12">
                 <Package className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-                <p className="text-muted-foreground">Aucune dépense d'achat pour cette période</p>
+                <p className="text-muted-foreground">{t('purchaseExpensesSection.aucuneDepenseDAchatPour')}</p>
               </div>
             ) : (
               <div className="space-y-2 pr-4">

@@ -5,6 +5,7 @@
  */
 
 import { useRef, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
 import { Printer, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -31,6 +32,7 @@ interface Props {
 }
 
 export default function TransportTicketPreview({ config, ticketNumbers, batchId }: Props) {
+  const { t } = useTranslation();
   const printRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
@@ -45,7 +47,7 @@ export default function TransportTicketPreview({ config, ticketNumbers, batchId 
     if (!printRef.current) return;
 
     setIsExporting(true);
-    toast.info('Génération du PDF en cours...');
+    toast.info(t('transportTicketPreview.generationDuPdfEnCours'));
 
     try {
       const element = printRef.current;
@@ -79,10 +81,10 @@ export default function TransportTicketPreview({ config, ticketNumbers, batchId 
       const fileName = `tickets-transport-${batchId?.slice(-8) || 'lot'}-${config.commune.toLowerCase()}.pdf`;
       pdf.save(fileName);
 
-      toast.success('PDF exporté avec succès');
+      toast.success(t('transportTicketPreview.pdfExporteAvecSucces'));
     } catch (error) {
       console.error('Erreur export PDF:', error);
-      toast.error('Erreur lors de l\'export PDF');
+      toast.error(t('transportTicketPreview.erreurLorsDeLExport'));
     } finally {
       setIsExporting(false);
     }

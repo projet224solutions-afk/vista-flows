@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -102,6 +103,7 @@ interface FloatingLog {
 }
 
 export default function SystemLiveMonitor({ open, onOpenChange }: SystemLiveMonitorProps) {
+  const { t } = useTranslation();
   const _navigate = useNavigate();
   const [activeFeatures, setActiveFeatures] = useState<Set<number>>(new Set());
   const [logs, setLogs] = useState<FloatingLog[]>([]);
@@ -324,7 +326,7 @@ export default function SystemLiveMonitor({ open, onOpenChange }: SystemLiveMoni
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-[95vw] max-h-[95vh] w-full md:w-[1400px] h-[95vh] md:h-[850px] p-0 overflow-hidden bg-black border-0" aria-describedby={undefined}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] w-full md:w-full max-w-[1400px] h-[95vh] md:h-[850px] p-0 overflow-hidden bg-black border-0" aria-describedby={undefined}>
           <VisuallyHidden>
             <DialogTitle>Système de Surveillance 24/7</DialogTitle>
           </VisuallyHidden>
@@ -493,7 +495,7 @@ export default function SystemLiveMonitor({ open, onOpenChange }: SystemLiveMoni
                             className="flex justify-between items-center p-2 sm:p-3 hover:bg-[#ff4000]/20 rounded-lg cursor-pointer transition-colors"
                             onClick={() => setShowTransactionMenu(false)}
                           >
-                            <span className="text-[#ff4000] text-xs sm:text-sm font-medium">📊 Année</span>
+                            <span className="text-[#ff4000] text-xs sm:text-sm font-medium">{t('systemLiveMonitor.annee')}</span>
                             <span className="text-white font-mono font-bold text-sm sm:text-lg">{transactionBreakdown.year.toLocaleString()}</span>
                           </div>
                         </div>
@@ -668,7 +670,7 @@ export default function SystemLiveMonitor({ open, onOpenChange }: SystemLiveMoni
 
                 <div className="flex items-center gap-1.5 sm:gap-2">
                   <CheckCircle2 className="w-4 h-4 sm:w-6 sm:h-6 text-[#ff4000]" />
-                  <span className="text-[#ff4000] font-bold text-xs sm:text-base">OPÉRATIONNEL</span>
+                  <span className="text-[#ff4000] font-bold text-xs sm:text-base">{t('systemLiveMonitor.operationnel')}</span>
                 </div>
               </motion.div>
             </div>

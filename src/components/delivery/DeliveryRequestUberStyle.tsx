@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +25,7 @@ interface DeliveryRequestUberStyleProps {
 }
 
 export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestUberStyleProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [step, setStep] = useState<'address' | 'confirm' | 'payment'>('address');
   const [_loading, setLoading] = useState(false);
@@ -72,11 +74,11 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
 
     setLoading(true);
     try {
-      toast.success('✅ Livraison créée ! Les livreurs vont recevoir la notification.');
+      toast.success(t('deliveryRequestUberStyle.livraisonCreeeLesLivreursVont'));
       onDeliveryCreated(transactionId || 'temp-id');
     } catch (error) {
       console.error('Error creating delivery:', error);
-      toast.error('Erreur lors de la création');
+      toast.error(t('deliveryRequestUberStyle.erreurLorsDeLaCreation'));
     } finally {
       setLoading(false);
     }
@@ -102,7 +104,7 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
                   Adresse de retrait
                 </Label>
                 <Input
-                  placeholder="Où récupérer le colis ?"
+                  placeholder={t('deliveryRequestUberStyle.ouRecupererLeColis')}
                   value={pickupAddress}
                   onChange={(e) => setPickupAddress(e.target.value)}
                 />
@@ -115,7 +117,7 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
                   Adresse de livraison
                 </Label>
                 <Input
-                  placeholder="Où livrer le colis ?"
+                  placeholder={t('deliveryRequestUberStyle.ouLivrerLeColis')}
                   value={deliveryAddress}
                   onChange={(e) => setDeliveryAddress(e.target.value)}
                 />
@@ -149,9 +151,9 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
 
               {/* Description */}
               <div className="space-y-2">
-                <Label>Description du colis</Label>
+                <Label>{t('deliveryRequestUberStyle.descriptionDuColis')}</Label>
                 <Input
-                  placeholder="Ex: Documents, vêtements, nourriture..."
+                  placeholder={t('deliveryRequestUberStyle.exDocumentsVetementsNourriture')}
                   value={packageDescription}
                   onChange={(e) => setPackageDescription(e.target.value)}
                 />
@@ -159,9 +161,9 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
 
               {/* Instructions spéciales */}
               <div className="space-y-2">
-                <Label>Instructions spéciales (optionnel)</Label>
+                <Label>{t('deliveryRequestUberStyle.instructionsSpecialesOptionnel')}</Label>
                 <Textarea
-                  placeholder="Instructions pour le livreur..."
+                  placeholder={t('deliveryRequestUberStyle.instructionsPourLeLivreur')}
                   value={specialInstructions}
                   onChange={(e) => setSpecialInstructions(e.target.value)}
                   rows={3}
@@ -195,7 +197,7 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
           {/* Résumé */}
           <Card>
             <CardHeader>
-              <CardTitle>Résumé de la commande</CardTitle>
+              <CardTitle>{t('deliveryRequestUberStyle.resumeDeLaCommande')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-start gap-3">
@@ -208,7 +210,7 @@ export function DeliveryRequestUberStyle({ onDeliveryCreated }: DeliveryRequestU
               <div className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 text-[#ff4000] flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-medium">Livraison</p>
+                  <p className="font-medium">{t('deliveryRequestUberStyle.livraison')}</p>
                   <p className="text-sm text-muted-foreground">{deliveryAddress}</p>
                 </div>
               </div>

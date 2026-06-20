@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { format, addDays, isBefore, startOfDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
@@ -58,6 +59,7 @@ export function ReservationModal({
   restaurantName,
   restaurantPhone
 }: ReservationModalProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const fc = useFormatCurrency();
   const { createReservation, checkAvailability } = useRestaurantReservations(serviceId);
@@ -183,7 +185,7 @@ export function ReservationModal({
       setTimeSlots(slots);
     } catch (error) {
       console.error('Erreur chargement créneaux:', error);
-      toast.error('Erreur lors du chargement des disponibilités');
+      toast.error(t('reservationModal.erreurLorsDuChargementDes'));
     } finally {
       setLoadingSlots(false);
     }
@@ -228,7 +230,7 @@ export function ReservationModal({
 
   const handleSubmit = async (paymentIntentId?: string) => {
     if (!selectedDate || !selectedTime || !customerName) {
-      toast.error('Veuillez remplir tous les champs obligatoires');
+      toast.error(t('reservationModal.veuillezRemplirTousLesChamps'));
       return;
     }
 
@@ -277,7 +279,7 @@ export function ReservationModal({
         });
         setShowReceiptDownload(true);
         setStep('confirmation');
-        toast.success('Réservation confirmée !');
+        toast.success(t('reservationModal.reservationConfirmee'));
       }
     } catch (error: any) {
       console.error('Erreur création réservation:', error);
@@ -358,12 +360,12 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    toast.success('Reçu téléchargé !');
+    toast.success(t('reservationModal.recuTelecharge'));
   };
 
   // Callback paiement Stripe réussi
   const handleStripeSuccess = async (paymentIntentId: string) => {
-    toast.success('Paiement par carte effectué avec succès !');
+    toast.success(t('reservationModal.paiementParCarteEffectueAvec'));
     setShowStripePayment(false);
     await handleSubmit(paymentIntentId);
   };
@@ -420,11 +422,11 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Users className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold">Combien de convives ?</h3>
-              <p className="text-muted-foreground mt-1">Sélectionnez le nombre de personnes</p>
+              <h3 className="text-xl font-semibold">{t('reservationModal.combienDeConvives')}</h3>
+              <p className="text-muted-foreground mt-1">{t('reservationModal.selectionnezLeNombreDePersonnes')}</p>
             </div>
 
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
                 <Button
                   key={num}
@@ -442,7 +444,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
 
             <div className="flex items-center gap-2 text-sm text-muted-foreground justify-center mt-4">
               <AlertCircle className="w-4 h-4" />
-              <span>Pour plus de 8 personnes, veuillez nous appeler</span>
+              <span>{t('reservationModal.pourPlusDe8Personnes')}</span>
             </div>
 
             <Button
@@ -459,7 +461,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
         return (
           <div className="space-y-6">
             <div className="text-center mb-4">
-              <h3 className="text-xl font-semibold">Choisissez date et heure</h3>
+              <h3 className="text-xl font-semibold">{t('reservationModal.choisissezDateEtHeure')}</h3>
               <p className="text-muted-foreground">{partySize} {partySize > 1 ? 'personnes' : 'personne'}</p>
             </div>
 
@@ -504,7 +506,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                 {loadingSlots ? (
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
-                    <p className="text-muted-foreground mt-2">Recherche des disponibilités...</p>
+                    <p className="text-muted-foreground mt-2">{t('reservationModal.rechercheDesDisponibilites')}</p>
                   </div>
                 ) : (
                   <>
@@ -513,7 +515,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                         <Label className="text-sm font-medium mb-2 block flex items-center gap-2">
                           <span className="text-lg">🌞</span> Service du midi
                         </Label>
-                        <div className="grid grid-cols-4 gap-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                           {lunchSlots.map(slot => (
                             <Button
                               key={slot.time}
@@ -538,7 +540,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                         <Label className="text-sm font-medium mb-2 block flex items-center gap-2">
                           <span className="text-lg">🌙</span> Service du soir
                         </Label>
-                        <div className="grid grid-cols-4 gap-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                           {dinnerSlots.map(slot => (
                             <Button
                               key={slot.time}
@@ -586,8 +588,8 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
         return (
           <div className="space-y-4">
             <div className="text-center mb-4">
-              <h3 className="text-xl font-semibold">Découvrez notre menu</h3>
-              <p className="text-muted-foreground">Précommandez vos plats préférés</p>
+              <h3 className="text-xl font-semibold">{t('reservationModal.decouvrezNotreMenu')}</h3>
+              <p className="text-muted-foreground">{t('reservationModal.precommandezVosPlatsPreferes')}</p>
             </div>
 
             {/* Toggle précommande */}
@@ -596,8 +598,8 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                 <div className="flex items-center gap-3">
                   <UtensilsCrossed className="w-5 h-5 text-orange-600" />
                   <div>
-                    <p className="font-medium">Précommander des plats</p>
-                    <p className="text-xs text-muted-foreground">Vos plats seront prêts à votre arrivée</p>
+                    <p className="font-medium">{t('reservationModal.precommanderDesPlats')}</p>
+                    <p className="text-xs text-muted-foreground">{t('reservationModal.vosPlatsSerontPretsA')}</p>
                   </div>
                 </div>
                 <Switch checked={wantToPreorder} onCheckedChange={setWantToPreorder} />
@@ -641,7 +643,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                   ) : filteredMenuItems.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       <UtensilsCrossed className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                      <p>Aucun plat disponible</p>
+                      <p>{t('reservationModal.aucunPlatDisponible')}</p>
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -780,7 +782,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
         return (
           <div className="space-y-6">
             <div className="text-center mb-4">
-              <h3 className="text-xl font-semibold">Vos coordonnées</h3>
+              <h3 className="text-xl font-semibold">{t('reservationModal.vosCoordonnees')}</h3>
               <p className="text-muted-foreground">
                 {format(selectedDate!, 'EEEE d MMMM', { locale: fr })} à {selectedTime}
               </p>
@@ -863,7 +865,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                   id="requests"
                   value={specialRequests}
                   onChange={(e) => setSpecialRequests(e.target.value)}
-                  placeholder="Anniversaire, allergies, préférences de table..."
+                  placeholder={t('reservationModal.anniversaireAllergiesPreferencesDeTable')}
                   className="mt-1 min-h-[80px]"
                 />
               </div>
@@ -876,7 +878,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                       <CreditCard className="w-5 h-5 text-[#ff4000]" />
                       <div>
                         <p className="font-medium">Payer maintenant</p>
-                        <p className="text-xs text-muted-foreground">Payez votre précommande en avance</p>
+                        <p className="text-xs text-muted-foreground">{t('reservationModal.payezVotrePrecommandeEnAvance')}</p>
                       </div>
                     </div>
                     <Switch checked={wantToPrepay} onCheckedChange={setWantToPrepay} />
@@ -918,7 +920,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
           return (
             <div className="space-y-6">
               <div className="text-center mb-4">
-                <h3 className="text-xl font-semibold">Paiement par carte</h3>
+                <h3 className="text-xl font-semibold">{t('reservationModal.paiementParCarte')}</h3>
                 <p className="text-muted-foreground">Montant: {fc(cartTotal)}</p>
               </div>
 
@@ -949,14 +951,14 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
               <div className="w-16 h-16 bg-orange-100 dark:bg-[#ff4000]/30 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Wallet className="w-8 h-8 text-[#ff4000]" />
               </div>
-              <h3 className="text-xl font-semibold">Choisissez votre mode de paiement</h3>
-              <p className="text-muted-foreground">Payez votre précommande en avance</p>
+              <h3 className="text-xl font-semibold">{t('reservationModal.choisissezVotreModeDePaiement')}</h3>
+              <p className="text-muted-foreground">{t('reservationModal.payezVotrePrecommandeEnAvance')}</p>
             </div>
 
             {/* Récapitulatif de la commande */}
             <Card>
               <CardContent className="p-4 space-y-3">
-                <h4 className="font-medium">Récapitulatif</h4>
+                <h4 className="font-medium">{t('reservationModal.recapitulatif')}</h4>
                 {cart.map(c => (
                   <div key={c.menuItem.id} className="flex justify-between text-sm">
                     <span>{c.quantity}x {c.menuItem.name}</span>
@@ -964,7 +966,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                   </div>
                 ))}
                 <div className="border-t pt-2 flex justify-between font-bold">
-                  <span>Total à payer</span>
+                  <span>{t('reservationModal.totalAPayer')}</span>
                   <span className="text-primary">{fc(cartTotal)}</span>
                 </div>
               </CardContent>
@@ -1003,7 +1005,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                   />
                   <div>
                     <p className="font-medium">Orange Money</p>
-                    <p className="text-xs text-muted-foreground">Paiement mobile</p>
+                    <p className="text-xs text-muted-foreground">{t('reservationModal.paiementMobile')}</p>
                   </div>
                 </Label>
               </div>
@@ -1082,7 +1084,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
               <CardContent className="p-4 flex items-center gap-3">
                 <AlertCircle className="w-5 h-5 text-[#ff4000] flex-shrink-0" />
                 <div className="text-left">
-                  <p className="font-medium text-[#ff4000] dark:text-orange-200">En attente de confirmation</p>
+                  <p className="font-medium text-[#ff4000] dark:text-orange-200">{t('reservationModal.enAttenteDeConfirmation')}</p>
                   <p className="text-xs text-[#ff4000] dark:text-orange-300">
                     Le restaurant confirmera votre réservation sous peu. Vous recevrez une notification.
                   </p>
@@ -1112,14 +1114,14 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
               {confirmationData?.preorder && confirmationData.preorder.length > 0 && (
                 <div className="border-t pt-3 mt-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Précommande</span>
+                    <span className="text-muted-foreground">{t('reservationModal.precommande')}</span>
                     <span className="font-semibold text-orange-600">
                       {fc(confirmationData.preorderTotal)}
                     </span>
                   </div>
                   {confirmationData?.paymentIntentId && (
                     <div className="flex justify-between items-center mt-2">
-                      <span className="text-muted-foreground">Paiement</span>
+                      <span className="text-muted-foreground">{t('reservationModal.paiement')}</span>
                       <Badge className="bg-[#ff4000]">
                         <Check className="w-3 h-3 mr-1" />
                         Carte payée
@@ -1146,7 +1148,7 @@ Contact restaurant: ${restaurantPhone || 'Non disponible'}
                 <div className="flex items-center gap-3">
                   <Eye className="w-5 h-5 text-blue-600 flex-shrink-0" />
                   <div className="text-left flex-1">
-                    <p className="font-medium text-blue-800 dark:text-blue-200">Suivez votre réservation</p>
+                    <p className="font-medium text-blue-800 dark:text-blue-200">{t('reservationModal.suivezVotreReservation')}</p>
                     <p className="text-xs text-blue-700 dark:text-blue-300">
                       Consultez vos réservations dans votre espace client pour voir le statut de confirmation
                     </p>

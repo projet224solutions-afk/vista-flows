@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +33,7 @@ export default function BureauWalletManagement({
   bureauCode,
   showTransactions = true
 }: BureauWalletManagementProps) {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const [wallet, setWallet] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -97,7 +99,7 @@ export default function BureauWalletManagement({
 
             console.log('✅ Wallet bureau créé avec succès:', newWallet);
             setWallet(newWallet);
-            toast.success('Wallet créé avec succès ! Vous avez reçu 10,000 GNF de bienvenue.');
+            toast.success(t('bureauWalletManagement.walletCreeAvecSuccesVous'));
             setLoading(false);
             return;
           }
@@ -134,9 +136,12 @@ export default function BureauWalletManagement({
   useEffect(() => {
     loadWallet();
 
-    // Écouter les mises à jour en temps réel
+    // Écouter les mises à jour en temps réel.
+    // ⚠️ Topic UNIQUE à ce composant (≠ BureauWalletDisplay du layout qui écoute le
+    // même wallet) : un topic partagé fait réutiliser un canal déjà souscrit par
+    // supabase-js → "cannot add postgres_changes callbacks after subscribe()".
     const channel = supabase
-      .channel(`bureau-wallet-${bureauId}`)
+      .channel(`bureau-wallet-mgmt-${bureauId}`)
       .on(
         'postgres_changes',
         {
@@ -155,7 +160,8 @@ export default function BureauWalletManagement({
     window.addEventListener('wallet-updated', loadWallet);
 
     return () => {
-      channel.unsubscribe();
+      // removeChannel (et non unsubscribe) pour retirer le canal du registre client
+      supabase.removeChannel(channel);
       window.removeEventListener('wallet-updated', loadWallet);
     };
   }, [bureauId, loadWallet]);
@@ -173,7 +179,7 @@ export default function BureauWalletManagement({
 
     const amount = parseFloat(depositAmount);
     if (isNaN(amount) || amount <= 0) {
-      toast.error('Montant invalide');
+      toast.error(t('bureauWalletManagement.montantInvalide'));
       return;
     }
 
@@ -212,7 +218,7 @@ export default function BureauWalletManagement({
       window.dispatchEvent(new CustomEvent('wallet-updated'));
     } catch (error: any) {
       console.error('Erreur dépôt:', error);
-      toast.error('Erreur lors du dépôt');
+      toast.error(t('bureauWalletManagement.erreurLorsDuDepot'));
     } finally {
       setBusy(false);
     }
@@ -223,12 +229,12 @@ export default function BureauWalletManagement({
 
     const amount = parseFloat(withdrawAmount);
     if (isNaN(amount) || amount <= 0) {
-      toast.error('Montant invalide');
+      toast.error(t('bureauWalletManagement.montantInvalide'));
       return;
     }
 
     if (amount > wallet.balance) {
-      toast.error('Solde insuffisant');
+      toast.error(t('bureauWalletManagement.soldeInsuffisant'));
       return;
     }
 
@@ -267,7 +273,7 @@ export default function BureauWalletManagement({
       window.dispatchEvent(new CustomEvent('wallet-updated'));
     } catch (error: any) {
       console.error('Erreur retrait:', error);
-      toast.error('Erreur lors du retrait');
+      toast.error(t('bureauWalletManagement.erreurLorsDuRetrait'));
     } finally {
       setBusy(false);
     }
@@ -279,7 +285,7 @@ export default function BureauWalletManagement({
         <CardContent className="p-12">
           <div className="flex flex-col items-center justify-center space-y-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            <p className="text-muted-foreground">Chargement du wallet...</p>
+            <p className="text-muted-foreground">{t('bureauWalletManagement.chargementDuWallet')}</p>
           </div>
         </CardContent>
       </Card>
@@ -293,7 +299,7 @@ export default function BureauWalletManagement({
           <div className="flex flex-col items-center justify-center space-y-4">
             <AlertCircle className="w-12 h-12 text-destructive" />
             <div className="text-center">
-              <p className="text-lg font-semibold mb-2">Erreur de chargement du wallet</p>
+              <p className="text-lg font-semibold mb-2">{t('bureauWalletManagement.erreurDeChargementDuWallet')}</p>
               <p className="text-sm text-muted-foreground mb-4">
                 Impossible de charger ou créer le wallet du bureau
               </p>
@@ -339,7 +345,7 @@ export default function BureauWalletManagement({
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">Solde actuel</p>
+            <p className="text-sm text-muted-foreground">{t('bureauWalletManagement.soldeActuel')}</p>
             <p className="text-4xl font-bold">{balanceDisplay} {wallet?.currency || 'GNF'}</p>
           </div>
         </CardContent>
@@ -374,7 +380,7 @@ export default function BureauWalletManagement({
         <TabsContent value="deposit" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Effectuer un dépôt</CardTitle>
+              <CardTitle className="text-lg">{t('bureauWalletManagement.effectuerUnDepot')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -403,7 +409,7 @@ export default function BureauWalletManagement({
         <TabsContent value="withdraw" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Effectuer un retrait</CardTitle>
+              <CardTitle className="text-lg">{t('bureauWalletManagement.effectuerUnRetrait')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -438,7 +444,7 @@ export default function BureauWalletManagement({
       {showTransactions && transactions.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Historique des transactions</CardTitle>
+            <CardTitle className="text-lg">{t('bureauWalletManagement.historiqueDesTransactions')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -479,13 +485,13 @@ export default function BureauWalletManagement({
       <AlertDialog open={showDepositConfirm} onOpenChange={setShowDepositConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer le dépôt</AlertDialogTitle>
+            <AlertDialogTitle>{t('bureauWalletManagement.confirmerLeDepot')}</AlertDialogTitle>
             <AlertDialogDescription>
               Voulez-vous vraiment déposer {parseFloat(depositAmount || '0').toLocaleString()} {wallet?.currency || 'GNF'} ?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={busy}>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={busy}>{t('bureauWalletManagement.annuler')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeposit} disabled={busy}>
               {busy ? 'Traitement...' : 'Confirmer'}
             </AlertDialogAction>
@@ -497,13 +503,13 @@ export default function BureauWalletManagement({
       <AlertDialog open={showWithdrawConfirm} onOpenChange={setShowWithdrawConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer le retrait</AlertDialogTitle>
+            <AlertDialogTitle>{t('bureauWalletManagement.confirmerLeRetrait')}</AlertDialogTitle>
             <AlertDialogDescription>
               Voulez-vous vraiment retirer {parseFloat(withdrawAmount || '0').toLocaleString()} {wallet?.currency || 'GNF'} ?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={busy}>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={busy}>{t('bureauWalletManagement.annuler')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleWithdraw} disabled={busy}>
               {busy ? 'Traitement...' : 'Confirmer'}
             </AlertDialogAction>

@@ -11,6 +11,7 @@ import { Package, Store, ShieldCheck, LayoutGrid, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { LocalPrice } from "@/components/ui/LocalPrice";
 import { getFlagEmoji, getCurrencyForCountry } from "@/data/countryMappings";
+import { useTranslation } from "@/hooks/useTranslation";
 
 /** Pays distincts d'une liste de vendeurs, triés (A→Z), sans pays → « Autres ». */
 function distinctVendorCountries(items: VendorItem[]): string[] {
@@ -60,6 +61,7 @@ export function BrowseModal({
   country = 'all',
   city = 'all',
 }: BrowseModalProps) {
+  const { t } = useTranslation();
   const [vendors, setVendors] = useState<VendorItem[]>([]);
   const [certifiedVendors, setCertifiedVendors] = useState<VendorItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -168,20 +170,20 @@ export function BrowseModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[96vw] max-h-[92vh] sm:max-h-[85vh] p-0 gap-0" style={{ maxWidth: '768px' }}>
         <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4">
-          <DialogTitle className="text-lg sm:text-xl font-bold">Explorer le Marketplace</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl font-bold">{t('marketplace.exploreTitle')}</DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="categories" className="w-full">
           <div className="px-4 sm:px-6 pb-3 sm:pb-4 overflow-x-auto">
             <TabsList className="inline-flex h-10 sm:h-11 w-full bg-muted/60 rounded-xl p-1 gap-1">
               <TabsTrigger value="categories" className="flex-1 min-w-0 text-[11px] sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-medium transition-all px-2 sm:px-3 whitespace-nowrap">
-                <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> <span className="truncate">Catégories</span>
+                <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> <span className="truncate">{t('marketplace.categories')}</span>
               </TabsTrigger>
               <TabsTrigger value="vendors" className="flex-1 min-w-0 text-[11px] sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-medium transition-all px-2 sm:px-3 whitespace-nowrap">
-                <Store className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> <span className="truncate">Vendeurs</span>
+                <Store className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> <span className="truncate">{t('marketplace.vendors')}</span>
               </TabsTrigger>
               <TabsTrigger value="certified" className="flex-1 min-w-0 text-[11px] sm:text-sm gap-1 sm:gap-1.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md font-medium transition-all px-2 sm:px-3 whitespace-nowrap">
-                <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> <span className="truncate">Certifiés</span>
+                <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> <span className="truncate">{t('marketplace.certified')}</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -190,7 +192,7 @@ export function BrowseModal({
             {/* CATÉGORIES — 2 volets : liste à gauche, produits de la catégorie à droite */}
             <TabsContent value="categories" className="mt-0">
               {categories.filter(c => c.id !== "all").length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">Aucune catégorie disponible</p>
+                <p className="text-sm text-muted-foreground text-center py-8">{t('marketplace.noCategories')}</p>
               ) : (
                 <div className="flex gap-2.5">
                   {/* Gauche : catégories (colonne étroite) */}
@@ -216,9 +218,9 @@ export function BrowseModal({
                   {/* Droite : produits de la catégorie active */}
                   <div className="flex-1 min-w-0 max-h-[50vh] overflow-y-auto">
                     {catLoading ? (
-                      <p className="text-xs text-muted-foreground text-center py-10">Chargement…</p>
+                      <p className="text-xs text-muted-foreground text-center py-10">{t('common.loading')}</p>
                     ) : catProducts.length === 0 ? (
-                      <p className="text-xs text-muted-foreground text-center py-10">Aucun produit dans cette catégorie ici.</p>
+                      <p className="text-xs text-muted-foreground text-center py-10">{t('marketplace.noCategoryProducts')}</p>
                     ) : (
                       <div className="grid grid-cols-2 gap-2">
                         {catProducts.map((product) => {
@@ -300,13 +302,13 @@ export function BrowseModal({
                           </div>
                           {v.is_certified && (
                             <Badge variant="secondary" className="text-[10px] shrink-0">
-                              <ShieldCheck className="w-3 h-3 mr-0.5" /> Certifié
+                              <ShieldCheck className="w-3 h-3 mr-0.5" /> {t('marketplace.certifiedBadge')}
                             </Badge>
                           )}
                         </button>
                       ))}
                       {filtered.length === 0 && !loading && (
-                        <p className="text-sm text-muted-foreground text-center py-8">Aucun vendeur disponible</p>
+                        <p className="text-sm text-muted-foreground text-center py-8">{t('marketplace.noVendors')}</p>
                       )}
                     </div>
                   </>
@@ -368,13 +370,13 @@ export function BrowseModal({
                         </button>
                       ))}
                       {filtered.length === 0 && !loading && (
-                        <p className="text-sm text-muted-foreground text-center py-8">Aucune boutique certifiée dans ce pays.</p>
+                        <p className="text-sm text-muted-foreground text-center py-8">{t('marketplace.noCertifiedInCountry')}</p>
                       )}
                     </div>
                   </>
                 );
               })() : (
-                <p className="text-sm text-muted-foreground text-center py-8">Aucune boutique certifiée par le PDG pour le moment</p>
+                <p className="text-sm text-muted-foreground text-center py-8">{t('marketplace.noCertifiedYet')}</p>
               )}
             </TabsContent>
           </ScrollArea>

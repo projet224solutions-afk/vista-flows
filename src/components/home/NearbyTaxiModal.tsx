@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Car, Bike, RefreshCw, AlertCircle, CheckCircle2, Navigation, Phone, MessageCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface NearbyDriver {
   driver_id: string;
@@ -35,6 +36,7 @@ const SEARCH_RADII_KM = [MAX_DISTANCE_KM, 10, FALLBACK_RADIUS_KM] as const;
 
 export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [drivers, setDrivers] = useState<NearbyDriver[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -243,7 +245,7 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader className="pb-3 border-b border-border/40">
           <DialogTitle className="flex items-center gap-2">
             <Car className="w-5 h-5 text-taxi-primary" />
@@ -258,7 +260,7 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
                 <Car className="w-12 h-12 text-taxi-primary animate-pulse" />
                 <div className="absolute inset-0 rounded-full border-4 border-taxi-primary/30 border-t-taxi-primary animate-spin" style={{ animationDuration: '1s' }} />
               </div>
-              <p className="text-sm mt-4">Recherche de chauffeurs autour de vous...</p>
+              <p className="text-sm mt-4">{t('taxi.searchingDrivers')}</p>
             </div>
           ) : error ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -348,7 +350,7 @@ export function NearbyTaxiModal({ open, onOpenChange }: NearbyTaxiModalProps) {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">
                             {driver.full_name}
-                            {index === 0 && <span className="ml-2 text-xs text-taxi-primary font-semibold">Le plus proche</span>}
+                            {index === 0 && <span className="ml-2 text-xs text-taxi-primary font-semibold">{t('taxi.closest')}</span>}
                           </p>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             {isCar

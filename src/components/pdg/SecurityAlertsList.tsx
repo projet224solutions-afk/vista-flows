@@ -1,5 +1,6 @@
 // ⚠️ Liste des alertes de sécurité
 import React from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Bell, Check, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +13,7 @@ interface Props {
 }
 
 const SecurityAlertsList: React.FC<Props> = ({ alerts, onAcknowledge }) => {
+  const { t } = useTranslation();
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical': return 'destructive';
@@ -25,8 +27,8 @@ const SecurityAlertsList: React.FC<Props> = ({ alerts, onAcknowledge }) => {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-2xl font-bold">Alertes de Sécurité</h3>
-        <p className="text-muted-foreground">Alertes temps réel nécessitant attention</p>
+        <h3 className="text-2xl font-bold">{t('securityAlertsList.alertesDeSecurite')}</h3>
+        <p className="text-muted-foreground">{t('securityAlertsList.alertesTempsReelNecessitantAttention')}</p>
       </div>
 
       <div className="space-y-3">
@@ -73,7 +75,7 @@ const SecurityAlertsList: React.FC<Props> = ({ alerts, onAcknowledge }) => {
         {alerts.length === 0 && (
           <Card>
             <CardContent className="py-8">
-              <p className="text-center text-muted-foreground">Aucune alerte active</p>
+              <p className="text-center text-muted-foreground">{t('securityAlertsList.aucuneAlerteActive')}</p>
             </CardContent>
           </Card>
         )}

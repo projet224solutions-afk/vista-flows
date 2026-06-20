@@ -5,6 +5,7 @@
  */
 
 import React, { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -39,6 +40,7 @@ export default function MotoSecurityDashboard({
     isPDG = false,
     className
 }: MotoSecurityDashboardProps) {
+    const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState('overview');
     const {
         notifications,
@@ -52,12 +54,12 @@ export default function MotoSecurityDashboard({
 
     const handleForceSync = async () => {
         await forceSync();
-        toast.success('🔄 Synchronisation forcée effectuée');
+        toast.success(t('motoSecurityDashboard.synchronisationForceeEffectuee'));
     };
 
     const handleMarkAllRead = async () => {
         await markAllAsRead();
-        toast.success('✅ Toutes les notifications marquées comme lues');
+        toast.success(t('motoSecurityDashboard.toutesLesNotificationsMarqueesComme'));
     };
 
     return (
@@ -127,7 +129,7 @@ export default function MotoSecurityDashboard({
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-medium text-[#ff4000]">Résolues</p>
+                                    <p className="text-sm font-medium text-[#ff4000]">{t('motoSecurityDashboard.resolues')}</p>
                                     <p className="text-2xl font-bold text-[#ff4000]">{stats.alertes_resolues}</p>
                                 </div>
                                 <CheckCircle className="w-8 h-8 text-[#ff4000]" />
@@ -165,7 +167,7 @@ export default function MotoSecurityDashboard({
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
-                    <TabsTrigger value="report">Déclarer vol</TabsTrigger>
+                    <TabsTrigger value="report">{t('motoSecurityDashboard.declarerVol')}</TabsTrigger>
                     <TabsTrigger value="alerts">Alertes</TabsTrigger>
                     <TabsTrigger value="notifications">Notifications</TabsTrigger>
                 </TabsList>
@@ -263,7 +265,7 @@ export default function MotoSecurityDashboard({
                     <ReportStolenMoto
                         onSuccess={() => {
                             setActiveTab('alerts');
-                            toast.success('✅ Déclaration enregistrée - Vérifiez les alertes');
+                            toast.success(t('motoSecurityDashboard.declarationEnregistreeVerifiezLesAlertes'));
                         }}
                     />
                 </TabsContent>
@@ -347,7 +349,7 @@ export default function MotoSecurityDashboard({
                                 {notifications.length === 0 && (
                                     <div className="text-center py-8">
                                         <Bell className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                                        <p className="text-gray-600">Aucune notification</p>
+                                        <p className="text-gray-600">{t('motoSecurityDashboard.aucuneNotification')}</p>
                                     </div>
                                 )}
                             </div>

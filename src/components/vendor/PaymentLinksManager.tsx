@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
@@ -57,7 +58,7 @@ const TYPE_CONFIG: Record<string, { icon: React.ReactNode; color: string; label:
   service: { icon: <Wrench className="w-3.5 h-3.5" />, color: 'bg-blue-100 text-[#04439e] dark:bg-[#04439e]/30 dark:text-blue-300', label: 'Service' },
 };
 
-interface Product { id: string; name: string; price: number; description?: string; images?: string[] }
+interface Product { id: string; name: string; price: number; description?: string; images?: string[]; stock_quantity?: number }
 interface Service { id: string; business_name: string; description?: string; category?: string }
 
 const initialForm = {
@@ -81,15 +82,17 @@ const initialForm = {
 };
 
 export default function PaymentLinksManager() {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const { toast } = useToast();
   const { userId: vendorUserId } = useCurrentVendor();
   const {
     paymentLinks, stats, loading, vendorId, ownerType,
-    loadPaymentLinks, createPaymentLink, updatePaymentLinkStatus, deletePaymentLink, getPaymentUrl
+    loadPaymentLinks, createPaymentLink, updatePaymentLink, updatePaymentLinkStatus, deletePaymentLink, getPaymentUrl
   } = usePaymentLinks();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
   const [showQrModal, setShowQrModal] = useState<string | null>(null);
   const [_showDetailModal, _setShowDetailModal] = useState<any>(null);
   const [creating, setCreating] = useState(false);
@@ -107,7 +110,7 @@ export default function PaymentLinksManager() {
 
   const loadAssets = async () => {
     if (vendorId) {
-      const { data } = await supabase.from('products').select('id, name, price, description, images')
+      const { data } = await supabase.from('products').select('id, name, price, description, images, stock_quantity')
         .eq('vendor_id', vendorId).eq('is_active', true).order('name');
       setProducts(data || []);
     }
@@ -125,12 +128,19 @@ export default function PaymentLinksManager() {
     return result;
   }, [paymentLinks, activeTab, filters.type]);
 
-  const handleProductSelect = (productId: string) => {
-    const p = products.find(x => x.id === productId);
-    if (p) {
-      setFormData(f => ({ ...f, product_id: p.id, produit: p.name, title: p.name, description: p.description || '', montant: p.price.toString() }));
-    }
+  // Panier multi-produits (type « checkout » = facture façon Alibaba)
+  const [cart, setCart] = useState<{ product_id: string; name: string; price: number; qty: number; image?: string | null }[]>([]);
+  const cartTotal = useMemo(() => cart.reduce((s, it) => s + it.price * it.qty, 0), [cart]);
+
+  const addProduct = (p: Product) => {
+    setCart(prev => {
+      const existing = prev.find(it => it.product_id === p.id);
+      if (existing) return prev.map(it => it.product_id === p.id ? { ...it, qty: it.qty + 1 } : it);
+      return [...prev, { product_id: p.id, name: p.name, price: p.price, qty: 1, image: p.images?.[0] || null }];
+    });
   };
+  const setQty = (id: string, qty: number) => setCart(prev => prev.map(it => it.product_id === id ? { ...it, qty: Math.max(1, qty) } : it));
+  const removeFromCart = (id: string) => setCart(prev => prev.filter(it => it.product_id !== id));
 
   const handleServiceSelect = (serviceId: string) => {
     const s = services.find(x => x.id === serviceId);
@@ -139,38 +149,91 @@ export default function PaymentLinksManager() {
     }
   };
 
-  const handleCreate = async () => {
-    if (!formData.produit || !formData.montant) {
-      toast({ title: "Erreur", description: "Titre et montant requis", variant: "destructive" });
+  const resetForm = () => {
+    setShowCreateModal(false);
+    setEditingPaymentId(null);
+    setFormData(initialForm);
+    setCart([]);
+  };
+
+  // Pré-remplit le formulaire à partir d'un lien existant (édition). Liens « pending » uniquement.
+  const openEdit = (link: any) => {
+    if (link.status !== 'pending') {
+      toast({ title: "Non modifiable", description: "Seuls les liens en attente peuvent être modifiés.", variant: "destructive" });
       return;
     }
+    setEditingPaymentId(link.payment_id);
+    setFormData({
+      ...initialForm,
+      linkType: (link.link_type || 'payment') as LinkType,
+      product_id: link.product_id || '',
+      service_id: link.service_id || '',
+      produit: link.produit || '',
+      title: link.title || link.produit || '',
+      description: link.description || '',
+      montant: String(link.montant ?? ''),
+      devise: link.devise || 'GNF',
+      reference: link.reference || '',
+      remise: String(link.remise ?? '0'),
+      type_remise: (link.type_remise || 'percentage') as 'percentage' | 'fixed',
+      payment_type: link.payment_type || 'full',
+      is_single_use: link.is_single_use !== false,
+    });
+    const items = link.metadata?.items;
+    setCart(Array.isArray(items) ? items.map((it: any) => ({
+      product_id: it.product_id, name: it.name, price: Number(it.price) || 0, qty: Number(it.qty) || 1, image: it.image || null,
+    })) : []);
+    setShowCreateModal(true);
+  };
+
+  const handleCreate = async () => {
+    // Panier multi-produits (checkout) → titre/montant dérivés des lignes.
+    const hasCart = formData.linkType === 'checkout' && cart.length > 0;
+    const produit = hasCart ? (cart.length === 1 ? cart[0].name : `${cart.length} produits`) : formData.produit;
+    const montant = hasCart ? cartTotal : parseFloat(formData.montant);
+
+    if (!produit || !montant || montant <= 0) {
+      toast({ title: "Erreur", description: hasCart ? "Panier vide ou montant nul" : "Titre et montant requis", variant: "destructive" });
+      return;
+    }
+
+    const payload = {
+      linkType: formData.linkType,
+      ownerType,
+      items: hasCart ? cart.map(it => ({ product_id: it.product_id, name: it.name, price: it.price, qty: it.qty, image: it.image })) : undefined,
+      produit,
+      title: formData.title || produit,
+      description: formData.description,
+      montant,
+      devise: formData.devise,
+      reference: formData.reference || undefined,
+      client_id: formData.client_id || undefined,
+      remise: parseFloat(formData.remise),
+      type_remise: formData.type_remise,
+      product_id: hasCart && cart.length === 1 ? cart[0].product_id : (formData.product_id || undefined),
+      service_id: formData.service_id || undefined,
+      payment_type: formData.payment_type,
+      is_single_use: formData.is_single_use,
+      expires_days: parseInt(formData.expires_days) || 7,
+    };
+
     try {
       setCreating(true);
-      const token = await createPaymentLink({
-        linkType: formData.linkType,
-        ownerType,
-        produit: formData.produit,
-        title: formData.title || formData.produit,
-        description: formData.description,
-        montant: parseFloat(formData.montant),
-        devise: formData.devise,
-        reference: formData.reference || undefined,
-        client_id: formData.client_id || undefined,
-        remise: parseFloat(formData.remise),
-        type_remise: formData.type_remise,
-        product_id: formData.product_id || undefined,
-        service_id: formData.service_id || undefined,
-        payment_type: formData.payment_type,
-        is_single_use: formData.is_single_use,
-        expires_days: parseInt(formData.expires_days) || 7,
-      });
 
+      // ── MODE ÉDITION ──
+      if (editingPaymentId) {
+        const ok = await updatePaymentLink(editingPaymentId, payload);
+        if (ok) resetForm();
+        return;
+      }
+
+      // ── MODE CRÉATION ──
+      const token = await createPaymentLink(payload);
       if (token) {
         const url = `${getPublicBaseUrl()}/pay/${encodeURIComponent(token)}`;
         navigator.clipboard.writeText(url);
         toast({ title: "✅ Lien créé et copié !", description: url });
-        setShowCreateModal(false);
-        setFormData(initialForm);
+        resetForm();
       }
     } finally {
       setCreating(false);
@@ -237,7 +300,7 @@ export default function PaymentLinksManager() {
       <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center justify-between shrink-0">
         <div className="flex gap-2 flex-1">
           <Input
-            placeholder="Rechercher..."
+            placeholder={t('paymentLinksManager.rechercher')}
             value={filters.search}
             onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))}
             className="sm:w-48"
@@ -245,12 +308,12 @@ export default function PaymentLinksManager() {
           <Select value={filters.status} onValueChange={(v) => setFilters(f => ({ ...f, status: v }))}>
             <SelectTrigger className="sm:w-36"><SelectValue placeholder="Statut" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous statuts</SelectItem>
+              <SelectItem value="all">{t('paymentLinksManager.tousStatuts')}</SelectItem>
               <SelectItem value="pending">En attente</SelectItem>
-              <SelectItem value="success">Payés</SelectItem>
-              <SelectItem value="failed">Échoués</SelectItem>
-              <SelectItem value="expired">Expirés</SelectItem>
-              <SelectItem value="cancelled">Annulés</SelectItem>
+              <SelectItem value="success">{t('paymentLinksManager.payes')}</SelectItem>
+              <SelectItem value="failed">{t('paymentLinksManager.echoues')}</SelectItem>
+              <SelectItem value="expired">{t('paymentLinksManager.expires')}</SelectItem>
+              <SelectItem value="cancelled">{t('paymentLinksManager.annules')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -258,22 +321,23 @@ export default function PaymentLinksManager() {
           <Button onClick={() => loadPaymentLinks(filters)} variant="outline" size="sm">
             <RefreshCw className="w-4 h-4" />
           </Button>
-          <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+          <Dialog open={showCreateModal} onOpenChange={(o) => { if (!o) resetForm(); else setShowCreateModal(true); }}>
             <DialogTrigger asChild>
-              <Button size="sm" className="bg-primary hover:bg-primary/90">
+              <Button size="sm" className="bg-primary hover:bg-primary/90"
+                onClick={() => { setEditingPaymentId(null); setFormData(initialForm); setCart([]); }}>
                 <Plus className="w-4 h-4 mr-1" />Créer un lien
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
               <DialogHeader>
-                <DialogTitle>Nouveau lien de paiement</DialogTitle>
-                <DialogDescription>Choisissez le type et remplissez les informations</DialogDescription>
+                <DialogTitle>{editingPaymentId ? 'Modifier le lien de paiement' : t('paymentLinksManager.nouveauLienDePaiement')}</DialogTitle>
+                <DialogDescription>{editingPaymentId ? 'Modifiez les détails puis enregistrez.' : t('paymentLinksManager.choisissezLeTypeEtRemplissez')}</DialogDescription>
               </DialogHeader>
               <ScrollArea className="flex-1 overflow-auto" style={{ maxHeight: 'calc(90vh - 180px)' }}>
                 <div className="space-y-4 px-1 pr-4 pb-2">
                   {/* Link type selection */}
                   <div>
-                    <Label className="mb-2 block">Type de lien</Label>
+                    <Label className="mb-2 block">{t('paymentLinksManager.typeDeLien')}</Label>
                     <div className="grid grid-cols-2 gap-2">
                       {LINK_TYPES.map(lt => (
                         <button
@@ -296,32 +360,87 @@ export default function PaymentLinksManager() {
 
                   <Separator />
 
-                  {/* Product select for checkout type */}
-                  {formData.linkType === 'checkout' && products.length > 0 && (
-                    <div>
-                      <Label>Produit</Label>
-                      <Select value={formData.product_id} onValueChange={handleProductSelect}>
-                        <SelectTrigger><SelectValue placeholder="Sélectionner un produit..." /></SelectTrigger>
-                        <SelectContent>
-                          {products.map(p => (
-                            <SelectItem key={p.id} value={p.id}>
-                              <div className="flex items-center gap-2">
-                                <Package className="w-3.5 h-3.5" />
-                                {p.name} — {fc(p.price)}
+                  {/* Panier multi-produits pour le type checkout (facture façon Alibaba) */}
+                  {formData.linkType === 'checkout' && (
+                    <div className="space-y-2">
+                      <Label>Sélectionnez les produits (cliquez pour ajouter)</Label>
+                      {products.length > 0 ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-64 overflow-y-auto p-1 border rounded-lg">
+                          {products.map(p => {
+                            const inCart = cart.find(it => it.product_id === p.id);
+                            const outOfStock = (p.stock_quantity ?? 0) <= 0;
+                            return (
+                              <button type="button" key={p.id}
+                                onClick={() => !outOfStock && addProduct(p)}
+                                disabled={outOfStock}
+                                title={outOfStock ? 'Indisponible — rupture de stock' : undefined}
+                                className={`text-left border rounded-lg p-2 transition ${
+                                  outOfStock
+                                    ? 'opacity-60 cursor-not-allowed border-border'
+                                    : `hover:border-primary hover:shadow-sm active:scale-95 ${inCart ? 'border-primary bg-primary/5' : 'border-border'}`
+                                }`}>
+                                <div className="relative w-full aspect-square rounded-md bg-muted overflow-hidden flex items-center justify-center mb-1.5">
+                                  {p.images?.[0] ? (
+                                    <img src={p.images[0]} alt={p.name} className={`w-full h-full object-cover ${outOfStock ? 'grayscale' : ''}`} />
+                                  ) : (
+                                    <Package className="w-7 h-7 text-muted-foreground" />
+                                  )}
+                                  {outOfStock && (
+                                    <span className="absolute inset-0 bg-background/40 flex items-center justify-center">
+                                      <span className="bg-destructive text-destructive-foreground text-[10px] font-bold px-1.5 py-0.5 rounded">Rupture</span>
+                                    </span>
+                                  )}
+                                  {!outOfStock && inCart && (
+                                    <span className="absolute top-1 right-1 bg-primary text-primary-foreground text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center shadow">
+                                      {inCart.qty}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-xs font-medium leading-tight line-clamp-2">{p.name}</p>
+                                <p className="text-xs text-primary font-semibold mt-0.5">{fc(p.price)}</p>
+                                {!outOfStock && (p.stock_quantity ?? 0) <= 5 && (
+                                  <p className="text-[10px] text-[#ff4000] mt-0.5">Plus que {p.stock_quantity}</p>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : <p className="text-xs text-muted-foreground">Aucun produit disponible</p>}
+
+                      {cart.length > 0 && (
+                        <div className="border rounded-lg divide-y">
+                          {cart.map(it => (
+                            <div key={it.product_id} className="flex items-center gap-2 p-2 text-sm">
+                              <div className="w-9 h-9 rounded bg-muted overflow-hidden flex items-center justify-center shrink-0 border">
+                                {it.image ? (
+                                  <img src={it.image} alt={it.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <Package className="w-4 h-4 text-muted-foreground" />
+                                )}
                               </div>
-                            </SelectItem>
+                              <span className="flex-1 truncate">{it.name}</span>
+                              <Input type="number" min={1} value={it.qty}
+                                onChange={(e) => setQty(it.product_id, parseInt(e.target.value) || 1)}
+                                className="w-16 h-8" />
+                              <span className="w-28 text-right font-medium">{fc(it.price * it.qty)}</span>
+                              <Button type="button" variant="ghost" size="icon" className="h-7 w-7"
+                                onClick={() => removeFromCart(it.product_id)}>✕</Button>
+                            </div>
                           ))}
-                        </SelectContent>
-                      </Select>
+                          <div className="flex justify-between p-2 font-bold bg-muted/40">
+                            <span>Total facture</span><span>{fc(cartTotal)}</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
                   {/* Service select for service type */}
                   {formData.linkType === 'service' && services.length > 0 && (
                     <div>
-                      <Label>Service</Label>
+                      <Label>{t('paymentLinksManager.service')}</Label>
                       <Select value={formData.service_id} onValueChange={handleServiceSelect}>
-                        <SelectTrigger><SelectValue placeholder="Sélectionner un service..." /></SelectTrigger>
+                        <SelectTrigger><SelectValue placeholder={t('paymentLinksManager.selectionnerUnService')} /></SelectTrigger>
                         <SelectContent>
                           {services.map(s => (
                             <SelectItem key={s.id} value={s.id}>
@@ -352,7 +471,7 @@ export default function PaymentLinksManager() {
                     <Textarea
                       value={formData.description}
                       onChange={(e) => setFormData(f => ({ ...f, description: e.target.value }))}
-                      placeholder="Description du paiement..."
+                      placeholder={t('paymentLinksManager.descriptionDuPaiement')}
                       rows={2}
                     />
                   </div>
@@ -360,7 +479,7 @@ export default function PaymentLinksManager() {
                   {/* Amount & currency */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label>Montant *</Label>
+                      <Label>{t('paymentLinksManager.montant')}</Label>
                       <Input type="number" value={formData.montant}
                         onChange={(e) => setFormData(f => ({ ...f, montant: e.target.value }))} placeholder="0" />
                     </div>
@@ -390,24 +509,24 @@ export default function PaymentLinksManager() {
 
                   {/* Payment type */}
                   <div>
-                    <Label>Type de règlement</Label>
+                    <Label>{t('paymentLinksManager.typeDeReglement')}</Label>
                     <Select value={formData.payment_type} onValueChange={(v) => setFormData(f => ({ ...f, payment_type: v }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="full">Paiement total</SelectItem>
+                        <SelectItem value="full">{t('paymentLinksManager.paiementTotal')}</SelectItem>
                         <SelectItem value="deposit">Acompte</SelectItem>
-                        <SelectItem value="balance">Solde restant</SelectItem>
+                        <SelectItem value="balance">{t('paymentLinksManager.soldeRestant')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   {/* Client info (optional) */}
                   <div>
-                    <Label>ID Client (optionnel)</Label>
+                    <Label>{t('paymentLinksManager.idClientOptionnel')}</Label>
                     <Input value={formData.client_id}
                       onChange={(e) => setFormData(f => ({ ...f, client_id: e.target.value }))}
                       placeholder="Ex: USR0002" />
-                    <p className="text-xs text-muted-foreground mt-1">Laissez vide pour un lien public</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('paymentLinksManager.laissezVidePourUnLien')}</p>
                   </div>
 
                   {/* Discount */}
@@ -433,7 +552,7 @@ export default function PaymentLinksManager() {
                   {/* Expiry & single use */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label>Expire dans (jours)</Label>
+                      <Label>{t('paymentLinksManager.expireDansJours')}</Label>
                       <Input type="number" min="1" max="365" value={formData.expires_days}
                         onChange={(e) => setFormData(f => ({ ...f, expires_days: e.target.value }))} />
                     </div>
@@ -447,7 +566,7 @@ export default function PaymentLinksManager() {
                   {/* Summary */}
                   {formData.montant && (
                     <div className="p-3 bg-muted rounded-lg space-y-1">
-                      <p className="text-sm font-semibold">Résumé</p>
+                      <p className="text-sm font-semibold">{t('paymentLinksManager.resume')}</p>
                       {(() => {
                         const m = parseFloat(formData.montant) || 0;
                         const r = parseFloat(formData.remise) || 0;
@@ -466,9 +585,13 @@ export default function PaymentLinksManager() {
                 </div>
               </ScrollArea>
               <div className="flex justify-end gap-2 pt-3 shrink-0">
-                <Button variant="outline" onClick={() => setShowCreateModal(false)}>Annuler</Button>
+                <Button variant="outline" onClick={resetForm}>{t('paymentLinksManager.annuler')}</Button>
                 <Button onClick={handleCreate} disabled={creating}>
-                  {creating ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />Création...</> : <><Plus className="w-4 h-4 mr-2" />Créer le lien</>}
+                  {creating
+                    ? <><RefreshCw className="w-4 h-4 mr-2 animate-spin" />{editingPaymentId ? 'Enregistrement…' : t('paymentLinksManager.creation')}</>
+                    : editingPaymentId
+                      ? <><Edit className="w-4 h-4 mr-2" />Enregistrer les modifications</>
+                      : <><Plus className="w-4 h-4 mr-2" />{t('paymentLinksManager.creerLeLien')}</>}
                 </Button>
               </div>
             </DialogContent>
@@ -479,11 +602,11 @@ export default function PaymentLinksManager() {
       {/* Tabs by link type */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
         <TabsList className="shrink-0 w-full justify-start">
-          <TabsTrigger value="all">Tous</TabsTrigger>
-          <TabsTrigger value="payment" className="gap-1"><CreditCard className="w-3.5 h-3.5" />Paiements</TabsTrigger>
+          <TabsTrigger value="all">{t('paymentLinksManager.tous')}</TabsTrigger>
+          <TabsTrigger value="payment" className="gap-1"><CreditCard className="w-3.5 h-3.5" />{t('paymentLinksManager.paiements')}</TabsTrigger>
           <TabsTrigger value="invoice" className="gap-1"><FileText className="w-3.5 h-3.5" />Factures</TabsTrigger>
           <TabsTrigger value="checkout" className="gap-1"><ShoppingCart className="w-3.5 h-3.5" />Checkouts</TabsTrigger>
-          <TabsTrigger value="service" className="gap-1"><Wrench className="w-3.5 h-3.5" />Services</TabsTrigger>
+          <TabsTrigger value="service" className="gap-1"><Wrench className="w-3.5 h-3.5" />{t('paymentLinksManager.services')}</TabsTrigger>
         </TabsList>
 
         <Card className="flex-1 flex flex-col overflow-hidden mt-3">
@@ -498,8 +621,8 @@ export default function PaymentLinksManager() {
                 ) : filteredLinks.length === 0 ? (
                   <div className="text-center py-12 text-muted-foreground">
                     <Link className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                    <p className="font-medium">Aucun lien de paiement</p>
-                    <p className="text-sm">Créez votre premier lien pour recevoir des paiements</p>
+                    <p className="font-medium">{t('paymentLinksManager.aucunLienDePaiement')}</p>
+                    <p className="text-sm">{t('paymentLinksManager.creezVotrePremierLienPour')}</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -593,8 +716,13 @@ export default function PaymentLinksManager() {
                                 <QrCode className="w-4 h-4" />
                               </Button>
                               {link.status === 'pending' && (
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(link)} title="Modifier">
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                              )}
+                              {link.status === 'pending' && (
                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"
-                                  onClick={() => cancelLink(link)} title="Annuler">
+                                  onClick={() => cancelLink(link)} title={t('paymentLinksManager.annuler')}>
                                   <Ban className="w-4 h-4" />
                                 </Button>
                               )}
@@ -603,7 +731,7 @@ export default function PaymentLinksManager() {
                                 size="icon"
                                 className="h-8 w-8 text-destructive hover:text-destructive"
                                 onClick={() => removeLink(link)}
-                                title="Supprimer"
+                                title={t('paymentLinksManager.supprimer')}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
@@ -622,10 +750,10 @@ export default function PaymentLinksManager() {
 
       {/* QR Code Modal */}
       <Dialog open={!!showQrModal} onOpenChange={() => setShowQrModal(null)}>
-        <DialogContent className="max-w-xs text-center">
+        <DialogContent className="max-w-xs text-center max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>QR Code du lien</DialogTitle>
-            <DialogDescription>Scannez pour accéder au paiement</DialogDescription>
+            <DialogTitle>{t('paymentLinksManager.qrCodeDuLien')}</DialogTitle>
+            <DialogDescription>{t('paymentLinksManager.scannezPourAccederAuPaiement')}</DialogDescription>
           </DialogHeader>
           <div className="flex justify-center p-4">
             {showQrModal && <QRCodeSVG value={showQrModal} size={200} />}

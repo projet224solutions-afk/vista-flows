@@ -628,7 +628,7 @@ export function UserActivitySearch() {
               </div>
 
               {/* Résumé financier */}
-              <div className="grid grid-cols-3 gap-4 mt-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
                 <div className="p-3 bg-orange-50 dark:bg-[#ff4000] rounded-lg text-center">
                   <ArrowDownLeft className="h-5 w-5 mx-auto text-[#ff4000] mb-1" />
                   <p className="text-lg font-bold text-[#ff4000]">{formatAmount(activityData.totalReceived)}</p>

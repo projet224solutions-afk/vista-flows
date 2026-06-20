@@ -1,171 +1,235 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { useCurrentVendor } from "@/hooks/useCurrentVendor";
-import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { Money } from "@/components/Money";
+import { backendFetch } from "@/services/backendApi";
+import { useTranslation } from "@/hooks/useTranslation";
+import {
+  Loader2,
+  Users,
+  Package,
+  Clock,
+  CheckCircle2,
+  TrendingUp,
+  RefreshCw,
+  Info,
+} from "lucide-react";
 
-export default function AffiliateManagement({ shopId }: { shopId?: string }) {
-  const { user } = useAuth();
-  const { userId: vendorUserId, loading: vendorLoading } = useCurrentVendor();
-  const [percentage, setPercentage] = useState<number>(5);
-  const [link, setLink] = useState<string>("");
-  const [vendorCustomId, setVendorCustomId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+interface AffiliateCommission {
+  id: string;
+  order_id: string;
+  product_id: string;
+  affiliate_user_id: string;
+  product_name: string;
+  affiliate_ref: string;
+  sale_amount: number;
+  commission_amount: number;
+  commission_rate: number;
+  status: "pending" | "confirmed" | "cancelled";
+  created_at: string;
+  confirmed_at: string | null;
+}
 
-  useEffect(() => {
-    if (vendorLoading) return;
-    fetchVendorCustomId();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, vendorUserId, vendorLoading]);
+interface VendorAffiliateData {
+  commissions: AffiliateCommission[];
+  pending: number;
+  confirmed: number;
+  cancelled: number;
+  affiliates: number;
+  products_enabled: number;
+}
 
-  const fetchVendorCustomId = async () => {
-    const ownerUserId = vendorUserId || user?.id;
-    if (!ownerUserId) {
-      setLoading(false);
-      return;
-    }
+const STATUS_META: Record<string, { labelKey: string; className: string }> = {
+  pending: { labelKey: "affiliateMgmt.statusPending", className: "bg-amber-500/15 text-amber-600 border-amber-500/30" },
+  confirmed: { labelKey: "affiliateMgmt.statusConfirmed", className: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30" },
+  cancelled: { labelKey: "affiliateMgmt.statusCancelled", className: "bg-muted text-muted-foreground border-border" },
+};
 
-    try {
-      const { data: userIdData, error } = await supabase
-        .from('user_ids')
-        .select('custom_id')
-        .eq('user_id', ownerUserId)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (userIdData?.custom_id) {
-        setVendorCustomId(userIdData.custom_id);
-      }
-    } catch (error) {
-      console.error('Erreur récupération custom_id vendeur:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const effectiveShopId = shopId || vendorCustomId;
-
-  const generateLink = () => {
-    if (!effectiveShopId) {
-      console.warn('shopId non disponible pour générer le lien d\'affiliation');
-      return;
-    }
-    const base = typeof window !== 'undefined' ? window.location.origin : '';
-    const newLink = `${base}/ref/${effectiveShopId}?aff=${percentage}`;
-    setLink(newLink);
-  };
-
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Programme d'affiliation</CardTitle>
-        </CardHeader>
-        <CardContent className="flex items-center justify-center py-8">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
-    );
-  }
-
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  accent,
+}: {
+  icon: typeof Users;
+  label: string;
+  value: React.ReactNode;
+  accent: string;
+}) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Programme d'affiliation</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {!effectiveShopId && (
-          <div className="p-4 rounded-lg bg-orange-500/10 border border-orange-500/20 mb-4">
-            <p className="text-sm text-orange-600">
-              ⚠️ Identifiant vendeur non disponible. Assurez-vous d'avoir complété votre profil vendeur.
-            </p>
+    <Card className="border-border/60">
+      <CardContent className="p-4">
+        <div className="flex items-center gap-3">
+          <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${accent}`}>
+            <Icon className="h-5 w-5" />
           </div>
-        )}
-
-        <div>
-          <label className="text-sm font-medium mb-2 block">
-            Pourcentage de commission (%)
-          </label>
-          <div className="flex items-center gap-2">
-            <Input
-              type="number"
-              min="0"
-              max="100"
-              value={percentage}
-              onChange={(e) => setPercentage(Number(e.target.value))}
-              placeholder="Ex: 5"
-              className="max-w-[200px]"
-            />
-            <Button onClick={generateLink} disabled={!effectiveShopId}>
-              Générer le lien d'affiliation
-            </Button>
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground">{label}</p>
+            <p className="truncate text-lg font-semibold">{value}</p>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Commission que vous offrez aux affiliés sur chaque vente
-          </p>
         </div>
-
-        {link && (
-          <div className="p-4 rounded-lg bg-[#ff4000]/10 border border-[#ff4000]/20">
-            <p className="text-sm font-medium text-[#ff4000] mb-2">
-              ✅ Lien d'affiliation généré avec succès !
-            </p>
-            <div className="flex items-center gap-2">
-              <Input
-                value={link}
-                readOnly
-                className="font-mono text-xs"
-                onClick={(e) => e.currentTarget.select()}
-              />
-              <Button
-                size="sm"
-                onClick={async () => {
-                  try {
-                    await navigator.clipboard.writeText(link);
-                    toast.success("Lien copié avec succès !", {
-                      description: "Le lien d'affiliation a été copié dans le presse-papiers"
-                    });
-                  } catch (error) {
-                    console.error('Erreur copie:', error);
-                    toast.error("Erreur lors de la copie", {
-                      description: "Impossible de copier le lien. Veuillez réessayer."
-                    });
-                  }
-                }}
-              >
-                Copier
-              </Button>
-            </div>
-            <a
-              href={link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-blue-600 hover:underline mt-2 inline-block"
-            >
-              Tester le lien →
-            </a>
-          </div>
-        )}
-
-        {effectiveShopId && (
-          <div className="p-4 rounded-lg bg-muted/50 border border-border">
-            <h3 className="text-sm font-semibold mb-2">💡 Comment ça marche ?</h3>
-            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-              <li>Définissez le pourcentage de commission pour vos affiliés</li>
-              <li>Générez et partagez votre lien d'affiliation unique</li>
-              <li>Suivez les ventes générées par vos affiliés</li>
-              <li>Gérez automatiquement les commissions via le système</li>
-            </ul>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
 }
 
+export default function AffiliateManagement(_props: { shopId?: string }) {
+  const { t } = useTranslation();
+  const [data, setData] = useState<VendorAffiliateData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    const res = await backendFetch<VendorAffiliateData>("/api/affiliate-program/vendor");
+    if (res.success) {
+      setData(res as unknown as VendorAffiliateData);
+    } else {
+      setError(res.error || t("affiliateMgmt.loadError"));
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const commissions = data?.commissions ?? [];
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-[#ff4000]" />
+              {t("affiliateMgmt.title")}
+            </CardTitle>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t("affiliateMgmt.intro")}
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            <span className="ml-2 hidden sm:inline">{t("affiliateMgmt.refresh")}</span>
+          </Button>
+        </CardHeader>
+
+        <CardContent className="space-y-4">
+          {loading ? (
+            <div className="flex items-center justify-center py-10">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : error ? (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+              {error}
+            </div>
+          ) : (
+            <>
+              {/* KPI */}
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <StatCard
+                  icon={Package}
+                  label={t("affiliateMgmt.kpiProducts")}
+                  value={data?.products_enabled ?? 0}
+                  accent="bg-[#ff4000]/10 text-[#ff4000]"
+                />
+                <StatCard
+                  icon={Users}
+                  label={t("affiliateMgmt.kpiAffiliates")}
+                  value={data?.affiliates ?? 0}
+                  accent="bg-blue-500/10 text-blue-600"
+                />
+                <StatCard
+                  icon={Clock}
+                  label={t("affiliateMgmt.kpiPending")}
+                  value={<Money amount={data?.pending ?? 0} from="GNF" />}
+                  accent="bg-amber-500/10 text-amber-600"
+                />
+                <StatCard
+                  icon={CheckCircle2}
+                  label={t("affiliateMgmt.kpiPaid")}
+                  value={<Money amount={data?.confirmed ?? 0} from="GNF" />}
+                  accent="bg-emerald-500/10 text-emerald-600"
+                />
+              </div>
+
+              {/* Comment ça marche */}
+              <div className="rounded-lg border border-border bg-muted/40 p-4">
+                <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold">
+                  <Info className="h-4 w-4 text-[#ff4000]" />
+                  {t("affiliateMgmt.howTitle")}
+                </h3>
+                <ul className="space-y-1 text-sm text-muted-foreground">
+                  <li>{t("affiliateMgmt.how1")}</li>
+                  <li>{t("affiliateMgmt.how2")}</li>
+                  <li>{t("affiliateMgmt.how3")}</li>
+                  <li>{t("affiliateMgmt.how4")}</li>
+                  <li>{t("affiliateMgmt.how5")}</li>
+                </ul>
+              </div>
+
+              {/* Table des commissions */}
+              <div>
+                <h3 className="mb-2 text-sm font-semibold">{t("affiliateMgmt.recentTitle")}</h3>
+                {commissions.length === 0 ? (
+                  <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                    {t("affiliateMgmt.empty")}
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto rounded-lg border border-border">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+                        <tr>
+                          <th className="px-3 py-2 font-medium">{t("affiliateMgmt.colProduct")}</th>
+                          <th className="px-3 py-2 font-medium">{t("affiliateMgmt.colAffiliate")}</th>
+                          <th className="px-3 py-2 text-right font-medium">{t("affiliateMgmt.colSale")}</th>
+                          <th className="px-3 py-2 text-right font-medium">{t("affiliateMgmt.colRate")}</th>
+                          <th className="px-3 py-2 text-right font-medium">{t("affiliateMgmt.colCommission")}</th>
+                          <th className="px-3 py-2 font-medium">{t("affiliateMgmt.colStatus")}</th>
+                          <th className="px-3 py-2 font-medium">{t("affiliateMgmt.colDate")}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {commissions.map((c) => {
+                          const meta = STATUS_META[c.status] || STATUS_META.pending;
+                          return (
+                            <tr key={c.id} className="border-t border-border/60">
+                              <td className="max-w-[200px] truncate px-3 py-2" title={c.product_name}>
+                                {c.product_name}
+                              </td>
+                              <td className="px-3 py-2 font-mono text-xs">{c.affiliate_ref}</td>
+                              <td className="px-3 py-2 text-right">
+                                <Money amount={c.sale_amount} from="GNF" />
+                              </td>
+                              <td className="px-3 py-2 text-right text-muted-foreground">
+                                {Number(c.commission_rate)}%
+                              </td>
+                              <td className="px-3 py-2 text-right font-medium">
+                                <Money amount={c.commission_amount} from="GNF" />
+                              </td>
+                              <td className="px-3 py-2">
+                                <Badge variant="outline" className={meta.className}>
+                                  {t(meta.labelKey)}
+                                </Badge>
+                              </td>
+                              <td className="px-3 py-2 text-xs text-muted-foreground">
+                                {new Date(c.created_at).toLocaleDateString("fr-FR")}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

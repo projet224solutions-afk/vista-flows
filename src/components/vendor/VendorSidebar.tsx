@@ -11,7 +11,7 @@ import {
   Wallet, Receipt, Truck, Megaphone, FileText, Settings,
   Target, TrendingUp, Box, MessageSquare, HeadphonesIcon,
   Store, DollarSign, Boxes, AlertTriangle, Link, Building2,
-  LayoutDashboard, ChevronRight, Star, Smartphone, Bot, Lock, MessagesSquare, Briefcase, Laptop
+  LayoutDashboard, ChevronRight, Star, Smartphone, Bot, Lock, MessagesSquare, Briefcase, Laptop, ShieldCheck, Undo2
 } from "lucide-react";
 
 import {
@@ -177,6 +177,8 @@ export function VendorSidebar() {
         { title: t('sidebar.virtualCard'), icon: Smartphone, path: "virtual-card" },
         { title: t('sidebar.quotesInvoices'), icon: FileText, path: "quotes-invoices" },
         { title: t('sidebar.payments'), icon: CreditCard, path: "payments" },
+        { title: "Escrow & Litiges", icon: ShieldCheck, path: "escrow" },
+        { title: "Retours", icon: Undo2, path: "returns" },
         { title: "Paiements Échelonnés", icon: CreditCard, path: "installments" },
         { title: "Ventes Avancées", icon: ShoppingCart, path: "advanced-sales" },
         { title: t('sidebar.paymentLinks'), icon: DollarSign, path: "payment-links" },

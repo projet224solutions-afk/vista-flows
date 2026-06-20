@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,6 +47,7 @@ interface Props {
 }
 
 export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
+  const { t } = useTranslation();
   const badgeRef = useRef<HTMLDivElement>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -92,7 +94,7 @@ export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
 
     try {
       setIsSaving(true);
-      toast.info('Génération du badge en cours...');
+      toast.info(t('badgeGenerator.generationDuBadgeEnCours'));
 
       const [html2canvas, jsPDF] = await loadPdfLibs();
       const canvas = await html2canvas(badgeRef.current, {
@@ -115,10 +117,10 @@ export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
       // Sauvegarder dans Supabase
       await saveBadgeToSupabase(imgData);
 
-      toast.success('Badge généré avec succès!');
+      toast.success(t('badgeGenerator.badgeGenereAvecSucces'));
     } catch (error) {
       console.error('Erreur génération badge:', error);
-      toast.error('Erreur lors de la génération du badge');
+      toast.error(t('badgeGenerator.erreurLorsDeLaGeneration'));
     } finally {
       setIsSaving(false);
     }
@@ -152,14 +154,14 @@ export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Générer Badge Professionnel</DialogTitle>
+          <DialogTitle>{t('badgeGenerator.genererBadgeProfessionnel')}</DialogTitle>
         </DialogHeader>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Formulaire d'édition */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Informations du Badge</h3>
+              <h3 className="text-lg font-semibold">{t('badgeGenerator.informationsDuBadge')}</h3>
               <Button
                 variant={isEditing ? "default" : "outline"}
                 size="sm"
@@ -187,7 +189,7 @@ export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Prénom(s)</Label>
+                  <Label>{t('badgeGenerator.prenomS')}</Label>
                   <Input
                     value={badgeData.firstName}
                     onChange={(e) => handleFieldChange('firstName', e.target.value)}
@@ -223,7 +225,7 @@ export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
                   />
                 </div>
                 <div>
-                  <Label>Date d'adhésion</Label>
+                  <Label>{t('badgeGenerator.dateDAdhesion')}</Label>
                   <Input
                     type="text"
                     value={badgeData.joinedDate}
@@ -236,7 +238,7 @@ export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Date de naissance</Label>
+                  <Label>{t('badgeGenerator.dateDeNaissance')}</Label>
                   <Input
                     type="text"
                     value={badgeData.dob}
@@ -271,7 +273,7 @@ export default function BadgeGenerator({ moto, bureauName, onClose }: Props) {
 
           {/* Aperçu du badge */}
           <div className="flex flex-col items-center justify-center">
-            <div className="text-sm text-muted-foreground mb-4">Aperçu du badge</div>
+            <div className="text-sm text-muted-foreground mb-4">{t('badgeGenerator.apercuDuBadge')}</div>
             <div className="transform scale-90 lg:scale-100">
               <div
                 ref={badgeRef}

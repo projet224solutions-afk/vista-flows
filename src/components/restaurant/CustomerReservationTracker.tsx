@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
@@ -89,10 +90,31 @@ export function CustomerReservationTracker({
   customerEmail,
   onClose
 }: CustomerReservationTrackerProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+
+  // Annulation par le client (réservation pas encore passée / installée). Met à jour le statut.
+  const cancelReservation = async (id: string) => {
+    if (typeof window !== 'undefined' && !window.confirm(t('customerReservationTracker.annulerCetteReservation'))) return;
+    setCancellingId(id);
+    try {
+      const { error } = await supabase
+        .from('restaurant_reservations')
+        .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+        .eq('id', id);
+      if (error) throw error;
+      setReservations((prev) => prev.map((r) => (r.id === id ? { ...r, status: 'cancelled' } : r)));
+      toast.success(t('customerReservationTracker.reservationAnnulee'));
+    } catch {
+      toast.error(t('customerReservationTracker.annulationImpossibleContactezLeRestauran'));
+    } finally {
+      setCancellingId(null);
+    }
+  };
 
   const loadReservations = async () => {
     try {
@@ -103,7 +125,7 @@ export function CustomerReservationTracker({
         .select(`
           *,
           professional_services:professional_service_id (
-            service_name
+            business_name
           )
         `)
         .order('reservation_date', { ascending: false })
@@ -126,13 +148,13 @@ export function CustomerReservationTracker({
 
       const formattedReservations = (data || []).map((r: any) => ({
         ...r,
-        restaurant_name: r.professional_services?.service_name || 'Restaurant'
+        restaurant_name: r.professional_services?.business_name || 'Restaurant'
       }));
 
       setReservations(formattedReservations);
     } catch (err: any) {
       console.error('Erreur chargement réservations:', err);
-      toast.error('Erreur lors du chargement des réservations');
+      toast.error(t('customerReservationTracker.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -142,7 +164,7 @@ export function CustomerReservationTracker({
     setRefreshing(true);
     await loadReservations();
     setRefreshing(false);
-    toast.success('Statut mis à jour');
+    toast.success(t('customerReservationTracker.statutMisAJour'));
   };
 
   const generateReceipt = (reservation: Reservation) => {
@@ -185,7 +207,7 @@ Merci d'avoir réservé avec 224Solutions !
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    toast.success('Reçu téléchargé !');
+    toast.success(t('customerReservationTracker.recuTelecharge'));
   };
 
   useEffect(() => {
@@ -205,7 +227,7 @@ Merci d'avoir réservé avec 224Solutions !
         (payload) => {
           console.log('Réservation mise à jour:', payload);
           loadReservations();
-          toast.info('Statut de votre réservation mis à jour !');
+          toast.info(t('customerReservationTracker.statutDeVotreReservationMis'));
         }
       )
       .subscribe();
@@ -222,7 +244,7 @@ Merci d'avoir réservé avec 224Solutions !
         <CardContent className="pt-6">
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-            <p className="text-muted-foreground">Chargement de vos réservations...</p>
+            <p className="text-muted-foreground">{t('customerReservationTracker.chargementDeVosReservations')}</p>
           </div>
         </CardContent>
       </Card>
@@ -235,7 +257,7 @@ Merci d'avoir réservé avec 224Solutions !
         <CardContent className="pt-6">
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
             <Calendar className="h-12 w-12 text-muted-foreground" />
-            <p className="text-muted-foreground">Aucune réservation trouvée</p>
+            <p className="text-muted-foreground">{t('customerReservationTracker.aucuneReservationTrouvee')}</p>
           </div>
         </CardContent>
       </Card>
@@ -245,7 +267,7 @@ Merci d'avoir réservé avec 224Solutions !
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Mes réservations</h2>
+        <h2 className="text-lg font-semibold">{t('customerReservationTracker.mesReservations')}</h2>
         <Button
           variant="outline"
           size="sm"
@@ -288,7 +310,7 @@ Merci d'avoir réservé avec 224Solutions !
 
             <CardContent className="space-y-4">
               {/* Info principale */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-muted-foreground" />
                   <div>
@@ -320,7 +342,7 @@ Merci d'avoir réservé avec 224Solutions !
                   <MapPin className="w-5 h-5 text-primary" />
                   <div>
                     <p className="text-sm font-medium">Table {reservation.table_number}</p>
-                    <p className="text-xs text-muted-foreground">Votre table est prête !</p>
+                    <p className="text-xs text-muted-foreground">{t('customerReservationTracker.votreTableEstPrete')}</p>
                   </div>
                 </div>
               )}
@@ -345,17 +367,15 @@ Merci d'avoir réservé avec 224Solutions !
                   Télécharger le reçu
                 </Button>
 
-                {!isPast && reservation.status !== 'cancelled' && (
+                {!isPast && !['cancelled', 'seated', 'completed'].includes(reservation.status) && (
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      // TODO: Implémenter l'annulation
-                      toast.info('Veuillez contacter le restaurant pour annuler');
-                    }}
+                    disabled={cancellingId === reservation.id}
+                    onClick={() => cancelReservation(reservation.id)}
                   >
                     <X className="w-4 h-4 mr-2" />
-                    Annuler
+                    {cancellingId === reservation.id ? 'Annulation…' : 'Annuler'}
                   </Button>
                 )}
               </div>
@@ -365,7 +385,7 @@ Merci d'avoir réservé avec 224Solutions !
                 <>
                   <Separator />
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">Demandes spéciales</p>
+                    <p className="text-xs text-muted-foreground mb-1">{t('customerReservationTracker.demandesSpeciales')}</p>
                     <p className="text-sm">{reservation.special_requests}</p>
                   </div>
                 </>

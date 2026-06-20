@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Truck, RefreshCw, AlertCircle, CheckCircle2, Navigation } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface NearbyDriver {
   id: string;
@@ -24,6 +25,7 @@ interface NearbyDeliveryModalProps {
 
 export function NearbyDeliveryModal({ open, onOpenChange }: NearbyDeliveryModalProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [drivers, setDrivers] = useState<NearbyDriver[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,7 +65,7 @@ export function NearbyDeliveryModal({ open, onOpenChange }: NearbyDeliveryModalP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader className="pb-3 border-b border-border/40">
           <DialogTitle className="flex items-center gap-2">
             <Truck className="w-5 h-5 text-livreur-primary" />
@@ -78,7 +80,7 @@ export function NearbyDeliveryModal({ open, onOpenChange }: NearbyDeliveryModalP
                 <Truck className="w-12 h-12 text-livreur-primary animate-pulse" />
                 <div className="absolute inset-0 rounded-full border-4 border-livreur-primary/30 border-t-livreur-primary animate-spin" style={{ animationDuration: '1s' }} />
               </div>
-              <p className="text-sm mt-4">Recherche de livreurs...</p>
+              <p className="text-sm mt-4">{t('delivery.searchingCouriers')}</p>
             </div>
           ) : error ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">

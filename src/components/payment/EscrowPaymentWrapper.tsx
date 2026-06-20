@@ -4,6 +4,7 @@
  */
 
 import { ReactNode, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -48,6 +49,7 @@ export function EscrowPaymentWrapper({
   onError,
   onComplete
 }: EscrowPaymentWrapperProps) {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const [showDialog, setShowDialog] = useState(false);
   const { createEscrow, creating, calculateFees } = useUniversalEscrow();
@@ -107,7 +109,7 @@ export function EscrowPaymentWrapper({
       </div>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Shield className="w-5 h-5 text-primary" />
@@ -132,7 +134,7 @@ export function EscrowPaymentWrapper({
               </div>
 
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Méthode:</span>
+                <span className="text-muted-foreground">{t('escrowPaymentWrapper.methode')}</span>
                 <Badge variant="secondary">
                   {transaction.payment_provider === 'wallet' && 'Wallet 224'}
                   {transaction.payment_provider === 'stripe' && 'Carte bancaire'}
@@ -143,7 +145,7 @@ export function EscrowPaymentWrapper({
 
               <div className="border-t pt-2">
                 <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Montant:</span>
+                  <span className="text-sm text-muted-foreground">{t('escrowPaymentWrapper.montant')}</span>
                   <span className="font-semibold">{fc(transaction.amount)}</span>
                 </div>
                 <div className="flex justify-between text-xs text-muted-foreground">
@@ -159,9 +161,9 @@ export function EscrowPaymentWrapper({
               <AlertDescription className="text-xs">
                 <strong>Protection acheteur:</strong>
                 <ul className="mt-1 ml-4 list-disc space-y-1">
-                  <li>Fonds bloqués de manière sécurisée</li>
-                  <li>Libération uniquement après confirmation</li>
-                  <li>Possibilité de remboursement en cas de litige</li>
+                  <li>{t('escrowPaymentWrapper.fondsBloquesDeManiereSecurisee')}</li>
+                  <li>{t('escrowPaymentWrapper.liberationUniquementApresConfirmation')}</li>
+                  <li>{t('escrowPaymentWrapper.possibiliteDeRemboursementEnCas')}</li>
                 </ul>
               </AlertDescription>
             </Alert>

@@ -6,7 +6,6 @@
 
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
 import { env } from '../config/env.js';
@@ -178,19 +177,7 @@ export function authenticateInternal(req: Request, res: Response, next: NextFunc
     return;
   }
 
-  // Timing-safe comparison — empêche les attaques par timing sur la clé API
-  if (!env.INTERNAL_API_KEY) {
-    logger.error('INTERNAL_API_KEY not configured');
-    res.status(503).json({ success: false, error: 'Service unavailable' });
-    return;
-  }
-
-  const expected = Buffer.from(env.INTERNAL_API_KEY, 'utf8');
-  const received = Buffer.from(apiKey.padEnd(env.INTERNAL_API_KEY.length, '\0').slice(0, env.INTERNAL_API_KEY.length), 'utf8');
-  const valid = expected.length === apiKey.length &&
-    crypto.timingSafeEqual(expected, received);
-
-  if (!valid) {
+  if (!env.INTERNAL_API_KEY || apiKey !== env.INTERNAL_API_KEY) {
     logger.warn(`Invalid internal API key from IP: ${req.ip}`);
     res.status(403).json({ success: false, error: 'Invalid API key' });
     return;

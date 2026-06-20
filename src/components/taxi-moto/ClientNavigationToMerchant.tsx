@@ -8,6 +8,7 @@
  */
 
 import { useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
@@ -45,6 +46,7 @@ export function ClientNavigationToMerchant({
   merchantName,
   onArrived,
 }: ClientNavigationToMerchantProps) {
+  const { t } = useTranslation();
   const hasBoth =
     clientPos && merchantPos &&
     Number.isFinite(merchantPos.lat) && Number.isFinite(merchantPos.lng) &&
@@ -85,7 +87,7 @@ export function ClientNavigationToMerchant({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Store className="w-5 h-5 text-primary" />
@@ -122,7 +124,7 @@ export function ClientNavigationToMerchant({
               <div className="rounded-lg border p-3 text-center">
                 <Clock className="w-4 h-4 text-primary mx-auto mb-1" />
                 <div className="text-lg font-bold">{etaMin} min</div>
-                <div className="text-xs text-muted-foreground">Arrivée estimée</div>
+                <div className="text-xs text-muted-foreground">{t('clientNavigationToMerchant.arriveeEstimee')}</div>
               </div>
             </div>
           )}
@@ -131,7 +133,7 @@ export function ClientNavigationToMerchant({
           {mapSrc && !arrived && (
             <div className="rounded-lg overflow-hidden border aspect-video bg-muted">
               <iframe
-                title="Itinéraire vers le vendeur"
+                title={t('clientNavigationToMerchant.itineraireVersLeVendeur')}
                 width="100%"
                 height="100%"
                 loading="lazy"

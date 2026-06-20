@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * PANEL DE SYNCHRONISATION OFFLINE
  * Interface utilisateur pour la gestion du mode hors-ligne
@@ -6,6 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +31,7 @@ import { toast } from "sonner";
 import { useOfflineSync } from '@/hooks/useOfflineSync';
 
 export default function OfflineSyncPanel() {
+    const { t } = useTranslation();
     const {
         isOnline,
         isSyncing,
@@ -70,7 +71,7 @@ export default function OfflineSyncPanel() {
     // Gestionnaire de nettoyage des erreurs
     const handleClearErrors = () => {
         clearSyncErrors();
-        toast.success('✅ Erreurs effacées');
+        toast.success(t('offlineSyncPanel.erreursEffacees'));
     };
 
     // Icône de statut de connexion
@@ -157,11 +158,11 @@ export default function OfflineSyncPanel() {
                             </div>
                             <div className="text-center p-3 bg-white rounded-lg shadow-sm">
                                 <div className="text-2xl font-bold text-[#ff4000]">{syncStats.synced}</div>
-                                <div className="text-sm text-gray-600">Synchronisés</div>
+                                <div className="text-sm text-gray-600">{t('offlineSyncPanel.synchronises')}</div>
                             </div>
                             <div className="text-center p-3 bg-white rounded-lg shadow-sm">
                                 <div className="text-2xl font-bold text-[#ff4000]">{syncStats.failed}</div>
-                                <div className="text-sm text-gray-600">Échoués</div>
+                                <div className="text-sm text-gray-600">{t('offlineSyncPanel.echoues')}</div>
                             </div>
                         </div>
 
@@ -169,7 +170,7 @@ export default function OfflineSyncPanel() {
                         {syncStats.total > 0 && (
                             <div className="space-y-2">
                                 <div className="flex justify-between text-sm">
-                                    <span>Progression de synchronisation</span>
+                                    <span>{t('offlineSyncPanel.progressionDeSynchronisation')}</span>
                                     <span>{Math.round((syncStats.synced / syncStats.total) * 100)}%</span>
                                 </div>
                                 <Progress
@@ -184,7 +185,7 @@ export default function OfflineSyncPanel() {
                             <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
                                 <div className="flex items-center gap-2 text-[#ff4000]">
                                     <CheckCircle className="w-4 h-4" />
-                                    <span className="font-medium">Dernière synchronisation</span>
+                                    <span className="font-medium">{t('offlineSyncPanel.derniereSynchronisation')}</span>
                                 </div>
                                 <div className="text-sm text-[#ff4000] mt-1">
                                     {new Date(lastSyncTime).toLocaleString()}
@@ -198,7 +199,7 @@ export default function OfflineSyncPanel() {
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2 text-[#ff4000]">
                                         <AlertTriangle className="w-4 h-4" />
-                                        <span className="font-medium">Erreurs de synchronisation</span>
+                                        <span className="font-medium">{t('offlineSyncPanel.erreursDeSynchronisation')}</span>
                                     </div>
                                     <Button size="sm" variant="outline" onClick={handleClearErrors}>
                                         <Trash2 className="w-3 h-3 mr-1" />
@@ -220,7 +221,7 @@ export default function OfflineSyncPanel() {
                     {/* Onglet Historique */}
                     <TabsContent value="history" className="space-y-4">
                         <div className="flex justify-between items-center">
-                            <h3 className="font-semibold text-gray-800">Historique des événements</h3>
+                            <h3 className="font-semibold text-gray-800">{t('offlineSyncPanel.historiqueDesEvenements')}</h3>
                             <Button
                                 size="sm"
                                 variant="outline"
@@ -290,7 +291,7 @@ export default function OfflineSyncPanel() {
                                     {isOnline ? (
                                         <>
                                             <Wifi className="w-4 h-4 text-[#ff4000]" />
-                                            <span className="font-medium text-[#ff4000]">Connexion active</span>
+                                            <span className="font-medium text-[#ff4000]">{t('offlineSyncPanel.connexionActive')}</span>
                                         </>
                                     ) : (
                                         <>
@@ -310,7 +311,7 @@ export default function OfflineSyncPanel() {
                             {/* Statistiques par type */}
                             {Object.keys(syncStats.by_type).length > 0 && (
                                 <div className="space-y-2">
-                                    <h4 className="font-medium text-gray-800">Par type d'événement</h4>
+                                    <h4 className="font-medium text-gray-800">{t('offlineSyncPanel.parTypeDEvenement')}</h4>
                                     {Object.entries(syncStats.by_type).map(([type, stats]) => (
                                         <div key={type} className="flex items-center justify-between p-2 bg-white rounded border">
                                             <div className="flex items-center gap-2">

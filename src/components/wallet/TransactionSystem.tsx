@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,8 +14,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useEnhancedTransactions } from "@/hooks/useEnhancedTransactions";
 import { useAuth } from "@/hooks/useAuth";
 import { useWallet } from "@/hooks/useWallet";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export const TransactionSystem = () => {
+  const { t } = useTranslation();
   const [receiverEmail, setReceiverEmail] = useState('');
   const [amount, setAmount] = useState('');
   const { wallet } = useWallet();
@@ -82,13 +83,13 @@ export const TransactionSystem = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge className="bg-orange-100 text-[#ff4000]"><CheckCircle className="w-3 h-3 mr-1" />Terminé</Badge>;
+        return <Badge className="bg-orange-100 text-[#ff4000]"><CheckCircle className="w-3 h-3 mr-1" />{t('transactionSystem.termine')}</Badge>;
       case 'pending':
         return <Badge className="bg-orange-100 text-[#ff4000]"><Clock className="w-3 h-3 mr-1" />En cours</Badge>;
       case 'failed':
-        return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Échoué</Badge>;
+        return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />{t('transactionSystem.echoue')}</Badge>;
       case 'refunded':
-        return <Badge className="bg-blue-100 text-blue-800">Remboursé</Badge>;
+        return <Badge className="bg-blue-100 text-blue-800">{t('transactionSystem.rembourse')}</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -121,8 +122,8 @@ export const TransactionSystem = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-foreground">Système de Transactions</h2>
-          <p className="text-muted-foreground">Envoyez et recevez de l'argent instantanément avec ID unique</p>
+          <h2 className="text-3xl font-bold text-foreground">{t('transactionSystem.systemeDeTransactions')}</h2>
+          <p className="text-muted-foreground">{t('transactionSystem.envoyezEtRecevezDeL')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="bg-vendeur/10 text-vendeur border-vendeur/20">
@@ -161,7 +162,7 @@ export const TransactionSystem = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="receiver">Email du destinataire *</Label>
+                  <Label htmlFor="receiver">{t('transactionSystem.emailDuDestinataire')}</Label>
                   <Input
                     id="receiver"
                     type="email"
@@ -173,7 +174,7 @@ export const TransactionSystem = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="amount">Montant *</Label>
+                    <Label htmlFor="amount">{t('transactionSystem.montant')}</Label>
                     <Input
                       id="amount"
                       type="number"
@@ -186,13 +187,13 @@ export const TransactionSystem = () => {
                     <Label htmlFor="currency">Devise</Label>
                     <div className="flex items-center gap-2 h-10 px-3 rounded-md border bg-muted/50">
                       <span className="font-semibold text-sm">{currency}</span>
-                      <span className="text-xs text-muted-foreground">(verrouillée selon votre pays)</span>
+                      <span className="text-xs text-muted-foreground">{t('transactionSystem.verrouilleeSelonVotrePays')}</span>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="method">Méthode de paiement</Label>
+                  <Label htmlFor="method">{t('transactionSystem.methodeDePaiement')}</Label>
                   <Select value={method} onValueChange={setMethod}>
                     <SelectTrigger>
                       <SelectValue />
@@ -230,7 +231,7 @@ export const TransactionSystem = () => {
                   <Label htmlFor="description">Description (optionnel)</Label>
                   <Textarea
                     id="description"
-                    placeholder="Note ou référence pour cette transaction..."
+                    placeholder={t('transactionSystem.noteOuReferencePourCette')}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     rows={3}
@@ -254,7 +255,7 @@ export const TransactionSystem = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Méthodes de paiement disponibles</CardTitle>
+                <CardTitle>{t('transactionSystem.methodesDePaiementDisponibles')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
@@ -262,16 +263,16 @@ export const TransactionSystem = () => {
                     <Wallet className="w-5 h-5 text-vendeur" />
                     <div>
                       <h4 className="font-medium">Wallet Interne</h4>
-                      <p className="text-sm text-muted-foreground">Transaction instantanée entre utilisateurs</p>
-                      <p className="text-xs text-vendeur">ID unique généré automatiquement</p>
+                      <p className="text-sm text-muted-foreground">{t('transactionSystem.transactionInstantaneeEntreUtilisateurs')}</p>
+                      <p className="text-xs text-vendeur">{t('transactionSystem.idUniqueGenereAutomatiquement')}</p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3 p-3 border rounded-lg">
                     <Shield className="w-5 h-5 text-blue-600" />
                     <div>
-                      <h4 className="font-medium">Escrow Sécurisé</h4>
-                      <p className="text-sm text-muted-foreground">Fonds bloqués jusqu'à confirmation</p>
+                      <h4 className="font-medium">{t('transactionSystem.escrowSecurise')}</h4>
+                      <p className="text-sm text-muted-foreground">{t('transactionSystem.fondsBloquesJusquAConfirmation')}</p>
                       <p className="text-xs text-blue-600">Protection automatique</p>
                     </div>
                   </div>
@@ -281,7 +282,7 @@ export const TransactionSystem = () => {
                     <div>
                       <h4 className="font-medium">Carte Bancaire</h4>
                       <p className="text-sm text-muted-foreground">Visa, Mastercard, etc.</p>
-                      <p className="text-xs text-gray-400">Bientôt disponible</p>
+                      <p className="text-xs text-gray-400">{t('transactionSystem.bientotDisponible')}</p>
                     </div>
                   </div>
 
@@ -290,7 +291,7 @@ export const TransactionSystem = () => {
                     <div>
                       <h4 className="font-medium">Mobile Money</h4>
                       <p className="text-sm text-muted-foreground">Orange Money, MTN, Moov</p>
-                      <p className="text-xs text-gray-400">Intégration en cours</p>
+                      <p className="text-xs text-gray-400">{t('transactionSystem.integrationEnCours')}</p>
                     </div>
                   </div>
                 </div>
@@ -302,11 +303,11 @@ export const TransactionSystem = () => {
         <TabsContent value="history" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Historique des transactions</CardTitle>
+              <CardTitle>{t('transactionSystem.historiqueDesTransactions')}</CardTitle>
               <div className="flex items-center gap-4">
                 <div className="flex-1">
                   <Input
-                    placeholder="Rechercher par ID unique (ex: ABC1234)"
+                    placeholder={t('transactionSystem.rechercherParIdUniqueEx')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -329,8 +330,8 @@ export const TransactionSystem = () => {
                       <TableHead>ID Unique</TableHead>
                       <TableHead>Type</TableHead>
                       <TableHead>Utilisateur</TableHead>
-                      <TableHead>Montant</TableHead>
-                      <TableHead>Méthode</TableHead>
+                      <TableHead>{t('transactionSystem.montant2')}</TableHead>
+                      <TableHead>{t('transactionSystem.methode')}</TableHead>
                       <TableHead>Statut</TableHead>
                       <TableHead>Date/Heure</TableHead>
                       <TableHead>Actions</TableHead>
@@ -354,9 +355,9 @@ export const TransactionSystem = () => {
                         </TableCell>
                         <TableCell>
                           {transaction.sender_id === user?.id ? (
-                            <Badge variant="outline" className="text-[#ff4000]">Envoyé</Badge>
+                            <Badge variant="outline" className="text-[#ff4000]">{t('transactionSystem.envoye')}</Badge>
                           ) : (
-                            <Badge variant="outline" className="text-[#ff4000]">Reçu</Badge>
+                            <Badge variant="outline" className="text-[#ff4000]">{t('transactionSystem.recu')}</Badge>
                           )}
                         </TableCell>
                         <TableCell>
@@ -397,7 +398,7 @@ export const TransactionSystem = () => {
                             </DialogTrigger>
                             <DialogContent>
                               <DialogHeader>
-                                <DialogTitle>Détails de la transaction</DialogTitle>
+                                <DialogTitle>{t('transactionSystem.detailsDeLaTransaction')}</DialogTitle>
                                 <DialogDescription>
                                   Transaction #{transaction.custom_id}
                                 </DialogDescription>
@@ -409,13 +410,13 @@ export const TransactionSystem = () => {
                                     <p className="font-mono text-lg">{transaction.custom_id}</p>
                                   </div>
                                   <div>
-                                    <Label>Montant</Label>
+                                    <Label>{t('transactionSystem.montant2')}</Label>
                                     <p className="font-semibold text-lg">{transaction.amount} {transaction.currency}</p>
                                   </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                   <div>
-                                    <Label>Méthode</Label>
+                                    <Label>{t('transactionSystem.methode')}</Label>
                                     <div className="flex items-center gap-2">
                                       {getMethodIcon(transaction.method)}
                                       <span className="capitalize">{transaction.method}</span>
@@ -433,11 +434,11 @@ export const TransactionSystem = () => {
                                   </div>
                                 )}
                                 <div>
-                                  <Label>Date de création</Label>
+                                  <Label>{t('transactionSystem.dateDeCreation')}</Label>
                                   <p>{new Date(transaction.created_at).toLocaleString('fr-FR')}</p>
                                 </div>
                                 <div>
-                                  <Label>Dernière mise à jour</Label>
+                                  <Label>{t('transactionSystem.derniereMiseAJour')}</Label>
                                   <p>{new Date(transaction.updated_at).toLocaleString('fr-FR')}</p>
                                 </div>
                               </div>
@@ -475,26 +476,26 @@ export const TransactionSystem = () => {
                   <Label>Filtrer par statut</Label>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Tous les statuts" />
+                      <SelectValue placeholder={t('transactionSystem.tousLesStatuts')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Tous les statuts</SelectItem>
+                      <SelectItem value="">{t('transactionSystem.tousLesStatuts')}</SelectItem>
                       <SelectItem value="pending">En cours</SelectItem>
-                      <SelectItem value="completed">Terminé</SelectItem>
-                      <SelectItem value="failed">Échoué</SelectItem>
-                      <SelectItem value="refunded">Remboursé</SelectItem>
-                      <SelectItem value="cancelled">Annulé</SelectItem>
+                      <SelectItem value="completed">{t('transactionSystem.termine')}</SelectItem>
+                      <SelectItem value="failed">{t('transactionSystem.echoue')}</SelectItem>
+                      <SelectItem value="refunded">{t('transactionSystem.rembourse')}</SelectItem>
+                      <SelectItem value="cancelled">{t('transactionSystem.annule')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label>Filtrer par méthode</Label>
+                  <Label>{t('transactionSystem.filtrerParMethode')}</Label>
                   <Select value={methodFilter} onValueChange={setMethodFilter}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Toutes les méthodes" />
+                      <SelectValue placeholder={t('transactionSystem.toutesLesMethodes')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Toutes les méthodes</SelectItem>
+                      <SelectItem value="">{t('transactionSystem.toutesLesMethodes')}</SelectItem>
                       <SelectItem value="wallet">Wallet Interne</SelectItem>
                       <SelectItem value="escrow">Escrow</SelectItem>
                       <SelectItem value="card">Carte Bancaire</SelectItem>
@@ -512,18 +513,18 @@ export const TransactionSystem = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Informations sur le système</CardTitle>
+              <CardTitle>{t('transactionSystem.informationsSurLeSysteme')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="p-4 bg-vendeur/5 rounded-lg border">
-                  <h4 className="font-semibold text-vendeur mb-2">Format des ID uniques</h4>
+                  <h4 className="font-semibold text-vendeur mb-2">{t('transactionSystem.formatDesIdUniques')}</h4>
                   <p className="text-sm text-muted-foreground">
                     Chaque transaction génère automatiquement un ID unique au format 3 lettres + 4 chiffres (ex: ABC1234)
                   </p>
                 </div>
                 <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <h4 className="font-semibold text-blue-800 mb-2">Traçabilité complète</h4>
+                  <h4 className="font-semibold text-blue-800 mb-2">{t('transactionSystem.tracabiliteComplete')}</h4>
                   <p className="text-sm text-blue-600">
                     Toutes les transactions sont enregistrées avec timestamp, métadonnées et suivi complet
                   </p>

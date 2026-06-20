@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -116,6 +117,7 @@ const DOMAIN_COLORS: Record<string, string> = {
 };
 
 const LogicSurveillanceDashboard: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [rules, setRules] = useState<ValidationRule[]>([]);
@@ -221,7 +223,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
         if (error) throw error;
       }
 
-      toast.success('Correction appliquée avec succès');
+      toast.success(t('logicSurveillanceDashboard.correctionAppliqueeAvecSucces'));
       setCorrectionReason('');
       loadDashboard();
     } catch (error: unknown) {
@@ -246,7 +248,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
 
       if (error) throw error;
 
-      toast.success('Anomalie ignorée');
+      toast.success(t('logicSurveillanceDashboard.anomalieIgnoree'));
       setCorrectionReason('');
       loadDashboard();
     } catch (error: unknown) {
@@ -266,9 +268,9 @@ const LogicSurveillanceDashboard: React.FC = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending': return <Badge className="bg-orange-500">En attente</Badge>;
-      case 'corrected': return <Badge className="bg-[#ff4000]">Corrigé</Badge>;
-      case 'ignored': return <Badge variant="secondary">Ignoré</Badge>;
-      case 'escalated': return <Badge variant="destructive">Escaladé</Badge>;
+      case 'corrected': return <Badge className="bg-[#ff4000]">{t('logicSurveillanceDashboard.corrige')}</Badge>;
+      case 'ignored': return <Badge variant="secondary">{t('logicSurveillanceDashboard.ignore')}</Badge>;
+      case 'escalated': return <Badge variant="destructive">{t('logicSurveillanceDashboard.escalade')}</Badge>;
       default: return <Badge>{status}</Badge>;
     }
   };
@@ -300,7 +302,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
             <Eye className="h-6 w-6 text-primary" />
             Surveillance Logique Globale
           </h1>
-          <p className="text-muted-foreground">Contrôle d'intégrité en temps réel de toutes les fonctionnalités</p>
+          <p className="text-muted-foreground">{t('logicSurveillanceDashboard.controleDIntegriteEnTemps')}</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -398,7 +400,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
             <div className="text-2xl font-bold">
               {dashboardData?.today_anomalies || 0}
             </div>
-            <div className="text-xs text-muted-foreground">anomalies détectées</div>
+            <div className="text-xs text-muted-foreground">{t('logicSurveillanceDashboard.anomaliesDetectees')}</div>
           </CardContent>
         </Card>
 
@@ -481,16 +483,16 @@ const LogicSurveillanceDashboard: React.FC = () => {
         <TabsContent value="anomalies" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Anomalies Récentes</CardTitle>
-              <CardDescription>Incohérences logiques détectées dans le système</CardDescription>
+              <CardTitle>{t('logicSurveillanceDashboard.anomaliesRecentes')}</CardTitle>
+              <CardDescription>{t('logicSurveillanceDashboard.incoherencesLogiquesDetecteesDansLe')}</CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[500px]">
                 {!dashboardData?.recent_anomalies?.length ? (
                   <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                     <CheckCircle className="h-12 w-12 mb-4 text-[#ff4000]" />
-                    <p className="text-lg font-medium">Aucune anomalie détectée</p>
-                    <p className="text-sm">Le système fonctionne correctement</p>
+                    <p className="text-lg font-medium">{t('logicSurveillanceDashboard.aucuneAnomalieDetectee')}</p>
+                    <p className="text-sm">{t('logicSurveillanceDashboard.leSystemeFonctionneCorrectement')}</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -526,7 +528,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
                                   </div>
                                   <div className="flex items-center gap-2">
                                     <XCircle className="h-3 w-3 text-[#ff4000]" />
-                                    <span><strong>Réel:</strong> {formatValue(anomaly.actual_value)}</span>
+                                    <span><strong>{t('logicSurveillanceDashboard.reel')}</strong> {formatValue(anomaly.actual_value)}</span>
                                   </div>
                                 </div>
                                 <p className="text-xs text-muted-foreground mt-2">
@@ -546,19 +548,19 @@ const LogicSurveillanceDashboard: React.FC = () => {
                                   </AlertDialogTrigger>
                                   <AlertDialogContent>
                                     <AlertDialogHeader>
-                                      <AlertDialogTitle>Correction de l'anomalie</AlertDialogTitle>
+                                      <AlertDialogTitle>{t('logicSurveillanceDashboard.correctionDeLAnomalie')}</AlertDialogTitle>
                                       <AlertDialogDescription>
                                         Choisissez le type de correction à appliquer.
                                       </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <Textarea
-                                      placeholder="Raison de la correction (optionnel)..."
+                                      placeholder={t('logicSurveillanceDashboard.raisonDeLaCorrectionOptionnel')}
                                       value={correctionReason}
                                       onChange={(e) => setCorrectionReason(e.target.value)}
                                       className="my-4"
                                     />
                                     <AlertDialogFooter>
-                                      <AlertDialogCancel>Annuler</AlertDialogCancel>
+                                      <AlertDialogCancel>{t('logicSurveillanceDashboard.annuler')}</AlertDialogCancel>
                                       <AlertDialogAction
                                         onClick={() => handleCorrection(anomaly.id, 'auto')}
                                         className="bg-[#ff4000]"
@@ -597,8 +599,8 @@ const LogicSurveillanceDashboard: React.FC = () => {
         <TabsContent value="rules" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Règles de Validation</CardTitle>
-              <CardDescription>Règles de logique métier surveillées par domaine</CardDescription>
+              <CardTitle>{t('logicSurveillanceDashboard.reglesDeValidation')}</CardTitle>
+              <CardDescription>{t('logicSurveillanceDashboard.reglesDeLogiqueMetierSurveillees')}</CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[500px]">
@@ -665,8 +667,8 @@ const LogicSurveillanceDashboard: React.FC = () => {
         <TabsContent value="audit" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Historique des Validations</CardTitle>
-              <CardDescription>Snapshots et corrections effectuées</CardDescription>
+              <CardTitle>{t('logicSurveillanceDashboard.historiqueDesValidations')}</CardTitle>
+              <CardDescription>{t('logicSurveillanceDashboard.snapshotsEtCorrectionsEffectuees')}</CardDescription>
             </CardHeader>
             <CardContent>
               {dashboardData?.last_snapshot ? (
@@ -674,7 +676,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                       <FileText className="h-5 w-5 text-primary" />
-                      <span className="font-medium">Dernière validation</span>
+                      <span className="font-medium">{t('logicSurveillanceDashboard.derniereValidation')}</span>
                     </div>
                     <Badge variant="outline">
                       {dashboardData.last_snapshot.snapshot_type}
@@ -682,15 +684,15 @@ const LogicSurveillanceDashboard: React.FC = () => {
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">Vérifications</p>
+                      <p className="text-sm text-muted-foreground">{t('logicSurveillanceDashboard.verifications')}</p>
                       <p className="text-xl font-bold">{dashboardData.last_snapshot.total_checks}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Réussies</p>
+                      <p className="text-sm text-muted-foreground">{t('logicSurveillanceDashboard.reussies')}</p>
                       <p className="text-xl font-bold text-[#ff4000]">{dashboardData.last_snapshot.passed_checks}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Échouées</p>
+                      <p className="text-sm text-muted-foreground">{t('logicSurveillanceDashboard.echouees')}</p>
                       <p className="text-xl font-bold text-[#ff4000]">{dashboardData.last_snapshot.failed_checks}</p>
                     </div>
                     <div>
@@ -705,7 +707,7 @@ const LogicSurveillanceDashboard: React.FC = () => {
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucune validation effectuée</p>
+                  <p>{t('logicSurveillanceDashboard.aucuneValidationEffectuee')}</p>
                   <Button onClick={runFullValidation} className="mt-4">
                     Lancer la première validation
                   </Button>

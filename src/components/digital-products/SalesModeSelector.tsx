@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Store,
   Link2,
@@ -80,6 +81,7 @@ const salesModes = {
 };
 
 export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }: SalesModeSelectorProps) {
+  const { t } = useTranslation();
   // Filtrer les modes selon hideDirectSale
   const availableModes = hideDirectSale
     ? (['affiliate'] as SalesMode[])
@@ -103,7 +105,7 @@ export function SalesModeSelector({ value, onChange, disabled, hideDirectSale }:
       <div className="text-center space-y-2">
         <div className="inline-flex items-center gap-2 rounded-full border border-[#dbe6fb] bg-white px-4 py-1.5 shadow-sm">
           <Crown className="w-4 h-4 text-[#04439e]" />
-          <span className="text-sm font-semibold text-[#04439e]">Modèle de vente</span>
+          <span className="text-sm font-semibold text-[#04439e]">{t('salesModeSelector.modeleDeVente')}</span>
         </div>
         <h2 className="text-xl font-semibold text-[#0b1b33]">
           Choisissez votre stratégie

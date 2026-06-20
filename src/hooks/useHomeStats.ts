@@ -30,10 +30,13 @@ export const useHomeStats = () => {
 
         if (productsError) console.warn('Produits:', productsError.message);
 
-        // Compter les vendeurs avec fallback
+        // Compter les vendeurs avec fallback.
+        // ⚠️ `select('*')` échoue en 42501 pour l'anonyme depuis la migration RLS
+        // 20260609100000 (anon n'a que les colonnes du catalogue public). On compte
+        // sur une colonne explicitement GRANTée (`id`) pour rester lisible par anon.
         const { count: vendorsCount, error: vendorsError } = await supabase
           .from('vendors')
-          .select('*', { count: 'exact', head: true });
+          .select('id', { count: 'exact', head: true });
 
         if (vendorsError) console.warn('Vendeurs:', vendorsError.message);
 

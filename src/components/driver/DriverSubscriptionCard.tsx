@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 export function DriverSubscriptionCard() {
+  const { t } = useTranslation();
   const {
     subscription,
     config,
@@ -72,7 +74,7 @@ export function DriverSubscriptionCard() {
         {/* Choix du cycle de facturation */}
         {(!hasAccess || isExpired) && (
           <div className="space-y-3">
-            <Label className="text-sm font-medium">Durée de l'abonnement</Label>
+            <Label className="text-sm font-medium">{t('driverSubscriptionCard.dureeDeLAbonnement')}</Label>
             <RadioGroup value={billingCycle} onValueChange={(v) => setBillingCycle(v as 'monthly' | 'yearly')}>
               <div className={`flex items-center space-x-2 p-4 border rounded-lg hover:bg-accent cursor-pointer ${billingCycle === 'monthly' ? 'border-primary bg-primary/5' : ''}`}>
                 <RadioGroupItem value="monthly" id="monthly" />
@@ -128,7 +130,7 @@ export function DriverSubscriptionCard() {
         {/* Statut de l'abonnement */}
         {subscription && hasAccess && expiryDate && (
           <div className="border rounded-lg p-4 space-y-2">
-            <p className="text-sm font-medium">Informations de l'abonnement</p>
+            <p className="text-sm font-medium">{t('driverSubscriptionCard.informationsDeLAbonnement')}</p>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
                 <p className="text-muted-foreground">Date d'expiration</p>
@@ -137,7 +139,7 @@ export function DriverSubscriptionCard() {
                 </p>
               </div>
               <div>
-                <p className="text-muted-foreground">Mode de paiement</p>
+                <p className="text-muted-foreground">{t('driverSubscriptionCard.modeDePaiement')}</p>
                 <p className="font-medium capitalize">{subscription.payment_method}</p>
               </div>
             </div>
@@ -148,7 +150,7 @@ export function DriverSubscriptionCard() {
         {(!hasAccess || isExpired) && (
           <>
             <div className="space-y-3">
-              <Label className="text-sm font-medium">Mode de paiement</Label>
+              <Label className="text-sm font-medium">{t('driverSubscriptionCard.modeDePaiement')}</Label>
               <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as any)}>
                 <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-accent cursor-pointer">
                   <RadioGroupItem value="wallet" id="wallet" />
@@ -156,7 +158,7 @@ export function DriverSubscriptionCard() {
                     <Wallet className="h-5 w-5 text-primary" />
                     <div>
                       <p className="font-medium">Wallet 224Solutions</p>
-                      <p className="text-xs text-muted-foreground">Paiement instantané</p>
+                      <p className="text-xs text-muted-foreground">{t('driverSubscriptionCard.paiementInstantane')}</p>
                     </div>
                   </Label>
                 </div>
@@ -166,7 +168,7 @@ export function DriverSubscriptionCard() {
                     <Smartphone className="h-5 w-5 text-muted-foreground" />
                     <div>
                       <p className="font-medium">Mobile Money</p>
-                      <p className="text-xs text-muted-foreground">Bientôt disponible</p>
+                      <p className="text-xs text-muted-foreground">{t('driverSubscriptionCard.bientotDisponible')}</p>
                     </div>
                   </Label>
                 </div>
@@ -176,7 +178,7 @@ export function DriverSubscriptionCard() {
                     <CreditCard className="h-5 w-5 text-muted-foreground" />
                     <div>
                       <p className="font-medium">Carte bancaire</p>
-                      <p className="text-xs text-muted-foreground">Bientôt disponible</p>
+                      <p className="text-xs text-muted-foreground">{t('driverSubscriptionCard.bientotDisponible')}</p>
                     </div>
                   </Label>
                 </div>
@@ -206,7 +208,7 @@ export function DriverSubscriptionCard() {
 
         {/* Avantages */}
         <div className="bg-primary/5 p-4 rounded-lg space-y-2">
-          <p className="font-medium text-sm">Avec l'abonnement, vous accédez à :</p>
+          <p className="font-medium text-sm">{t('driverSubscriptionCard.avecLAbonnementVousAccedez')}</p>
           <ul className="text-sm space-y-1 text-muted-foreground">
             <li className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-success" />

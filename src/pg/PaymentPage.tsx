@@ -1,5 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,6 +42,7 @@ interface PaymentDetails {
 }
 
 export default function PaymentPage() {
+  const { t } = useTranslation();
   const { paymentId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -174,7 +176,7 @@ export default function PaymentPage() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">Chargement des détails du paiement...</p>
+          <p className="text-gray-600">{t('paymentPage.chargementDesDetailsDuPaiement')}</p>
         </div>
       </div>
     );
@@ -186,7 +188,7 @@ export default function PaymentPage() {
         <Card className="max-w-md">
           <CardContent className="p-8 text-center">
             <AlertCircle className="w-12 h-12 mx-auto mb-4 text-[#ff4000]" />
-            <h2 className="text-xl font-semibold mb-2">Lien de paiement non trouvé</h2>
+            <h2 className="text-xl font-semibold mb-2">{t('paymentPage.lienDePaiementNonTrouve')}</h2>
             <p className="text-gray-600 mb-4">
               Ce lien de paiement n'existe pas ou a été supprimé.
             </p>
@@ -206,7 +208,7 @@ export default function PaymentPage() {
         <Card className="max-w-md">
           <CardContent className="p-8 text-center">
             <Clock className="w-12 h-12 mx-auto mb-4 text-gray-500" />
-            <h2 className="text-xl font-semibold mb-2">Lien expiré</h2>
+            <h2 className="text-xl font-semibold mb-2">{t('paymentPage.lienExpire')}</h2>
             <p className="text-gray-600 mb-4">
               Ce lien de paiement a expiré. Veuillez contacter le vendeur pour un nouveau lien.
             </p>
@@ -226,7 +228,7 @@ export default function PaymentPage() {
         <Card className="max-w-md">
           <CardContent className="p-8 text-center">
             <CheckCircle className="w-12 h-12 mx-auto mb-4 text-[#ff4000]" />
-            <h2 className="text-xl font-semibold mb-2">Paiement confirmé !</h2>
+            <h2 className="text-xl font-semibold mb-2">{t('paymentPage.paiementConfirme')}</h2>
             <p className="text-gray-600 mb-4">
               Votre paiement de {formatCurrency(paymentDetails.total, paymentDetails.devise)} a été traité avec succès.
             </p>
@@ -258,7 +260,7 @@ export default function PaymentPage() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               224SOLUTIONS
             </h1>
-            <p className="text-gray-600">Paiement sécurisé</p>
+            <p className="text-gray-600">{t('paymentPage.paiementSecurise')}</p>
           </div>
         </div>
 
@@ -278,7 +280,7 @@ export default function PaymentPage() {
                 </div>
                 <div>
                   <p className="font-semibold">{paymentDetails.vendeur.name}</p>
-                  <p className="text-sm text-gray-600">Vendeur</p>
+                  <p className="text-sm text-gray-600">{t('paymentPage.vendeur')}</p>
                 </div>
               </div>
 
@@ -291,7 +293,7 @@ export default function PaymentPage() {
 
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span>Montant :</span>
+                  <span>{t('paymentPage.montant')}</span>
                   <span>{formatCurrency(paymentDetails.montant, paymentDetails.devise)}</span>
                 </div>
                 {(paymentDetails as any).remise > 0 && (
@@ -304,11 +306,11 @@ export default function PaymentPage() {
                   </div>
                 )}
                 <div className="flex justify-between text-sm text-gray-600">
-                  <span>Frais de transaction (1%) :</span>
+                  <span>{t('paymentPage.fraisDeTransaction1')}</span>
                   <span>{formatCurrency(paymentDetails.frais, paymentDetails.devise)}</span>
                 </div>
                 <div className="flex justify-between font-semibold text-lg border-t pt-2">
-                  <span>Total à payer :</span>
+                  <span>{t('paymentPage.totalAPayer')}</span>
                   <span className="text-blue-600">
                     {formatCurrency(paymentDetails.total, paymentDetails.devise)}
                   </span>
@@ -343,7 +345,7 @@ export default function PaymentPage() {
                     id="name"
                     value={clientInfo.name}
                     onChange={(e) => setClientInfo({ ...clientInfo, name: e.target.value })}
-                    placeholder="Votre nom complet"
+                    placeholder={t('paymentPage.votreNomComplet')}
                     required
                   />
                 </div>
@@ -355,13 +357,13 @@ export default function PaymentPage() {
                     type="email"
                     value={clientInfo.email}
                     onChange={(e) => setClientInfo({ ...clientInfo, email: e.target.value })}
-                    placeholder="votre@email.com"
+                    placeholder={t('paymentPage.votreEmailCom')}
                     required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="phone">Téléphone</Label>
+                  <Label htmlFor="phone">{t('paymentPage.telephone')}</Label>
                   <Input
                     id="phone"
                     value={clientInfo.phone}
@@ -373,10 +375,10 @@ export default function PaymentPage() {
 
               {/* Méthode de paiement */}
               <div>
-                <Label htmlFor="payment-method">Moyen de paiement *</Label>
+                <Label htmlFor="payment-method">{t('paymentPage.moyenDePaiement')}</Label>
                 <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Choisir un moyen de paiement" />
+                    <SelectValue placeholder={t('paymentPage.choisirUnMoyenDePaiement')} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="wallet">
@@ -405,8 +407,8 @@ export default function PaymentPage() {
               <div className="flex items-center gap-2 p-3 bg-orange-50 rounded-lg">
                 <Shield className="w-5 h-5 text-[#ff4000]" />
                 <div className="text-sm">
-                  <p className="font-semibold text-[#ff4000]">Paiement sécurisé</p>
-                  <p className="text-[#ff4000]">Vos données sont protégées par SSL</p>
+                  <p className="font-semibold text-[#ff4000]">{t('paymentPage.paiementSecurise')}</p>
+                  <p className="text-[#ff4000]">{t('paymentPage.vosDonneesSontProtegeesPar')}</p>
                 </div>
               </div>
 

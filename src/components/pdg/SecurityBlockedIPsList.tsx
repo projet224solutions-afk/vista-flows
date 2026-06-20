@@ -1,5 +1,6 @@
 // 🚫 Liste des IPs bloquées
 import React, { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Ban, Unlock, Plus } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +17,7 @@ interface Props {
 }
 
 const SecurityBlockedIPsList: React.FC<Props> = ({ blockedIPs, onBlock, onUnblock }) => {
+  const { t } = useTranslation();
   const [isBlockOpen, setIsBlockOpen] = useState(false);
   const [newBlock, setNewBlock] = useState({ ip: '', reason: '', hours: 24 });
 
@@ -29,8 +31,8 @@ const SecurityBlockedIPsList: React.FC<Props> = ({ blockedIPs, onBlock, onUnbloc
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-2xl font-bold">IPs Bloquées</h3>
-          <p className="text-muted-foreground">Gestion des blocages IP</p>
+          <h3 className="text-2xl font-bold">{t('securityBlockedIPsList.ipsBloquees')}</h3>
+          <p className="text-muted-foreground">{t('securityBlockedIPsList.gestionDesBlocagesIp')}</p>
         </div>
         <Dialog open={isBlockOpen} onOpenChange={setIsBlockOpen}>
           <DialogTrigger asChild>
@@ -41,8 +43,8 @@ const SecurityBlockedIPsList: React.FC<Props> = ({ blockedIPs, onBlock, onUnbloc
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Bloquer une Adresse IP</DialogTitle>
-              <DialogDescription>Ajouter une IP à la liste de blocage</DialogDescription>
+              <DialogTitle>{t('securityBlockedIPsList.bloquerUneAdresseIp')}</DialogTitle>
+              <DialogDescription>{t('securityBlockedIPsList.ajouterUneIpALa')}</DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -54,15 +56,15 @@ const SecurityBlockedIPsList: React.FC<Props> = ({ blockedIPs, onBlock, onUnbloc
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Raison du blocage</label>
+                <label className="text-sm font-medium">{t('securityBlockedIPsList.raisonDuBlocage')}</label>
                 <Textarea
                   value={newBlock.reason}
                   onChange={(e) => setNewBlock({ ...newBlock, reason: e.target.value })}
-                  placeholder="Tentatives de brute force détectées"
+                  placeholder={t('securityBlockedIPsList.tentativesDeBruteForceDetectees')}
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Durée (heures)</label>
+                <label className="text-sm font-medium">{t('securityBlockedIPsList.dureeHeures')}</label>
                 <Input
                   type="number"
                   value={newBlock.hours}
@@ -104,14 +106,14 @@ const SecurityBlockedIPsList: React.FC<Props> = ({ blockedIPs, onBlock, onUnbloc
             <CardContent>
               <div className="grid gap-2 text-sm">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">Bloqué le:</span>
+                  <span className="font-medium">{t('securityBlockedIPsList.bloqueLe')}</span>
                   <span className="text-muted-foreground">
                     {new Date(block.blocked_at).toLocaleString('fr-FR')}
                   </span>
                 </div>
                 {block.expires_at && (
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">Expire le:</span>
+                    <span className="font-medium">{t('securityBlockedIPsList.expireLe')}</span>
                     <span className="text-muted-foreground">
                       {new Date(block.expires_at).toLocaleString('fr-FR')}
                     </span>
@@ -124,7 +126,7 @@ const SecurityBlockedIPsList: React.FC<Props> = ({ blockedIPs, onBlock, onUnbloc
         {blockedIPs.length === 0 && (
           <Card>
             <CardContent className="py-8">
-              <p className="text-center text-muted-foreground">Aucune IP bloquée</p>
+              <p className="text-center text-muted-foreground">{t('securityBlockedIPsList.aucuneIpBloquee')}</p>
             </CardContent>
           </Card>
         )}

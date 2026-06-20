@@ -20,6 +20,8 @@ import SEOHead from "@/components/SEOHead";
 import { getCurrencyForCountry } from "@/data/countryMappings";
 import { useVendorCertificationCached } from "@/hooks/useVendorCertificationCache";
 import { CertifiedVendorBadge } from "@/components/vendor/CertifiedVendorBadge";
+import ShopReviewsSection from "@/components/vendor/ShopReviewsSection";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AffiliateFlightPartnerCard } from "@/components/vendor/AffiliateFlightPartnerCard";
 import { LocalPrice } from "@/components/ui/LocalPrice";
 
@@ -27,7 +29,7 @@ import { LocalPrice } from "@/components/ui/LocalPrice";
 function VendorCertBadgeInline({ vendorId }: { vendorId: string }) {
   const { isCertified } = useVendorCertificationCached(vendorId);
   if (!isCertified) return null;
-  return <CertifiedVendorBadge status="CERTIFIE" size="lg" />;
+  return <CertifiedVendorBadge status="CERTIFIE" size="sm" />;
 }
 
 interface Vendor {
@@ -87,6 +89,7 @@ export default function VendorShop() {
   const [loading, setLoading] = useState(true);
   const [isOwner, setIsOwner] = useState(false);
   const [activeTab, setActiveTab] = useState("physical");
+  const [showReviews, setShowReviews] = useState(false);
   const hasTrackedVisit = useRef(false);
   const [errorType, setErrorType] = useState<ShopErrorType>('none');
   const [loadingTimedOut, setLoadingTimedOut] = useState(false);
@@ -183,21 +186,17 @@ export default function VendorShop() {
         'city, neighborhood, business_type, service_type, country, shop_slug, shop_currency, ' +
         'currency_locked, seller_country_code, delivery_base_price, delivery_price_per_km, ' +
         'delivery_rush_bonus, delivery_enabled, average_delivery_days';
-      const vendorColumns = user ? '*' : PUBLIC_VENDOR_COLUMNS;
-
-      if (isUUID) {
+      // ⚠️ ANTI-RÉGRESSION : on charge TOUJOURS les colonnes PUBLIQUES (lisibles
+      // par tous, anon inclus depuis la migration RLS 20260609100000). Un
+      // `select('*')` pour un anonyme renvoie 42501 → la fiche se croyait
+      // « introuvable » alors qu'elle existe (cas du lien de partage ouvert
+      // déconnecté). Les coordonnées privées sont récupérées ensuite, en
+      // best-effort, pour les connectés.
+      {
         const { data, error } = await supabase
           .from('vendors')
-          .select(vendorColumns)
-          .eq('id', id)
-          .maybeSingle();
-        if (error) throw error;
-        vendorData = data as unknown as Vendor | null;
-      } else {
-        const { data, error } = await supabase
-          .from('vendors')
-          .select(vendorColumns)
-          .eq('shop_slug', id)
+          .select(PUBLIC_VENDOR_COLUMNS)
+          .eq(isUUID ? 'id' : 'shop_slug', id)
           .maybeSingle();
         if (error) throw error;
         vendorData = data as unknown as Vendor | null;
@@ -205,6 +204,19 @@ export default function VendorShop() {
 
       // Check abort
       if (isStaleRequest()) return;
+
+      // Coordonnées de contact (phone/email/address) — réservées aux connectés
+      // par la RLS. Best-effort : si refusé, la fiche reste affichée sans contact.
+      if (vendorData && user) {
+        try {
+          const { data: contact } = await supabase
+            .from('vendors')
+            .select('phone, email, address')
+            .eq('id', vendorData.id)
+            .maybeSingle();
+          if (contact) vendorData = { ...vendorData, ...(contact as object) } as Vendor;
+        } catch { /* ignore — contact privé optionnel */ }
+      }
 
       if (!vendorData) {
         log('SHOP VENDOR FETCH FAIL', { reason: 'not_found', id });
@@ -704,6 +716,10 @@ export default function VendorShop() {
               <MessageCircle className="w-4 h-4 mr-2" />
               Message
             </Button>
+            <Button variant="outline" onClick={() => setShowReviews(true)}>
+              <Star className="w-4 h-4 mr-2 fill-amber-400 text-amber-400" />
+              Avis
+            </Button>
             <ShareButton
               title={vendor.business_name}
               text={`Découvrez la boutique ${vendor.business_name} sur 224 Solutions`}
@@ -721,12 +737,18 @@ export default function VendorShop() {
         </div>
       </div>
 
+      {/* Fenêtre des avis clients (ouverte par le bouton « Avis ») */}
+      <Dialog open={showReviews} onOpenChange={setShowReviews}>
+        <DialogContent className="w-[96vw] max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Avis de la boutique</DialogTitle>
+          </DialogHeader>
+          <ShopReviewsSection vendorId={vendor.id} />
+        </DialogContent>
+      </Dialog>
+
       {/* Products section - with inline error if products failed */}
       <div className="px-4">
-        <div className="mb-4">
-          <RecentlyViewedProducts maxItems={6} />
-        </div>
-
         {errorType === 'products_error' && (
           <Card className="p-6 text-center mb-4 border-destructive/30">
             <AlertTriangle className="w-8 h-8 text-destructive mx-auto mb-3" />
@@ -998,6 +1020,11 @@ export default function VendorShop() {
             )}
           </>
         )}
+
+        {/* Derniers produits visités — en bas, après les produits de la boutique */}
+        <div className="mt-8">
+          <RecentlyViewedProducts maxItems={6} />
+        </div>
       </div>
 
       <QuickFooter />

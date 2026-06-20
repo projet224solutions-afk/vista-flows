@@ -4,6 +4,9 @@
  */
 
 import { useState } from 'react';
+import { toast } from 'sonner';
+import { backendFetch } from '@/services/backendApi';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Button } from '@/components/ui/button';
@@ -56,11 +59,50 @@ interface DropshipOrdersProps {
 }
 
 export function DropshipOrders({ orders, loading, onUpdateStatus }: DropshipOrdersProps) {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<DropshipOrder | null>(null);
   const [showTrackingDialog, setShowTrackingDialog] = useState(false);
   const [trackingNumber, setTrackingNumber] = useState('');
   const [notes, setNotes] = useState('');
+  const [placingId, setPlacingId] = useState<string | null>(null);
+
+  // Passe la commande chez le fournisseur via le BACKEND (clés API serveur ; réel si
+  // configuré, sinon mock). Met à jour le statut → 'ordered_from_supplier'.
+  const handlePlaceWithSupplier = async (order: DropshipOrder) => {
+    setPlacingId(order.id);
+    try {
+      const res = await backendFetch<{ mock?: boolean }>(`/api/v2/dropship/order/${order.id}/place`, { method: 'POST', body: {} });
+      if (res.success) {
+        toast.success((res as any).mock
+          ? 'Commande fournisseur placée (mode test — configurez les clés API pour le réel)'
+          : 'Commande passée chez le fournisseur');
+        await onUpdateStatus(order.id, 'ordered_from_supplier');
+      } else {
+        toast.error(res.error || 'Échec du placement chez le fournisseur');
+      }
+    } finally {
+      setPlacingId(null);
+    }
+  };
+
+  // Rapatrie le n° de suivi depuis le fournisseur (backend ; réel si clés, sinon no-op).
+  const handleSyncTracking = async (order: DropshipOrder) => {
+    setPlacingId(order.id);
+    try {
+      const res = await backendFetch<{ changed?: boolean; status?: string }>(`/api/v2/dropship/order/${order.id}/tracking/sync`, { method: 'POST', body: {} });
+      if (res.success) {
+        const changed = (res as any).changed;
+        const newStatus = (res as any).status as string | undefined;
+        toast.success(changed ? 'Suivi mis à jour depuis le fournisseur' : 'Aucun nouveau suivi disponible pour le moment');
+        if (changed && newStatus) await onUpdateStatus(order.id, newStatus);
+      } else {
+        toast.error(res.error || 'Synchronisation du suivi impossible');
+      }
+    } finally {
+      setPlacingId(null);
+    }
+  };
 
   const filteredOrders = orders.filter(o =>
     o.order_reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -104,7 +146,7 @@ export function DropshipOrders({ orders, loading, onUpdateStatus }: DropshipOrde
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Rechercher une commande..."
+          placeholder={t('dropshipOrders.rechercherUneCommande')}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-10"
@@ -123,19 +165,19 @@ export function DropshipOrders({ orders, loading, onUpdateStatus }: DropshipOrde
           {filteredOrders.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <ShoppingCart className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <h3 className="font-medium text-lg mb-2">Aucune commande</h3>
-              <p>Les commandes de produits dropshipping apparaîtront ici</p>
+              <h3 className="font-medium text-lg mb-2">{t('dropshipOrders.aucuneCommande')}</h3>
+              <p>{t('dropshipOrders.lesCommandesDeProduitsDropshipping')}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Référence</TableHead>
+                    <TableHead>{t('dropshipOrders.reference')}</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Fournisseur</TableHead>
                     <TableHead>Articles</TableHead>
-                    <TableHead>Client Total</TableHead>
+                    <TableHead>{t('dropshipOrders.clientTotal')}</TableHead>
                     <TableHead>Profit</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -181,9 +223,21 @@ export function DropshipOrders({ orders, loading, onUpdateStatus }: DropshipOrde
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               {order.status === 'pending' && (
-                                <DropdownMenuItem onClick={() => onUpdateStatus(order.id, 'ordered_from_supplier')}>
+                                <DropdownMenuItem
+                                  disabled={placingId === order.id}
+                                  onClick={() => handlePlaceWithSupplier(order)}
+                                >
                                   <Package className="w-4 h-4 mr-2" />
-                                  Marquer comme commandé
+                                  Commander chez le fournisseur
+                                </DropdownMenuItem>
+                              )}
+                              {!['pending', 'delivered_to_customer', 'completed', 'cancelled', 'refunded'].includes(order.status) && (
+                                <DropdownMenuItem
+                                  disabled={placingId === order.id}
+                                  onClick={() => handleSyncTracking(order)}
+                                >
+                                  <Truck className="w-4 h-4 mr-2" />
+                                  Synchroniser le suivi
                                 </DropdownMenuItem>
                               )}
                               {order.status === 'ordered_from_supplier' && (
@@ -253,12 +307,12 @@ export function DropshipOrders({ orders, loading, onUpdateStatus }: DropshipOrde
       <Dialog open={showTrackingDialog} onOpenChange={setShowTrackingDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Ajouter le numéro de suivi</DialogTitle>
+            <DialogTitle>{t('dropshipOrders.ajouterLeNumeroDeSuivi')}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="tracking">Numéro de suivi</Label>
+              <Label htmlFor="tracking">{t('dropshipOrders.numeroDeSuivi')}</Label>
               <Input
                 id="tracking"
                 value={trackingNumber}
@@ -273,7 +327,7 @@ export function DropshipOrders({ orders, loading, onUpdateStatus }: DropshipOrde
                 id="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Notes sur l'expédition..."
+                placeholder={t('dropshipOrders.notesSurLExpedition')}
                 rows={3}
               />
             </div>

@@ -1,11 +1,13 @@
 ﻿import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from "@/hooks/useTranslation";
 import { ArrowLeft, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DjomyPaymentForm } from '@/components/payment/DjomyPaymentForm';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function DjomyPayment() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
@@ -39,8 +41,8 @@ export default function DjomyPayment() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center space-y-4">
-          <h1 className="text-xl font-semibold text-destructive">Montant invalide</h1>
-          <p className="text-muted-foreground">Le montant du paiement n'est pas valide.</p>
+          <h1 className="text-xl font-semibold text-destructive">{t('djomyPayment.montantInvalide')}</h1>
+          <p className="text-muted-foreground">{t('djomyPayment.leMontantDuPaiementN')}</p>
           <Button onClick={() => navigate('/')} variant="outline">
             Retour à l'accueil
           </Button>
@@ -63,12 +65,12 @@ export default function DjomyPayment() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex-1">
-            <h1 className="font-semibold">Paiement Mobile Money</h1>
+            <h1 className="font-semibold">{t('djomyPayment.paiementMobileMoney')}</h1>
             <p className="text-xs text-muted-foreground">224Solutions</p>
           </div>
           <div className="flex items-center gap-1 text-[#ff4000] dark:text-[#ff4000]">
             <Shield className="w-4 h-4" />
-            <span className="text-xs font-medium">Sécurisé</span>
+            <span className="text-xs font-medium">{t('djomyPayment.securise')}</span>
           </div>
         </div>
       </div>
@@ -89,7 +91,7 @@ export default function DjomyPayment() {
         <div className="mt-8 text-center space-y-2">
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
             <Shield className="w-4 h-4" />
-            <span>Paiement sécurisé 100% local</span>
+            <span>{t('djomyPayment.paiementSecurise100Local')}</span>
           </div>
           <p className="text-xs text-muted-foreground">
             Vos données de paiement ne transitent jamais par nos serveurs.

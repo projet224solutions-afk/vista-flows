@@ -1,5 +1,5 @@
-// @ts-nocheck
 import { useState, useEffect, lazy, Suspense } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -33,8 +33,10 @@ const PDGEscrowManagement = lazy(() => import('./PDGEscrowManagement'));
 const DriverSubscriptionManagement = lazy(() => import('./DriverSubscriptionManagement'));
 const PDGServiceSubscriptions = lazy(() => import('./PDGServiceSubscriptions'));
 const PDGTransferLimits = lazy(() => import('./PDGTransferLimits'));
+const CountryPricingManagement = lazy(() => import('./CountryPricingManagement'));
 
 export default function PDGFinance() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const fc = useFormatCurrency();
   const { convert, userCurrency } = usePriceConverter();
@@ -214,7 +216,7 @@ export default function PDGFinance() {
               } else if (payload.changedAt !== lastKnownChangedAt) {
                 lastKnownChangedAt = payload.changedAt;
                 loadFxHealth().catch(() => {});
-                toast.info('Taux BCRG mis à jour — interface actualisée');
+                toast.info(t('pDGFinance.tauxBcrgMisAJour'));
               }
             } catch { /* JSON invalide */ }
           }
@@ -238,7 +240,7 @@ export default function PDGFinance() {
         } else if (changedAt !== lastKnownChangedAt) {
           lastKnownChangedAt = changedAt;
           loadFxHealth().catch(() => {});
-          toast.info('Taux BCRG mis à jour — interface actualisée');
+          toast.info(t('pDGFinance.tauxBcrgMisAJour'));
         }
       } catch { /* silencieux */ }
     }, 60 * 1000);
@@ -280,7 +282,7 @@ export default function PDGFinance() {
       if (response.data?.changed_under_one_hour) {
         toast.warning(`Changement de taux detecte en ${response.data?.minutes_between || 'N/A'} min.${response.data?.alert_created ? ' Alerte enregistree.' : ' Alerte deja active.'}`);
       } else {
-        toast.success('Aucun changement de taux en moins d\'1 minute.');
+        toast.success(t('pDGFinance.aucunChangementDeTauxEn'));
       }
       await loadFxHealth();
     } catch (error: any) {
@@ -305,7 +307,7 @@ export default function PDGFinance() {
   const updateFxMargin = async () => {
     const marginPercent = Number(String(marginPercentInput).replace(',', '.'));
     if (!Number.isFinite(marginPercent) || marginPercent < 0 || marginPercent > 30) {
-      toast.error('Commission invalide. Entrez un pourcentage entre 0 et 30.');
+      toast.error(t('pDGFinance.commissionInvalideEntrezUnPourcentage'));
       return;
     }
 
@@ -371,10 +373,10 @@ export default function PDGFinance() {
       a.click();
       window.URL.revokeObjectURL(url);
 
-      toast.success('Export réussi');
+      toast.success(t('pDGFinance.exportReussi'));
     } catch (error) {
       console.error('Erreur export:', error);
-      toast.error('Erreur lors de l\'export');
+      toast.error(t('pDGFinance.erreurLorsDeLExport'));
     }
   };
 
@@ -415,7 +417,7 @@ export default function PDGFinance() {
     <Tabs value={activeFinanceTab} onValueChange={setActiveFinanceTab} className="space-y-4 sm:space-y-6">
       {/* Mobile: Horizontal scrollable tabs */}
       <div className="overflow-x-auto scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0">
-        <TabsList className="inline-flex w-max sm:w-full sm:grid sm:grid-cols-9 gap-1 bg-muted/50 p-1 rounded-xl">
+        <TabsList className="inline-flex w-max sm:w-full sm:grid sm:grid-cols-10 gap-1 bg-muted/50 p-1 rounded-xl">
           <TabsTrigger value="overview" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
             <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>Revenus</span>
@@ -438,7 +440,7 @@ export default function PDGFinance() {
           </TabsTrigger>
           <TabsTrigger value="service-subscriptions" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
             <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            <span>Services</span>
+            <span>{t('pDGFinance.services')}</span>
           </TabsTrigger>
           <TabsTrigger value="escrow" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
             <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -451,6 +453,10 @@ export default function PDGFinance() {
           <TabsTrigger value="devises" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
             <Globe2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>Devises</span>
+          </TabsTrigger>
+          <TabsTrigger value="country-pricing" className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm whitespace-nowrap">
+            <Globe2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span>Prix par pays</span>
           </TabsTrigger>
         </TabsList>
       </div>
@@ -465,7 +471,7 @@ export default function PDGFinance() {
               <DollarSign className="w-5 h-5 text-blue-500" />
               Gestion Commission FX
             </CardTitle>
-            <CardDescription>Gérez le taux de commission appliqué sur les conversions de devises</CardDescription>
+            <CardDescription>{t('pDGFinance.gerezLeTauxDeCommission')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {fxLoading ? (
@@ -475,7 +481,7 @@ export default function PDGFinance() {
               </div>
             ) : !fxHealth ? (
               <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Données FX indisponibles pour le moment.</p>
+                <p className="text-sm text-muted-foreground">{t('pDGFinance.donneesFxIndisponiblesPourLe')}</p>
                 {fxError && (
                   <p className="text-xs text-[#ff4000]">Erreur: {fxError}</p>
                 )}
@@ -513,7 +519,7 @@ export default function PDGFinance() {
                 </div>
 
                 <div className="rounded-lg border border-orange-200/50 bg-orange-50/30 p-3">
-                  <p className="text-xs text-muted-foreground font-medium">Taux Final (avec commission)</p>
+                  <p className="text-xs text-muted-foreground font-medium">{t('pDGFinance.tauxFinalAvecCommission')}</p>
                   <p className="text-lg font-semibold mt-1 text-[#ff4000]">
                     {typeof fxHealth.current_rate?.final_rate_usd === 'number'
                       ? fxHealth.current_rate.final_rate_usd.toLocaleString(undefined, { maximumFractionDigits: 6 })
@@ -619,13 +625,23 @@ export default function PDGFinance() {
         </Suspense>
       </TabsContent>
 
+      <TabsContent value="country-pricing" className="space-y-6">
+        <Suspense fallback={
+          <div className="flex items-center justify-center p-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        }>
+          <CountryPricingManagement />
+        </Suspense>
+      </TabsContent>
+
       <TabsContent value="devises" className="space-y-6">
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
               <Globe2 className="w-5 h-5 text-primary" />
               <div>
-                <CardTitle>Conversions de devises</CardTitle>
+                <CardTitle>{t('pDGFinance.conversionsDeDevises')}</CardTitle>
                 <CardDescription>
                   Monitoring en temps réel de chaque conversion lors des achats marketplace.
                   Toute erreur apparaît ici immédiatement.
@@ -645,7 +661,7 @@ export default function PDGFinance() {
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-primary" />
-              <CardTitle className="text-xl">Santé FX (devises)</CardTitle>
+              <CardTitle className="text-xl">{t('pDGFinance.santeFxDevises')}</CardTitle>
               {typeof displayedFxMargin === 'number' && (
                 <Badge variant="secondary" className="ml-2">
                   Commission: {(displayedFxMargin * 100).toFixed(2)}%
@@ -664,7 +680,7 @@ export default function PDGFinance() {
               {marginUpdateLoading ? 'Mise à jour...' : 'Modifier Commission'}
             </Button>
           </div>
-          <CardDescription>Taux actuel, historique du jour et sources consultées</CardDescription>
+          <CardDescription>{t('pDGFinance.tauxActuelHistoriqueDuJour')}</CardDescription>
           <div className="flex flex-wrap gap-2 pt-2">
             <Button type="button" variant="outline" className="gap-2" onClick={loadConversionStats} disabled={conversionStatsLoading}>
               <Globe2 className="w-4 h-4" />
@@ -684,7 +700,7 @@ export default function PDGFinance() {
             </div>
           ) : !fxHealth ? (
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Données FX indisponibles pour le moment.</p>
+              <p className="text-sm text-muted-foreground">{t('pDGFinance.donneesFxIndisponiblesPourLe')}</p>
               {fxError && (
                 <p className="text-xs text-[#ff4000]">Erreur: {fxError}</p>
               )}
@@ -754,7 +770,7 @@ export default function PDGFinance() {
               {/* Ligne d'infos : Commission, Âge USD/GNF, Sources */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div className="rounded-lg border p-3">
-                  <p className="text-xs text-muted-foreground">Commission appliquée</p>
+                  <p className="text-xs text-muted-foreground">{t('pDGFinance.commissionAppliquee')}</p>
                   <p className="text-lg font-semibold">
                     {typeof fxHealth.current_rate?.margin === 'number'
                       ? `${(fxHealth.current_rate.margin * 100).toFixed(2)}%`
@@ -776,9 +792,9 @@ export default function PDGFinance() {
                   </Badge>
                 </div>
                 <div className="rounded-lg border p-3">
-                  <p className="text-xs text-muted-foreground">Sources bancaires visitées</p>
+                  <p className="text-xs text-muted-foreground">{t('pDGFinance.sourcesBancairesVisitees')}</p>
                   <p className="text-lg font-semibold">{visibleBankSources.length}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Collecte du backend</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t('pDGFinance.collecteDuBackend')}</p>
                 </div>
               </div>
 
@@ -787,9 +803,9 @@ export default function PDGFinance() {
               </div>
 
               <div className="rounded-lg border p-3">
-                <p className="text-sm font-medium mb-2">Sources bancaires visitées (URLs)</p>
+                <p className="text-sm font-medium mb-2">{t('pDGFinance.sourcesBancairesVisiteesUrls')}</p>
                 {visibleBankSources.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">Aucune source bancaire trouvée.</p>
+                  <p className="text-xs text-muted-foreground">{t('pDGFinance.aucuneSourceBancaireTrouvee')}</p>
                 ) : (
                   <div className="max-h-44 overflow-auto space-y-1">
                     {visibleBankSources.slice(0, 12).map((source, idx) => (
@@ -810,9 +826,9 @@ export default function PDGFinance() {
               </div>
 
               <div className="rounded-lg border p-3">
-                <p className="text-sm font-medium mb-2">Historique devise Guinée (GNF)</p>
+                <p className="text-sm font-medium mb-2">{t('pDGFinance.historiqueDeviseGuineeGnf')}</p>
                 {!Array.isArray(fxHealth.gnf_today_history) || fxHealth.gnf_today_history.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">Aucun taux GNF collecté aujourd'hui.</p>
+                  <p className="text-xs text-muted-foreground">{t('pDGFinance.aucunTauxGnfCollecteAujourd')}</p>
                 ) : (
                   <div className="max-h-40 overflow-auto space-y-1">
                     {fxHealth.gnf_today_history.slice(0, 20).map((rate: any, idx: number) => (
@@ -841,9 +857,9 @@ export default function PDGFinance() {
               </div>
 
               <div className="rounded-lg border p-3">
-                <p className="text-sm font-medium mb-2">Historique du taux (aujourd'hui)</p>
+                <p className="text-sm font-medium mb-2">{t('pDGFinance.historiqueDuTauxAujourdHui')}</p>
                 {!fxHealth.today_history || fxHealth.today_history.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">Aucun taux collecté aujourd'hui.</p>
+                  <p className="text-xs text-muted-foreground">{t('pDGFinance.aucunTauxCollecteAujourdHui')}</p>
                 ) : (
                   <div className="max-h-64 overflow-auto space-y-1">
                     {fxHealth.today_history.slice(0, 20).map((rate, idx) => (
@@ -997,7 +1013,7 @@ export default function PDGFinance() {
               <BarChart3 className="w-5 h-5 text-primary" />
               Évolution des Transactions
             </CardTitle>
-            <CardDescription>Volume des 10 dernières transactions</CardDescription>
+            <CardDescription>{t('pDGFinance.volumeDes10DernieresTransactions')}</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[300px]">
@@ -1043,8 +1059,8 @@ export default function PDGFinance() {
       {/* Export Section */}
       <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle>Export des Données</CardTitle>
-          <CardDescription>Télécharger les rapports financiers</CardDescription>
+          <CardTitle>{t('pDGFinance.exportDesDonnees')}</CardTitle>
+          <CardDescription>{t('pDGFinance.telechargerLesRapportsFinanciers')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-4">
@@ -1075,8 +1091,8 @@ export default function PDGFinance() {
       {/* Recent Transactions */}
       <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="text-xl">Transactions Récentes</CardTitle>
-          <CardDescription>Les 10 dernières opérations financières</CardDescription>
+          <CardTitle className="text-xl">{t('pDGFinance.transactionsRecentes')}</CardTitle>
+          <CardDescription>{t('pDGFinance.les10DernieresOperationsFinancieres')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -1142,9 +1158,9 @@ export default function PDGFinance() {
     </Tabs>
 
       <Dialog open={showMarginDialog} onOpenChange={setShowMarginDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Modifier commission FX</DialogTitle>
+            <DialogTitle>{t('pDGFinance.modifierCommissionFx')}</DialogTitle>
             <DialogDescription>
               Définir la commission (%) appliquée sur le taux de change.
             </DialogDescription>
@@ -1188,7 +1204,7 @@ export default function PDGFinance() {
           </DialogHeader>
 
           {!conversionStats ? (
-            <p className="text-sm text-muted-foreground">Aucune statistique disponible.</p>
+            <p className="text-sm text-muted-foreground">{t('pDGFinance.aucuneStatistiqueDisponible')}</p>
           ) : (
             <div className="space-y-4 mt-2">
               {/* Sélecteur fenêtre */}
@@ -1232,7 +1248,7 @@ export default function PDGFinance() {
                     <CardHeader><CardTitle className="text-sm">Corridors pays vers pays</CardTitle></CardHeader>
                     <CardContent>
                       {!Array.isArray(conversionStats.country_corridors) || conversionStats.country_corridors.length === 0 ? (
-                        <p className="text-xs text-muted-foreground">Aucun corridor détecté.</p>
+                        <p className="text-xs text-muted-foreground">{t('pDGFinance.aucunCorridorDetecte')}</p>
                       ) : (
                         <div className="max-h-48 overflow-auto space-y-1">
                           {conversionStats.country_corridors.slice(0, 30).map((row: any, idx: number) => (
@@ -1249,7 +1265,7 @@ export default function PDGFinance() {
                     <CardHeader><CardTitle className="text-sm">Top utilisateurs</CardTitle></CardHeader>
                     <CardContent>
                       {!Array.isArray(conversionStats.by_user) || conversionStats.by_user.length === 0 ? (
-                        <p className="text-xs text-muted-foreground">Aucun utilisateur.</p>
+                        <p className="text-xs text-muted-foreground">{t('pDGFinance.aucunUtilisateur')}</p>
                       ) : (
                         <div className="max-h-48 overflow-auto space-y-1">
                           {conversionStats.by_user.slice(0, 30).map((row: any, idx: number) => (
@@ -1269,7 +1285,7 @@ export default function PDGFinance() {
               {conversionTab === 'transactions' && (
                 <div className="space-y-2">
                   {!Array.isArray(conversionStats.transactions) || conversionStats.transactions.length === 0 ? (
-                    <p className="text-sm text-muted-foreground py-6 text-center">Aucune transaction dans cette fenêtre.</p>
+                    <p className="text-sm text-muted-foreground py-6 text-center">{t('pDGFinance.aucuneTransactionDansCetteFenetre')}</p>
                   ) : (
                     <div className="space-y-2 max-h-[60vh] overflow-auto">
                       {conversionStats.transactions.map((tx: any, idx: number) => {
@@ -1300,11 +1316,11 @@ export default function PDGFinance() {
                             {/* Ligne 3 : montants */}
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                               <div className="rounded bg-orange-50 border border-orange-100 p-2">
-                                <p className="text-[10px] text-muted-foreground">Montant envoyé</p>
+                                <p className="text-[10px] text-muted-foreground">{t('pDGFinance.montantEnvoye')}</p>
                                 <p className="font-bold text-[#ff4000]">{Math.round(tx.amount_sent).toLocaleString('fr-FR')} <span className="font-normal">{tx.sender_currency}</span></p>
                               </div>
                               <div className="rounded bg-orange-50 border border-orange-100 p-2">
-                                <p className="text-[10px] text-muted-foreground">Montant reçu</p>
+                                <p className="text-[10px] text-muted-foreground">{t('pDGFinance.montantRecu')}</p>
                                 <p className="font-bold text-[#ff4000]">{Math.round(tx.amount_received).toLocaleString('fr-FR')} <span className="font-normal">{tx.receiver_currency}</span></p>
                               </div>
                               {tx.fee_amount > 0 && (
@@ -1315,7 +1331,7 @@ export default function PDGFinance() {
                               )}
                               {isIntl && !sameAmount && (
                                 <div className="rounded bg-blue-50 border border-blue-100 p-2">
-                                  <p className="text-[10px] text-muted-foreground">Taux appliqué</p>
+                                  <p className="text-[10px] text-muted-foreground">{t('pDGFinance.tauxApplique')}</p>
                                   <p className="font-semibold text-blue-700">
                                     {/* rate_used = unités de receiver pour 1 sender. Si < 1, on inverse
                                         le NOMBRE *et* les devises pour rester cohérent (ex. 1 XOF = 15,49 GNF). */}
@@ -1339,7 +1355,7 @@ export default function PDGFinance() {
               {conversionTab === 'rates' && (
                 <div className="space-y-2">
                   {!Array.isArray(conversionStats.rate_history) || conversionStats.rate_history.length === 0 ? (
-                    <p className="text-sm text-muted-foreground py-6 text-center">Aucun historique de taux disponible pour cette fenêtre.<br/><span className="text-xs">Les taux sont enregistrés uniquement pour les transferts internationaux.</span></p>
+                    <p className="text-sm text-muted-foreground py-6 text-center">{t('pDGFinance.aucunHistoriqueDeTauxDisponible')}<br/><span className="text-xs">{t('pDGFinance.lesTauxSontEnregistresUniquement')}</span></p>
                   ) : (
                     <div className="max-h-[60vh] overflow-auto">
                       <table className="w-full text-xs border-collapse">
@@ -1434,7 +1450,7 @@ export default function PDGFinance() {
                           {wallet.profiles?.phone && (
                             <div className="flex items-center gap-2 text-sm">
                               <Phone className="w-4 h-4 text-muted-foreground" />
-                              <span className="text-muted-foreground">Téléphone:</span>
+                              <span className="text-muted-foreground">{t('pDGFinance.telephone')}</span>
                               <span className="font-medium">{wallet.profiles.phone}</span>
                             </div>
                           )}
@@ -1452,7 +1468,7 @@ export default function PDGFinance() {
                       {/* Informations wallet */}
                       <div className="space-y-4">
                         <div className="p-4 rounded-lg bg-gradient-to-br from-[#ff4000]/10 to-transparent border border-[#ff4000]/20">
-                          <p className="text-sm text-muted-foreground mb-1">Solde</p>
+                          <p className="text-sm text-muted-foreground mb-1">{t('pDGFinance.solde')}</p>
                           <p className="text-3xl font-bold text-[#ff4000]">
                             {Number(wallet.balance).toLocaleString()} {wallet.currency}
                           </p>
@@ -1471,7 +1487,7 @@ export default function PDGFinance() {
 
                           <div className="flex items-center gap-2 text-sm">
                             <Calendar className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">Créé le:</span>
+                            <span className="text-muted-foreground">{t('pDGFinance.creeLe')}</span>
                             <span className="font-medium">
                               {new Date(wallet.created_at).toLocaleDateString('fr-FR', {
                                 day: 'numeric',
@@ -1483,7 +1499,7 @@ export default function PDGFinance() {
 
                           <div className="flex items-center gap-2 text-sm">
                             <Calendar className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">Mis à jour:</span>
+                            <span className="text-muted-foreground">{t('pDGFinance.misAJour')}</span>
                             <span className="font-medium">
                               {new Date(wallet.updated_at).toLocaleDateString('fr-FR', {
                                 day: 'numeric',

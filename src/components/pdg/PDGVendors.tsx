@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -71,6 +72,7 @@ interface Vendor {
 }
 
 export default function PDGVendors() {
+  const { t } = useTranslation();
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ active: 0, inactive: 0, total: 0 });
@@ -241,7 +243,7 @@ export default function PDGVendors() {
       });
     } catch (error: any) {
       console.error('Erreur chargement vendeurs:', error);
-      toast.error('Erreur lors du chargement des vendeurs');
+      toast.error(t('pDGVendors.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -272,7 +274,7 @@ export default function PDGVendors() {
       <div className="flex items-center justify-center py-12">
         <div className="flex items-center gap-3">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <span>Chargement des vendeurs...</span>
+          <span>{t('pDGVendors.chargementDesVendeurs')}</span>
         </div>
       </div>
     );
@@ -324,7 +326,7 @@ export default function PDGVendors() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Liste des Vendeurs</CardTitle>
+              <CardTitle>{t('pDGVendors.listeDesVendeurs')}</CardTitle>
               <CardDescription>{vendors.length} vendeurs enregistrés</CardDescription>
             </div>
             <Button onClick={loadVendors} variant="outline" size="sm">
@@ -338,7 +340,7 @@ export default function PDGVendors() {
             {vendors.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <Store className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Aucun vendeur enregistré</p>
+                <p>{t('pDGVendors.aucunVendeurEnregistre')}</p>
               </div>
             ) : (
               vendors.map((vendor) => (
@@ -362,7 +364,7 @@ export default function PDGVendors() {
                           <p>📧 {vendor.profiles?.email || 'Email non disponible'}</p>
                           <p>👤 {vendor.profiles?.first_name} {vendor.profiles?.last_name}</p>
                           {vendor.profiles?.phone && <p>📱 {vendor.profiles.phone}</p>}
-                          <p>🆔 Code Vendeur: <span className="font-mono font-semibold text-primary">{vendor.vendor_code}</span></p>
+                          <p>{t('pDGVendors.codeVendeur')} <span className="font-mono font-semibold text-primary">{vendor.vendor_code}</span></p>
                           <p>
                             💱 Devise boutique:{' '}
                             <span className="font-semibold text-primary">
@@ -373,7 +375,7 @@ export default function PDGVendors() {
                             )}
                           </p>
                           {vendor.agent_info && (
-                            <p>👥 Créé par l'agent: <span className="font-medium">{vendor.agent_info}</span></p>
+                            <p>{t('pDGVendors.creeParLAgent')} <span className="font-medium">{vendor.agent_info}</span></p>
                           )}
                           {vendor.subscription ? (
                             <div className="mt-2 p-2 bg-primary/5 rounded border border-primary/20">
@@ -395,7 +397,7 @@ export default function PDGVendors() {
                               </p>
                             </div>
                           ) : (
-                            <p className="mt-2 text-xs text-destructive">⚠️ Aucun abonnement actif</p>
+                            <p className="mt-2 text-xs text-destructive">{t('pDGVendors.aucunAbonnementActif')}</p>
                           )}
                           <p className="text-xs">📅 Créé le: {new Date(vendor.created_at).toLocaleDateString('fr-FR', {
                             day: '2-digit',
@@ -412,7 +414,7 @@ export default function PDGVendors() {
                         variant="outline"
                         size="sm"
                         onClick={() => openCurrencyDialog(vendor)}
-                        title="Changer la devise de la boutique"
+                        title={t('pDGVendors.changerLaDeviseDeLa')}
                       >
                         <Globe className="w-4 h-4 mr-1" />
                         Devise
@@ -434,7 +436,7 @@ export default function PDGVendors() {
         open={currencyDialog.open}
         onOpenChange={(open) => setCurrencyDialog(d => ({ ...d, open }))}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               Changer la devise — {currencyDialog.vendor?.business_name}
@@ -457,7 +459,7 @@ export default function PDGVendors() {
                 onValueChange={(v) => setCurrencyDialog(d => ({ ...d, selectedCountry: v, bcrgError: null }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un pays..." />
+                  <SelectValue placeholder={t('pDGVendors.selectionnerUnPays')} />
                 </SelectTrigger>
                 <SelectContent>
                   {COUNTRY_OPTIONS.map((c) => (
@@ -471,12 +473,12 @@ export default function PDGVendors() {
 
             {currencyDialog.selectedCountry && (
               <div className="p-3 bg-orange-50 border border-orange-200 rounded-md text-sm text-[#ff4000] space-y-1">
-                <p className="font-semibold">Effets du changement :</p>
+                <p className="font-semibold">{t('pDGVendors.effetsDuChangement')}</p>
                 <ul className="list-disc list-inside space-y-1 text-xs">
-                  <li>La devise de la boutique devient <strong>{COUNTRY_OPTIONS.find(c => c.code === currencyDialog.selectedCountry)?.currency}</strong></li>
-                  <li>Le solde du wallet sera <strong>converti au taux BCRG live</strong> au moment de la confirmation</li>
-                  <li>Tous les produits actifs sont marqués <strong>à réviser</strong> — le vendeur doit corriger ses prix</li>
-                  <li>Les commandes en cours restent dans l'ancienne devise (normal)</li>
+                  <li>{t('pDGVendors.laDeviseDeLaBoutique')} <strong>{COUNTRY_OPTIONS.find(c => c.code === currencyDialog.selectedCountry)?.currency}</strong></li>
+                  <li>{t('pDGVendors.leSoldeDuWalletSera')} <strong>converti au taux BCRG live</strong> {t('pDGVendors.auMomentDeLaConfirmation')}</li>
+                  <li>{t('pDGVendors.tousLesProduitsActifsSont')} <strong>{t('pDGVendors.aReviser')}</strong> {t('pDGVendors.leVendeurDoitCorrigerSes')}</li>
+                  <li>{t('pDGVendors.lesCommandesEnCoursRestent')}</li>
                 </ul>
               </div>
             )}
@@ -487,7 +489,7 @@ export default function PDGVendors() {
                 <div>
                   <p className="font-semibold">Taux BCRG indisponible</p>
                   <p className="text-xs mt-1">{currencyDialog.bcrgError}</p>
-                  <p className="text-xs mt-1 text-[#ff4000]">Le changement de devise est bloqué tant que la BCRG n'est pas accessible. Réessayez dans quelques minutes.</p>
+                  <p className="text-xs mt-1 text-[#ff4000]">{t('pDGVendors.leChangementDeDeviseEst')}</p>
                 </div>
               </div>
             )}

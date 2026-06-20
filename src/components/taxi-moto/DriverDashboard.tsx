@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -66,6 +67,7 @@ export function DriverDashboard({
   hasSubscription = true,
   driverLoading = false
 }: DriverDashboardProps) {
+  const { t } = useTranslation();
   const [stats, setStats] = useState<DriverStats>({
     todayEarnings: 0,
     todayRides: 0,
@@ -201,7 +203,7 @@ export function DriverDashboard({
       });
     } catch (error) {
       console.error('❌ Error loading stats:', error);
-      toast.error('Erreur de chargement des statistiques');
+      toast.error(t('driverDashboard.erreurDeChargementDesStatistiques'));
     } finally {
       setLoading(false);
     }
@@ -244,7 +246,7 @@ export function DriverDashboard({
     <div className="space-y-4 mt-4">
       {/* En-tête avec statistiques et bouton en ligne */}
       <div className="flex items-center justify-between mb-2">
-        <h2 className="text-lg font-bold text-gray-800">Statistiques du jour</h2>
+        <h2 className="text-lg font-bold text-gray-800">{t('driverDashboard.statistiquesDuJour')}</h2>
         <div className="flex items-center gap-2">
           <Button
             onClick={onToggleOnline}
@@ -276,7 +278,7 @@ export function DriverDashboard({
           <Button
             onClick={() => {
               loadStats();
-              toast.success('✓ Données actualisées');
+              toast.success(t('driverDashboard.donneesActualisees'));
             }}
             variant="outline"
             size="sm"
@@ -295,9 +297,9 @@ export function DriverDashboard({
           onClick={() => {
             if (stats.todayEarnings > 0) {
               onNavigate('history');
-              toast.success('💰 Détails des gains');
+              toast.success(t('driverDashboard.detailsDesGains'));
             } else {
-              toast.info('Aucun gain aujourd\'hui. Commencez une course pour gagner de l\'argent.');
+              toast.info(t('driverDashboard.aucunGainAujourdHuiCommencez'));
             }
           }}
         >
@@ -306,7 +308,7 @@ export function DriverDashboard({
               {stats.todayEarnings.toLocaleString()}
             </div>
             <div className="text-xs font-medium text-gray-600">GNF aujourd'hui</div>
-            <div className="text-xs text-[#ff4000] mt-1">👆 Voir détails</div>
+            <div className="text-xs text-[#ff4000] mt-1">{t('driverDashboard.voirDetails')}</div>
           </CardContent>
         </Card>
 
@@ -315,9 +317,9 @@ export function DriverDashboard({
           onClick={() => {
             if (stats.todayRides > 0) {
               onNavigate('history');
-              toast.success('🚕 Historique des courses');
+              toast.success(t('driverDashboard.historiqueDesCourses'));
             } else {
-              toast.info('Aucune course active aujourd\'hui. Passez en ligne pour recevoir des demandes.');
+              toast.info(t('driverDashboard.aucuneCourseActiveAujourdHui'));
             }
           }}
         >
@@ -339,7 +341,7 @@ export function DriverDashboard({
               onNavigate('history');
               toast.success(`⭐ Note moyenne: ${stats.rating.toFixed(1)}/5 sur ${stats.totalRides} courses`);
             } else {
-              toast.info('Aucune évaluation pour le moment. Effectuez des courses pour recevoir des notes.');
+              toast.info(t('driverDashboard.aucuneEvaluationPourLeMoment'));
             }
           }}
         >
@@ -349,7 +351,7 @@ export function DriverDashboard({
               <Star className="w-6 h-6 fill-[#ff4000] text-[#ff4000]" />
             </div>
             <div className="text-xs font-medium text-gray-600">Note moyenne</div>
-            <div className="text-xs text-[#ff4000] mt-1">👆 Voir évaluations</div>
+            <div className="text-xs text-[#ff4000] mt-1">{t('driverDashboard.voirEvaluations')}</div>
           </CardContent>
         </Card>
 
@@ -359,7 +361,7 @@ export function DriverDashboard({
             if (isOnline) {
               toast.success(`⏱️ En ligne depuis ${currentOnlineTime}`);
             } else {
-              toast.info('Passez en ligne pour commencer à travailler');
+              toast.info(t('driverDashboard.passezEnLignePourCommencer'));
             }
           }}
         >
@@ -459,7 +461,7 @@ export function DriverDashboard({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Hash className="w-4 h-4 text-[#04439e]" />
-              <span className="text-sm font-medium">N° Série</span>
+              <span className="text-sm font-medium">{t('driverDashboard.nSerie')}</span>
             </div>
             <Badge variant="outline" className="font-mono text-xs">
               {stats.serialNumber || 'Non renseigné'}
@@ -500,7 +502,7 @@ export function DriverDashboard({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Wifi className="w-4 h-4 text-[#ff4000]" />
-              <span className="text-sm font-medium">Base de données</span>
+              <span className="text-sm font-medium">{t('driverDashboard.baseDeDonnees')}</span>
             </div>
             <Badge className={driverId ? "bg-orange-100 text-[#ff4000]" : "bg-orange-100 text-[#ff4000]"}>
               {driverId ? '✓ Connecté' : '⏳ En attente'}

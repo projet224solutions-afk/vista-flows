@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
@@ -39,6 +40,7 @@ const COLORS = [
 ];
 
 export function FashionModule({ serviceId, businessName }: FashionModuleProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('products');
   const [newProduct, setNewProduct] = useState({
     name: '',
@@ -61,10 +63,10 @@ export function FashionModule({ serviceId, businessName }: FashionModuleProps) {
 
   const handleAddProduct = () => {
     if (!newProduct.name || !newProduct.price || newProduct.selectedSizes.length === 0) {
-      toast.error('Remplissez les champs obligatoires et ajoutez au moins une taille');
+      toast.error(t('fashionModule.remplissezLesChampsObligatoiresEt'));
       return;
     }
-    toast.success('Produit ajouté avec succès !');
+    toast.success(t('fashionModule.produitAjouteAvecSucces'));
   };
 
   return (
@@ -75,14 +77,14 @@ export function FashionModule({ serviceId, businessName }: FashionModuleProps) {
             <Shirt className="w-8 h-8 text-primary" />
             {businessName || 'Boutique Mode'}
           </h2>
-          <p className="text-muted-foreground">Gestion de votre catalogue mode</p>
+          <p className="text-muted-foreground">{t('fashionModule.gestionDeVotreCatalogueMode')}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Produits</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('fashionModule.produits')}</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -93,7 +95,7 @@ export function FashionModule({ serviceId, businessName }: FashionModuleProps) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Commandes</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('fashionModule.commandes')}</CardTitle>
             <ShoppingBag className="h-4 w-4 text-[#ff4000]" />
           </CardHeader>
           <CardContent>
@@ -128,7 +130,7 @@ export function FashionModule({ serviceId, businessName }: FashionModuleProps) {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="products">Catalogue</TabsTrigger>
-          <TabsTrigger value="add">Ajouter Article</TabsTrigger>
+          <TabsTrigger value="add">{t('fashionModule.ajouterArticle')}</TabsTrigger>
           <TabsTrigger value="inventory">Stock</TabsTrigger>
         </TabsList>
 
@@ -136,17 +138,17 @@ export function FashionModule({ serviceId, businessName }: FashionModuleProps) {
           <Card>
             <CardHeader>
               <CardTitle>Nouvel Article</CardTitle>
-              <CardDescription>Ajoutez un vêtement à votre catalogue</CardDescription>
+              <CardDescription>{t('fashionModule.ajoutezUnVetementAVotre')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Nom du produit *</Label>
+                  <Label>{t('fashionModule.nomDuProduit')}</Label>
                   <Input placeholder="Ex: T-shirt basique col rond" value={newProduct.name} onChange={(e) => setNewProduct({...newProduct, name: e.target.value})} />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Catégorie *</Label>
+                  <Label>{t('fashionModule.categorie')}</Label>
                   <Select value={newProduct.category} onValueChange={(v) => setNewProduct({...newProduct, category: v})}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -224,12 +226,12 @@ export function FashionModule({ serviceId, businessName }: FashionModuleProps) {
         <TabsContent value="products">
           <Card>
             <CardHeader>
-              <CardTitle>Catalogue Produits</CardTitle>
+              <CardTitle>{t('fashionModule.catalogueProduits')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-center py-12">
                 <Shirt className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">Utilisez l'onglet "Ajouter Article" pour commencer</p>
+                <p className="text-muted-foreground">{t('fashionModule.utilisezLOngletAjouterArticle')}</p>
               </div>
             </CardContent>
           </Card>
@@ -238,12 +240,12 @@ export function FashionModule({ serviceId, businessName }: FashionModuleProps) {
         <TabsContent value="inventory">
           <Card>
             <CardHeader>
-              <CardTitle>Gestion du Stock</CardTitle>
+              <CardTitle>{t('fashionModule.gestionDuStock')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-center py-12">
                 <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">Suivi des stocks par taille et couleur</p>
+                <p className="text-muted-foreground">{t('fashionModule.suiviDesStocksParTaille')}</p>
               </div>
             </CardContent>
           </Card>

@@ -1,5 +1,5 @@
-// @ts-nocheck
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { _Card, _CardContent } from '@/components/ui/card';
@@ -35,6 +35,7 @@ interface SupplierOrdersProps {
 }
 
 export function SupplierOrders({ vendorId }: SupplierOrdersProps) {
+  const { t } = useTranslation();
   const [orders, setOrders] = useState<SupplierOrder[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -86,7 +87,7 @@ export function SupplierOrders({ vendorId }: SupplierOrdersProps) {
       setOrders(data || []);
     } catch (error: any) {
       console.error('Erreur chargement commandes:', error);
-      toast.error('Erreur lors du chargement des commandes');
+      toast.error(t('supplierOrders.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -129,7 +130,7 @@ export function SupplierOrders({ vendorId }: SupplierOrdersProps) {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Chargement des commandes...</div>;
+    return <div className="text-center py-8">{t('supplierOrders.chargementDesCommandes')}</div>;
   }
 
   if (orders.length === 0) {
@@ -153,11 +154,11 @@ export function SupplierOrders({ vendorId }: SupplierOrdersProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>N° Commande</TableHead>
+              <TableHead>{t('supplierOrders.nCommande')}</TableHead>
               <TableHead>Fournisseur</TableHead>
-              <TableHead>Montant</TableHead>
-              <TableHead>Paiement</TableHead>
-              <TableHead>Statut Commande</TableHead>
+              <TableHead>{t('supplierOrders.montant')}</TableHead>
+              <TableHead>{t('supplierOrders.paiement')}</TableHead>
+              <TableHead>{t('supplierOrders.statutCommande')}</TableHead>
               <TableHead>Date</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>

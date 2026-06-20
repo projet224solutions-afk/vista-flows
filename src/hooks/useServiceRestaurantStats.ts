@@ -43,6 +43,10 @@ export interface ServiceRestaurantStats {
     today: number;
     pending: number;
   };
+  reviews: {
+    rating: number;   // note moyenne agrégée (professional_services.rating)
+    count: number;    // nombre d'avis (professional_services.total_reviews)
+  };
   hasData: boolean;
 }
 
@@ -95,6 +99,7 @@ const defaultStats: ServiceRestaurantStats = {
   menuItems: { total: 0, active: 0 },
   tables: { total: 0, occupied: 0 },
   reservations: { today: 0, pending: 0 },
+  reviews: { rating: 0, count: 0 },
   hasData: false,
 };
 
@@ -124,10 +129,11 @@ export function useServiceRestaurantStats(serviceId?: string) {
       startOfWeek.setDate(now.getDate() - now.getDay());
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      // 1. Récupérer le user_id du service professionnel
+      // 1. Récupérer le user_id + la note agrégée du service professionnel
+      //    (rating/total_reviews maintenus par le trigger recompute_service_rating).
       const { data: serviceData } = await supabase
         .from('professional_services')
-        .select('user_id')
+        .select('user_id, rating, total_reviews')
         .eq('id', serviceId)
         .single();
 
@@ -170,37 +176,28 @@ export function useServiceRestaurantStats(serviceId?: string) {
       const salesStatsDelivery = calculateSalesStats(deliveryOrders, startOfDay, startOfWeek, startOfMonth);
       const salesStatsTakeaway = calculateSalesStats(takeawayOrders, startOfDay, startOfWeek, startOfMonth);
 
-      // 3. Charger les éléments du menu (service_products + products)
-      let menuItems: any[] = [];
-
-      // 3a. Depuis service_products
+      // 3. Charger les PLATS du menu — table réelle restaurant_menu_items (PAS service_products,
+      //    qui est l'e-commerce et reste vide pour les restaurants → comptait toujours 0).
       const { data: menuData, error: menuError } = await supabase
-        .from('service_products')
+        .from('restaurant_menu_items')
         .select('id, is_available')
         .eq('professional_service_id', serviceId);
+      if (menuError) console.log('⚠️ Erreur chargement menu:', menuError.message);
+      const menuItems: any[] = menuData || [];
+      console.log('🍔 Total plats menu:', menuItems.length);
 
-      if (menuError) {
-        console.log('⚠️ Erreur chargement menu:', menuError.message);
-      }
+      // 3b. Tables (réelles) + réservations (réelles) — étaient codées en dur à 0.
+      const [{ data: tablesData }, { data: resaData }] = await Promise.all([
+        supabase.from('restaurant_tables').select('id, status, current_order_id, is_active').eq('professional_service_id', serviceId),
+        supabase.from('restaurant_reservations').select('id, reservation_date, status').eq('professional_service_id', serviceId),
+      ]);
+      const tables = (tablesData || []).filter((t: any) => t.is_active !== false);
+      const occupiedTables = tables.filter((t: any) => t.status === 'occupied' || t.current_order_id).length;
+      const todayStr = startOfDay.toISOString().slice(0, 10);
+      const resaToday = (resaData || []).filter((r: any) => String(r.reservation_date || '').slice(0, 10) === todayStr).length;
+      const resaPending = (resaData || []).filter((r: any) => r.status === 'pending').length;
 
-      if (menuData) {
-        menuItems = [...menuData];
-      }
-
-      // 3b. NE PAS charger les produits legacy depuis products
-      // Les plats du menu restaurant sont UNIQUEMENT dans service_products avec professional_service_id
-      // La table products est réservée aux produits e-commerce
-      console.log('ℹ️ Restaurant: n\'utilise PAS les produits legacy (table products)')
-
-      console.log('🍔 Total items menu:', menuItems.length);
-
-      // 3. Charger le stock restaurant
-      const { data: stockData } = await supabase
-        .from('restaurant_stock')
-        .select('id')
-        .eq('professional_service_id', serviceId);
-
-      const hasData = orders.length > 0 || menuItems.length > 0 || (stockData?.length || 0) > 0;
+      const hasData = orders.length > 0 || menuItems.length > 0 || tables.length > 0 || (resaData?.length || 0) > 0;
 
       setStats({
         orders: orderStats,
@@ -216,12 +213,16 @@ export function useServiceRestaurantStats(serviceId?: string) {
           active: menuItems.filter(m => m.is_available !== false).length,
         },
         tables: {
-          total: 0, // TODO: Charger depuis restaurant_tables quand disponible
-          occupied: 0,
+          total: tables.length,
+          occupied: occupiedTables,
         },
         reservations: {
-          today: 0, // TODO: Charger depuis restaurant_reservations quand disponible
-          pending: 0,
+          today: resaToday,
+          pending: resaPending,
+        },
+        reviews: {
+          rating: Number((serviceData as any)?.rating) || 0,
+          count: Number((serviceData as any)?.total_reviews) || 0,
         },
         hasData,
       });

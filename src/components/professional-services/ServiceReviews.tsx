@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Star, MessageSquare, Loader2, ThumbsUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface ServiceReviewsProps {
   serviceId: string;
@@ -56,6 +57,7 @@ function RatingBar({ count, total, label }: { count: number; total: number; labe
 }
 
 export function ServiceReviews({ serviceId }: ServiceReviewsProps) {
+  const { t } = useTranslation();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -103,14 +105,14 @@ export function ServiceReviews({ serviceId }: ServiceReviewsProps) {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-semibold">Avis Clients</h2>
+      <h2 className="text-lg font-semibold">{t('serviceReviews.title')}</h2>
 
       {total === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground">
             <MessageSquare className="w-12 h-12 mb-3 opacity-30" />
-            <p className="font-medium">Aucun avis pour le moment</p>
-            <p className="text-sm mt-1">Les avis de vos clients apparaîtront ici.</p>
+            <p className="font-medium">{t('serviceReviews.noReviews')}</p>
+            <p className="text-sm mt-1">{t('serviceReviews.noReviewsDesc')}</p>
           </CardContent>
         </Card>
       ) : (
@@ -121,7 +123,7 @@ export function ServiceReviews({ serviceId }: ServiceReviewsProps) {
               <CardContent className="p-6 flex flex-col items-center justify-center gap-2">
                 <div className="text-5xl font-black">{avg.toFixed(1)}</div>
                 <Stars value={Math.round(avg)} size="lg" />
-                <p className="text-sm text-muted-foreground">{total} avis client{total > 1 ? 's' : ''}</p>
+                <p className="text-sm text-muted-foreground">{total} {t('serviceReviews.reviewWord')}</p>
               </CardContent>
             </Card>
 
@@ -137,7 +139,7 @@ export function ServiceReviews({ serviceId }: ServiceReviewsProps) {
           {/* Liste des avis */}
           <div className="space-y-3">
             {reviews.map(review => {
-              const name = review.client?.full_name || 'Client anonyme';
+              const name = review.client?.full_name || t('serviceReviews.anonymousClient');
               const initials = name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
               const date = new Date(review.created_at).toLocaleDateString('fr-FR', {
                 day: 'numeric', month: 'long', year: 'numeric'
@@ -159,7 +161,7 @@ export function ServiceReviews({ serviceId }: ServiceReviewsProps) {
                             {review.is_verified && (
                               <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-1">
                                 <ThumbsUp className="w-2.5 h-2.5" />
-                                Vérifié
+                                {t('serviceReviews.verified')}
                               </Badge>
                             )}
                           </div>

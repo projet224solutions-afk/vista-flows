@@ -1,10 +1,10 @@
-// @ts-nocheck
 /**
  * 💰 DASHBOARD DE GESTION DES DÉPENSES - 224SOLUTIONS
  * Interface complète pour la gestion des dépenses vendeurs
  */
 
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -44,6 +44,7 @@ interface ExpenseManagementDashboardProps {
 }
 
 export default function ExpenseManagementDashboard({ className }: ExpenseManagementDashboardProps) {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const { currency: vendorCurrency, convert, isReady: currencyReady } = useVendorCurrency();
   const fmtAmt = (amount: number) => currencyReady ? `${Math.round(convert(amount)).toLocaleString('fr-FR')} ${vendorCurrency}` : '—';
@@ -166,8 +167,8 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
       {/* En-tête avec alertes - Mobile optimized */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h2 className="text-lg sm:text-2xl font-bold text-gray-900">Gestion des Dépenses</h2>
-          <p className="text-xs sm:text-sm text-gray-600 line-clamp-1">Suivez vos dépenses professionnelles</p>
+          <h2 className="text-lg sm:text-2xl font-bold text-gray-900">{t('expenseManagementDashboard.gestionDesDepenses')}</h2>
+          <p className="text-xs sm:text-sm text-gray-600 line-clamp-1">{t('expenseManagementDashboard.suivezVosDepensesProfessionnelles')}</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -192,7 +193,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
           <CardContent className="p-3 sm:p-6">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Total Dépenses</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">{t('expenseManagementDashboard.totalDepenses')}</p>
                 <p className="text-base sm:text-2xl font-bold text-gray-900 truncate">
                   {safeStats.total_expenses?.toLocaleString() || 0}
                 </p>
@@ -219,7 +220,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
           <CardContent className="p-3 sm:p-6">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Nb. Dépenses</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">{t('expenseManagementDashboard.nbDepenses')}</p>
                 <p className="text-base sm:text-2xl font-bold text-gray-900">{expenses.length}</p>
                 <p className="text-xs text-gray-500 mt-1 truncate">
                   {metrics.currentMonthCount} ce mois
@@ -237,7 +238,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
           <CardContent className="p-3 sm:p-6">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Dép. Moyenne</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">{t('expenseManagementDashboard.depMoyenne')}</p>
                 <p className="text-base sm:text-2xl font-bold text-gray-900 truncate">
                   {(expenses.length > 0 ? (safeStats.total_expenses || 0) / expenses.length : 0).toLocaleString()}
                 </p>
@@ -257,7 +258,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
           <CardContent className="p-3 sm:p-6">
             <div className="flex items-center justify-between">
               <div className="min-w-0 flex-1">
-                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">Catégories</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 truncate">{t('expenseManagementDashboard.categories')}</p>
                 <p className="text-base sm:text-2xl font-bold text-gray-900">{categories?.length || 0}</p>
                 <p className="text-xs text-gray-500 mt-1 truncate">
                   {categories.filter(c => expenses.some(e => e.category_id === c.id)).length} utilisées
@@ -474,22 +475,22 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
         <TabsContent value="expenses" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Nouvelle Dépense</CardTitle>
+              <CardTitle>{t('expenseManagementDashboard.nouvelleDepense')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                  <Label>Libellé</Label>
+                  <Label>{t('expenseManagementDashboard.libelle')}</Label>
                   <Input placeholder="Ex: Achat fournitures" id="expense-label" />
                 </div>
                 <div>
-                  <Label>Montant</Label>
+                  <Label>{t('expenseManagementDashboard.montant')}</Label>
                   <Input type="number" placeholder="0" id="expense-amount" />
                 </div>
                 <div>
-                  <Label>Catégorie</Label>
+                  <Label>{t('expenseManagementDashboard.categorie')}</Label>
                   <select id="expense-category" className="w-full h-10 px-3 border rounded-md bg-white">
-                    <option value="">Sélectionner</option>
+                    <option value="">{t('expenseManagementDashboard.selectionner')}</option>
                     {categories?.map((c: any) => (
                       <option key={c?.id} value={c?.id}>{c?.name || c?.label || `Catégorie #${c?.id}`}</option>
                     ))}
@@ -510,7 +511,17 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                         return;
                       }
                       try {
-                        await createExpense({ label, amount, category_id });
+                        // Colonnes réelles : vendor_id (=userId, FK profiles), title (NOT NULL),
+                        // status 'paid' (sinon non compté dans les stats approved+paid). Montant en GNF
+                        // (base plateforme, converti à l'affichage comme le reste de l'app).
+                        await createExpense({
+                          vendor_id: userId,
+                          category_id,
+                          title: label,
+                          amount,
+                          currency: 'GNF',
+                          status: 'paid',
+                        } as any);
                         toast({ title: 'Dépense ajoutée' });
                         await refetch();
                         if (labelEl) labelEl.value = '';
@@ -530,19 +541,19 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
 
           <Card>
             <CardHeader>
-              <CardTitle>Liste des Dépenses</CardTitle>
+              <CardTitle>{t('expenseManagementDashboard.listeDesDepenses')}</CardTitle>
             </CardHeader>
             <CardContent>
               {expenses.length === 0 ? (
-                <p className="text-gray-500">Aucune dépense enregistrée</p>
+                <p className="text-gray-500">{t('expenseManagementDashboard.aucuneDepenseEnregistree')}</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-left border-b">
-                        <th className="py-2 pr-4">Libellé</th>
-                        <th className="py-2 pr-4">Catégorie</th>
-                        <th className="py-2 pr-4">Montant</th>
+                        <th className="py-2 pr-4">{t('expenseManagementDashboard.libelle')}</th>
+                        <th className="py-2 pr-4">{t('expenseManagementDashboard.categorie')}</th>
+                        <th className="py-2 pr-4">{t('expenseManagementDashboard.montant')}</th>
                         <th className="py-2 pr-4">Date</th>
                         <th className="py-2 pr-4 text-right">Actions</th>
                       </tr>
@@ -550,22 +561,29 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                     <tbody>
                       {expenses.map((e: any) => (
                         <tr key={e?.id} className="border-b last:border-0">
-                          <td className="py-2 pr-4">{e?.label || e?.name || '—'}</td>
+                          <td className="py-2 pr-4">{e?.title || e?.label || e?.name || '—'}</td>
                           <td className="py-2 pr-4">{categories?.find((c: any) => c?.id === (e?.category_id || e?.category))?.name || '—'}</td>
                           <td className="py-2 pr-4">{fmtAmt(Number(e?.amount || 0))}</td>
                           <td className="py-2 pr-4">{e?.created_at ? new Date(e.created_at).toLocaleString('fr-FR') : '—'}</td>
                           <td className="py-2 pr-0 text-right">
-                            <Button variant="ghost" size="sm" onClick={async () => {
-                              try {
-                                await deleteExpense(e?.id);
-                                toast({ title: 'Dépense supprimée' });
-                                await refetch();
-                              } catch (_err) {
-                                toast({ title: 'Erreur suppression', variant: 'destructive' });
-                              }
-                            }}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                            {e?.is_locked ? (
+                              // Dépense liée à un achat fournisseur → verrouillée (non supprimable).
+                              <span className="text-xs text-muted-foreground inline-flex items-center gap-1" title="Dépense liée à un achat — non modifiable">
+                                <Lock className="w-3.5 h-3.5" /> Achat
+                              </span>
+                            ) : (
+                              <Button variant="ghost" size="sm" onClick={async () => {
+                                try {
+                                  await deleteExpense(e?.id);
+                                  toast({ title: 'Dépense supprimée' });
+                                  await refetch();
+                                } catch (_err) {
+                                  toast({ title: 'Erreur suppression', variant: 'destructive' });
+                                }
+                              }}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -581,7 +599,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
         <TabsContent value="categories" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Créer une Catégorie</CardTitle>
+              <CardTitle>{t('expenseManagementDashboard.creerUneCategorie')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -601,7 +619,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                     const budget = Number(budgetEl?.value || 0);
                     if (!name) { toast({ title: 'Nom requis', variant: 'destructive' }); return; }
                     try {
-                      await createCategory({ name, monthly_budget: budget } as any);
+                      await createCategory({ vendor_id: userId, name, budget_limit: budget } as any);
                       toast({ title: 'Catégorie créée' });
                       await refetch();
                       if (nameEl) nameEl.value = '';
@@ -609,7 +627,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                     } catch (_e) {
                       toast({ title: 'Erreur', description: 'Impossible de créer la catégorie', variant: 'destructive' });
                     }
-                  }}>Créer</Button>
+                  }}>{t('expenseManagementDashboard.creer')}</Button>
                 </div>
               </div>
             </CardContent>
@@ -617,11 +635,11 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
 
           <Card>
             <CardHeader>
-              <CardTitle>Liste des Catégories</CardTitle>
+              <CardTitle>{t('expenseManagementDashboard.listeDesCategories')}</CardTitle>
             </CardHeader>
             <CardContent>
               {(!categories || categories.length === 0) ? (
-                <p className="text-gray-500">Aucune catégorie</p>
+                <p className="text-gray-500">{t('expenseManagementDashboard.aucuneCategorie')}</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -635,7 +653,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                       {categories.map((c: any) => (
                         <tr key={c?.id} className="border-b last:border-0">
                           <td className="py-2 pr-4">{c?.name || '—'}</td>
-                          <td className="py-2 pr-4">{fmtAmt(Number(c?.monthly_budget || 0))}</td>
+                          <td className="py-2 pr-4">{fmtAmt(Number(c?.budget_limit ?? c?.monthly_budget ?? 0))}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -676,13 +694,13 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                 return (
                   <div className="space-y-3">
                     <div className="text-sm text-gray-700">
-                      <strong>Total du mois:</strong> {fmtAmt(total)}
+                      <strong>{t('expenseManagementDashboard.totalDuMois')}</strong> {fmtAmt(total)}
                     </div>
                     <div>
-                      <div className="font-medium mb-2">Top catégories du mois</div>
+                      <div className="font-medium mb-2">{t('expenseManagementDashboard.topCategoriesDuMois')}</div>
                       <div className="space-y-2">
                         {ranked.length === 0 ? (
-                          <p className="text-gray-500">Aucune dépense ce mois.</p>
+                          <p className="text-gray-500">{t('expenseManagementDashboard.aucuneDepenseCeMois')}</p>
                         ) : ranked.map((r) => {
                           const cat = categories?.find((c: any) => String(c?.id) === String(r.id));
                           return (
@@ -702,7 +720,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
 
           <Card>
             <CardHeader>
-              <CardTitle>Détection de Dépassement de Budget</CardTitle>
+              <CardTitle>{t('expenseManagementDashboard.detectionDeDepassementDeBudget')}</CardTitle>
             </CardHeader>
             <CardContent>
               {(() => {
@@ -721,7 +739,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                 const over = categories
                   ?.map((c: any) => {
                     const spent = byCategory.get(String(c?.id)) || 0;
-                    const budget = Number(c?.monthly_budget || 0);
+                    const budget = Number(c?.budget_limit ?? c?.monthly_budget ?? 0);
                     return { id: c?.id, name: c?.name, spent, budget, over: budget > 0 && spent > budget };
                   })
                   .filter((x: any) => x?.over) || [];
@@ -729,7 +747,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                 return (
                   <div className="space-y-2">
                     {over.length === 0 ? (
-                      <p className="text-[#ff4000] bg-orange-50 p-2 rounded">Aucun dépassement détecté ce mois.</p>
+                      <p className="text-[#ff4000] bg-orange-50 p-2 rounded">{t('expenseManagementDashboard.aucunDepassementDetecteCeMois')}</p>
                     ) : (
                       over.map((o: any) => (
                         <div key={o.id} className="p-2 rounded border border-orange-200 bg-orange-50">
@@ -759,7 +777,7 @@ export default function ExpenseManagementDashboard({ className }: ExpenseManagem
                 return (
                   <ul className="list-disc pl-5 space-y-1 text-gray-700">
                     {recs.length === 0 ? (
-                      <li>Tendance stable. Continuez le suivi mensuel.</li>
+                      <li>{t('expenseManagementDashboard.tendanceStableContinuezLeSuivi')}</li>
                     ) : recs.map((r, idx) => <li key={idx}>{r}</li>)}
                   </ul>
                 );

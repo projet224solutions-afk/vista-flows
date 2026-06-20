@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Wallet, Users, UserPlus, UserCog, BarChart3,
   DollarSign, Package, Home, ChevronLeft, ChevronRight,
@@ -48,6 +49,7 @@ export default function AgentSidebar({
   onLogout,
   unifiedPermissions = {}
 }: AgentSidebarProps) {
+  const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(false);
 
   const hasPermission = (permission: string): boolean => {
@@ -311,7 +313,7 @@ export default function AgentSidebar({
             )}
           >
             <Key className="w-5 h-5" />
-            {!collapsed && <span className="ml-3">Mot de passe</span>}
+            {!collapsed && <span className="ml-3">{t('agentSidebar.motDePasse')}</span>}
           </Button>
 
           <Button
@@ -323,7 +325,7 @@ export default function AgentSidebar({
             )}
           >
             <LogOut className="w-5 h-5" />
-            {!collapsed && <span className="ml-3">Déconnexion</span>}
+            {!collapsed && <span className="ml-3">{t('agentSidebar.deconnexion')}</span>}
           </Button>
         </div>
 

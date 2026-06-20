@@ -36,8 +36,57 @@ export function useVendorSubscription() {
   const loadSubscriptionData = async () => {
     if (!user) return;
 
+    // Clés de cache : l'abonnement persiste pour que le vendeur garde l'accès à ses
+    // modules HORS LIGNE (la date d'expiration réelle est conservée → pas d'accès infini).
+    const SUB_CACHE_KEY = `vendor_subscription_cache_${user.id}`;
+    const PLANS_CACHE_KEY = 'vendor_plans_cache';
+
+    // Lit le cache. `hasEntry=false` => aucune donnée jamais mise en cache (clé absente).
+    const readCache = (): { subscription: VendorSubscription | null; plans: Plan[]; hasEntry: boolean } => {
+      try {
+        const rawSub = localStorage.getItem(SUB_CACHE_KEY);
+        const rawPlans = localStorage.getItem(PLANS_CACHE_KEY);
+        return {
+          subscription: rawSub !== null ? (JSON.parse(rawSub) as VendorSubscription | null) : null,
+          plans: rawPlans ? (JSON.parse(rawPlans) as Plan[]) : [],
+          hasEntry: rawSub !== null,
+        };
+      } catch {
+        return { subscription: null, plans: [], hasEntry: false };
+      }
+    };
+
+    const applyCache = (label: string) => {
+      const cached = readCache();
+      setSubscription(cached.subscription);
+      setHasAccess(cached.subscription?.status === 'active');
+      if (cached.plans.length) setPlans(cached.plans);
+      console.log(`📴 Abonnement restauré depuis cache (${label}):`, cached.subscription?.plan_name ?? 'aucun');
+    };
+
+    // ⚡ PEINTURE INSTANTANÉE (stale-while-revalidate) : afficher le dernier abonnement
+    // connu TOUT DE SUITE → les sections (FeatureGuard) se rendent sans skeleton d'attente.
+    const firstPaint = readCache();
+    const hadCache = firstPaint.hasEntry || firstPaint.plans.length > 0;
+    if (hadCache) {
+      setSubscription(firstPaint.subscription);
+      setHasAccess(firstPaint.subscription?.status === 'active');
+      if (firstPaint.plans.length) setPlans(firstPaint.plans);
+      setLoading(false);
+    }
+
+    // 📴 HORS LIGNE : on s'en tient au dernier abonnement connu, sans réseau.
+    // (Sinon la requête renvoie { data: null } sans exception → abonnement vu comme
+    // expiré → tous les modules basic/business POS/inventaire/fournisseurs… bloqués.)
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      if (!hadCache) applyCache('offline');
+      setLoading(false);
+      return;
+    }
+
     try {
-      setLoading(true);
+      // Ne PAS re-bloquer le rendu si on a déjà peint depuis le cache (revalidation en fond).
+      if (!hadCache) setLoading(true);
 
       // Requête directe pour récupérer l'abonnement actif avec le plan
       const { data: subData, error: subError } = await supabase
@@ -59,7 +108,11 @@ export function useVendorSubscription() {
         .maybeSingle();
 
       if (subError) {
+        // Échec réseau silencieux : NE PAS dégrader le vendeur — conserver le cache.
         console.error('❌ Erreur récupération abonnement:', subError);
+        applyCache('after_error');
+        setLoading(false);
+        return;
       }
 
       if (subData) {
@@ -77,10 +130,13 @@ export function useVendorSubscription() {
         };
         setSubscription(vendorSub);
         setHasAccess(vendorSub.status === 'active');
+        try { localStorage.setItem(SUB_CACHE_KEY, JSON.stringify(vendorSub)); } catch { }
         console.log('✅ Abonnement chargé:', vendorSub);
       } else {
+        // Réponse réseau propre sans abonnement actif → réellement plan gratuit.
         setSubscription(null);
         setHasAccess(false);
+        try { localStorage.setItem(SUB_CACHE_KEY, JSON.stringify(null)); } catch { }
         console.log('ℹ️ Aucun abonnement actif trouvé');
       }
 
@@ -91,10 +147,18 @@ export function useVendorSubscription() {
         .eq('is_active', true)
         .order('display_order');
 
-      setPlans((plansData || []) as Plan[]);
+      if (plansData && plansData.length) {
+        setPlans(plansData as Plan[]);
+        try { localStorage.setItem(PLANS_CACHE_KEY, JSON.stringify(plansData)); } catch { }
+      } else {
+        // Pas de plans (réseau) → garder ceux en cache plutôt qu'une liste vide.
+        const cached = readCache();
+        setPlans(cached.plans);
+      }
 
     } catch (error) {
       console.error('❌ Erreur chargement abonnement:', error);
+      applyCache('catch');
     } finally {
       setLoading(false);
     }

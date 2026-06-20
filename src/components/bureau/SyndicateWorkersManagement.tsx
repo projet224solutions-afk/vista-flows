@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -53,6 +54,7 @@ interface SyndicateWorkersManagementProps {
 }
 
 export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWorkersManagementProps) {
+  const { t } = useTranslation();
   const { workers, loading, stats, createWorker, updateWorker, deleteWorker, toggleWorkerStatus, refetch } = useSyndicateWorkersData(bureauId);
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -127,9 +129,9 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
   const getAccessLevelBadge = (level: string) => {
     switch (level) {
       case 'president':
-        return <Badge className="bg-[#ff4000] text-white"><Crown className="w-3 h-3 mr-1" />Président</Badge>;
+        return <Badge className="bg-[#ff4000] text-white"><Crown className="w-3 h-3 mr-1" />{t('syndicateWorkersManagement.president')}</Badge>;
       case 'secretary':
-        return <Badge className="bg-blue-500 text-white">Secrétaire</Badge>;
+        return <Badge className="bg-blue-500 text-white">{t('syndicateWorkersManagement.secretaire')}</Badge>;
       default:
         return <Badge variant="secondary">Membre</Badge>;
     }
@@ -173,7 +175,7 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.presidentCount}</p>
-                <p className="text-xs text-muted-foreground">Présidents</p>
+                <p className="text-xs text-muted-foreground">{t('syndicateWorkersManagement.presidents')}</p>
               </div>
             </div>
           </CardContent>
@@ -186,7 +188,7 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.secretaryCount}</p>
-                <p className="text-xs text-muted-foreground">Secrétaires</p>
+                <p className="text-xs text-muted-foreground">{t('syndicateWorkersManagement.secretaires')}</p>
               </div>
             </div>
           </CardContent>
@@ -232,7 +234,7 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Ajouter un Membre</DialogTitle>
+                  <DialogTitle>{t('syndicateWorkersManagement.ajouterUnMembre')}</DialogTitle>
                   <DialogDescription>
                     Créez un nouveau membre du bureau syndicat
                   </DialogDescription>
@@ -245,16 +247,16 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
                         id="nom"
                         value={newWorker.nom}
                         onChange={(e) => setNewWorker({ ...newWorker, nom: e.target.value })}
-                        placeholder="Nom de famille"
+                        placeholder={t('syndicateWorkersManagement.nomDeFamille')}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="prenom">Prénom</Label>
+                      <Label htmlFor="prenom">{t('syndicateWorkersManagement.prenom')}</Label>
                       <Input
                         id="prenom"
                         value={newWorker.prenom}
                         onChange={(e) => setNewWorker({ ...newWorker, prenom: e.target.value })}
-                        placeholder="Prénom"
+                        placeholder={t('syndicateWorkersManagement.prenom')}
                       />
                     </div>
                   </div>
@@ -269,7 +271,7 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="telephone">Téléphone</Label>
+                    <Label htmlFor="telephone">{t('syndicateWorkersManagement.telephone')}</Label>
                     <Input
                       id="telephone"
                       value={newWorker.telephone}
@@ -278,7 +280,7 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="access_level">Niveau d'accès</Label>
+                    <Label htmlFor="access_level">{t('syndicateWorkersManagement.niveauDAcces')}</Label>
                     <Select
                       value={newWorker.access_level}
                       onValueChange={(value) => setNewWorker({ ...newWorker, access_level: value })}
@@ -287,8 +289,8 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="president">Président</SelectItem>
-                        <SelectItem value="secretary">Secrétaire</SelectItem>
+                        <SelectItem value="president">{t('syndicateWorkersManagement.president')}</SelectItem>
+                        <SelectItem value="secretary">{t('syndicateWorkersManagement.secretaire')}</SelectItem>
                         <SelectItem value="member">Membre</SelectItem>
                       </SelectContent>
                     </Select>
@@ -322,7 +324,7 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Rechercher par nom, email, téléphone, ID..."
+                  placeholder={t('syndicateWorkersManagement.rechercherParNomEmailTelephone')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -334,7 +336,7 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
                 <SelectValue placeholder="Statut" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous</SelectItem>
+                <SelectItem value="all">{t('syndicateWorkersManagement.tous')}</SelectItem>
                 <SelectItem value="active">Actifs</SelectItem>
                 <SelectItem value="inactive">Inactifs</SelectItem>
               </SelectContent>
@@ -344,9 +346,9 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
                 <SelectValue placeholder="Niveau" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous niveaux</SelectItem>
-                <SelectItem value="president">Présidents</SelectItem>
-                <SelectItem value="secretary">Secrétaires</SelectItem>
+                <SelectItem value="all">{t('syndicateWorkersManagement.tousNiveaux')}</SelectItem>
+                <SelectItem value="president">{t('syndicateWorkersManagement.presidents')}</SelectItem>
+                <SelectItem value="secretary">{t('syndicateWorkersManagement.secretaires')}</SelectItem>
                 <SelectItem value="member">Membres</SelectItem>
               </SelectContent>
             </Select>
@@ -360,7 +362,7 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
           ) : filteredWorkers.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Users className="w-16 h-16 mx-auto mb-4 opacity-20" />
-              <p>Aucun membre trouvé</p>
+              <p>{t('syndicateWorkersManagement.aucunMembreTrouve')}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -449,14 +451,14 @@ export function SyndicateWorkersManagement({ bureauId, bureauName }: SyndicateWo
       <AlertDialog open={!!workerToDelete} onOpenChange={() => setWorkerToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+            <AlertDialogTitle>{t('syndicateWorkersManagement.confirmerLaSuppression')}</AlertDialogTitle>
             <AlertDialogDescription>
               Êtes-vous sûr de vouloir supprimer le membre "{workerToDelete?.nom} {workerToDelete?.prenom}" ?
               Cette action est irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel>{t('syndicateWorkersManagement.annuler')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground">
               Supprimer
             </AlertDialogAction>

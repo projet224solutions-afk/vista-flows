@@ -206,7 +206,9 @@ export function useConvertedPrice(amount: number, fromCurrency: string): Convert
   const { convert, loading } = usePriceConverter();
 
   return useMemo(() => {
-    if (loading || !amount || !fromCurrency) return null;
+    // NB : ne PAS utiliser `!amount` — `!0` est true, ce qui faisait afficher « 0 GNF »
+    // (non converti) au lieu de « 0 » dans la devise de l'utilisateur. On convertit 0 aussi.
+    if (loading || amount == null || Number.isNaN(amount) || !fromCurrency) return null;
     return convert(amount, fromCurrency);
   }, [convert, loading, amount, fromCurrency]);
 }

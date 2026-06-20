@@ -19,6 +19,7 @@ import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
 import { paymentRateLimit } from '../middlewares/routeRateLimiter.js';
 import { triggerAffiliateCommission } from '../services/commission.service.js';
+import { creditWallet } from '../services/wallet.service.js';
 import { emitCoreFeatureEvent } from '../services/coreFeatureEvents.service.js';
 
 const router = Router();
@@ -576,48 +577,27 @@ router.post('/secure/validate', optionalJWT, async (req: AuthenticatedRequest, r
       return;
     }
 
-    // ── TOUTES LES VALIDATIONS OK → Créditer le wallet ──
+    // ── TOUTES LES VALIDATIONS OK → Créditer le wallet (ATOMIQUE + IDEMPOTENT + AML) ──
+    // Via creditWallet → credit_user_wallet_safe : verrou/création du wallet, plafond de
+    // détention AML + quarantaine de l'excédent, garde devise, et clé d'idempotence
+    // (anti double-crédit au rejeu/concurrence). Remplace l'ancien read-modify-write brut
+    // du solde (course = perte ou duplication d'argent) et le journal manuel.
+    const creditRes = await creditWallet(
+      userId,
+      Number(transaction.net_amount),
+      `Recharge sécurisée via ${transaction.payment_method || 'mobile money'}`,
+      external_transaction_id || transaction_id,
+      'deposit',
+      `secure:${transaction_id}`,
+    );
 
-    // Récupérer ou créer le wallet
-    let walletId: string;
-    let currentBalance: number;
-
-    const { data: wallet, error: walletError } = await supabaseAdmin
-      .from('wallets')
-      .select('id, balance')
-      .eq('user_id', userId)
-      .single();
-
-    if (walletError || !wallet) {
-      const { data: newWallet, error: createError } = await supabaseAdmin
-        .from('wallets')
-        .insert({ user_id: userId, balance: 0, currency: 'GNF' })
-        .select('id, balance')
-        .single();
-
-      if (createError || !newWallet) {
-        res.status(500).json({ success: false, error: 'WALLET_CREATION_FAILED' });
-        return;
-      }
-      walletId = newWallet.id;
-      currentBalance = newWallet.balance;
-    } else {
-      walletId = wallet.id;
-      currentBalance = wallet.balance;
-    }
-
-    const newBalance = Number(currentBalance) + Number(transaction.net_amount);
-
-    const { error: updateError } = await supabaseAdmin
-      .from('wallets')
-      .update({ balance: newBalance, updated_at: new Date().toISOString() })
-      .eq('id', walletId);
-
-    if (updateError) {
-      logger.error(`[SecurePayment] Wallet update failed: ${updateError.message}`);
-      res.status(500).json({ success: false, error: 'WALLET_UPDATE_FAILED' });
+    if (!creditRes.success) {
+      logger.error(`[SecurePayment] Wallet credit failed: ${creditRes.error}`);
+      res.status(500).json({ success: false, error: 'WALLET_CREDIT_FAILED' });
       return;
     }
+
+    const newBalance = creditRes.newBalance ?? null;
 
     // Marquer la transaction comme complétée
     await supabaseAdmin
@@ -631,21 +611,6 @@ router.post('/secure/validate', optionalJWT, async (req: AuthenticatedRequest, r
         completed_at: new Date().toISOString(),
       })
       .eq('id', transaction_id);
-
-    // Journal wallets (aligné au schéma wallet_transactions existant)
-    await ignoreSupabaseError(supabaseAdmin.from('wallet_transactions').insert({
-      sender_wallet_id: walletId,
-      receiver_wallet_id: walletId,
-      transaction_type: 'deposit',
-      amount: transaction.net_amount,
-      description: `Recharge sécurisée via ${transaction.payment_method || 'mobile money'}`,
-      status: 'completed',
-      metadata: {
-        reference: external_transaction_id,
-        secure_transaction_id: transaction_id,
-        source: 'backend-node',
-      },
-    }));
 
     // Déclencher les commissions affiliées
     await triggerAffiliateCommission(userId, Number(transaction.net_amount), 'wallet_deposit', transaction_id);

@@ -81,6 +81,7 @@ export const getDashboardRoute = (role: string | null | undefined): string => {
     client: '/client',
     agent: '/agent-dashboard',
     vendor_agent: '/home', // Les vendor_agents sont redirigés via leur access_token
+    restaurant_agent: '/restaurant-agent', // Agent de restaurant → son interface dédiée filtrée par permissions
   };
 
   return roleRoutes[normalizedRole] || '/home';

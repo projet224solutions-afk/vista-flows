@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
@@ -46,6 +47,7 @@ export function VendorDisputeDialog({
   orderNumber,
   onSuccess
 }: VendorDisputeDialogProps) {
+  const { t } = useTranslation();
   const { disputeEscrow } = useEscrowTransactions();
   const [loading, setLoading] = useState(false);
   const [reason, setReason] = useState<DisputeReason>('client_no_response');
@@ -55,7 +57,7 @@ export function VendorDisputeDialog({
     e.preventDefault();
 
     if (!description || description.length < 20) {
-      toast.error('Veuillez fournir une description détaillée (minimum 20 caractères)');
+      toast.error(t('vendorDisputeDialog.veuillezFournirUneDescriptionDetaillee'));
       return;
     }
 
@@ -65,7 +67,7 @@ export function VendorDisputeDialog({
       const fullReason = `[${disputeReasons[reason]}] ${description}`;
       await disputeEscrow(escrowId, fullReason);
 
-      toast.success('Litige ouvert avec succès', {
+      toast.success(t('vendorDisputeDialog.litigeOuvertAvecSucces'), {
         description: 'Un administrateur examinera votre demande.'
       });
 
@@ -77,7 +79,7 @@ export function VendorDisputeDialog({
       onSuccess?.();
     } catch (error) {
       console.error('[VendorDisputeDialog] Error:', error);
-      toast.error('Erreur lors de l\'ouverture du litige');
+      toast.error(t('vendorDisputeDialog.erreurLorsDeL'));
     } finally {
       setLoading(false);
     }
@@ -93,7 +95,7 @@ export function VendorDisputeDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertCircle className="h-5 w-5 text-destructive" />
@@ -110,13 +112,13 @@ export function VendorDisputeDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Raison du litige */}
           <div className="space-y-2">
-            <Label htmlFor="reason">Raison du litige</Label>
+            <Label htmlFor="reason">{t('vendorDisputeDialog.raisonDuLitige')}</Label>
             <Select
               value={reason}
               onValueChange={(value) => setReason(value as DisputeReason)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Sélectionnez une raison" />
+                <SelectValue placeholder={t('vendorDisputeDialog.selectionnezUneRaison')} />
               </SelectTrigger>
               <SelectContent>
                 {Object.entries(disputeReasons).map(([key, label]) => (
@@ -130,10 +132,10 @@ export function VendorDisputeDialog({
 
           {/* Description détaillée */}
           <div className="space-y-2">
-            <Label htmlFor="description">Description détaillée *</Label>
+            <Label htmlFor="description">{t('vendorDisputeDialog.descriptionDetaillee')}</Label>
             <Textarea
               id="description"
-              placeholder="Expliquez le problème en détail..."
+              placeholder={t('vendorDisputeDialog.expliquezLeProblemeEnDetail')}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
@@ -151,7 +153,7 @@ export function VendorDisputeDialog({
               <AlertCircle className="h-4 w-4 text-[#ff4000] flex-shrink-0 mt-0.5" />
               <div className="text-sm text-[#ff4000] dark:text-orange-200">
                 <p className="font-medium mb-1">Important</p>
-                <p>Un litige bloquera la transaction jusqu'à sa résolution par un administrateur. Utilisez cette option uniquement en cas de problème réel.</p>
+                <p>{t('vendorDisputeDialog.unLitigeBloqueraLaTransaction')}</p>
               </div>
             </div>
           </div>

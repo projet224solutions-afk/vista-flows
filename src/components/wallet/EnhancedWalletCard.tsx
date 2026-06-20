@@ -149,7 +149,7 @@ export function EnhancedWalletCard({
 
         {/* Actions rapides */}
         {showActions && !wallet.is_blocked && (
-          <div className="grid grid-cols-3 gap-2 pt-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-2">
             <Button variant="secondary" size="sm" className="flex flex-col h-16 gap-1 bg-white/20 hover:bg-white/30 text-white border-0" onClick={onDeposit} disabled={processing}>
               <ArrowDownToLine className="w-5 h-5" />
               <span className="text-xs">{t('wallet.depositBtn')}</span>

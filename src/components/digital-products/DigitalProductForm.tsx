@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -159,6 +160,7 @@ const categoryConfig: Record<ProductCategory, {
 type FormStep = 'mode' | 'details' | 'pricing' | 'media' | 'review';
 
 export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create', initialProduct }: DigitalProductFormProps) {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -180,7 +182,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
   // Fonction pour générer la description par IA
   const handleGenerateDescription = async () => {
     if (!baseData.title.trim()) {
-      toast.error('Veuillez d\'abord saisir un titre');
+      toast.error(t('digitalProductForm.veuillezDAbordSaisirUn'));
       return;
     }
 
@@ -220,10 +222,10 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
         shortDescription: nextShort || deriveShortDescription(nextDescription) || prev.shortDescription,
       }));
 
-      toast.success('Description générée avec succès!');
+      toast.success(t('digitalProductForm.descriptionGenereeAvecSucces'));
     } catch (error) {
       console.error('Erreur génération description:', error);
-      toast.error('Erreur lors de la génération de la description');
+      toast.error(t('digitalProductForm.erreurLorsDeLaGeneration'));
     } finally {
       setGeneratingDescription(false);
     }
@@ -371,7 +373,11 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
     maxQuantity: '',
     requireEmail: true,
     instantDelivery: true,
-    accessDuration: (initialProduct?.access_duration as DirectSaleFormData['accessDuration']) || 'lifetime'
+    accessDuration: (initialProduct?.access_duration as DirectSaleFormData['accessDuration']) || 'lifetime',
+    affiliateEnabled: (initialProduct as any)?.affiliate_enabled || false,
+    affiliateCommissionRate: (initialProduct as any)?.affiliate_commission_rate
+      ? String((initialProduct as any).affiliate_commission_rate)
+      : ''
   }));
 
   // Médias
@@ -434,6 +440,10 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
       pricingType: (initialProduct.pricing_type as DirectSaleFormData['pricingType']) || prev.pricingType,
       subscriptionInterval: (initialProduct.subscription_interval as DirectSaleFormData['subscriptionInterval']) || prev.subscriptionInterval,
       accessDuration: (initialProduct.access_duration as DirectSaleFormData['accessDuration']) || prev.accessDuration,
+      affiliateEnabled: (initialProduct as any).affiliate_enabled ?? prev.affiliateEnabled,
+      affiliateCommissionRate: (initialProduct as any).affiliate_commission_rate != null
+        ? String((initialProduct as any).affiliate_commission_rate)
+        : prev.affiliateCommissionRate,
     }));
 
     setImages(initialProduct.images || []);
@@ -518,7 +528,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
       setDeliverableFiles(prev => [...prev, ...uploadedUrls]);
       toast.success(`${uploadedUrls.length} fichier(s) ajouté(s) avec succès`);
     } else if (files.length > 0) {
-      toast.error('Aucun fichier n\'a pu être uploadé. Vérifiez votre connexion et réessayez.');
+      toast.error(t('digitalProductForm.aucunFichierNAPu'));
     }
     setUploadingFiles(false);
     // Reset input pour permettre de re-sélectionner le même fichier
@@ -574,7 +584,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
         return true;
       case 'details':
         if (!baseData.title.trim()) {
-          toast.error('Le titre est obligatoire');
+          toast.error(t('digitalProductForm.leTitreEstObligatoire'));
           return false;
         }
 
@@ -586,17 +596,17 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
           });
 
           if (!trainingData.instructorName.trim()) {
-            toast.error('Le nom du formateur est obligatoire pour une formation');
+            toast.error(t('digitalProductForm.leNomDuFormateurEst'));
             return false;
           }
 
           if (filledLessons.length === 0) {
-            toast.error('Ajoutez au moins un cours a votre formation');
+            toast.error(t('digitalProductForm.ajoutezAuMoinsUnCours'));
             return false;
           }
 
           if (hasInvalidLessonDuration) {
-            toast.error('Chaque cours doit durer entre 1 et 60 minutes');
+            toast.error(t('digitalProductForm.chaqueCoursDoitDurerEntre'));
             return false;
           }
         }
@@ -605,12 +615,12 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
       case 'pricing':
         if (salesMode === 'affiliate') {
           if (!affiliateData.affiliateUrl) {
-            toast.error('Le lien d\'affiliation est obligatoire');
+            toast.error(t('digitalProductForm.leLienDAffiliationEst'));
             return false;
           }
         } else {
           if (!directData.price || parseFloat(directData.price) < 0) {
-            toast.error('Le prix est obligatoire');
+            toast.error(t('digitalProductForm.lePrixEstObligatoire'));
             return false;
           }
         }
@@ -620,7 +630,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
           deliverableFiles.length > 0 || !!videoFile || !!videoPreviewUrl;
 
         if (salesMode === 'direct' && !hasDeliverableContent) {
-          toast.error('Ajoutez un fichier livrable ou une vidéo pour la vente directe');
+          toast.error(t('digitalProductForm.ajoutezUnFichierLivrableOu'));
           return false;
         }
         return true;
@@ -633,7 +643,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
   const handleSubmit = async () => {
     if (!user) return;
     if (uploadingFiles || uploadingVideo) {
-      toast.error('Veuillez attendre la fin des uploads avant de publier');
+      toast.error(t('digitalProductForm.veuillezAttendreLaFinDes'));
       return;
     }
 
@@ -671,7 +681,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
         : [];
 
       if (salesMode === 'direct' && finalDeliverableFiles.length === 0) {
-        toast.error('Aucun fichier livrable détecté');
+        toast.error(t('digitalProductForm.aucunFichierLivrableDetecte'));
         return;
       }
 
@@ -739,6 +749,11 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
         productData.pricing_type = directData.pricingType || 'one_time';
         productData.subscription_interval = directData.pricingType === 'subscription' ? directData.subscriptionInterval : null;
         productData.access_duration = directData.accessDuration || 'lifetime';
+        // Affiliation (programme interne) — produits numériques en vente directe uniquement.
+        productData.affiliate_enabled = directData.affiliateEnabled || false;
+        productData.affiliate_commission_rate = directData.affiliateEnabled && directData.affiliateCommissionRate
+          ? parseFloat(directData.affiliateCommissionRate)
+          : 0;
       }
 
       if (isEdit) {
@@ -752,7 +767,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
           .eq('id', initialProduct!.id);
 
         if (error) throw error;
-        toast.success('Produit mis à jour avec succès!');
+        toast.success(t('digitalProductForm.produitMisAJourAvec'));
       } else {
         const { error } = await supabase
           .from('digital_products')
@@ -837,7 +852,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
                     onValueChange={(value) => setBaseData(prev => ({ ...prev, productType: value }))}
                   >
                     <SelectTrigger className="mt-1.5">
-                      <SelectValue placeholder="Sélectionnez un type de produit" />
+                      <SelectValue placeholder={t('digitalProductForm.selectionnezUnTypeDeProduit')} />
                     </SelectTrigger>
                     <SelectContent>
                       {productTypes[category]?.map((type) => (
@@ -858,14 +873,14 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
                     id="shortDescription"
                     value={baseData.shortDescription}
                     onChange={(e) => setBaseData(prev => ({ ...prev, shortDescription: e.target.value }))}
-                    placeholder="Résumé accrocheur en une phrase"
+                    placeholder={t('digitalProductForm.resumeAccrocheurEnUnePhrase')}
                     className="mt-1.5"
                   />
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="description">Description complète</Label>
+                    <Label htmlFor="description">{t('digitalProductForm.descriptionComplete')}</Label>
                     <Button
                       type="button"
                       variant="outline"
@@ -896,7 +911,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
                 </div>
 
                 <div>
-                  <Label htmlFor="tags">Tags (séparés par des virgules)</Label>
+                  <Label htmlFor="tags">{t('digitalProductForm.tagsSeparesParDesVirgules')}</Label>
                   <Input
                     id="tags"
                     value={baseData.tags}
@@ -920,7 +935,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
                     <CardContent className="space-y-4">
                       <div className="grid gap-3 sm:grid-cols-2">
                         <div>
-                          <Label htmlFor="training-instructor">Nom du formateur</Label>
+                          <Label htmlFor="training-instructor">{t('digitalProductForm.nomDuFormateur')}</Label>
                           <Input
                             id="training-instructor"
                             value={trainingData.instructorName}
@@ -936,7 +951,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
                             onValueChange={(value) => setTrainingData((prev) => ({ ...prev, level: value as TrainingProductDraft['level'] }))}
                           >
                             <SelectTrigger className="mt-1.5">
-                              <SelectValue placeholder="Choisir un niveau" />
+                              <SelectValue placeholder={t('digitalProductForm.choisirUnNiveau')} />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="debutant">Debutant</SelectItem>
@@ -967,7 +982,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
                             id="training-audience"
                             value={trainingData.targetAudience}
                             onChange={(e) => setTrainingData((prev) => ({ ...prev, targetAudience: e.target.value }))}
-                            placeholder="Ex: Debutants qui veulent lancer un business"
+                            placeholder={t('digitalProductForm.exDebutantsQuiVeulentLancer')}
                             className="mt-1.5"
                           />
                         </div>
@@ -1282,7 +1297,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
 
                 {/* Catégorie */}
                 <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                  <span className="text-sm text-muted-foreground">Catégorie</span>
+                  <span className="text-sm text-muted-foreground">{t('digitalProductForm.categorie')}</span>
                   <span className="text-sm text-foreground">
                     {config.icon} {config.title}
                   </span>
@@ -1295,7 +1310,7 @@ export function DigitalProductForm({ category, onBack, onSuccess, mode = 'create
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-sm text-foreground">Publier immédiatement</p>
+                    <p className="font-medium text-sm text-foreground">{t('digitalProductForm.publierImmediatement')}</p>
                     <p className="text-xs text-muted-foreground">
                       Le produit sera visible sur le marketplace
                     </p>

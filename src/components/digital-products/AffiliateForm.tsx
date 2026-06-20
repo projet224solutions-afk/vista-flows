@@ -4,6 +4,7 @@
  */
 
 import {} from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Link2,
   Globe,
@@ -73,6 +74,7 @@ export function AffiliateForm({
   onValidateUrl,
   urlValidationStatus = 'idle'
 }: AffiliateFormProps) {
+  const { t } = useTranslation();
   const selectedNetwork = affiliateNetworks.find(n => n.id === data.affiliateNetwork);
 
   const getUrlPlaceholder = () => {
@@ -109,7 +111,7 @@ export function AffiliateForm({
             onValueChange={(v) => onChange({ affiliateNetwork: v })}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Choisir un réseau" />
+              <SelectValue placeholder={t('affiliateForm.choisirUnReseau')} />
             </SelectTrigger>
             <SelectContent>
               {affiliateNetworks.map((network) => (
@@ -278,8 +280,8 @@ export function AffiliateForm({
         <CardContent className="space-y-4">
           {/* Type de commission */}
           <div>
-            <Label className="text-xs mb-2 block">Type de commission</Label>
-            <div className="grid grid-cols-3 gap-2">
+            <Label className="text-xs mb-2 block">{t('affiliateForm.typeDeCommission')}</Label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {commissionTypes.map((type) => (
                 <div
                   key={type.id}
@@ -327,7 +329,7 @@ export function AffiliateForm({
                 onValueChange={(v) => onChange({ cookieDuration: v })}
               >
                 <SelectTrigger className="mt-1.5">
-                  <SelectValue placeholder="Durée" />
+                  <SelectValue placeholder={t('affiliateForm.duree')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="24h">24 heures</SelectItem>
@@ -336,7 +338,7 @@ export function AffiliateForm({
                   <SelectItem value="60d">60 jours</SelectItem>
                   <SelectItem value="90d">90 jours</SelectItem>
                   <SelectItem value="lifetime">Lifetime</SelectItem>
-                  <SelectItem value="unknown">Non spécifié</SelectItem>
+                  <SelectItem value="unknown">{t('affiliateForm.nonSpecifie')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

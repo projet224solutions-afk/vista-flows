@@ -1,5 +1,5 @@
-// @ts-nocheck
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
@@ -32,6 +32,7 @@ interface SupplierCatalogProps {
 }
 
 export function SupplierCatalog({ vendorId }: SupplierCatalogProps) {
+  const { t } = useTranslation();
   const [products, setProducts] = useState<SupplierProduct[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<SupplierProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,7 +77,7 @@ export function SupplierCatalog({ vendorId }: SupplierCatalogProps) {
       setFilteredProducts(data || []);
     } catch (error: any) {
       console.error('Erreur chargement produits:', error);
-      toast.error('Erreur lors du chargement du catalogue');
+      toast.error(t('supplierCatalog.erreurLorsDuChargementDu'));
     } finally {
       setLoading(false);
     }
@@ -87,7 +88,7 @@ export function SupplierCatalog({ vendorId }: SupplierCatalogProps) {
   };
 
   if (loading) {
-    return <div className="text-center py-8">Chargement du catalogue...</div>;
+    return <div className="text-center py-8">{t('supplierCatalog.chargementDuCatalogue')}</div>;
   }
 
   return (
@@ -96,7 +97,7 @@ export function SupplierCatalog({ vendorId }: SupplierCatalogProps) {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
-          placeholder="Rechercher un produit, fournisseur ou catégorie..."
+          placeholder={t('supplierCatalog.rechercherUnProduitFournisseurOu')}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-10"

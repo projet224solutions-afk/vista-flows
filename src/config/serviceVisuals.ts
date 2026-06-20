@@ -22,6 +22,9 @@ import {
   Truck,
   Utensils,
   Wrench,
+  Square,
+  Hammer,
+  Flame,
 } from 'lucide-react';
 
 export interface ServiceVisual {
@@ -52,6 +55,30 @@ export const SERVICE_VISUALS: Record<string, ServiceVisual> = {
     accent: '#ff4000',
     icon: HardHat,
     logoImage: '/service-icons/logo-construction-btp.jpeg',
+  },
+  plomberie: {
+    image: 'https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?auto=format&fit=crop&w=800&q=80',
+    accent: '#0E6BA8',
+    icon: Wrench,
+    logoImage: '/service-icons/logo-plomberie.svg',
+  },
+  vitrerie: {
+    image: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=800&q=80',
+    accent: '#29A7C4',
+    icon: Square,
+    logoImage: '/service-icons/logo-vitrerie.svg',
+  },
+  menuiserie: {
+    image: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=800&q=80',
+    accent: '#B5651D',
+    icon: Hammer,
+    logoImage: '/service-icons/logo-menuiserie.svg',
+  },
+  soudure: {
+    image: 'https://images.unsplash.com/photo-1565952511394-1e3e5f1f2f3d?auto=format&fit=crop&w=800&q=80',
+    accent: '#ff4000',
+    icon: Flame,
+    logoImage: '/service-icons/logo-soudure.svg',
   },
   education: {
     image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=800&q=80',
@@ -186,6 +213,10 @@ export function getServiceVisual(input: {
   if (haystack.includes('réparation') || haystack.includes('reparation') || haystack.includes('mécanique') || haystack.includes('mecanique')) return SERVICE_VISUALS.reparation;
   if (haystack.includes('nettoyage') || haystack.includes('ménage') || haystack.includes('menage')) return SERVICE_VISUALS.menage;
   if (haystack.includes('informatique') || haystack.includes('tech')) return SERVICE_VISUALS.informatique;
+  if (haystack.includes('plomberie') || haystack.includes('plombier') || haystack.includes('sanitaire')) return SERVICE_VISUALS.plomberie;
+  if (haystack.includes('vitrerie') || haystack.includes('vitrier') || haystack.includes('vitre')) return SERVICE_VISUALS.vitrerie;
+  if (haystack.includes('menuiserie') || haystack.includes('menuisier') || haystack.includes('bois')) return SERVICE_VISUALS.menuiserie;
+  if (haystack.includes('soudure') || haystack.includes('soudeur') || haystack.includes('métallerie') || haystack.includes('metallerie') || haystack.includes('ferronnerie')) return SERVICE_VISUALS.soudure;
   if (haystack.includes('construction') || haystack.includes('btp')) return SERVICE_VISUALS.construction;
   if (haystack.includes('agriculture') || haystack.includes('agricole')) return SERVICE_VISUALS.agriculture;
   if (haystack.includes('sport') || haystack.includes('fitness')) return SERVICE_VISUALS.sport;

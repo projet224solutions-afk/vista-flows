@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -61,6 +62,7 @@ interface WalletTransaction {
 }
 
 export function DriverEarnings({ driverId }: DriverEarningsProps) {
+  const { t } = useTranslation();
   const [rides, setRides] = useState<Ride[]>([]);
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [stats, setStats] = useState<EarningsStats>({
@@ -231,7 +233,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
   // ─── Dépôt ───────────────────────────────────────────────
   const handleDeposit = async () => {
     if (!depositAmount || parseFloat(depositAmount) <= 0) {
-      toast.error('Veuillez entrer un montant valide');
+      toast.error(t('driverEarnings.veuillezEntrerUnMontantValide'));
       return;
     }
 
@@ -240,7 +242,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
       const result = await depositToWallet(parseFloat(depositAmount), 'Dépôt wallet chauffeur');
       if (!result.success) throw new Error(result.error || 'Erreur lors du dépôt');
 
-      toast.success('Dépôt effectué avec succès');
+      toast.success(t('driverEarnings.depotEffectueAvecSucces'));
       setDepositAmount('');
       setDepositOpen(false);
       reload();
@@ -256,11 +258,11 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
   const handleWithdrawRequest = () => {
     const amount = parseFloat(withdrawAmount);
     if (isNaN(amount) || amount <= 0) {
-      toast.error('Montant invalide');
+      toast.error(t('driverEarnings.montantInvalide'));
       return;
     }
     if (amount > balance) {
-      toast.error('Solde insuffisant');
+      toast.error(t('driverEarnings.soldeInsuffisant'));
       return;
     }
 
@@ -348,7 +350,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
       setPinSetupOpen(false);
 
       if (pinSetupMode === 'setup' && pendingWithdrawAmount > 0) {
-        toast.success('Code PIN activé. Confirmez votre retrait.');
+        toast.success(t('driverEarnings.codePinActiveConfirmezVotre'));
         setPinError(null);
         setPinPromptOpen(true);
         return;
@@ -407,7 +409,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
           <CardContent>
             <div className="space-y-4">
               <div>
-                <p className="text-sm opacity-90">Solde disponible</p>
+                <p className="text-sm opacity-90">{t('driverEarnings.soldeDisponible')}</p>
                 <p className="text-4xl font-bold mt-1">
                   <Money amount={balance || 0} from={currency || 'GNF'} />
                 </p>
@@ -420,7 +422,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
               </div>
 
               {/* Actions rapides du wallet */}
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {/* Dépôt */}
                 <Dialog open={depositOpen} onOpenChange={setDepositOpen}>
                   <DialogTrigger asChild>
@@ -431,7 +433,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Effectuer un dépôt</DialogTitle>
+                      <DialogTitle>{t('driverEarnings.effectuerUnDepot')}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                       <div className="space-y-2">
@@ -439,7 +441,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
                         <Input
                           id="deposit-amount"
                           type="number"
-                          placeholder="Entrez le montant"
+                          placeholder={t('driverEarnings.entrezLeMontant')}
                           value={depositAmount}
                           onChange={(e) => setDepositAmount(e.target.value)}
                         />
@@ -448,7 +450,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
                         {processing ? (
                           <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Traitement...</>
                         ) : (
-                          <><ArrowDownCircle className="w-4 h-4 mr-2" />Confirmer le dépôt</>
+                          <><ArrowDownCircle className="w-4 h-4 mr-2" />{t('driverEarnings.confirmerLeDepot')}</>
                         )}
                       </Button>
                     </div>
@@ -465,7 +467,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Effectuer un retrait</DialogTitle>
+                      <DialogTitle>{t('driverEarnings.effectuerUnRetrait')}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                       <div className="space-y-2">
@@ -473,7 +475,7 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
                         <Input
                           id="withdraw-amount"
                           type="number"
-                          placeholder="Entrez le montant"
+                          placeholder={t('driverEarnings.entrezLeMontant')}
                           value={withdrawAmount}
                           onChange={(e) => setWithdrawAmount(e.target.value)}
                         />
@@ -525,12 +527,12 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
         {showTransactions && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Transactions récentes</CardTitle>
+              <CardTitle className="text-lg">{t('driverEarnings.transactionsRecentes')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 {transactions.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-4">Aucune transaction</p>
+                  <p className="text-center text-muted-foreground py-4">{t('driverEarnings.aucuneTransaction')}</p>
                 ) : (
                   transactions.map((tx) => (
                     <div key={tx.id} className="flex items-center justify-between p-3 border rounded-lg">
@@ -613,12 +615,12 @@ export function DriverEarnings({ driverId }: DriverEarningsProps) {
         {/* Historique des courses */}
         <Card>
           <CardHeader>
-            <CardTitle>Historique des courses</CardTitle>
+            <CardTitle>{t('driverEarnings.historiqueDesCourses')}</CardTitle>
           </CardHeader>
           <CardContent>
             {rides.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                <p>Aucune course terminée</p>
+                <p>{t('driverEarnings.aucuneCourseTerminee')}</p>
               </div>
             ) : (
               <div className="space-y-3">

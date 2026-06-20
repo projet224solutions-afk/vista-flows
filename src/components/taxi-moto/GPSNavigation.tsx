@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Money } from "@/components/Money";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,7 @@ interface GPSNavigationProps {
 }
 
 export function GPSNavigation({ activeRide, currentLocation, onContactCustomer }: GPSNavigationProps) {
+  const { t } = useTranslation();
   const [distance, setDistance] = useState<number | null>(null);
   const [duration, setDuration] = useState<number | null>(null);
 
@@ -74,7 +76,7 @@ export function GPSNavigation({ activeRide, currentLocation, onContactCustomer }
 
   const openGoogleMaps = () => {
     if (!activeRide || !currentLocation) {
-      toast.error("Impossible d'ouvrir la navigation");
+      toast.error(t('gPSNavigation.impossibleDOuvrirLaNavigation'));
       return;
     }
 
@@ -87,7 +89,7 @@ export function GPSNavigation({ activeRide, currentLocation, onContactCustomer }
     const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
 
     window.open(mapsUrl, '_blank');
-    toast.success("Navigation ouverte dans Google Maps");
+    toast.success(t('gPSNavigation.navigationOuverteDansGoogleMaps'));
   };
 
   if (!activeRide) {
@@ -129,7 +131,7 @@ export function GPSNavigation({ activeRide, currentLocation, onContactCustomer }
           {/* Informations client */}
           <div className="bg-white rounded-lg p-3 border border-blue-200">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold text-gray-700">Client</span>
+              <span className="text-sm font-semibold text-gray-700">{t('gPSNavigation.client')}</span>
               <Button
                 variant="outline"
                 size="sm"
@@ -151,7 +153,7 @@ export function GPSNavigation({ activeRide, currentLocation, onContactCustomer }
                 <div className="flex items-start gap-2">
                   <MapPin className="w-5 h-5 text-[#ff4000] mt-0.5" />
                   <div className="flex-1">
-                    <p className="text-xs font-semibold text-[#ff4000] uppercase mb-1">Point de départ</p>
+                    <p className="text-xs font-semibold text-[#ff4000] uppercase mb-1">{t('gPSNavigation.pointDeDepart')}</p>
                     <p className="text-sm text-gray-900">{activeRide.pickup.address}</p>
                   </div>
                 </div>
@@ -185,7 +187,7 @@ export function GPSNavigation({ activeRide, currentLocation, onContactCustomer }
               <div className="bg-white rounded-lg p-3 border border-blue-200 text-center">
                 <div className="flex items-center justify-center gap-1 mb-1">
                   <Clock className="w-3 h-3 text-gray-600" />
-                  <p className="text-xs text-gray-600">Temps estimé</p>
+                  <p className="text-xs text-gray-600">{t('gPSNavigation.tempsEstime')}</p>
                 </div>
                 <p className="text-2xl font-bold text-blue-600">
                   {duration} <span className="text-sm">min</span>
@@ -221,7 +223,7 @@ export function GPSNavigation({ activeRide, currentLocation, onContactCustomer }
         <CardContent className="pt-4">
           <div className="grid grid-cols-2 gap-3 text-center">
             <div>
-              <p className="text-xs text-gray-600 mb-1">Prix estimé</p>
+              <p className="text-xs text-gray-600 mb-1">{t('gPSNavigation.prixEstime')}</p>
               <p className="text-lg font-bold text-[#ff4000]">
                 <Money amount={activeRide.estimatedPrice} from="GNF" />
               </p>

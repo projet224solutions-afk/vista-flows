@@ -4,6 +4,7 @@
  */
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -13,6 +14,7 @@ import { DriverLayout } from '@/components/driver/DriverLayout';
 import { useTheme } from 'next-themes';
 
 export default function DriverSettings() {
+  const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
   const isDark = theme === 'dark';
 
@@ -20,8 +22,8 @@ export default function DriverSettings() {
     <DriverLayout currentPage="settings">
       <div className="p-6 max-w-4xl mx-auto space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Paramètres</h1>
-          <p className="text-muted-foreground">Configurez votre application</p>
+          <h1 className="text-3xl font-bold">{t('driverSettings.parametres')}</h1>
+          <p className="text-muted-foreground">{t('driverSettings.configurezVotreApplication')}</p>
         </div>
 
         {/* Notifications */}
@@ -31,13 +33,13 @@ export default function DriverSettings() {
               <Bell className="h-5 w-5" />
               Notifications
             </CardTitle>
-            <CardDescription>Gérez vos préférences de notification</CardDescription>
+            <CardDescription>{t('driverSettings.gerezVosPreferencesDeNotification')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <Label>Nouvelles missions</Label>
-                <p className="text-sm text-muted-foreground">Recevoir des alertes pour les nouvelles livraisons</p>
+                <p className="text-sm text-muted-foreground">{t('driverSettings.recevoirDesAlertesPourLes')}</p>
               </div>
               <Switch defaultChecked />
             </div>
@@ -45,7 +47,7 @@ export default function DriverSettings() {
             <div className="flex items-center justify-between">
               <div>
                 <Label>Notifications sonores</Label>
-                <p className="text-sm text-muted-foreground">Sons pour les alertes importantes</p>
+                <p className="text-sm text-muted-foreground">{t('driverSettings.sonsPourLesAlertesImportantes')}</p>
               </div>
               <Switch defaultChecked />
             </div>
@@ -53,7 +55,7 @@ export default function DriverSettings() {
             <div className="flex items-center justify-between">
               <div>
                 <Label>Notifications push</Label>
-                <p className="text-sm text-muted-foreground">Recevoir des notifications même hors app</p>
+                <p className="text-sm text-muted-foreground">{t('driverSettings.recevoirDesNotificationsMemeHors')}</p>
               </div>
               <Switch defaultChecked />
             </div>
@@ -67,13 +69,13 @@ export default function DriverSettings() {
               <Navigation className="h-5 w-5" />
               GPS & Navigation
             </CardTitle>
-            <CardDescription>Options de localisation et navigation</CardDescription>
+            <CardDescription>{t('driverSettings.optionsDeLocalisationEtNavigation')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <Label>Tracking GPS automatique</Label>
-                <p className="text-sm text-muted-foreground">Partager votre position en temps réel</p>
+                <p className="text-sm text-muted-foreground">{t('driverSettings.partagerVotrePositionEnTemps')}</p>
               </div>
               <Switch defaultChecked />
             </div>
@@ -95,21 +97,21 @@ export default function DriverSettings() {
               <Lock className="h-5 w-5" />
               Confidentialité et sécurité
             </CardTitle>
-            <CardDescription>Protégez vos données personnelles</CardDescription>
+            <CardDescription>{t('driverSettings.protegezVosDonneesPersonnelles')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <Label>Profil visible</Label>
-                <p className="text-sm text-muted-foreground">Les clients peuvent voir votre profil</p>
+                <Label>{t('driverSettings.profilVisible')}</Label>
+                <p className="text-sm text-muted-foreground">{t('driverSettings.lesClientsPeuventVoirVotre')}</p>
               </div>
               <Switch defaultChecked />
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <div>
-                <Label>Partage de statistiques</Label>
-                <p className="text-sm text-muted-foreground">Partager vos performances avec 224Solutions</p>
+                <Label>{t('driverSettings.partageDeStatistiques')}</Label>
+                <p className="text-sm text-muted-foreground">{t('driverSettings.partagerVosPerformancesAvec224solutions')}</p>
               </div>
               <Switch defaultChecked />
             </div>
@@ -127,13 +129,13 @@ export default function DriverSettings() {
               <Globe className="h-5 w-5" />
               Préférences
             </CardTitle>
-            <CardDescription>Langue et affichage</CardDescription>
+            <CardDescription>{t('driverSettings.langueEtAffichage')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Langue</Label>
               <select className="w-full p-2 border rounded-lg">
-                <option>Français</option>
+                <option>{t('driverSettings.francais')}</option>
                 <option>English</option>
               </select>
             </div>
@@ -141,7 +143,7 @@ export default function DriverSettings() {
             <div className="flex items-center justify-between">
               <div>
                 <Label>Mode sombre</Label>
-                <p className="text-sm text-muted-foreground">Activer le thème sombre</p>
+                <p className="text-sm text-muted-foreground">{t('driverSettings.activerLeThemeSombre')}</p>
               </div>
               <Switch
                 checked={isDark}
@@ -153,8 +155,8 @@ export default function DriverSettings() {
 
         {/* Actions */}
         <div className="flex gap-4">
-          <Button variant="outline" className="flex-1">Annuler</Button>
-          <Button className="flex-1">Enregistrer les modifications</Button>
+          <Button variant="outline" className="flex-1">{t('driverSettings.annuler')}</Button>
+          <Button className="flex-1">{t('driverSettings.enregistrerLesModifications')}</Button>
         </div>
       </div>
     </DriverLayout>

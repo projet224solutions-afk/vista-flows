@@ -4,6 +4,7 @@
  */
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -39,6 +40,7 @@ export default function AgoraVideoCall({
   callerInfo,
   onCallEnd
 }: AgoraVideoCallProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { callState, joinCall, toggleMute, toggleVideo, endCall } = useAgora();
 
@@ -159,7 +161,7 @@ export default function AgoraVideoCall({
               </AvatarFallback>
             </Avatar>
             <h3 className="text-xl font-semibold">{callerInfo?.name}</h3>
-            <p className="text-muted-foreground">Appel vidéo</p>
+            <p className="text-muted-foreground">{t('agoraVideoCall.appelVideo')}</p>
           </div>
 
           <div className="flex gap-2 justify-center">
@@ -189,7 +191,7 @@ export default function AgoraVideoCall({
       <Card className="w-full max-w-md mx-auto">
         <CardContent className="p-8 text-center">
           <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p>Connexion à l'appel...</p>
+          <p>{t('agoraVideoCall.connexionALAppel')}</p>
         </CardContent>
       </Card>
     );

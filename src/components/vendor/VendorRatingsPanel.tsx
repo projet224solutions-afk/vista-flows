@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Star, MessageSquare, User, Calendar, Bot } from 'lucide-react';
@@ -40,6 +41,7 @@ interface RatingStats {
 }
 
 export default function VendorRatingsPanel() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [ratings, setRatings] = useState<VendorRating[]>([]);
   const [stats, setStats] = useState<RatingStats>({
@@ -122,7 +124,7 @@ export default function VendorRatingsPanel() {
       }
     } catch (error) {
       console.error('Error loading ratings:', error);
-      toast.error('Erreur lors du chargement des notes');
+      toast.error(t('vendorRatingsPanel.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -150,7 +152,7 @@ export default function VendorRatingsPanel() {
     return (
       <Card>
         <CardContent className="p-6 text-center">
-          <p className="text-muted-foreground">Chargement des notes...</p>
+          <p className="text-muted-foreground">{t('vendorRatingsPanel.chargementDesNotes')}</p>
         </CardContent>
       </Card>
     );
@@ -167,7 +169,7 @@ export default function VendorRatingsPanel() {
         </CardHeader>
         <CardContent className="text-center py-8">
           <Star className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">Aucune note reçue pour le moment</p>
+          <p className="text-muted-foreground">{t('vendorRatingsPanel.aucuneNoteRecuePourLe')}</p>
           <p className="text-sm text-muted-foreground mt-2">
             Les notes apparaîtront ici lorsque vos clients vous évalueront
           </p>

@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -81,6 +82,7 @@ function _getFileSize(_url: string): string {
 }
 
 export default function DigitalPurchaseDownload() {
+  const { t } = useTranslation();
   const { productId } = useParams<{ productId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -167,7 +169,7 @@ export default function DigitalPurchaseDownload() {
           setTimeout(() => loadAccessAndProduct(retryCount + 1), 1500);
           return;
         }
-        toast.error('Achat non trouvé ou accès non accordé');
+        toast.error(t('digitalPurchaseDownload.achatNonTrouveOuAcces'));
         navigate('/marketplace');
         return;
       }
@@ -192,7 +194,7 @@ export default function DigitalPurchaseDownload() {
 
       if (!productData) {
         console.error('Digital product not found for ID:', productId);
-        toast.error('Produit introuvable');
+        toast.error(t('digitalPurchaseDownload.produitIntrouvable'));
         navigate('/marketplace');
         return;
       }
@@ -205,7 +207,7 @@ export default function DigitalPurchaseDownload() {
 
     } catch (error) {
       console.error('Erreur chargement:', error);
-      toast.error('Erreur lors du chargement');
+      toast.error(t('digitalPurchaseDownload.erreurLorsDuChargement'));
     } finally {
       setLoading(false);
     }
@@ -213,7 +215,7 @@ export default function DigitalPurchaseDownload() {
 
   const handleDownload = async (fileUrl: string) => {
     if (!access || !access.access_granted) {
-      toast.error('Accès non autorisé');
+      toast.error(t('digitalPurchaseDownload.accesNonAutorise'));
       return;
     }
 
@@ -235,10 +237,10 @@ export default function DigitalPurchaseDownload() {
       }
 
       window.open(fileUrl, '_blank');
-      toast.success('Téléchargement lancé !');
+      toast.success(t('digitalPurchaseDownload.telechargementLance'));
     } catch (error) {
       console.error('Erreur téléchargement:', error);
-      toast.error('Erreur lors du téléchargement');
+      toast.error(t('digitalPurchaseDownload.erreurLorsDuTelechargement'));
     } finally {
       setDownloading(null);
     }
@@ -264,7 +266,7 @@ export default function DigitalPurchaseDownload() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Chargement de votre contenu...</p>
+          <p className="text-muted-foreground">{t('digitalPurchaseDownload.chargementDeVotreContenu')}</p>
         </div>
       </div>
     );
@@ -276,7 +278,7 @@ export default function DigitalPurchaseDownload() {
         <Card className="max-w-md w-full">
           <CardContent className="p-8 text-center">
             <AlertCircle className="w-12 h-12 mx-auto mb-4 text-destructive" />
-            <h2 className="text-xl font-semibold mb-2">Achat non trouvé</h2>
+            <h2 className="text-xl font-semibold mb-2">{t('digitalPurchaseDownload.achatNonTrouve')}</h2>
             <p className="text-muted-foreground mb-4">
               Vous n'avez pas accès à ce produit ou l'achat n'a pas été finalisé.
             </p>
@@ -321,7 +323,7 @@ export default function DigitalPurchaseDownload() {
               <p className="text-sm text-muted-foreground">
                 {isSubscription
                   ? `Votre abonnement ${access.billing_cycle === 'yearly' ? 'annuel' : 'mensuel'} est maintenant actif.`
-                  : <>Votre paiement de <LocalPrice amount={access.amount} currency={product.currency || 'GNF'} /> a été confirmé.</>
+                  : <>{t('digitalPurchaseDownload.votrePaiementDe')} <LocalPrice amount={access.amount} currency={product.currency || 'GNF'} /> {t('digitalPurchaseDownload.aEteConfirme')}</>
                 }
               </p>
             </CardContent>
@@ -466,7 +468,7 @@ export default function DigitalPurchaseDownload() {
             ) : (
               <div className="text-center py-10 text-muted-foreground">
                 <Clock className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p className="font-medium text-foreground/70">Contenu en préparation</p>
+                <p className="font-medium text-foreground/70">{t('digitalPurchaseDownload.contenuEnPreparation')}</p>
                 <p className="text-xs mt-1 max-w-xs mx-auto">
                   Le vendeur n'a pas encore ajouté les fichiers téléchargeables.
                   Ils seront disponibles ici dès qu'ils seront mis en ligne.

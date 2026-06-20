@@ -18,6 +18,7 @@ import {
   Users, Clock, CheckCircle, XCircle, Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface ServiceAnalyticsProps {
   serviceId: string;
@@ -45,9 +46,9 @@ interface Stats {
 }
 
 const PERIODS = [
-  { value: '7', label: '7 derniers jours' },
-  { value: '30', label: '30 derniers jours' },
-  { value: '90', label: '3 derniers mois' },
+  { value: '7', labelKey: 'serviceAnalytics.period7' },
+  { value: '30', labelKey: 'serviceAnalytics.period30' },
+  { value: '90', labelKey: 'serviceAnalytics.period90' },
 ];
 
 function formatAmount(n: number) {
@@ -76,6 +77,7 @@ function Trend({ current, prev }: { current: number; prev: number }) {
 }
 
 export function ServiceAnalytics({ serviceId }: ServiceAnalyticsProps) {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const { convert, userCurrency } = usePriceConverter();
   // Axe Y compact (revenus stockés en GNF → devise de l'utilisateur, taux BCRG)
@@ -193,14 +195,14 @@ export function ServiceAnalytics({ serviceId }: ServiceAnalyticsProps) {
     <div className="space-y-6">
       {/* Sélecteur période */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Statistiques Détaillées</h2>
+        <h2 className="text-lg font-semibold">{t('serviceAnalytics.title')}</h2>
         <Select value={period} onValueChange={setPeriod}>
           <SelectTrigger className="w-44 h-8 text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {PERIODS.map(p => (
-              <SelectItem key={p.value} value={p.value} className="text-xs">{p.label}</SelectItem>
+              <SelectItem key={p.value} value={p.value} className="text-xs">{t(p.labelKey)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -211,7 +213,7 @@ export function ServiceAnalytics({ serviceId }: ServiceAnalyticsProps) {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-muted-foreground">Réservations</span>
+              <span className="text-xs text-muted-foreground">{t('serviceAnalytics.bookings')}</span>
               <Calendar className="w-4 h-4 text-muted-foreground" />
             </div>
             <div className="text-2xl font-bold">{s.periodBookings}</div>
@@ -222,7 +224,7 @@ export function ServiceAnalytics({ serviceId }: ServiceAnalyticsProps) {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-muted-foreground">Revenus période</span>
+              <span className="text-xs text-muted-foreground">{t('serviceAnalytics.periodRevenue')}</span>
               <DollarSign className="w-4 h-4 text-muted-foreground" />
             </div>
             <div className="text-xl font-bold">{fc(s.periodRevenue)}</div>
@@ -233,36 +235,36 @@ export function ServiceAnalytics({ serviceId }: ServiceAnalyticsProps) {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-muted-foreground">Note moyenne</span>
+              <span className="text-xs text-muted-foreground">{t('serviceAnalytics.avgRating')}</span>
               <Star className="w-4 h-4 text-muted-foreground" />
             </div>
             <div className="text-2xl font-bold">
               {s.avgRating > 0 ? s.avgRating.toFixed(1) : '—'}
             </div>
-            <span className="text-xs text-muted-foreground">{s.totalReviews} avis</span>
+            <span className="text-xs text-muted-foreground">{s.totalReviews} {t('serviceAnalytics.reviewsWord')}</span>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-muted-foreground">Revenu total</span>
+              <span className="text-xs text-muted-foreground">{t('serviceAnalytics.totalRevenue')}</span>
               <TrendingUp className="w-4 h-4 text-muted-foreground" />
             </div>
             <div className="text-xl font-bold">{fc(s.totalRevenue)}</div>
-            <span className="text-xs text-muted-foreground">{s.totalBookings} au total</span>
+            <span className="text-xs text-muted-foreground">{s.totalBookings} {t('serviceAnalytics.totalWord')}</span>
           </CardContent>
         </Card>
       </div>
 
       {/* Statuts */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <Card className="border-orange-200 bg-orange-50 dark:bg-[#ff4000]/20">
           <CardContent className="p-3 flex items-center gap-2">
             <Clock className="w-4 h-4 text-[#ff4000]" />
             <div>
               <div className="text-lg font-bold text-[#ff4000]">{s.pendingBookings}</div>
-              <div className="text-xs text-[#ff4000]">En attente</div>
+              <div className="text-xs text-[#ff4000]">{t('serviceAnalytics.pending')}</div>
             </div>
           </CardContent>
         </Card>
@@ -271,7 +273,7 @@ export function ServiceAnalytics({ serviceId }: ServiceAnalyticsProps) {
             <CheckCircle className="w-4 h-4 text-[#ff4000]" />
             <div>
               <div className="text-lg font-bold text-[#ff4000]">{s.confirmedBookings}</div>
-              <div className="text-xs text-[#ff4000]">Confirmées</div>
+              <div className="text-xs text-[#ff4000]">{t('serviceAnalytics.confirmed')}</div>
             </div>
           </CardContent>
         </Card>
@@ -280,7 +282,7 @@ export function ServiceAnalytics({ serviceId }: ServiceAnalyticsProps) {
             <XCircle className="w-4 h-4 text-[#ff4000]" />
             <div>
               <div className="text-lg font-bold text-[#ff4000]">{s.cancelledBookings}</div>
-              <div className="text-xs text-[#ff4000]">Annulées</div>
+              <div className="text-xs text-[#ff4000]">{t('serviceAnalytics.cancelled')}</div>
             </div>
           </CardContent>
         </Card>
@@ -291,14 +293,14 @@ export function ServiceAnalytics({ serviceId }: ServiceAnalyticsProps) {
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
             <Users className="w-4 h-4 text-primary" />
-            Réservations par jour
+            {t('serviceAnalytics.bookingsPerDay')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {chartData.every(d => d.bookings === 0) ? (
             <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
               <Calendar className="w-10 h-10 mb-2 opacity-30" />
-              <p className="text-sm">Aucune réservation sur cette période</p>
+              <p className="text-sm">{t('serviceAnalytics.noBookingsPeriod')}</p>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={200}>
@@ -307,7 +309,7 @@ export function ServiceAnalytics({ serviceId }: ServiceAnalyticsProps) {
                 <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
                 <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
                 <Tooltip
-                  formatter={(v: number) => [v, 'Réservations']}
+                  formatter={(v: number) => [v, t('serviceAnalytics.bookings')]}
                   contentStyle={{ fontSize: 12, borderRadius: 8 }}
                 />
                 <Bar dataKey="bookings" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
@@ -322,14 +324,14 @@ export function ServiceAnalytics({ serviceId }: ServiceAnalyticsProps) {
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
             <DollarSign className="w-4 h-4 text-[#ff4000]" />
-            Revenus encaissés
+            {t('serviceAnalytics.revenue')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {chartData.every(d => d.revenue === 0) ? (
             <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
               <DollarSign className="w-10 h-10 mb-2 opacity-30" />
-              <p className="text-sm">Aucun revenu sur cette période</p>
+              <p className="text-sm">{t('serviceAnalytics.noRevenuePeriod')}</p>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={200}>
@@ -338,7 +340,7 @@ export function ServiceAnalytics({ serviceId }: ServiceAnalyticsProps) {
                 <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" />
                 <YAxis tick={{ fontSize: 10 }} tickFormatter={compactAxis} width={64} />
                 <Tooltip
-                  formatter={(v: number) => [fc(v), 'Revenus']}
+                  formatter={(v: number) => [fc(v), t('serviceAnalytics.revenueShort')]}
                   contentStyle={{ fontSize: 12, borderRadius: 8 }}
                 />
                 <Line

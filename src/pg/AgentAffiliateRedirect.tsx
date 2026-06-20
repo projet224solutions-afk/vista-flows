@@ -5,12 +5,14 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useSearchParams, useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AgentAffiliateRedirect() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
@@ -85,7 +87,7 @@ export default function AgentAffiliateRedirect() {
         }, 1500);
       } else {
         setStatus('invalid');
-        toast.error('Lien invalide ou expiré', {
+        toast.error(t('agentAffiliateRedirect.lienInvalideOuExpire'), {
           description: 'Ce lien d\'affiliation n\'est plus valide.'
         });
 
@@ -111,7 +113,7 @@ export default function AgentAffiliateRedirect() {
           {status === 'loading' && (
             <>
               <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-              <h2 className="text-xl font-semibold mb-2">Vérification du lien...</h2>
+              <h2 className="text-xl font-semibold mb-2">{t('agentAffiliateRedirect.verificationDuLien')}</h2>
               <p className="text-muted-foreground">Veuillez patienter</p>
             </>
           )}
@@ -121,7 +123,7 @@ export default function AgentAffiliateRedirect() {
               <div className="w-16 h-16 rounded-full bg-orange-100 flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="h-8 w-8 text-[#ff4000]" />
               </div>
-              <h2 className="text-xl font-semibold mb-2 text-[#ff4000]">Lien vérifié !</h2>
+              <h2 className="text-xl font-semibold mb-2 text-[#ff4000]">{t('agentAffiliateRedirect.lienVerifie')}</h2>
               <p className="text-muted-foreground mb-4">
                 Invitation de <span className="font-semibold text-primary">{agentName}</span>
               </p>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +32,7 @@ interface PermissionManagerProps {
 }
 
 export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
+  const { t } = useTranslation();
   const { permissions, permissionCatalog, loading, grantPermission, revokePermission, loadPermissions } = usePDGAgentPermissions(pdgId);
   const { agents, loading: _agentsLoading } = usePDGAgentsData();
 
@@ -117,10 +119,10 @@ export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
         <CardContent className="space-y-4">
           {/* Sélection de l'agent */}
           <div className="space-y-2">
-            <Label>Sélectionner un agent</Label>
+            <Label>{t('pDGAgentPermissionManager.selectionnerUnAgent')}</Label>
             <Select value={selectedAgent} onValueChange={setSelectedAgent}>
               <SelectTrigger>
-                <SelectValue placeholder="Choisir un agent" />
+                <SelectValue placeholder={t('pDGAgentPermissionManager.choisirUnAgent')} />
               </SelectTrigger>
               <SelectContent>
                 {agents.map(agent => (
@@ -206,7 +208,7 @@ export function PDGAgentPermissionManager({ pdgId }: PermissionManagerProps) {
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle>Ajouter permissions</DialogTitle>
+            <DialogTitle>{t('pDGAgentPermissionManager.ajouterPermissions')}</DialogTitle>
             <DialogDescription>
               Sélectionnez les permissions à accorder à cet agent
             </DialogDescription>

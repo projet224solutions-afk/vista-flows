@@ -236,7 +236,9 @@ export class SyncScheduler {
     // Marquer comme synchronisé
     this.lastSync.set(entity, new Date());
 
-    // Pour les ventes POS, appeler le vrai moteur de sync
+    // Pour les ventes POS, appeler les vrais moteurs de sync (vendeur ET caisse restaurant).
+    // Les deux puisent dans IndexedDB local (même appareil = même propriétaire) ; chacun ne
+    // traite que SES événements (type 'sale'/'credit_sale' vs 'restaurant_pos_sale').
     if (entity === 'pos_sales') {
       try {
         const { syncOfflinePosSales } = await import('@/lib/offlinePosSync');
@@ -246,6 +248,24 @@ export class SyncScheduler {
         }
       } catch (err) {
         console.warn(`[SyncScheduler] ⚠️ Erreur sync pos_sales:`, err);
+      }
+      try {
+        const { syncOfflineRestaurantSales } = await import('@/lib/offlineRestaurantSync');
+        const rResult = await syncOfflineRestaurantSales();
+        if (rResult.total > 0) {
+          console.log(`[SyncScheduler] ✅ restaurant POS sync: ${rResult.synced}/${rResult.total} synchronisées`);
+        }
+      } catch (err) {
+        console.warn(`[SyncScheduler] ⚠️ Erreur sync restaurant POS:`, err);
+      }
+      try {
+        const { syncOfflinePharmacySales } = await import('@/lib/offlinePharmacySync');
+        const pResult = await syncOfflinePharmacySales();
+        if (pResult.total > 0) {
+          console.log(`[SyncScheduler] ✅ pharmacy POS sync: ${pResult.synced}/${pResult.total} synchronisées`);
+        }
+      } catch (err) {
+        console.warn(`[SyncScheduler] ⚠️ Erreur sync pharmacie POS:`, err);
       }
       return;
     }

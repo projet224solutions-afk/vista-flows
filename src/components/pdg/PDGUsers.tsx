@@ -1,5 +1,5 @@
-// @ts-nocheck
 import { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -59,6 +59,7 @@ const COUNTRY_OPTIONS = [
 ];
 
 export default function PDGUsers() {
+  const { t } = useTranslation();
   const [users, setUsers] = useState<unknown[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(true);
@@ -210,7 +211,7 @@ export default function PDGUsers() {
       }
     } catch (error) {
       console.error('Erreur chargement utilisateurs:', error);
-      toast.error('Erreur lors du chargement des utilisateurs');
+      toast.error(t('pDGUsers.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -256,7 +257,7 @@ export default function PDGUsers() {
       toast.success(currentStatus ? 'Utilisateur suspendu' : 'Utilisateur activé');
       loadUsers();
     } catch (_error) {
-      toast.error('Erreur lors de la modification du statut');
+      toast.error(t('pDGUsers.erreurLorsDeLaModification'));
     }
   };
 
@@ -361,8 +362,8 @@ export default function PDGUsers() {
       {/* Filters */}
       <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle>Gestion des Utilisateurs</CardTitle>
-          <CardDescription>Recherche et filtrage</CardDescription>
+          <CardTitle>{t('pDGUsers.gestionDesUtilisateurs')}</CardTitle>
+          <CardDescription>{t('pDGUsers.rechercheEtFiltrage')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex gap-4">
@@ -370,7 +371,7 @@ export default function PDGUsers() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Rechercher par email, nom..."
+                  placeholder={t('pDGUsers.rechercherParEmailNom')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 bg-background"
@@ -379,13 +380,13 @@ export default function PDGUsers() {
             </div>
             <Select value={roleFilter} onValueChange={setRoleFilter}>
               <SelectTrigger className="w-48 bg-background">
-                <SelectValue placeholder="Filtrer par rôle" />
+                <SelectValue placeholder={t('pDGUsers.filtrerParRole')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous les rôles</SelectItem>
+                <SelectItem value="all">{t('pDGUsers.tousLesRoles')}</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="vendeur">Vendeur</SelectItem>
-                <SelectItem value="client">Client</SelectItem>
+                <SelectItem value="vendeur">{t('pDGUsers.vendeur')}</SelectItem>
+                <SelectItem value="client">{t('pDGUsers.client')}</SelectItem>
                 <SelectItem value="livreur">Livreur</SelectItem>
                 <SelectItem value="taxi">Taxi</SelectItem>
                 <SelectItem value="transitaire">Transitaire</SelectItem>
@@ -511,14 +512,14 @@ export default function PDGUsers() {
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+                        <AlertDialogTitle>{t('pDGUsers.confirmerLaSuppression')}</AlertDialogTitle>
                         <AlertDialogDescription>
                           Êtes-vous sûr de vouloir supprimer l'utilisateur <strong>{user.email}</strong> ?
                           Cette action est irréversible et supprimera toutes les données associées.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Annuler</AlertDialogCancel>
+                        <AlertDialogCancel>{t('pDGUsers.annuler')}</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => deleteUser(user.id, user.email)}
                           className="bg-[#ff4000] hover:bg-[#ff4000]"
@@ -599,7 +600,7 @@ export default function PDGUsers() {
                             onClick={() => {
                               // Copier l'ID du service
                               navigator.clipboard.writeText(service.id);
-                              toast.success('ID du service copié');
+                              toast.success(t('pDGUsers.idDuServiceCopie'));
                             }}
                             className="ml-2"
                           >
@@ -619,14 +620,14 @@ export default function PDGUsers() {
       {filteredUsers.length === 0 && (
         <Card className="border-border/40 bg-card/50 backdrop-blur-sm">
           <CardContent className="p-12 text-center">
-            <p className="text-muted-foreground">Aucun utilisateur trouvé</p>
+            <p className="text-muted-foreground">{t('pDGUsers.aucunUtilisateurTrouve')}</p>
           </CardContent>
         </Card>
       )}
 
       {/* Dialog changement de devise */}
       <Dialog open={currencyDialog.open} onOpenChange={open => setCurrencyDialog(d => ({ ...d, open }))}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Globe className="w-5 h-5" />
@@ -638,13 +639,13 @@ export default function PDGUsers() {
               Utilisateur : <strong>{currencyDialog.user?.email}</strong>
             </p>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Pays de résidence</label>
+              <label className="text-sm font-medium">{t('pDGUsers.paysDeResidence')}</label>
               <Select
                 value={currencyDialog.selectedCountry}
                 onValueChange={v => setCurrencyDialog(d => ({ ...d, selectedCountry: v, error: null }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un pays..." />
+                  <SelectValue placeholder={t('pDGUsers.selectionnerUnPays')} />
                 </SelectTrigger>
                 <SelectContent>
                   {COUNTRY_OPTIONS.map(c => (

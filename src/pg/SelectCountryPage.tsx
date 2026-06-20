@@ -6,6 +6,7 @@
  */
 
 import { useState, useMemo } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -115,6 +116,7 @@ const COUNTRIES: Array<{ code: string; name: string; flag: string }> = [
 ];
 
 export default function SelectCountryPage() {
+  const { t } = useTranslation();
   const navigate  = useNavigate();
   const location  = useLocation();
   const { user, profile, refreshProfile } = useAuth();
@@ -216,7 +218,7 @@ export default function SelectCountryPage() {
           <div className="flex justify-center mb-3">
             <Globe className="w-10 h-10 opacity-90" />
           </div>
-          <h1 className="text-2xl font-bold">Votre pays de résidence</h1>
+          <h1 className="text-2xl font-bold">{t('selectCountryPage.votrePaysDeResidence')}</h1>
           <p className="text-blue-200 text-sm mt-2">
             Sélectionnez le pays où vous résidez.<br />
             Votre devise wallet sera attribuée automatiquement.
@@ -268,7 +270,7 @@ export default function SelectCountryPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
-                  placeholder="Rechercher un pays..."
+                  placeholder={t('selectCountryPage.rechercherUnPays')}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-9"

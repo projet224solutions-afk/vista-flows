@@ -13,6 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 import WalletTransactionHistory from "@/components/WalletTransactionHistory";
 import { UnifiedTransferDialog } from "./UnifiedTransferDialog";
 import StripeWalletTopup from "./StripeWalletTopup";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { PaymentMethodsManager } from "@/components/payment/PaymentMethodsManager";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,6 +46,7 @@ export default function UniversalWalletDashboard({
   const [_transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [hidden, setHidden] = useState(false);
+  const [showPaymentMethods, setShowPaymentMethods] = useState(false);
 
   const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
@@ -174,7 +177,7 @@ export default function UniversalWalletDashboard({
       .subscribe();
 
     return () => {
-      channel.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, [userId, loadWallet]);
 
@@ -525,7 +528,7 @@ export default function UniversalWalletDashboard({
                       toast.info(`Envoi de la demande ${depositMethod === 'orange' ? 'Orange Money' : 'MTN MoMo'}...`);
                       // TODO: Intégrer l'API Orange Money / MTN MoMo
                       setTimeout(() => {
-                        toast.success('Demande envoyée ! Confirmez sur votre téléphone.');
+                        toast.success(t('universalWalletDashboard.demandeEnvoyeeConfirmezSurVotre'));
                       }, 1500);
                     }}
                     disabled={busy || !depositAmount || !phoneNumber}
@@ -683,6 +686,25 @@ export default function UniversalWalletDashboard({
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Moyens de paiement — sous Dépôt/Retrait/Transfert */}
+      <Button
+        variant="outline"
+        className="w-full gap-2"
+        onClick={() => setShowPaymentMethods(true)}
+      >
+        <CreditCard className="w-4 h-4" />
+        Moyens de paiement
+      </Button>
+
+      <Dialog open={showPaymentMethods} onOpenChange={setShowPaymentMethods}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t('universalWalletDashboard.moyensDePaiement')}</DialogTitle>
+          </DialogHeader>
+          <PaymentMethodsManager />
+        </DialogContent>
+      </Dialog>
 
       {/* Historique des transactions */}
       {showTransactions && (

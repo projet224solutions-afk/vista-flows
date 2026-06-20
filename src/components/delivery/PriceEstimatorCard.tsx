@@ -4,6 +4,7 @@
  */
 
 import { Card, CardContent } from '@/components/ui/card';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Money } from '@/components/Money';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -16,6 +17,7 @@ interface PriceEstimatorCardProps {
 }
 
 export function PriceEstimatorCard({ estimate, loading }: PriceEstimatorCardProps) {
+  const { t } = useTranslation();
   if (loading) {
     return (
       <Card className="bg-gradient-to-br from-orange-500/10 to-[#ff4000]/10 border-orange-500/20">
@@ -38,7 +40,7 @@ export function PriceEstimatorCard({ estimate, loading }: PriceEstimatorCardProp
         <div className="text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
             <DollarSign className="h-6 w-6 text-orange-600" />
-            <span className="text-sm font-medium text-muted-foreground">Prix estimé</span>
+            <span className="text-sm font-medium text-muted-foreground">{t('priceEstimatorCard.prixEstime')}</span>
           </div>
           <div className="text-4xl font-bold text-orange-600">
             <Money amount={estimate.totalPrice} from="GNF" />
@@ -54,7 +56,7 @@ export function PriceEstimatorCard({ estimate, loading }: PriceEstimatorCardProp
         {/* Détails du prix */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Prix de base</span>
+            <span className="text-muted-foreground">{t('priceEstimatorCard.prixDeBase')}</span>
             <span className="font-medium"><Money amount={estimate.breakdown.base} from="GNF" /></span>
           </div>
           <div className="flex items-center justify-between text-sm">
@@ -73,7 +75,7 @@ export function PriceEstimatorCard({ estimate, loading }: PriceEstimatorCardProp
             </div>
           )}
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Frais de service</span>
+            <span className="text-muted-foreground">{t('priceEstimatorCard.fraisDeService')}</span>
             <span className="font-medium"><Money amount={estimate.breakdown.serviceFee} from="GNF" /></span>
           </div>
         </div>

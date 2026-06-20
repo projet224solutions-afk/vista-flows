@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow, differenceInMinutes } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface FundsRelease {
   id: string;
@@ -59,6 +60,7 @@ interface WalletBalance {
 }
 
 export function FundsReleaseStatus() {
+  const { t } = useTranslation();
   const [releases, setReleases] = useState<FundsRelease[]>([]);
   const [walletBalance, setWalletBalance] = useState<WalletBalance | null>(null);
   const [loading, setLoading] = useState(true);
@@ -136,11 +138,11 @@ export function FundsReleaseStatus() {
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: any; label: string; icon: any }> = {
-      PENDING: { variant: 'secondary', label: 'En révision', icon: AlertTriangle },
-      SCHEDULED: { variant: 'default', label: 'Planifié', icon: Clock },
-      RELEASED: { variant: 'default', label: 'Libéré', icon: CheckCircle },
-      REJECTED: { variant: 'destructive', label: 'Rejeté', icon: AlertTriangle },
-      DISPUTED: { variant: 'destructive', label: 'En litige', icon: AlertTriangle },
+      PENDING: { variant: 'secondary', label: t('fundsReleaseStatus.statusPending'), icon: AlertTriangle },
+      SCHEDULED: { variant: 'default', label: t('fundsReleaseStatus.statusScheduled'), icon: Clock },
+      RELEASED: { variant: 'default', label: t('fundsReleaseStatus.statusReleased'), icon: CheckCircle },
+      REJECTED: { variant: 'destructive', label: t('fundsReleaseStatus.statusRejected'), icon: AlertTriangle },
+      DISPUTED: { variant: 'destructive', label: t('fundsReleaseStatus.statusDisputed'), icon: AlertTriangle },
     };
 
     const config = variants[status] || variants.PENDING;
@@ -171,7 +173,7 @@ export function FundsReleaseStatus() {
     const remainingMinutes = differenceInMinutes(scheduled, now);
 
     if (remainingMinutes <= 0) {
-      return 'Bientôt disponible';
+      return t('fundsReleaseStatus.soonAvailable');
     }
 
     if (remainingMinutes < 60) {
@@ -198,7 +200,7 @@ export function FundsReleaseStatus() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Solde disponible
+              {t('fundsReleaseStatus.availableBalance')}
             </CardTitle>
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -207,7 +209,7 @@ export function FundsReleaseStatus() {
               {((walletBalance?.balance || 0) / 100).toFixed(2)} XOF
             </div>
             <p className="text-xs text-muted-foreground">
-              Utilisable immédiatement
+              {t('fundsReleaseStatus.usableNow')}
             </p>
           </CardContent>
         </Card>
@@ -215,7 +217,7 @@ export function FundsReleaseStatus() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Total reçu
+              {t('fundsReleaseStatus.totalReceived')}
             </CardTitle>
             <Clock className="h-4 w-4 text-[#ff4000]" />
           </CardHeader>
@@ -224,7 +226,7 @@ export function FundsReleaseStatus() {
               {((walletBalance?.total_received || 0) / 100).toFixed(2)} XOF
             </div>
             <p className="text-xs text-muted-foreground">
-              {releases.length} paiement{releases.length > 1 ? 's' : ''} en cours
+              {releases.length} {t('fundsReleaseStatus.paymentsInProgress')}
             </p>
           </CardContent>
         </Card>
@@ -232,7 +234,7 @@ export function FundsReleaseStatus() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Total envoyé
+              {t('fundsReleaseStatus.totalSent')}
             </CardTitle>
             <TrendingUp className="h-4 w-4 text-[#ff4000]" />
           </CardHeader>
@@ -241,7 +243,7 @@ export function FundsReleaseStatus() {
               {((walletBalance?.total_sent || 0) / 100).toFixed(2)} XOF
             </div>
             <p className="text-xs text-muted-foreground">
-              Toutes périodes confondues
+              {t('fundsReleaseStatus.allPeriods')}
             </p>
           </CardContent>
         </Card>
@@ -253,10 +255,10 @@ export function FundsReleaseStatus() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" />
-              Libérations en cours
+              {t('fundsReleaseStatus.releasesInProgress')}
             </CardTitle>
             <CardDescription>
-              Vos paiements en cours de validation et de libération
+              {t('fundsReleaseStatus.releasesDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -281,7 +283,7 @@ export function FundsReleaseStatus() {
                             {getStatusBadge(release.status)}
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            Reçu {formatDistanceToNow(new Date(release.held_at), {
+                            {t('fundsReleaseStatus.received')} {formatDistanceToNow(new Date(release.held_at), {
                               addSuffix: true,
                               locale: fr,
                             })}
@@ -296,7 +298,7 @@ export function FundsReleaseStatus() {
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">
-                              Libération dans: {getRemainingTime(release.scheduled_release_at)}
+                              {t('fundsReleaseStatus.releaseIn')} {getRemainingTime(release.scheduled_release_at)}
                             </span>
                             <span className="font-medium">{Math.round(progress)}%</span>
                           </div>
@@ -311,10 +313,10 @@ export function FundsReleaseStatus() {
                             <AlertTriangle className="h-5 w-5 text-[#ff4000] mt-0.5" />
                             <div>
                               <p className="font-medium text-[#ff4000]">
-                                Révision en cours
+                                {t('fundsReleaseStatus.reviewInProgress')}
                               </p>
                               <p className="text-sm text-[#ff4000] mt-1">
-                                Votre paiement nécessite une validation manuelle par notre équipe. Cela peut prendre jusqu'à 24 heures.
+                                {t('fundsReleaseStatus.reviewText')}
                               </p>
                             </div>
                           </div>
@@ -324,7 +326,7 @@ export function FundsReleaseStatus() {
                       {/* Info */}
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                          <span className="text-muted-foreground">Transaction:</span>
+                          <span className="text-muted-foreground">{t('fundsReleaseStatus.transaction')}</span>
                           <p className="font-mono text-xs mt-1">
                             {Array.isArray(release.stripe_transaction)
                               ? release.stripe_transaction[0]?.stripe_payment_intent_id?.slice(0, 20)
@@ -333,9 +335,9 @@ export function FundsReleaseStatus() {
                           </p>
                         </div>
                         <div>
-                          <span className="text-muted-foreground">Type:</span>
+                          <span className="text-muted-foreground">{t('fundsReleaseStatus.type')}</span>
                           <p className="font-medium mt-1">
-                            {release.release_type === 'AUTO' ? 'Automatique' : 'Manuel'}
+                            {release.release_type === 'AUTO' ? t('fundsReleaseStatus.auto') : t('fundsReleaseStatus.manual')}
                           </p>
                         </div>
                       </div>
@@ -355,12 +357,10 @@ export function FundsReleaseStatus() {
             <Shield className="h-5 w-5 text-blue-600 mt-0.5" />
             <div className="space-y-2">
               <p className="font-medium text-blue-900">
-                Système de protection des paiements
+                {t('fundsReleaseStatus.protectionTitle')}
               </p>
               <p className="text-sm text-blue-700">
-                Pour votre sécurité, tous les paiements font l'objet d'une vérification automatique
-                avant libération des fonds. Les paiements à faible risque sont libérés automatiquement
-                après un délai de 30 minutes à 2 heures.
+                {t('fundsReleaseStatus.protectionText')}
               </p>
             </div>
           </div>

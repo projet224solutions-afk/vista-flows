@@ -103,25 +103,60 @@ export interface SupportTicket {
 }
 
 export function useVendorStats() {
-  const { userId, loading: vendorLoading } = useCurrentVendor();
+  const { userId } = useCurrentVendor();
   const [stats, setStats] = useState<VendorStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!userId) {
-      // Le contexte vendeur (useCurrentVendor) résout le vendor_id de façon asynchrone (~1,5 s sur la
-      // base distante). Tant qu'il charge, on RESTE en chargement : sinon le dashboard verrait
-      // stats=null sans erreur et afficherait « Erreur de chargement » prématurément.
-      if (!vendorLoading) setLoading(false);
+      setLoading(false);
       return;
     }
 
     const STATS_CACHE_KEY = `vendor_stats_cache_${userId}`;
 
+    const readCachedStats = (): VendorStats | null => {
+      try {
+        const cached = localStorage.getItem(STATS_CACHE_KEY);
+        return cached ? (JSON.parse(cached) as VendorStats) : null;
+      } catch {
+        return null;
+      }
+    };
+
+    // ⚡ PEINTURE INSTANTANÉE (stale-while-revalidate) : si on a des stats en cache, on les
+    // affiche TOUT DE SUITE et on lève le loading → le dashboard se rend sans attendre le
+    // réseau. La requête ci-dessous rafraîchit ensuite les chiffres en arrière-plan.
+    // Sans cache, on reste en loading jusqu'à la réponse réseau (évite un faux écran d'erreur).
+    const cachedFirstPaint = readCachedStats();
+    if (cachedFirstPaint) {
+      setStats(cachedFirstPaint);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+
     const fetchStats = async () => {
       const startedAt = performance.now();
       console.info('[VENDOR STATS START]', { userId });
+
+      // 📴 HORS LIGNE : servir directement les stats en cache, sans tenter le réseau.
+      // Sinon le lookup vendeur renvoie { data: null } SANS lever d'exception
+      // → on tombait sur « Vendor profile not found » (avant le catch) et le cache
+      // n'était jamais lu → le dashboard affichait l'écran « connectez-vous à Internet ».
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        const cachedStats = readCachedStats();
+        if (cachedStats) {
+          setStats(cachedStats);
+          console.info('[VENDOR STATS SUCCESS]', { source: 'offline_cache' });
+        } else {
+          setError('offline_no_cache');
+          console.warn('[VENDOR STATS] Hors ligne sans cache disponible', { userId });
+        }
+        setLoading(false);
+        return;
+      }
 
       const withTimeout = <T,>(promiseFactory: () => PromiseLike<T>, timeoutMs: number, label: string) =>
         Promise.race<T>([
@@ -143,6 +178,15 @@ export function useVendorStats() {
         );
 
         if (!vendor) {
+          // Le lookup peut renvoyer null sur un échec réseau silencieux (sans throw).
+          // Avant d'abandonner, se rabattre sur les dernières stats connues.
+          const cachedStats = readCachedStats();
+          if (cachedStats) {
+            setStats(cachedStats);
+            console.info('[VENDOR STATS SUCCESS]', { source: 'cache_vendor_lookup_null' });
+            setLoading(false);
+            return;
+          }
           setError('Vendor profile not found');
           console.error('[VENDOR STATS FAIL]', { reason: 'vendor_profile_not_found', userId });
           setLoading(false);
@@ -239,7 +283,11 @@ export function useVendorStats() {
     };
 
     fetchStats();
-  }, [userId, vendorLoading]);
+    // Déps = [userId] uniquement : userId est désormais exposé tout de suite par
+    // useCurrentVendor (= auth user id), donc plus besoin d'attendre vendorLoading.
+    // Inclure vendorLoading provoquerait un second fetch inutile à sa bascule.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
 
   return { stats, loading, error };
 }

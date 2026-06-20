@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from 'react-router-dom';
 import { buildEscrowDisputePayload } from '@/lib/escrow/disputePayload';
 
@@ -8,6 +9,7 @@ interface EscrowDisputeFormProps {
 }
 
 const EscrowDisputeForm: React.FC<EscrowDisputeFormProps> = ({ escrowId, onSubmit }) => {
+  const { t } = useTranslation();
   const [reason, setReason] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
@@ -38,9 +40,9 @@ const EscrowDisputeForm: React.FC<EscrowDisputeFormProps> = ({ escrowId, onSubmi
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-white rounded shadow">
-      <h2 className="text-xl font-bold">Justification du litige</h2>
+      <h2 className="text-xl font-bold">{t('escrowDisputeForm.justificationDuLitige')}</h2>
       <div>
-        <label className="block font-semibold">Motif du litige</label>
+        <label className="block font-semibold">{t('escrowDisputeForm.motifDuLitige')}</label>
         <input
           type="text"
           className="w-full border p-2 rounded"
@@ -50,7 +52,7 @@ const EscrowDisputeForm: React.FC<EscrowDisputeFormProps> = ({ escrowId, onSubmi
         />
       </div>
       <div>
-        <label className="block font-semibold">Explication détaillée</label>
+        <label className="block font-semibold">{t('escrowDisputeForm.explicationDetaillee')}</label>
         <textarea
           className="w-full border p-2 rounded"
           value={description}

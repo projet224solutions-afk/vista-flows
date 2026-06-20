@@ -4,6 +4,7 @@
  */
 
 import { Badge } from '@/components/ui/badge';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Hash, Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 import { formatPublicId } from '@/utils/publicIdFormatter';
@@ -27,6 +28,7 @@ export function PublicIdBadge({
   copyable = true,
   className
 }: PublicIdBadgeProps) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const formattedId = formatPublicId(publicId);
 
@@ -46,7 +48,7 @@ export function PublicIdBadge({
 
       setTimeout(() => setCopied(false), 2000);
     } catch (_error) {
-      toast.error('Erreur lors de la copie');
+      toast.error(t('publicIdBadge.erreurLorsDeLaCopie'));
     }
   };
 

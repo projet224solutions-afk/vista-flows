@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +35,7 @@ interface BugBountyStats {
 }
 
 export function BugBountyProgram() {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const { isMobile } = useResponsive();
   const navigate = useNavigate();
@@ -104,7 +106,7 @@ export function BugBountyProgram() {
 
     } catch (error) {
       console.error('Erreur Bug Bounty:', error);
-      toast.error('Erreur lors du chargement des données Bug Bounty');
+      toast.error(t('bugBountyProgram.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -127,10 +129,10 @@ export function BugBountyProgram() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'resolved': return <Badge className="bg-[#ff4000]">Résolu</Badge>;
+      case 'resolved': return <Badge className="bg-[#ff4000]">{t('bugBountyProgram.resolu')}</Badge>;
       case 'in_review': return <Badge className="bg-blue-500">En revue</Badge>;
-      case 'confirmed': return <Badge className="bg-[#04439e]">Confirmé</Badge>;
-      case 'rejected': return <Badge variant="destructive">Rejeté</Badge>;
+      case 'confirmed': return <Badge className="bg-[#04439e]">{t('bugBountyProgram.confirme')}</Badge>;
+      case 'rejected': return <Badge variant="destructive">{t('bugBountyProgram.rejete')}</Badge>;
       default: return <Badge variant="outline">En attente</Badge>;
     }
   };
@@ -197,12 +199,12 @@ export function BugBountyProgram() {
           <div className="p-4 bg-muted rounded-lg">
             <TrendingUp className="w-8 h-8 text-[#ff4000] mb-2" />
             <div className="text-2xl font-bold">{stats.resolvedVulnerabilities}</div>
-            <div className="text-xs text-muted-foreground">Vulnérabilités corrigées</div>
+            <div className="text-xs text-muted-foreground">{t('bugBountyProgram.vulnerabilitesCorrigees')}</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
             <DollarSign className="w-8 h-8 text-[#ff4000] mb-2" />
             <div className="text-2xl font-bold">{fc(stats.totalRewards)}</div>
-            <div className="text-xs text-muted-foreground">Récompenses versées</div>
+            <div className="text-xs text-muted-foreground">{t('bugBountyProgram.recompensesVersees')}</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
             <Users className="w-8 h-8 text-blue-500 mb-2" />
@@ -223,11 +225,11 @@ export function BugBountyProgram() {
 
         {/* Rapports récents */}
         <div className="space-y-2">
-          <h4 className="font-semibold text-sm">Rapports récents</h4>
+          <h4 className="font-semibold text-sm">{t('bugBountyProgram.rapportsRecents')}</h4>
           {reports.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Bug className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>Aucun rapport de bug soumis</p>
+              <p>{t('bugBountyProgram.aucunRapportDeBugSoumis')}</p>
             </div>
           ) : (
             reports.map((report) => (

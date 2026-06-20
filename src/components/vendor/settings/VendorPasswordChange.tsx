@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +18,7 @@ const passwordSchema = z.string()
   .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/, "Le mot de passe doit contenir au moins un caractère spécial");
 
 export default function VendorPasswordChange() {
+  const { t } = useTranslation();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -86,7 +88,7 @@ export default function VendorPasswordChange() {
 
     // ⚡ Pour les utilisateurs OAuth, pas besoin de mot de passe actuel
     if (!isOAuthUser && !currentPassword.trim()) {
-      toast.error("Veuillez entrer votre mot de passe actuel");
+      toast.error(t('vendorPasswordChange.veuillezEntrerVotreMotDe'));
       return;
     }
 
@@ -99,7 +101,7 @@ export default function VendorPasswordChange() {
     }
 
     if (newPassword !== confirmPassword) {
-      toast.error("Les mots de passe ne correspondent pas");
+      toast.error(t('vendorPasswordChange.lesMotsDePasseNe'));
       return;
     }
 
@@ -108,7 +110,7 @@ export default function VendorPasswordChange() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user?.email) {
-        toast.error("Impossible de récupérer les informations utilisateur");
+        toast.error(t('vendorPasswordChange.impossibleDeRecupererLesInformations'));
         return;
       }
 
@@ -120,7 +122,7 @@ export default function VendorPasswordChange() {
         });
 
         if (signInError) {
-          toast.error("Le mot de passe actuel est incorrect");
+          toast.error(t('vendorPasswordChange.leMotDePasseActuel'));
           setLoading(false);
           return;
         }
@@ -153,7 +155,7 @@ export default function VendorPasswordChange() {
       }
     } catch (error: any) {
       console.error('Erreur changement mot de passe:', error);
-      toast.error("Une erreur est survenue");
+      toast.error(t('vendorPasswordChange.uneErreurEstSurvenue'));
     } finally {
       setLoading(false);
     }
@@ -198,7 +200,7 @@ export default function VendorPasswordChange() {
         <CardContent className="p-6">
           <div className="flex items-center justify-center gap-2">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-            <span className="text-sm text-muted-foreground">Vérification...</span>
+            <span className="text-sm text-muted-foreground">{t('vendorPasswordChange.verification')}</span>
           </div>
         </CardContent>
       </Card>
@@ -237,14 +239,14 @@ export default function VendorPasswordChange() {
           {/* Mot de passe actuel - Seulement pour les utilisateurs NON-OAuth */}
           {!isOAuthUser && (
             <div className="space-y-2">
-              <Label htmlFor="currentPassword">Mot de passe actuel</Label>
+              <Label htmlFor="currentPassword">{t('vendorPasswordChange.motDePasseActuel')}</Label>
               <div className="relative">
                 <Input
                   id="currentPassword"
                   type={showCurrentPassword ? "text" : "password"}
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="Entrez votre mot de passe actuel"
+                  placeholder={t('vendorPasswordChange.entrezVotreMotDePasse')}
                   className="pr-10"
                 />
                 <button
@@ -285,25 +287,25 @@ export default function VendorPasswordChange() {
           {/* Indicateurs de validation */}
           {newPassword.length > 0 && (
             <div className="grid grid-cols-2 gap-2 p-4 bg-muted/50 rounded-lg">
-              <PasswordCheck passed={passwordChecks.length} label="8 caractères minimum" />
-              <PasswordCheck passed={passwordChecks.lowercase} label="Une minuscule" />
-              <PasswordCheck passed={passwordChecks.uppercase} label="Une majuscule" />
-              <PasswordCheck passed={passwordChecks.number} label="Un chiffre" />
-              <PasswordCheck passed={passwordChecks.special} label="Un caractère spécial" />
-              <PasswordCheck passed={passwordChecks.match} label="Mots de passe identiques" />
+              <PasswordCheck passed={passwordChecks.length} label={t('vendorPasswordChange.t8CaracteresMinimum')} />
+              <PasswordCheck passed={passwordChecks.lowercase} label={t('vendorPasswordChange.uneMinuscule')} />
+              <PasswordCheck passed={passwordChecks.uppercase} label={t('vendorPasswordChange.uneMajuscule')} />
+              <PasswordCheck passed={passwordChecks.number} label={t('vendorPasswordChange.unChiffre')} />
+              <PasswordCheck passed={passwordChecks.special} label={t('vendorPasswordChange.unCaractereSpecial')} />
+              <PasswordCheck passed={passwordChecks.match} label={t('vendorPasswordChange.motsDePasseIdentiques')} />
             </div>
           )}
 
           {/* Confirmation mot de passe */}
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirmer le nouveau mot de passe</Label>
+            <Label htmlFor="confirmPassword">{t('vendorPasswordChange.confirmerLeNouveauMotDe')}</Label>
             <div className="relative">
               <Input
                 id="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirmez votre nouveau mot de passe"
+                placeholder={t('vendorPasswordChange.confirmezVotreNouveauMotDe')}
                 className="pr-10"
               />
               <button

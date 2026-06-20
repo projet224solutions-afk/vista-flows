@@ -1,5 +1,6 @@
 ﻿import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useAuth } from '@/hooks/useAuth';
 import SurveillanceLogiqueDashboard from '@/components/pdg/SurveillanceLogiqueDashboard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle } from 'lucide-react';
 
 export default function SurveillancePage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -78,7 +80,7 @@ export default function SurveillancePage() {
               </CardHeader>
               <CardContent className="space-y-4 text-slate-300">
                 <div>
-                  <h3 className="font-semibold text-white mb-2">Qu'est-ce que le système de surveillance?</h3>
+                  <h3 className="font-semibold text-white mb-2">{t('surveillancePage.quEstCeQueLe')}</h3>
                   <p>
                     Le système de surveillance logique est un outil de monitoring avancé qui détecte et corrige automatiquement
                     les anomalies logiques dans 100% des fonctionnalités de Vista-Flows.
@@ -86,36 +88,36 @@ export default function SurveillancePage() {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-white mb-2">120 Règles Métier Surveillées</h3>
+                  <h3 className="font-semibold text-white mb-2">{t('surveillancePage.t120ReglesMetierSurveillees')}</h3>
                   <p>
                     Réparties sur 8 domaines:
                   </p>
                   <ul className="list-disc list-inside space-y-1 ml-4 mt-2">
-                    <li><strong>POS_SALES</strong> - Ventes et points de vente (8 règles)</li>
-                    <li><strong>INVENTORY</strong> - Gestion des stocks (4 règles)</li>
-                    <li><strong>PAYMENTS</strong> - Paiements et transactions (5 règles)</li>
-                    <li><strong>ORDERS</strong> - Commandes et confirmations (4 règles)</li>
-                    <li><strong>DELIVERIES</strong> - Livraisons et tracking (4 règles)</li>
-                    <li><strong>COMMISSIONS</strong> - Calculs de commissions (3 règles)</li>
-                    <li><strong>SECURITY</strong> - Sécurité et permissions (3 règles)</li>
-                    <li><strong>WALLETS</strong> - Portefeuilles et soldes (3 règles)</li>
+                    <li><strong>POS_SALES</strong> {t('surveillancePage.ventesEtPointsDeVente')}</li>
+                    <li><strong>INVENTORY</strong> {t('surveillancePage.gestionDesStocks4Regles')}</li>
+                    <li><strong>PAYMENTS</strong> {t('surveillancePage.paiementsEtTransactions5Regles')}</li>
+                    <li><strong>ORDERS</strong> {t('surveillancePage.commandesEtConfirmations4Regles')}</li>
+                    <li><strong>DELIVERIES</strong> {t('surveillancePage.livraisonsEtTracking4Regles')}</li>
+                    <li><strong>COMMISSIONS</strong> {t('surveillancePage.calculsDeCommissions3Regles')}</li>
+                    <li><strong>SECURITY</strong> {t('surveillancePage.securiteEtPermissions3Regles')}</li>
+                    <li><strong>WALLETS</strong> {t('surveillancePage.portefeuillesEtSoldes3Regles')}</li>
                   </ul>
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-white mb-2">Sévérités des Anomalies</h3>
+                  <h3 className="font-semibold text-white mb-2">{t('surveillancePage.severitesDesAnomalies')}</h3>
                   <div className="grid grid-cols-2 gap-4 mt-2">
                     <div className="p-3 bg-[#ff4000]/30 border border-[#ff4000] rounded">
                       <span className="font-semibold text-[#ff4000]">🔴 CRITICAL</span>
-                      <p className="text-sm mt-1">Impact immédiat sur les données</p>
+                      <p className="text-sm mt-1">{t('surveillancePage.impactImmediatSurLesDonnees')}</p>
                     </div>
                     <div className="p-3 bg-orange-900/30 border border-orange-500 rounded">
                       <span className="font-semibold text-orange-400">🟠 HIGH</span>
-                      <p className="text-sm mt-1">Impact important à court terme</p>
+                      <p className="text-sm mt-1">{t('surveillancePage.impactImportantACourtTerme')}</p>
                     </div>
                     <div className="p-3 bg-[#ff4000]/30 border border-[#ff4000] rounded">
                       <span className="font-semibold text-[#ff4000]">🟡 MEDIUM</span>
-                      <p className="text-sm mt-1">Impact modéré, notification</p>
+                      <p className="text-sm mt-1">{t('surveillancePage.impactModereNotification')}</p>
                     </div>
                     <div className="p-3 bg-[#ff4000]/30 border border-[#ff4000] rounded">
                       <span className="font-semibold text-[#ff4000]">🟢 LOW</span>
@@ -129,19 +131,19 @@ export default function SurveillancePage() {
                   <ul className="space-y-2">
                     <li className="flex gap-2">
                       <span className="text-blue-400">🔍</span>
-                      <span><strong>Détecter</strong> - Lancer une détection complète des anomalies</span>
+                      <span><strong>{t('surveillancePage.detecter')}</strong> {t('surveillancePage.lancerUneDetectionCompleteDes')}</span>
                     </li>
                     <li className="flex gap-2">
                       <span className="text-[#ff4000]">✓</span>
-                      <span><strong>Correction Auto</strong> - Appliquer automatiquement la correction</span>
+                      <span><strong>Correction Auto</strong> {t('surveillancePage.appliquerAutomatiquementLaCorrection')}</span>
                     </li>
                     <li className="flex gap-2">
                       <span className="text-[#04439e]">🔧</span>
-                      <span><strong>Correction Manuelle</strong> - Approuver et corriger manuellement</span>
+                      <span><strong>Correction Manuelle</strong> {t('surveillancePage.approuverEtCorrigerManuellement')}</span>
                     </li>
                     <li className="flex gap-2">
                       <span className="text-[#ff4000]">📈</span>
-                      <span><strong>Exporter</strong> - Télécharger l'analyse en JSON</span>
+                      <span><strong>Exporter</strong> {t('surveillancePage.telechargerLAnalyseEnJson')}</span>
                     </li>
                   </ul>
                 </div>
@@ -153,12 +155,12 @@ export default function SurveillancePage() {
           <TabsContent value="integration" className="space-y-6">
             <Card className="bg-slate-800 border-slate-700">
               <CardHeader>
-                <CardTitle className="text-blue-400">🔌 Détails de l'Intégration</CardTitle>
+                <CardTitle className="text-blue-400">{t('surveillancePage.detailsDeLIntegration')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 text-slate-300">
                 <div>
                   <h3 className="font-semibold text-white mb-2">Architecture</h3>
-                  <p className="mb-3">Le système utilise une architecture 4-couches:</p>
+                  <p className="mb-3">{t('surveillancePage.leSystemeUtiliseUneArchitecture')}</p>
                   <div className="bg-slate-900 p-4 rounded border border-slate-700 text-sm space-y-2 font-mono">
                     <div><span className="text-blue-400">Layer 1:</span> PostgreSQL + RLS</div>
                     <div><span className="text-[#ff4000]">Layer 2:</span> RPC Functions (SECURITY DEFINER)</div>
@@ -168,25 +170,25 @@ export default function SurveillancePage() {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-white mb-2">Détection Automatique</h3>
+                  <h3 className="font-semibold text-white mb-2">{t('surveillancePage.detectionAutomatique')}</h3>
                   <p className="mb-3">
                     La détection des anomalies s'exécute automatiquement toutes les <strong>5 minutes</strong> via un Cron Job Supabase.
                   </p>
                   <div className="bg-slate-900 p-4 rounded border border-slate-700 text-sm">
-                    <p><strong>Prochaine exécution:</strong> Dans ~5 minutes</p>
-                    <p><strong>Nombre de règles exécutées:</strong> 120</p>
-                    <p><strong>Temps d'exécution cible:</strong> &lt; 500ms</p>
+                    <p><strong>{t('surveillancePage.prochaineExecution')}</strong> {t('surveillancePage.dans5Minutes')}</p>
+                    <p><strong>{t('surveillancePage.nombreDeReglesExecutees')}</strong> 120</p>
+                    <p><strong>{t('surveillancePage.tempsDExecutionCible')}</strong> &lt; 500ms</p>
                   </div>
                 </div>
 
                 <div>
                   <h3 className="font-semibold text-white mb-2">Permissions</h3>
-                  <p className="mb-3">Seuls les utilisateurs avec le rôle <strong>PDG</strong> peuvent:</p>
+                  <p className="mb-3">{t('surveillancePage.seulsLesUtilisateursAvecLe')} <strong>PDG</strong> peuvent:</p>
                   <ul className="list-disc list-inside space-y-1">
-                    <li>Voir les anomalies détectées</li>
-                    <li>Approuver les corrections</li>
-                    <li>Accéder aux audit trails</li>
-                    <li>Exporter les analyses</li>
+                    <li>{t('surveillancePage.voirLesAnomaliesDetectees')}</li>
+                    <li>{t('surveillancePage.approuverLesCorrections')}</li>
+                    <li>{t('surveillancePage.accederAuxAuditTrails')}</li>
+                    <li>{t('surveillancePage.exporterLesAnalyses')}</li>
                   </ul>
                 </div>
 
@@ -205,16 +207,16 @@ export default function SurveillancePage() {
           <TabsContent value="support" className="space-y-6">
             <Card className="bg-slate-800 border-slate-700">
               <CardHeader>
-                <CardTitle className="text-blue-400">💬 Support et FAQ</CardTitle>
+                <CardTitle className="text-blue-400">{t('surveillancePage.supportEtFaq')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6 text-slate-300">
                 <div>
-                  <h3 className="font-semibold text-white mb-2 text-lg">❔ Questions Fréquentes</h3>
+                  <h3 className="font-semibold text-white mb-2 text-lg">{t('surveillancePage.questionsFrequentes')}</h3>
                 </div>
 
                 <div className="space-y-4">
                   <div className="border-b border-slate-700 pb-4">
-                    <h4 className="font-semibold text-white mb-2">Q: Qu'est-ce qu'une anomalie?</h4>
+                    <h4 className="font-semibold text-white mb-2">{t('surveillancePage.qQuEstCeQu')}</h4>
                     <p>
                       Une anomalie est une violation d'une règle métier. Par exemple, si une vente est complétée mais le stock
                       n'a pas diminué, c'est une anomalie (règle POS_001).
@@ -222,7 +224,7 @@ export default function SurveillancePage() {
                   </div>
 
                   <div className="border-b border-slate-700 pb-4">
-                    <h4 className="font-semibold text-white mb-2">Q: Qu'est-ce qu'une correction automatique?</h4>
+                    <h4 className="font-semibold text-white mb-2">{t('surveillancePage.qQuEstCeQu2')}</h4>
                     <p>
                       Certaines anomalies peuvent être corrigées automatiquement sans intervention manuelle. Par exemple,
                       corriger un stock négatif à zéro. Les autres anomalies nécessitent l'approbation du PDG.
@@ -230,7 +232,7 @@ export default function SurveillancePage() {
                   </div>
 
                   <div className="border-b border-slate-700 pb-4">
-                    <h4 className="font-semibold text-white mb-2">Q: Comment exporter les données?</h4>
+                    <h4 className="font-semibold text-white mb-2">{t('surveillancePage.qCommentExporterLesDonnees')}</h4>
                     <p>
                       Cliquez sur le bouton "Exporter analyse" pour télécharger un fichier JSON contenant toutes les anomalies
                       détectées, les corrections appliquées et l'audit trail.
@@ -238,7 +240,7 @@ export default function SurveillancePage() {
                   </div>
 
                   <div className="border-b border-slate-700 pb-4">
-                    <h4 className="font-semibold text-white mb-2">Q: Quelle est la fréquence des détections?</h4>
+                    <h4 className="font-semibold text-white mb-2">{t('surveillancePage.qQuelleEstLaFrequence')}</h4>
                     <p>
                       La détection automatique s'exécute toutes les 5 minutes. Vous pouvez aussi déclencher une détection
                       manuelle à tout moment en cliquant sur "Détecter anomalies".
@@ -246,22 +248,22 @@ export default function SurveillancePage() {
                   </div>
 
                   <div className="border-b border-slate-700 pb-4">
-                    <h4 className="font-semibold text-white mb-2">Q: Les données sont-elles sécurisées?</h4>
+                    <h4 className="font-semibold text-white mb-2">{t('surveillancePage.qLesDonneesSontElles')}</h4>
                     <p>
                       Oui. Le système utilise:
                     </p>
                     <ul className="list-disc list-inside ml-4 mt-2 space-y-1">
-                      <li>RLS (Row-Level Security) pour le contrôle d'accès</li>
-                      <li>SECURITY DEFINER pour les RPC functions</li>
-                      <li>Audit trail immuable pour la traçabilité</li>
-                      <li>Accès PDG-only via les policies</li>
+                      <li>{t('surveillancePage.rlsRowLevelSecurityPour')}</li>
+                      <li>{t('surveillancePage.securityDefinerPourLesRpc')}</li>
+                      <li>{t('surveillancePage.auditTrailImmuablePourLa')}</li>
+                      <li>{t('surveillancePage.accesPdgOnlyViaLes')}</li>
                     </ul>
                   </div>
                 </div>
 
                 <div className="mt-6 pt-6 border-t border-slate-700">
-                  <h3 className="font-semibold text-white mb-3">☎️ Contacter le Support</h3>
-                  <p className="mb-3">En cas de problème:</p>
+                  <h3 className="font-semibold text-white mb-3">{t('surveillancePage.contacterLeSupport')}</h3>
+                  <p className="mb-3">{t('surveillancePage.enCasDeProbleme')}</p>
                   <ul className="space-y-2">
                     <li><strong>Email:</strong> support@vista-flows.com</li>
                     <li><strong>Documentation:</strong> docs.vista-flows.com/surveillance</li>

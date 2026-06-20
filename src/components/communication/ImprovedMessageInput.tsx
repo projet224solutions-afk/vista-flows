@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -22,6 +23,7 @@ export default function ImprovedMessageInput({
   disabled = false,
   placeholder = "Tapez votre message..."
 }: ImprovedMessageInputProps) {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [message, setMessage] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -331,7 +333,7 @@ export default function ImprovedMessageInput({
             variant="ghost"
             onClick={() => imageInputRef.current?.click()}
             disabled={disabled || isRecording}
-            title="Ajouter une image"
+            title={t('improvedMessageInput.ajouterUneImage')}
             className="h-9 w-9 hover:bg-primary/10 hover:text-primary"
           >
             <ImageIcon className="w-5 h-5" />
@@ -342,7 +344,7 @@ export default function ImprovedMessageInput({
             variant="ghost"
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled || isRecording}
-            title="Ajouter un fichier"
+            title={t('improvedMessageInput.ajouterUnFichier')}
             className="h-9 w-9 hover:bg-primary/10 hover:text-primary"
           >
             <Paperclip className="w-5 h-5" />

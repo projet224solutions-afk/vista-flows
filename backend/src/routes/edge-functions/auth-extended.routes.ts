@@ -1,6 +1,5 @@
 ﻿import { Router, Request, Response } from "express";
 import { createClient } from "@supabase/supabase-js";
-import speakeasy from "speakeasy";
 import { verifyJWT, AuthenticatedRequest } from "../../middlewares/auth.middleware.js";
 import { requirePermissionOrRole } from "../../middlewares/permissions.middleware.js";
 
@@ -240,18 +239,6 @@ router.post("/pdg-update-agent-email", ...manageAgents, async (req: Request, res
   } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
 });
 
-router.post("/pdg-mfa-verify", verifyJWT, async (req: Request, res: Response) => {
-  try {
-    const { agent_id, otp } = req.body || {};
-    if (!agent_id || !otp) return res.status(400).json({ success: false, error: "agent_id et otp requis" });
-    const { data: mfa } = await supabase.from("mfa_settings").select("totp_secret").eq("user_id", agent_id).maybeSingle();
-    if (!mfa?.totp_secret) return res.status(404).json({ success: false, error: "MFA non configure" });
-    const verified = speakeasy.totp.verify({ secret: mfa.totp_secret, encoding: "base32", token: String(otp), window: 1 });
-    if (!verified) return res.status(401).json({ success: false, error: "Code MFA invalide" });
-    return res.json({ success: true, agent_id, verified: true });
-  } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
-});
-
 router.post("/reset-pdg-password", ...manageAgents, async (req: Request, res: Response) => {
   try {
     const { agent_id, new_password } = req.body || {};
@@ -318,40 +305,72 @@ router.post("/reset-bureau-password", ...manageBureaus, async (req: Request, res
     if (new_password.length < 8) return res.status(400).json({ success: false, error: "Mot de passe trop court (minimum 8 caractères)" });
 
     const { data: bureau, error: bureauError } = await supabase
-      .from("bureaus").select("president_email, bureau_code").eq("id", bureau_id).single();
+      .from("bureaus").select("president_email, president_name, bureau_code").eq("id", bureau_id).single();
     if (bureauError || !bureau?.president_email)
       return res.status(404).json({ success: false, error: "Bureau ou email du président introuvable" });
 
-    const email = bureau.president_email as string;
+    const email = String(bureau.president_email);
+    const fullName = (bureau.president_name as string) || (bureau.bureau_code as string) || "Président";
 
-    // Étape 1 : chercher dans profiles via email (profiles.id = auth.users.id)
+    // Le rôle DOIT être 'syndicat' : c'est le seul rôle qui ouvre l'interface bureau
+    // (/syndicat = SyndicatDashboardUltraPro, résolue par president_email) et qui passe
+    // les gardes de route. Le rôle 'bureau' n'a aucune route fonctionnelle (login cassé).
+    const PRESIDENT_ROLE = "syndicat";
+
+    // ── 1. Résoudre (ou créer) le compte Supabase Auth ────────────────────────
+    let userId: string | null = null;
+    let created = false;
+
+    // a) via profiles (profiles.id = auth.users.id)
     const { data: profile } = await supabase
       .from("profiles").select("id").eq("email", email).maybeSingle();
+    if (profile?.id) userId = profile.id as string;
 
-    if (profile?.id) {
-      const { error: resetError } = await supabase.auth.admin.updateUserById(profile.id, { password: new_password });
-      if (resetError) throw resetError;
-      return res.json({ success: true, email, action: "password_updated" });
-    }
-
-    // Étape 2 : pas dans profiles → chercher dans auth.users (magic link sans profil)
-    const { data: usersData, error: listError } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
-    if (!listError) {
-      const authUser = (usersData?.users || []).find((u: any) => u.email === email);
-      if (authUser) {
-        const { error: resetError } = await supabase.auth.admin.updateUserById(authUser.id, { password: new_password });
-        if (resetError) throw resetError;
-        return res.json({ success: true, email, action: "password_updated" });
+    // b) sinon via auth.users (compte sans profil)
+    if (!userId) {
+      const { data: usersData, error: listError } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      if (!listError) {
+        const authUser = (usersData?.users || []).find((u: any) => u.email === email);
+        if (authUser) userId = authUser.id;
       }
     }
 
-    // Étape 3 : aucun compte existant → créer (le trigger DB crée le profil automatiquement)
-    const { data: authData, error: createError } = await supabase.auth.admin.createUser({
-      email, password: new_password, email_confirm: true,
-      user_metadata: { role: "bureau" }
+    // c) sinon créer le compte
+    if (!userId) {
+      const { data: authData, error: createError } = await supabase.auth.admin.createUser({
+        email, password: new_password, email_confirm: true,
+        user_metadata: { role: PRESIDENT_ROLE, full_name: fullName },
+      });
+      if (createError || !authData?.user) throw createError || new Error("Création du compte échouée");
+      userId = authData.user.id;
+      created = true;
+    } else {
+      // Compte existant → mettre à jour le mot de passe + le rôle dans les métadonnées
+      const { error: resetError } = await supabase.auth.admin.updateUserById(userId, {
+        password: new_password,
+        user_metadata: { role: PRESIDENT_ROLE, full_name: fullName },
+      });
+      if (resetError) throw resetError;
+    }
+
+    // ── 2. Garantir le profil avec le rôle 'syndicat' ─────────────────────────
+    // (le trigger DB crée une ligne de base ; on force le rôle attendu par les routes)
+    const { error: upsertError } = await supabase
+      .from("profiles")
+      .upsert(
+        { id: userId, email, role: PRESIDENT_ROLE, full_name: fullName, is_active: true },
+        { onConflict: "id" },
+      );
+    if (upsertError) {
+      // Repli : au moins forcer le rôle si la ligne existe déjà
+      await supabase.from("profiles").update({ role: PRESIDENT_ROLE }).eq("id", userId);
+    }
+
+    return res.json({
+      success: true,
+      email,
+      action: created ? "account_created_with_password" : "password_updated",
     });
-    if (createError) throw createError;
-    return res.json({ success: true, email, action: "account_created_with_password" });
 
   } catch (err: any) { return res.status(500).json({ success: false, error: err.message }); }
 });

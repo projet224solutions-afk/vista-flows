@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -63,6 +64,7 @@ export function CartItemWithDiscount({
   onUpdateQuantity,
   formatCurrency,
 }: CartItemWithDiscountProps) {
+  const { t } = useTranslation();
   const [isDiscountDialogOpen, setIsDiscountDialogOpen] = useState(false);
   const [discountType, setDiscountType] = useState<'percent' | 'amount'>(
     item.discount.type || 'percent'
@@ -82,7 +84,7 @@ export function CartItemWithDiscount({
     }
 
     if (finalPrice < 0) {
-      toast.error('La remise ne peut pas être supérieure au prix');
+      toast.error(t('cartItemWithDiscount.laRemiseNePeutPas'));
       return;
     }
 
@@ -93,7 +95,7 @@ export function CartItemWithDiscount({
     });
 
     setIsDiscountDialogOpen(false);
-    toast.success('Remise appliquée');
+    toast.success(t('cartItemWithDiscount.remiseAppliquee'));
   };
 
   const handleRemoveDiscount = () => {
@@ -103,7 +105,7 @@ export function CartItemWithDiscount({
       amount: 0,
     });
     setDiscountValue(0);
-    toast.info('Remise supprimée');
+    toast.info(t('cartItemWithDiscount.remiseSupprimee'));
   };
 
   return (
@@ -188,7 +190,7 @@ export function CartItemWithDiscount({
                   size="icon"
                   className="h-7 w-7"
                   onClick={() => setIsDiscountDialogOpen(true)}
-                  title="Appliquer une remise"
+                  title={t('cartItemWithDiscount.appliquerUneRemise')}
                 >
                   <Edit2 className="h-3 w-3" />
                 </Button>
@@ -208,14 +210,14 @@ export function CartItemWithDiscount({
 
       {/* Dialog remise */}
       <Dialog open={isDiscountDialogOpen} onOpenChange={setIsDiscountDialogOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Remise sur {item.name}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
             <div>
-              <Label>Type de remise</Label>
+              <Label>{t('cartItemWithDiscount.typeDeRemise')}</Label>
               <Select
                 value={discountType}
                 onValueChange={(v: 'percent' | 'amount') => setDiscountType(v)}
@@ -225,7 +227,7 @@ export function CartItemWithDiscount({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="percent">Pourcentage (%)</SelectItem>
-                  <SelectItem value="amount">Montant fixe (GNF)</SelectItem>
+                  <SelectItem value="amount">{t('cartItemWithDiscount.montantFixeGnf')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

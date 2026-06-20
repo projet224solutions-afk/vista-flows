@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -67,6 +68,7 @@ interface UserTrackerProps {
 }
 
 export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mode = 'taxi' }: UserTrackerProps = {}) {
+  const { t } = useTranslation();
   const isMerchant = mode === 'merchant';
   const [userId, setUserId] = useState('');
   const [trackedUser, setTrackedUser] = useState<TrackedUser | null>(null);
@@ -97,18 +99,51 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
   const displayLng = live.position?.lng ?? trackedUser?.lastLng;
   const isLive = !!live.position;
 
-  // Suivre la position du chauffeur tant que le tracking est actif
+  // Indique qu'on a une position FIXE de boutique (mode marchand) → le GPS navigateur ne
+  // doit pas l'écraser (le client doit venir À LA BOUTIQUE, pas à la position du téléphone).
+  const shopCoordsLockedRef = useRef(false);
+
+  // Suivre la position du chauffeur tant que le tracking est actif.
+  // En mode marchand, le GPS sert seulement de repli si la boutique n'a pas de coordonnées.
   useEffect(() => {
     if (!isTracking || !navigator.geolocation) return;
     const watchId = navigator.geolocation.watchPosition(
-      (pos) => setMyLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }),
-      () => { /* GPS chauffeur indisponible : itinéraire centré sur le client */ },
-      // maximumAge:2000 → position fraîche (<2s), haute précision via enableHighAccuracy,
-      // robuste (évite les timeouts de démarrage à froid du GPS)
+      (pos) => setMyLocation((prev) => {
+        // Mode marchand : la position fixe de la boutique prime → ne pas écraser.
+        if (isMerchant && shopCoordsLockedRef.current) return prev;
+        return { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy };
+      }),
+      () => { /* GPS indisponible : en marchand, on garde les coords boutique */ },
       { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
     );
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [isTracking]);
+  }, [isTracking, isMerchant]);
+
+  // 🏬 MODE MARCHAND : la position du vendeur = coordonnées ENREGISTRÉES de la boutique
+  // (fixe et fiable). Sans ça, si le GPS du navigateur du vendeur échoue, le client reste
+  // bloqué sur « En attente de la position du vendeur… » et le vendeur ne voit pas le client.
+  useEffect(() => {
+    if (!isMerchant) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || cancelled) return;
+        const { data: v } = await supabase
+          .from('vendors')
+          .select('latitude, longitude')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        const lat = v?.latitude != null ? Number(v.latitude) : null;
+        const lng = v?.longitude != null ? Number(v.longitude) : null;
+        if (!cancelled && lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng)) {
+          shopCoordsLockedRef.current = true;       // la boutique prime sur le GPS navigateur
+          setMyLocation({ lat, lng });
+        }
+      } catch { /* pas de coords boutique → repli GPS navigateur */ }
+    })();
+    return () => { cancelled = true; };
+  }, [isMerchant]);
 
   // ===== Mode course (taxi) : statut occupé + course persistante =====
   // Garde l'état "course active" et la dernière position sans recréer les callbacks
@@ -151,7 +186,7 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
         .then((r) => {
           const delivered = (r as any)?.delivered ?? (r?.data as any)?.delivered;
           if (r?.success && delivered !== false) {
-            toast.info('📲 Notification envoyée au client pour qu\'il ouvre l\'application');
+            toast.info(t('userTracker.notificationEnvoyeeAuClientPour'));
           }
         })
         .catch(() => { /* push best-effort */ });
@@ -162,15 +197,15 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
   // Feedback : le client a confirmé ou refusé le partage de sa position
   useEffect(() => {
     if (live.clientResponse === 'confirmed') {
-      toast.success('✅ Le client a confirmé le partage de sa position');
+      toast.success(t('userTracker.leClientAConfirmeLe'));
       setClientDeclined(false);
     } else if (live.clientResponse === 'declined') {
-      toast.warning('Le client a refusé la demande de localisation');
+      toast.warning(t('userTracker.leClientARefuseLa'));
       setClientDeclined(true);
     }
   }, [live.clientResponse]);
 
-  const hasClientPosition = displayLat !== undefined && displayLng !== undefined;
+  const hasClientPosition = Number.isFinite(displayLat) && Number.isFinite(displayLng);
 
   // ===== Mode vendeur/service : on regarde le CLIENT approcher de NOUS =====
   const clientDistanceKm = (isMerchant && hasClientPosition && myLocation)
@@ -261,7 +296,7 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
     // Accepte un ID brut, un UUID collé ou un lien …/track/<id>
     const raw = extractUserId(userId);
     if (!raw) {
-      toast.error('Veuillez saisir un ID ou un lien de suivi');
+      toast.error(t('userTracker.veuillezSaisirUnIdOu'));
       return;
     }
 
@@ -278,7 +313,7 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
     if (resolved) {
       if (resolved.status !== 'active') {
         setLoading(false);
-        toast.error('Compte introuvable — il est peut-être supprimé ou inexistant');
+        toast.error(t('userTracker.compteIntrouvableIlEstPeut'));
         return;
       }
       if (resolved.trackingKey) id = resolved.trackingKey;
@@ -293,14 +328,14 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
             .from('profiles').select('id').or(filter).limit(1).maybeSingle();
           if (!byPhone?.id) {
             setLoading(false);
-            toast.error('Aucun client trouvé avec ce numéro de téléphone');
+            toast.error(t('userTracker.aucunClientTrouveAvecCe'));
             return;
           }
           id = byPhone.id as string;
         }
       } catch {
         setLoading(false);
-        toast.error('Erreur lors de la recherche');
+        toast.error(t('userTracker.erreurLorsDeLaRecherche'));
         return;
       }
     }
@@ -340,7 +375,7 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
         });
 
         setIsTracking(true);
-        toast.success('🎯 Utilisateur trouvé - Tracking actif');
+        toast.success(t('userTracker.utilisateurTrouveTrackingActif'));
         return;
       }
 
@@ -360,7 +395,7 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
           phone: profileData.phone
         });
         setIsTracking(true);
-        toast.success('👤 Client trouvé — en attente de sa position partagée');
+        toast.success(t('userTracker.clientTrouveEnAttenteDe'));
         return;
       }
 
@@ -368,11 +403,11 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
       //    partagée en direct (le client a peut-être juste donné son ID/lien).
       setTrackedUser({ id });
       setIsTracking(true);
-      toast.success('📡 Suivi de la position en direct activé');
+      toast.success(t('userTracker.suiviDeLaPositionEn'));
 
     } catch (error) {
       console.error('❌ Erreur lors du tracking:', error);
-      toast.error('Erreur lors de la recherche');
+      toast.error(t('userTracker.erreurLorsDeLaRecherche'));
     } finally {
       setLoading(false);
     }
@@ -388,7 +423,7 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
     setLocalizationConfirmed(false);
     setLocalProfile(null);
     setUserId('');
-    toast.info('⏸️ Tracking arrêté');
+    toast.info(t('userTracker.trackingArrete'));
   };
 
   // « Course terminée » : clôt la course et demande au parent de fermer la vue
@@ -399,7 +434,7 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
     setLocalizationConfirmed(false);
     setLocalProfile(null);
     setUserId('');
-    toast.success('✅ Course terminée');
+    toast.success(t('userTracker.courseTerminee'));
     onFinish?.();
   };
 
@@ -436,7 +471,7 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
             isOnline: updated.is_online,
             status: updated.status
           } : null);
-          toast.success('📍 Position mise à jour');
+          toast.success(t('userTracker.positionMiseAJour'));
         }
       )
       .subscribe();
@@ -482,7 +517,7 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
           <div className="space-y-3">
             <div className="flex gap-2">
               <Input
-                placeholder="ID, téléphone ou lien de suivi"
+                placeholder={t('userTracker.idTelephoneOuLienDe')}
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
                 className="font-mono text-sm"
@@ -498,7 +533,7 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              💡 Saisissez l'<strong>ID</strong>, le <strong>numéro de téléphone</strong> ou le <strong>lien</strong> du client pour voir sa position en temps réel
+              💡 Saisissez l'<strong>ID</strong>{t('userTracker.le')} <strong>{t('userTracker.numeroDeTelephone')}</strong> {t('userTracker.ouLe')} <strong>lien</strong> du client pour voir sa position en temps réel
             </p>
           </div>
         )}
@@ -550,7 +585,7 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
                       <p className="text-[11px] font-mono text-muted-foreground">ID : {clientProfile.customId}</p>
                     )}
                     {clientProfile.isShop && (
-                      <Badge variant="outline" className="mt-1 text-[10px]">🏪 Boutique</Badge>
+                      <Badge variant="outline" className="mt-1 text-[10px]">{t('userTracker.boutique')}</Badge>
                     )}
                   </div>
                 </div>
@@ -637,8 +672,9 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
               </div>
             )}
 
-            {/* Position GPS */}
-            {displayLat !== undefined && displayLng !== undefined ? (
+            {/* Position GPS — exiger des nombres FINIS (lastLat/lastLng peuvent être null en
+                base → null.toFixed plantait après confirmation de position). */}
+            {Number.isFinite(displayLat) && Number.isFinite(displayLng) ? (
               isMerchant ? (
               /* MODE VENDEUR/SERVICE : on voit le client approcher de nous */
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
@@ -662,17 +698,17 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
                     </div>
                     <div className="rounded border p-2 bg-white/60">
                       <div className="text-base font-bold text-blue-700">{merchantEtaMin} min</div>
-                      <div className="text-[10px] text-muted-foreground">Arrivée estimée</div>
+                      <div className="text-[10px] text-muted-foreground">{t('userTracker.arriveeEstimee')}</div>
                     </div>
                   </div>
                 )}
                 {merchantMapSrc && !merchantArrived && (
                   <div className="rounded-lg overflow-hidden border border-blue-200 aspect-video bg-white">
-                    <iframe title="Le client en route vers vous" width="100%" height="100%" loading="lazy" referrerPolicy="no-referrer-when-downgrade" src={merchantMapSrc} />
+                    <iframe title={t('userTracker.leClientEnRouteVers')} width="100%" height="100%" loading="lazy" referrerPolicy="no-referrer-when-downgrade" src={merchantMapSrc} />
                   </div>
                 )}
                 {merchantArrived ? (
-                  <p className="text-sm text-center text-[#ff4000] font-medium">🎉 Le client est arrivé à votre position.</p>
+                  <p className="text-sm text-center text-[#ff4000] font-medium">{t('userTracker.leClientEstArriveA')}</p>
                 ) : (
                   <div className="text-xs font-mono text-blue-800 bg-white/50 p-2 rounded border border-blue-100">
                     📍 Client : {displayLat.toFixed(6)}, {displayLng.toFixed(6)}
@@ -701,7 +737,7 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
                 {embedSrc && (
                   <div className="rounded-lg overflow-hidden border border-orange-200 aspect-video bg-white">
                     <iframe
-                      title="Itinéraire vers le client"
+                      title={t('userTracker.itineraireVersLeClient')}
                       width="100%"
                       height="100%"
                       loading="lazy"
@@ -722,11 +758,11 @@ export function UserTracker({ driverName, driverId, onActiveChange, onFinish, mo
                       {myLocation.accuracy ? ` (±${Math.round(myLocation.accuracy)} m)` : ''}
                     </div>
                   ) : (
-                    <div className="text-[#ff4000]">Activez votre GPS pour afficher l'itinéraire complet</div>
+                    <div className="text-[#ff4000]">{t('userTracker.activezVotreGpsPourAfficher')}</div>
                   )}
                   {((live.position?.accuracy ?? 0) > GPS_CONFIG.ACCEPTABLE_ACCURACY_METERS
                     || (myLocation?.accuracy ?? 0) > GPS_CONFIG.ACCEPTABLE_ACCURACY_METERS) && (
-                    <div className="text-[#ff4000]">⚠️ Signal GPS faible — la précision peut varier</div>
+                    <div className="text-[#ff4000]">{t('userTracker.signalGpsFaibleLaPrecision')}</div>
                   )}
                 </div>
 

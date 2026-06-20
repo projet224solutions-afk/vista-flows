@@ -4,6 +4,7 @@
  */
 
 import { Badge } from '@/components/ui/badge';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Shield, DollarSign, Users, Briefcase, Settings, Brain, ChevronDown, Check, X, Store } from 'lucide-react';
@@ -40,6 +41,7 @@ export function AgentPermissionsDisplay({
   showAllPermissions = true, // Par défaut, affiche toutes les permissions
   className
 }: AgentPermissionsDisplayProps) {
+  const { t } = useTranslation();
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>(
     Object.fromEntries(PERMISSION_CATEGORIES.map(cat => [cat.key, true]))
   );
@@ -49,7 +51,7 @@ export function AgentPermissionsDisplay({
       <Card className={cn("border-0 shadow-lg", className)}>
         <CardContent className="py-8 text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-          <p className="text-sm text-muted-foreground">Chargement des permissions…</p>
+          <p className="text-sm text-muted-foreground">{t('agentPermissionsDisplay.chargementDesPermissions')}</p>
         </CardContent>
       </Card>
     );

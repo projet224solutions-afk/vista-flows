@@ -5,6 +5,7 @@
  */
 
 import { useState, useRef } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,7 @@ interface _TicketBatch {
 }
 
 export default function TransportTicketGenerator({ bureauId, bureauName }: { bureauId: string; bureauName?: string }) {
+  const { t } = useTranslation();
   const [isGenerating, setIsGenerating] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -83,13 +85,13 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
 
     // Vérifier le type de fichier
     if (!file.type.startsWith('image/')) {
-      toast.error('Veuillez sélectionner une image');
+      toast.error(t('transportTicketGenerator.veuillezSelectionnerUneImage'));
       return;
     }
 
     // Vérifier la taille (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
-      toast.error('L\'image ne doit pas dépasser 2MB');
+      toast.error(t('transportTicketGenerator.lImageNeDoitPas'));
       return;
     }
 
@@ -114,7 +116,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
       }
 
       setStampUrl(result.url);
-      toast.success('Cachet téléchargé avec succès');
+      toast.success(t('transportTicketGenerator.cachetTelechargeAvecSucces'));
     } catch (error: any) {
       console.error('Erreur upload cachet:', error);
       toast.error(`Erreur: ${error?.message || 'Téléchargement échoué'}`);
@@ -158,11 +160,11 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
 
   const handleGenerateTickets = async () => {
     if (!config.commune) {
-      toast.error('Veuillez saisir la commune');
+      toast.error(t('transportTicketGenerator.veuillezSaisirLaCommune'));
       return;
     }
     if (config.amount <= 0) {
-      toast.error('Le montant doit être supérieur à 0');
+      toast.error(t('transportTicketGenerator.leMontantDoitEtreSuperieur'));
       return;
     }
 
@@ -285,12 +287,12 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Nom du Syndicat */}
             <div className="space-y-2">
-              <Label htmlFor="syndicateName">Nom du Syndicat</Label>
+              <Label htmlFor="syndicateName">{t('transportTicketGenerator.nomDuSyndicat')}</Label>
               <Input
                 id="syndicateName"
                 value={config.syndicateName}
                 onChange={(e) => setConfig({ ...config, syndicateName: e.target.value })}
-                placeholder="Syndicat de Transports Moto-Taxi"
+                placeholder={t('transportTicketGenerator.syndicatDeTransportsMotoTaxi')}
               />
             </div>
 
@@ -308,13 +310,13 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
 
             {/* Type de ticket */}
             <div className="space-y-2">
-              <Label htmlFor="ticketType">Type de Ticket</Label>
+              <Label htmlFor="ticketType">{t('transportTicketGenerator.typeDeTicket')}</Label>
               <Select
                 value={config.ticketType}
                 onValueChange={(value) => setConfig({ ...config, ticketType: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner le type" />
+                  <SelectValue placeholder={t('transportTicketGenerator.selectionnerLeType')} />
                 </SelectTrigger>
                 <SelectContent>
                   {ticketTypes.map((type) => (
@@ -328,7 +330,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
 
             {/* Montant */}
             <div className="space-y-2">
-              <Label htmlFor="amount">Montant (GNF)</Label>
+              <Label htmlFor="amount">{t('transportTicketGenerator.montantGnf')}</Label>
               <Input
                 id="amount"
                 type="number"
@@ -379,7 +381,7 @@ export default function TransportTicketGenerator({ bureauId, bureauName }: { bur
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <span className="text-sm text-[#ff4000] font-medium">✓ Cachet téléchargé</span>
+                  <span className="text-sm text-[#ff4000] font-medium">{t('transportTicketGenerator.cachetTelecharge')}</span>
                   <Button
                     variant="outline"
                     size="sm"

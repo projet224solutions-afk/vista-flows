@@ -18,9 +18,17 @@ import { Router, Response } from 'express';
 import { verifyJWT, requireRole } from '../middlewares/auth.middleware.js';
 import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
+import { createNotification, createNotifications } from '../services/notification.service.js';
 import { logger } from '../config/logger.js';
 import { runPlatformMonitors } from '../services/escrowMonitor.service.js';
+import * as autoHealing from '../services/autoHealing.service.js';
+import { getAlertDetails } from '../services/alertDetails.service.js';
 import * as aml from '../services/aml.service.js';
+import { z } from 'zod';
+import { env } from '../config/env.js';
+import { cache } from '../config/redis.js';
+import { requireStepUpMFA } from '../middlewares/stepUpMfa.middleware.js';
+import * as mfa from '../services/totpMfa.service.js';
 
 const router = Router();
 const PDG_ROLES = ['admin', 'pdg', 'ceo'];
@@ -134,7 +142,7 @@ async function safeDeleteByIds(table: string, column: string, ids: string[]): Pr
  * POST /api/admin/delete-user
  * Body : { userId: string, force?: boolean }
  */
-router.post('/delete-user', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+router.post('/delete-user', verifyJWT, requireRole(PDG_ROLES), requireStepUpMFA, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const actorId = req.user!.id;
     const { userId, force } = req.body || {};
@@ -245,13 +253,29 @@ router.post('/delete-user', verifyJWT, requireRole(PDG_ROLES), async (req: Authe
     await safeDelete('financial_quarantine', 'actor_id', userId);
     await safeDelete('moneroo_payments', 'user_id', userId);
     await safeDelete('payment_methods', 'user_id', userId);
+    await safeDelete('escrow_transactions', 'payer_id', userId);
+    await safeDelete('escrow_transactions', 'receiver_id', userId);
 
     // Client
     const { data: customer } = await supabaseAdmin.from('customers').select('id').eq('user_id', userId).maybeSingle();
     if (customer) {
-      await safeDelete('carts', 'customer_id', (customer as any).id);
-      await safeDelete('customer_credits', 'customer_id', (customer as any).id);
-      await safeDelete('customers', 'id', (customer as any).id);
+      const cid = (customer as any).id;
+      // Commandes ACHETEUR : supprimer escrow/items/livraisons AVANT les orders (escrow_transactions.order_id
+      // bloque sinon, FK sans cascade) → sinon la suppression de customers/profiles échoue.
+      const { data: custOrders } = await supabaseAdmin.from('orders').select('id').eq('customer_id', cid);
+      for (const o of (custOrders || []) as any[]) {
+        await safeDelete('escrow_transactions', 'order_id', o.id);
+        await safeDelete('order_items', 'order_id', o.id);
+        await safeDelete('order_status_history', 'order_id', o.id);
+        await safeDelete('delivery_tracking', 'order_id', o.id);
+        await safeDelete('china_logistics', 'order_id', o.id);
+        await safeDelete('payment_schedules', 'order_id', o.id);
+        await safeDelete('deliveries', 'order_id', o.id);
+      }
+      await safeDelete('orders', 'customer_id', cid);
+      await safeDelete('carts', 'customer_id', cid);
+      await safeDelete('customer_credits', 'customer_id', cid);
+      await safeDelete('customers', 'id', cid);
     }
     await safeDelete('advanced_carts', 'user_id', userId);
     await safeDelete('wishlists', 'user_id', userId);
@@ -443,12 +467,20 @@ router.post('/delete-user', verifyJWT, requireRole(PDG_ROLES), async (req: Authe
     await safeDelete('financial_security_alerts', 'user_id', userId);
     if (u?.email) await safeDelete('bug_reports', 'reporter_email', u.email);
 
-    // Profil
-    await safeDelete('profiles', 'id', userId);
-
-    // Nettoyage dynamique des FK restantes + storage (best-effort, RPC)
+    // Nettoyage DYNAMIQUE de toutes les FK publiques restantes (n'importe quelle colonne :
+    // sender_user_id, receiver_user_id, created_by…) AVANT de supprimer le profil → évite
+    // « Database error deleting user » lors de la suppression auth.
     try { await supabaseAdmin.rpc('cleanup_user_references', { target_user_id: userId }); }
     catch (e) { logger.warn(`[admin/delete-user] cleanup_user_references: ${e instanceof Error ? e.message : String(e)}`); }
+
+    // Filet supplémentaire : wallet_transactions référence le user par sender/receiver (pas user_id).
+    await safeDelete('wallet_transactions', 'sender_user_id', userId);
+    await safeDelete('wallet_transactions', 'receiver_user_id', userId);
+
+    // Profil (en dernier, une fois toutes les références nettoyées)
+    await safeDelete('profiles', 'id', userId);
+
+    // Objets de stockage (best-effort)
     try { await supabaseAdmin.rpc('delete_user_storage_objects', { target_user_id: userId }); }
     catch (e) { logger.warn(`[admin/delete-user] storage cleanup: ${e instanceof Error ? e.message : String(e)}`); }
 
@@ -712,11 +744,101 @@ router.post('/ids/normalize', verifyJWT, requireRole(PDG_ROLES), async (req: Aut
  */
 router.get('/platform-monitor', verifyJWT, requireRole(PDG_ROLES), async (_req: AuthenticatedRequest, res: Response) => {
   try {
-    const data = await runPlatformMonitors();
+    // skipFnDomains : on évite le scan RÉSEAU sécurité-frontend dans la requête (timeout serverless →
+    // spinner infini). Ses alertes restent visibles (relues depuis system_alerts, écrites par le cycle 24/7).
+    const data = await runPlatformMonitors({ skipFnDomains: true });
+    // Connexion à l'auto-réparation : ingestion RAPIDE des alertes actives en incidents (sans LLM ici).
+    let autoHealingSummary: { open: number; proposed: number; escalated: number; detected: number } | undefined;
+    try { autoHealingSummary = await autoHealing.ingestAndSummarize(); } catch { /* best-effort */ }
+    res.json({ success: true, data: { ...data, autoHealing: autoHealingSummary } });
+  } catch (error: any) {
+    logger.error(`[admin/platform-monitor] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors de la surveillance plateforme' });
+  }
+});
+
+/**
+ * GET /api/admin/platform-monitor/details?module=&key=
+ * Drill-down d'une anomalie : lignes fautives RÉELLES + infos complètes de l'utilisateur concerné.
+ * Rend chaque alerte cliquable (qui ? quel wallet ? quel montant ?). Réservé PDG/admin.
+ */
+router.get('/platform-monitor/details', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const module = String(req.query.module || '');
+    const key = String(req.query.key || '');
+    if (!key) { res.status(400).json({ success: false, error: 'key requis' }); return; }
+    const data = await getAlertDetails(module, key);
     res.json({ success: true, data });
   } catch (error: any) {
     logger.error(`[admin/platform-monitor] ${error.message}`);
     res.status(500).json({ success: false, error: 'Erreur lors de la surveillance plateforme' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUTO-RÉPARATION SUPERVISÉE (dual-IA : OpenAI propose → Claude vérifie) — réservé PDG/admin.
+// FONDATION : diagnostic + proposition uniquement (aucune exécution automatique).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** GET /api/admin/auto-healing/incidents?status= — liste des incidents + chaîne de diagnostic. */
+router.get('/auto-healing/incidents', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+    const incidents = await autoHealing.listIncidents(status);
+    res.json({ success: true, data: { incidents, providers: autoHealing.providersStatus() } });
+  } catch (error: any) {
+    logger.error(`[admin/auto-healing/list] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors du chargement des incidents' });
+  }
+});
+
+/** POST /api/admin/auto-healing/scan — ingère les alertes actives et lance le diagnostic dual-IA. */
+router.post('/auto-healing/scan', verifyJWT, requireRole(PDG_ROLES), async (_req: AuthenticatedRequest, res: Response) => {
+  try {
+    const result = await autoHealing.scanAndDiagnose();
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    logger.error(`[admin/auto-healing/scan] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors du scan d\'auto-réparation' });
+  }
+});
+
+/** POST /api/admin/auto-healing/:id/diagnose — re-lance le diagnostic dual-IA d'un incident. */
+router.post('/auto-healing/:id/diagnose', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const ok = await autoHealing.diagnoseOne(req.params.id);
+    if (!ok) { res.status(404).json({ success: false, error: 'Incident introuvable' }); return; }
+    res.json({ success: true });
+  } catch (error: any) {
+    logger.error(`[admin/auto-healing/diagnose] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors du diagnostic' });
+  }
+});
+
+/** POST /api/admin/auto-healing/:id/apply — applique la remédiation SÛRE (auto_safe) via son job atomique.
+ *  Refuse les actions argent/sensibles (needs_human). 2FA step-up exigée (non-bloquante en transition). */
+router.post('/auto-healing/:id/apply', verifyJWT, requireRole(PDG_ROLES), requireStepUpMFA, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const result = await autoHealing.applyRemediation(req.params.id, req.user!.id);
+    if (!result.ok) { res.status(400).json({ success: false, error: result.error || 'Application impossible' }); return; }
+    res.json({ success: true });
+  } catch (error: any) {
+    logger.error(`[admin/auto-healing/apply] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors de l\'application de la remédiation' });
+  }
+});
+
+/** POST /api/admin/auto-healing/:id/status { status: 'resolved'|'escalated' } — décision du PDG. */
+router.post('/auto-healing/:id/status', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const status = String(req.body?.status || '');
+    if (status !== 'resolved' && status !== 'escalated') { res.status(400).json({ success: false, error: 'Statut invalide' }); return; }
+    const ok = await autoHealing.setIncidentStatus(req.params.id, status, req.user!.id);
+    if (!ok) { res.status(400).json({ success: false, error: 'Mise à jour impossible' }); return; }
+    res.json({ success: true });
+  } catch (error: any) {
+    logger.error(`[admin/auto-healing/status] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors de la mise à jour' });
   }
 });
 
@@ -758,7 +880,7 @@ router.get('/aml/quarantine', verifyJWT, requireRole(PDG_ROLES), async (req: Aut
 });
 
 /** POST /api/admin/aml/quarantine/:id/release { notes? } — libérer (recrédit tracé). */
-router.post('/aml/quarantine/:id/release', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+router.post('/aml/quarantine/:id/release', verifyJWT, requireRole(PDG_ROLES), requireStepUpMFA, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = await aml.releaseQuarantine(req.params.id, req.user!.id, req.body?.notes);
     res.json({ success: true, data });
@@ -769,7 +891,7 @@ router.post('/aml/quarantine/:id/release', verifyJWT, requireRole(PDG_ROLES), as
 });
 
 /** POST /api/admin/aml/quarantine/:id/reject { notes? } — rejeter (non recrédité). */
-router.post('/aml/quarantine/:id/reject', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+router.post('/aml/quarantine/:id/reject', verifyJWT, requireRole(PDG_ROLES), requireStepUpMFA, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const data = await aml.rejectQuarantine(req.params.id, req.user!.id, req.body?.notes);
     res.json({ success: true, data });
@@ -780,7 +902,7 @@ router.post('/aml/quarantine/:id/reject', verifyJWT, requireRole(PDG_ROLES), asy
 });
 
 /** POST /api/admin/aml/quarantine-amount { user_id, amount, notes? } — mettre un montant du solde en quarantaine. */
-router.post('/aml/quarantine-amount', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+router.post('/aml/quarantine-amount', verifyJWT, requireRole(PDG_ROLES), requireStepUpMFA, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { user_id, amount, notes } = req.body || {};
     if (!user_id) { res.status(400).json({ success: false, error: 'user_id requis' }); return; }
@@ -793,7 +915,7 @@ router.post('/aml/quarantine-amount', verifyJWT, requireRole(PDG_ROLES), async (
 });
 
 /** POST /api/admin/aml/freeze { user_id, frozen, reason? } — geler / dégeler un wallet. */
-router.post('/aml/freeze', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+router.post('/aml/freeze', verifyJWT, requireRole(PDG_ROLES), requireStepUpMFA, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { user_id, frozen, reason } = req.body || {};
     if (!user_id) { res.status(400).json({ success: false, error: 'user_id requis' }); return; }
@@ -819,7 +941,7 @@ router.post('/aml/kyc', verifyJWT, requireRole(PDG_ROLES), async (req: Authentic
 });
 
 /** POST /api/admin/aml/cap-override { user_id, amount|null } — plafond manuel d'un wallet. */
-router.post('/aml/cap-override', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+router.post('/aml/cap-override', verifyJWT, requireRole(PDG_ROLES), requireStepUpMFA, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { user_id, amount } = req.body || {};
     if (!user_id) { res.status(400).json({ success: false, error: 'user_id requis' }); return; }
@@ -854,6 +976,296 @@ router.post('/user-emails', verifyJWT, requireRole(PDG_ROLES), async (req: Authe
   }
 });
 
+/**
+ * GET /api/admin/escrow/transactions — TOUTES les transactions escrow enrichies (PDG only).
+ * Via service_role : contourne la RLS (payer_id/receiver_id = auth.uid()) qui empêchait le
+ * PDG de voir les escrows des autres → affichait 0. Enrichi côté serveur (vendor + order +
+ * litige OUVERT lié) en requêtes GROUPÉES = rapide (fini le N+1).
+ */
+router.get('/escrow/transactions', verifyJWT, requireRole(PDG_ROLES), async (_req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { data: txs, error } = await supabaseAdmin
+      .from('escrow_transactions')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(1000);
+    if (error) throw error;
+    const rows: any[] = txs || [];
+    const ids = rows.map((t) => t.id);
+    const receiverIds = [...new Set(rows.map((t) => t.receiver_id).filter(Boolean))];
+    const orderIds = [...new Set(rows.map((t) => t.order_id).filter(Boolean))];
+
+    const [vendorsRes, ordersRes, disputesRes] = await Promise.all([
+      // receiver_id référence auth.users(id) = user_id du vendeur → on joint par vendors.user_id
+      receiverIds.length ? supabaseAdmin.from('vendors').select('id, business_name, user_id').in('user_id', receiverIds) : Promise.resolve({ data: [] as any[] }),
+      orderIds.length ? supabaseAdmin.from('orders').select('id, order_number').in('id', orderIds) : Promise.resolve({ data: [] as any[] }),
+      ids.length ? supabaseAdmin.from('escrow_disputes').select('id, escrow_id, status, reason, initiator_role, created_at').in('escrow_id', ids).neq('status', 'resolved') : Promise.resolve({ data: [] as any[] }),
+    ]);
+    const vById = new Map((vendorsRes.data || []).map((v: any) => [v.user_id, v]));
+    const oById = new Map((ordersRes.data || []).map((o: any) => [o.id, o]));
+    const dByEscrow = new Map((disputesRes.data || []).map((d: any) => [d.escrow_id, d]));
+
+    const enriched = rows.map((t) => ({
+      ...t,
+      vendor: vById.get(t.receiver_id) || null,
+      order: oById.get(t.order_id) || null,
+      dispute: dByEscrow.get(t.id) || null, // litige ouvert lié à cet escrow (ou null)
+    }));
+    res.json({ success: true, data: enriched });
+  } catch (error: any) {
+    logger.error(`[escrow/transactions] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur chargement transactions escrow' });
+  }
+});
+
+/**
+ * GET /api/admin/disputes/list — liste ENRICHIE des litiges escrow (PDG only).
+ * Via service_role : contourne la RLS de escrow_disputes (qui limite au seul
+ * initiateur) → le PDG voit TOUS les litiges. Enrichi côté serveur (escrow + profils
+ * en requêtes groupées) = affichage rapide, sans N+1 ni problème de permission.
+ */
+router.get('/disputes/list', verifyJWT, requireRole(PDG_ROLES), async (_req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { data: disputes, error } = await supabaseAdmin
+      .from('escrow_disputes')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    const rows: any[] = disputes || [];
+
+    const escrowIds = [...new Set(rows.map((d) => d.escrow_id).filter(Boolean))];
+    const { data: escrows } = escrowIds.length
+      ? await supabaseAdmin.from('escrow_transactions')
+          .select('id, amount, currency, payer_id, receiver_id, order_id, status').in('id', escrowIds)
+      : { data: [] as any[] };
+    const escrowById = new Map((escrows || []).map((e: any) => [e.id, e]));
+
+    const userIds = [...new Set(rows.flatMap((d) => {
+      const e = escrowById.get(d.escrow_id);
+      return [d.initiator_user_id, e?.payer_id, e?.receiver_id];
+    }).filter(Boolean))];
+    const { data: profiles } = userIds.length
+      ? await supabaseAdmin.from('profiles').select('id, full_name, phone, email').in('id', userIds)
+      : { data: [] as any[] };
+    const pById = new Map((profiles || []).map((p: any) => [p.id, p]));
+
+    const enriched = rows.map((d) => {
+      const e = escrowById.get(d.escrow_id) || null;
+      return {
+        ...d,
+        escrow: e,
+        initiator_profile: pById.get(d.initiator_user_id) || null,
+        buyer_profile: e ? (pById.get(e.payer_id) || null) : null,
+        seller_profile: e ? (pById.get(e.receiver_id) || null) : null,
+      };
+    });
+    res.json({ success: true, data: enriched });
+  } catch (error: any) {
+    logger.error(`[disputes/list] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur chargement litiges' });
+  }
+});
+
+/**
+ * POST /api/admin/disputes/resolve { dispute_id, resolution, resolution_notes } — PDG only.
+ * Résolution ATOMIQUE d'un litige escrow (rembourse l'acheteur OU libère le vendeur) via le
+ * RPC resolve_escrow_dispute (1 transaction, verrou anti-double, crédit wallet réel).
+ * Migré depuis l'Edge Function 'resolve-dispute' → 100% backend Node.js.
+ */
+router.post('/disputes/resolve', verifyJWT, requireRole(PDG_ROLES), requireStepUpMFA, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const { dispute_id, resolution, resolution_notes } = req.body || {};
+    if (!dispute_id || !['refund_to_buyer', 'release_to_seller'].includes(resolution)) {
+      res.status(400).json({ success: false, error: 'dispute_id et resolution (refund_to_buyer|release_to_seller) requis' });
+      return;
+    }
+
+    const { error: rpcErr } = await supabaseAdmin.rpc('resolve_escrow_dispute', {
+      p_dispute_id: dispute_id,
+      p_resolution: resolution,
+      p_resolver_id: userId,
+      p_notes: resolution_notes || null,
+    });
+    if (rpcErr) {
+      const msg = String(rpcErr.message || '');
+      const status = /already_resolved/.test(msg) ? 409
+        : /not_refundable|invalid_resolution|dispute_not_found|escrow_not_found/.test(msg) ? 400
+        : 500;
+      logger.warn(`[disputes/resolve] ${dispute_id}: ${msg}`);
+      res.status(status).json({ success: false, error: `Résolution impossible: ${msg}` });
+      return;
+    }
+
+    // Notifier les 2 parties (best-effort, le mouvement est déjà committé)
+    try {
+      const { data: d } = await supabaseAdmin.from('escrow_disputes').select('escrow_id').eq('id', dispute_id).maybeSingle();
+      if ((d as any)?.escrow_id) {
+        const { data: esc } = await supabaseAdmin.from('escrow_transactions').select('payer_id, receiver_id').eq('id', (d as any).escrow_id).maybeSingle();
+        const notifs: any[] = [];
+        if ((esc as any)?.payer_id) notifs.push({
+          userId: (esc as any).payer_id, type: 'dispute', title: 'Litige résolu',
+          message: resolution === 'refund_to_buyer' ? 'Litige résolu : vous avez été remboursé sur votre portefeuille.' : 'Litige résolu : les fonds ont été libérés au vendeur.',
+          metadata: { dispute_id, resolution },
+        });
+        if ((esc as any)?.receiver_id) notifs.push({
+          userId: (esc as any).receiver_id, type: 'dispute', title: 'Litige résolu',
+          message: resolution === 'release_to_seller' ? 'Litige résolu : les fonds vous ont été libérés.' : 'Litige résolu : la commande a été remboursée à l\'acheteur.',
+          metadata: { dispute_id, resolution },
+        });
+        if (notifs.length) await createNotifications(notifs);
+      }
+    } catch (e: any) {
+      logger.warn(`[disputes/resolve] notif non bloquant: ${e?.message}`);
+    }
+
+    logger.info(`[disputes/resolve] ${dispute_id} → ${resolution} by ${userId}`);
+    res.json({ success: true, resolution });
+  } catch (error: any) {
+    logger.error(`[disputes/resolve] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors de la résolution du litige' });
+  }
+});
+
+/**
+ * POST /api/admin/escrow/:escrowId/release — LIBÉRATION ATOMIQUE (PDG only).
+ * ⚠️ Remplace l'ancien chemin via l'edge-function 'escrow-release' qui était un STUB VIDE
+ * (return success sans rien faire → l'argent n'était JAMAIS libéré). Ici on appelle la RPC
+ * atomique release_escrow() (verrou de ligne, net + commission, tout-ou-rien). L'idempotence
+ * est garantie par la RPC : un 2e appel échoue car le statut n'est plus 'held'/'pending'.
+ */
+router.post('/escrow/:escrowId/release', verifyJWT, requireRole(PDG_ROLES), requireStepUpMFA, async (req: AuthenticatedRequest, res: Response) => {
+  const escrowId = req.params.escrowId;
+  if (!/^[0-9a-fA-F-]{36}$/.test(escrowId)) { res.status(400).json({ success: false, error: 'escrowId invalide' }); return; }
+  try {
+    const userId = req.user!.id;
+    const { data: esc, error: e1 } = await supabaseAdmin
+      .from('escrow_transactions')
+      .select('id, status, commission_percent, receiver_id, order_id')
+      .eq('id', escrowId).maybeSingle();
+    if (e1) throw e1;
+    if (!esc) { res.status(404).json({ success: false, error: 'Transaction escrow introuvable' }); return; }
+    if (!['pending', 'held'].includes((esc as any).status)) {
+      res.status(409).json({ success: false, error: `Déjà traité (statut: ${(esc as any).status})` }); return;
+    }
+
+    const commission = Number((esc as any).commission_percent) || 2.5;
+    const { error: rpcErr } = await supabaseAdmin.rpc('release_escrow', {
+      p_escrow_id: escrowId,
+      p_commission_percent: commission,
+      p_released_by: userId,
+    });
+    if (rpcErr) {
+      const msg = String(rpcErr.message || '');
+      logger.warn(`[escrow/release] ${escrowId}: ${msg}`);
+      res.status(/not.*held|already|status/i.test(msg) ? 409 : 400).json({ success: false, error: `Libération impossible: ${msg}` });
+      return;
+    }
+
+    if ((esc as any).order_id) {
+      try { await supabaseAdmin.from('orders').update({ status: 'delivered', payment_status: 'paid', updated_at: new Date().toISOString() }).eq('id', (esc as any).order_id); } catch { /* */ }
+    }
+    try {
+      if ((esc as any).receiver_id) await createNotification({
+        userId: (esc as any).receiver_id, type: 'escrow', title: 'Fonds libérés',
+        message: 'Les fonds de votre vente ont été libérés sur votre portefeuille.', metadata: { escrow_id: escrowId },
+      });
+    } catch (e: any) { logger.warn(`[escrow/release] notif: ${e?.message}`); }
+
+    logger.info(`[escrow/release] ${escrowId} released by ${userId} (commission ${commission}%)`);
+    res.json({ success: true });
+  } catch (error: any) {
+    logger.error(`[escrow/release] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors de la libération' });
+  }
+});
+
+/**
+ * POST /api/admin/escrow/:escrowId/refund — REMBOURSEMENT ATOMIQUE (PDG only).
+ * ⚠️ Remplace l'edge-function 'escrow-refund' qui faisait UPDATE status='refunded' sur la
+ * MAUVAISE table ('escrows') SANS créditer l'acheteur. Ici : RPC refund_order_escrow()
+ * (crédite réellement le wallet acheteur + escrow 'refunded', atomique, statut 'held'/'pending').
+ */
+router.post('/escrow/:escrowId/refund', verifyJWT, requireRole(PDG_ROLES), requireStepUpMFA, async (req: AuthenticatedRequest, res: Response) => {
+  const escrowId = req.params.escrowId;
+  if (!/^[0-9a-fA-F-]{36}$/.test(escrowId)) { res.status(400).json({ success: false, error: 'escrowId invalide' }); return; }
+  try {
+    const userId = req.user!.id;
+    const { data: esc, error: e1 } = await supabaseAdmin
+      .from('escrow_transactions')
+      .select('id, status, payer_id, order_id')
+      .eq('id', escrowId).maybeSingle();
+    if (e1) throw e1;
+    if (!esc) { res.status(404).json({ success: false, error: 'Transaction escrow introuvable' }); return; }
+    if (!(esc as any).order_id) { res.status(400).json({ success: false, error: 'Escrow sans commande liée' }); return; }
+    if (!['pending', 'held'].includes((esc as any).status)) {
+      res.status(409).json({ success: false, error: `Déjà traité (statut: ${(esc as any).status})` }); return;
+    }
+
+    const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('refund_order_escrow', { p_order_id: (esc as any).order_id });
+    if (rpcErr) {
+      const msg = String(rpcErr.message || '');
+      logger.warn(`[escrow/refund] ${escrowId}: ${msg}`);
+      res.status(400).json({ success: false, error: `Remboursement impossible: ${msg}` });
+      return;
+    }
+    if ((rpcData as any)?.skipped) {
+      res.status(409).json({ success: false, error: `Remboursement ignoré (escrow non remboursable)` }); return;
+    }
+
+    try { await supabaseAdmin.from('orders').update({ status: 'cancelled', payment_status: 'refunded', updated_at: new Date().toISOString() }).eq('id', (esc as any).order_id); } catch { /* */ }
+    try {
+      if ((esc as any).payer_id) await createNotification({
+        userId: (esc as any).payer_id, type: 'escrow', title: 'Commande remboursée',
+        message: 'Votre commande a été remboursée sur votre portefeuille.', metadata: { escrow_id: escrowId },
+      });
+    } catch (e: any) { logger.warn(`[escrow/refund] notif: ${e?.message}`); }
+
+    logger.info(`[escrow/refund] ${escrowId} (order ${(esc as any).order_id}) refunded by ${userId}`);
+    res.json({ success: true });
+  } catch (error: any) {
+    logger.error(`[escrow/refund] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors du remboursement' });
+  }
+});
+
+/**
+ * POST /api/admin/escrow/:escrowId/dispute — OUVERTURE d'un litige par le PDG (PDG only).
+ * Insère un escrow_disputes (initiator_role 'admin'). L'unicité partielle
+ * (uniq_open_escrow_dispute_per_escrow) empêche atomiquement 2 litiges ouverts sur le même escrow.
+ */
+router.post('/escrow/:escrowId/dispute', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  const escrowId = req.params.escrowId;
+  if (!/^[0-9a-fA-F-]{36}$/.test(escrowId)) { res.status(400).json({ success: false, error: 'escrowId invalide' }); return; }
+  try {
+    const userId = req.user!.id;
+    const reason = String((req.body?.reason || 'Litige ouvert par l\'administration')).slice(0, 1000);
+    const { data: esc } = await supabaseAdmin.from('escrow_transactions').select('id, order_id, payer_id, receiver_id').eq('id', escrowId).maybeSingle();
+    if (!esc) { res.status(404).json({ success: false, error: 'Transaction escrow introuvable' }); return; }
+
+    const { data: dispute, error: insErr } = await supabaseAdmin.from('escrow_disputes').insert({
+      escrow_id: escrowId, initiator_user_id: userId, initiator_role: 'admin', reason, status: 'open',
+      metadata: { order_id: (esc as any).order_id, opened_by: 'pdg' },
+    }).select('id').single();
+    if (insErr) {
+      if ((insErr as any).code === '23505') { res.status(409).json({ success: false, error: 'Un litige est déjà en cours sur cet escrow' }); return; }
+      throw insErr;
+    }
+
+    try {
+      const notifs: any[] = [];
+      if ((esc as any).payer_id) notifs.push({ userId: (esc as any).payer_id, type: 'dispute', title: 'Litige ouvert par l\'administration', message: 'Un litige a été ouvert sur votre commande. Expliquez votre version dans le suivi.', metadata: { escrow_dispute_id: dispute.id } });
+      if ((esc as any).receiver_id) notifs.push({ userId: (esc as any).receiver_id, type: 'dispute', title: 'Litige ouvert par l\'administration', message: 'Un litige a été ouvert sur une de vos ventes. Donnez votre version des faits.', metadata: { escrow_dispute_id: dispute.id } });
+      if (notifs.length) await createNotifications(notifs);
+    } catch (e: any) { logger.warn(`[escrow/dispute] notif: ${e?.message}`); }
+
+    res.json({ success: true, dispute_id: dispute.id });
+  } catch (error: any) {
+    logger.error(`[escrow/dispute] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors de l\'ouverture du litige' });
+  }
+});
+
 /** GET/PUT /api/admin/aml/caps — config globale des plafonds (rôle × palier KYC). */
 router.get('/aml/caps', verifyJWT, requireRole(PDG_ROLES), async (_req: AuthenticatedRequest, res: Response) => {
   try {
@@ -864,7 +1276,7 @@ router.get('/aml/caps', verifyJWT, requireRole(PDG_ROLES), async (_req: Authenti
   }
 });
 
-router.put('/aml/caps', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+router.put('/aml/caps', verifyJWT, requireRole(PDG_ROLES), requireStepUpMFA, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const config = req.body?.config ?? req.body;
     if (!config || typeof config !== 'object') { res.status(400).json({ success: false, error: 'config invalide' }); return; }
@@ -873,6 +1285,129 @@ router.put('/aml/caps', verifyJWT, requireRole(PDG_ROLES), async (req: Authentic
   } catch (error: any) {
     logger.error(`[admin/aml/caps PUT] ${error.message}`);
     res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// ============================================================================
+// 🔐 2FA ADMIN — gestion du step-up TOTP (enrôlement / activation / step-up)
+// Tout est vérifié SERVEUR (speakeasy). Le secret ne transite jamais en clair vers
+// le client après l'enrôlement initial (QR/secret affichés une seule fois).
+// ============================================================================
+const codeSchema = z.object({ code: z.string().trim().regex(/^\d{6}$/, 'Code à 6 chiffres requis') });
+
+const reqMeta = (req: AuthenticatedRequest) => ({
+  ip: (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip,
+  userAgent: req.headers['user-agent'] as string | undefined,
+});
+
+/** GET /api/admin/mfa/status — état 2FA de l'admin courant. */
+router.get('/mfa/status', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const row = await mfa.getAdminMfa(req.user!.id);
+    const stepUpActive = !!(await cache.get<boolean>(`mfa-stepup:${req.user!.id}`));
+    res.json({
+      success: true,
+      enabled: !!row?.enabled,
+      enrolledAt: row?.enrolled_at || null,
+      locked: mfa.isLocked(row),
+      stepUpActive,
+      enforced: env.ADMIN_MFA_ENFORCED,
+    });
+  } catch (error: any) {
+    logger.error(`[admin/mfa/status] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur statut 2FA' });
+  }
+});
+
+/** POST /api/admin/mfa/enroll — génère un secret EN ATTENTE + QR (à activer ensuite). */
+router.post('/mfa/enroll', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const existing = await mfa.getAdminMfa(req.user!.id);
+    if (existing?.enabled) {
+      res.status(409).json({ success: false, code: 'MFA_ALREADY_ENABLED', error: '2FA déjà active. Désactivez-la d\'abord.' });
+      return;
+    }
+    const { base32, otpauthUrl } = mfa.generateTotpSecret(req.user!.email || req.user!.id);
+    await mfa.upsertPendingSecret(req.user!.id, base32);
+    await mfa.logEvent(req.user!.id, 'enroll', true, reqMeta(req));
+    // base32/otpauthUrl renvoyés UNE seule fois (pour le QR) — jamais relisibles ensuite.
+    res.json({ success: true, otpauthUrl, secret: base32 });
+  } catch (error: any) {
+    logger.error(`[admin/mfa/enroll] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur enrôlement 2FA' });
+  }
+});
+
+/** POST /api/admin/mfa/activate { code } — vérifie le code et active la 2FA. */
+router.post('/mfa/activate', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const parsed = codeSchema.safeParse(req.body);
+    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.issues[0].message }); return; }
+    const row = await mfa.getAdminMfa(req.user!.id);
+    if (!row) { res.status(400).json({ success: false, error: 'Aucun enrôlement en cours' }); return; }
+    if (row.enabled) { res.status(409).json({ success: false, error: '2FA déjà active' }); return; }
+    const ok = mfa.verifyTotp(mfa.decryptSecret(row.secret_encrypted), parsed.data.code);
+    if (!ok) {
+      await mfa.logEvent(req.user!.id, 'fail', false, reqMeta(req));
+      res.status(401).json({ success: false, code: 'MFA_INVALID', error: 'Code 2FA invalide' });
+      return;
+    }
+    await mfa.enableMfa(req.user!.id);
+    await mfa.logEvent(req.user!.id, 'activate', true, reqMeta(req));
+    res.json({ success: true });
+  } catch (error: any) {
+    logger.error(`[admin/mfa/activate] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur activation 2FA' });
+  }
+});
+
+/** POST /api/admin/mfa/step-up { code } — ouvre une fenêtre de 5 min pour les ops sensibles. */
+router.post('/mfa/step-up', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const parsed = codeSchema.safeParse(req.body);
+    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.issues[0].message }); return; }
+    const row = await mfa.getAdminMfa(req.user!.id);
+    if (!row?.enabled) { res.status(400).json({ success: false, code: 'MFA_NOT_ENABLED', error: '2FA non activée' }); return; }
+    if (mfa.isLocked(row)) { res.status(403).json({ success: false, code: 'MFA_LOCKED', error: 'Compte 2FA verrouillé temporairement', lockedUntil: row.locked_until }); return; }
+    const ok = mfa.verifyTotp(mfa.decryptSecret(row.secret_encrypted), parsed.data.code);
+    if (!ok) {
+      const locked = await mfa.recordFailure(req.user!.id, row.failed_attempts);
+      await mfa.logEvent(req.user!.id, locked ? 'lockout' : 'fail', false, reqMeta(req));
+      res.status(locked ? 403 : 401).json({ success: false, code: locked ? 'MFA_LOCKED' : 'MFA_INVALID', error: locked ? 'Compte 2FA verrouillé' : 'Code 2FA invalide' });
+      return;
+    }
+    await mfa.recordStepUpSuccess(req.user!.id);
+    await cache.set(`mfa-stepup:${req.user!.id}`, true, 300);
+    await mfa.logEvent(req.user!.id, 'step_up', true, reqMeta(req));
+    res.json({ success: true, validForSeconds: 300 });
+  } catch (error: any) {
+    logger.error(`[admin/mfa/step-up] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur step-up 2FA' });
+  }
+});
+
+/** POST /api/admin/mfa/disable { code } — désactive la 2FA (code valide requis). */
+router.post('/mfa/disable', verifyJWT, requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const parsed = codeSchema.safeParse(req.body);
+    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.issues[0].message }); return; }
+    const row = await mfa.getAdminMfa(req.user!.id);
+    if (!row?.enabled) { res.status(400).json({ success: false, error: '2FA non activée' }); return; }
+    if (mfa.isLocked(row)) { res.status(403).json({ success: false, code: 'MFA_LOCKED', error: 'Compte 2FA verrouillé temporairement' }); return; }
+    const ok = mfa.verifyTotp(mfa.decryptSecret(row.secret_encrypted), parsed.data.code);
+    if (!ok) {
+      await mfa.recordFailure(req.user!.id, row.failed_attempts);
+      await mfa.logEvent(req.user!.id, 'fail', false, reqMeta(req));
+      res.status(401).json({ success: false, code: 'MFA_INVALID', error: 'Code 2FA invalide' });
+      return;
+    }
+    await mfa.disableMfa(req.user!.id);
+    await cache.del(`mfa-stepup:${req.user!.id}`);
+    await mfa.logEvent(req.user!.id, 'disable', true, reqMeta(req));
+    res.json({ success: true });
+  } catch (error: any) {
+    logger.error(`[admin/mfa/disable] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur désactivation 2FA' });
   }
 });
 

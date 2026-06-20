@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { usePermissionGuard } from '@/hooks/usePermissionGuard';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -23,6 +24,7 @@ export function PermissionGuard({
   redirectTo = '/pdg',
   fallback
 }: PermissionGuardProps) {
+  const { t } = useTranslation();
   const { hasAccess, loading } = usePermissionGuard(requiredPermission, redirectTo);
 
   if (loading) {
@@ -43,7 +45,7 @@ export function PermissionGuard({
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <ShieldAlert className="w-16 h-16 text-destructive mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Accès Refusé</h2>
+            <h2 className="text-2xl font-bold mb-2">{t('permissionGuard.accesRefuse')}</h2>
             <p className="text-muted-foreground">
               Vous n'avez pas la permission nécessaire pour accéder à cette section.
             </p>

@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, XCircle, TrendingUp, Shield, Zap, Globe, Lock, Server, Smartphone } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
  * Affiche les avantages compétitifs en sécurité et performance
  */
 export const CompareWithCompetitors = () => {
+  const { t } = useTranslation();
   const performanceMetrics = [
     { name: 'First Contentful Paint', us: '0.8s', amazon: '1.2s', alibaba: '1.5s', aliexpress: '1.8s', jumia: '2.2s', odoo: '2.1s' },
     { name: 'Largest Contentful Paint', us: '1.2s', amazon: '1.8s', alibaba: '2.2s', aliexpress: '2.5s', jumia: '3.0s', odoo: '3.1s' },
@@ -63,7 +65,7 @@ export const CompareWithCompetitors = () => {
         <Badge className="bg-gradient-to-r from-primary to-primary-glow text-white">
           Leader Technique 2025
         </Badge>
-        <h2 className="text-3xl font-bold">224SOLUTIONS vs Géants du E-Commerce</h2>
+        <h2 className="text-3xl font-bold">{t('compareWithCompetitors.t224solutionsVsGeantsDuE')}</h2>
         <p className="text-muted-foreground">
           Comparaison complète : Performance, Sécurité & Mobile
         </p>
@@ -99,7 +101,7 @@ export const CompareWithCompetitors = () => {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left p-2">Fonctionnalité</th>
+                      <th className="text-left p-2">{t('compareWithCompetitors.fonctionnalite')}</th>
                       {platforms.map((p) => (
                         <th key={p} className={`text-center p-2 ${p === '224SOL' ? 'bg-primary/10 font-bold' : ''}`}>
                           {p}
@@ -140,7 +142,7 @@ export const CompareWithCompetitors = () => {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left p-2">Métrique</th>
+                      <th className="text-left p-2">{t('compareWithCompetitors.metrique')}</th>
                       {platforms.map((p) => (
                         <th key={p} className={`text-center p-2 ${p === '224SOL' ? 'bg-primary/10 font-bold' : ''}`}>
                           {p}
@@ -181,7 +183,7 @@ export const CompareWithCompetitors = () => {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left p-2">Critère</th>
+                      <th className="text-left p-2">{t('compareWithCompetitors.critere')}</th>
                       {platforms.map((p) => (
                         <th key={p} className={`text-center p-2 ${p === '224SOL' ? 'bg-primary/10 font-bold' : ''}`}>
                           {p}
@@ -239,9 +241,9 @@ export const CompareWithCompetitors = () => {
               <li>• <strong>3.5x plus rapide</strong> qu'Amazon en chargement</li>
               <li>• <strong>PWA Score 98/100</strong> vs 72/100 pour Amazon</li>
               <li>• <strong>Chiffrement E2E natif</strong> (non disponible chez Alibaba/AliExpress/Jumia)</li>
-              <li>• <strong>Mode hors ligne complet</strong> - unique sur le marché</li>
-              <li>• <strong>RLS avancé</strong> pour sécurité données utilisateur</li>
-              <li>• <strong>Optimisé pour l'Afrique</strong> avec latence minimale</li>
+              <li>• <strong>Mode hors ligne complet</strong> {t('compareWithCompetitors.uniqueSurLeMarche')}</li>
+              <li>• <strong>{t('compareWithCompetitors.rlsAvance')}</strong> {t('compareWithCompetitors.pourSecuriteDonneesUtilisateur')}</li>
+              <li>• <strong>{t('compareWithCompetitors.optimisePourLAfrique')}</strong> {t('compareWithCompetitors.avecLatenceMinimale')}</li>
             </ul>
           </div>
         </CardContent>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,6 +41,7 @@ interface Props {
 }
 
 export function ProjectDetailDialog({ project, professionals, open, onClose, onUpdateProject, onAddTask, onFetchTasks, onAddReport, onFetchReports }: Props) {
+  const { t } = useTranslation();
   const [tasks, setTasks] = useState<BTPTask[]>([]);
   const [reports, setReports] = useState<BTPDailyReport[]>([]);
   const [showAddTask, setShowAddTask] = useState(false);
@@ -100,18 +102,18 @@ export function ProjectDetailDialog({ project, professionals, open, onClose, onU
             <span className="font-bold">{progressCalc}%</span>
           </div>
           <Progress value={progressCalc} className="h-3" />
-          <div className="grid grid-cols-3 gap-3 text-center text-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-center text-sm">
             <div className="bg-muted/50 rounded-lg p-2">
               <p className="font-bold"><Money amount={Number(project.budget_estimated)} from="GNF" /></p>
               <p className="text-muted-foreground text-xs">Budget</p>
             </div>
             <div className="bg-muted/50 rounded-lg p-2">
               <p className="font-bold">{project.estimated_duration_days}j</p>
-              <p className="text-muted-foreground text-xs">Durée estimée</p>
+              <p className="text-muted-foreground text-xs">{t('projectDetailDialog.dureeEstimee')}</p>
             </div>
             <div className="bg-muted/50 rounded-lg p-2">
               <p className="font-bold">{tasks.length}</p>
-              <p className="text-muted-foreground text-xs">Tâches</p>
+              <p className="text-muted-foreground text-xs">{t('projectDetailDialog.taches')}</p>
             </div>
           </div>
         </div>
@@ -140,7 +142,7 @@ export function ProjectDetailDialog({ project, professionals, open, onClose, onU
             {showAddTask && (
               <Card>
                 <CardContent className="pt-4 space-y-3">
-                  <Input placeholder="Titre de la tâche *" value={taskForm.title} onChange={e => setTaskForm(p => ({ ...p, title: e.target.value }))} />
+                  <Input placeholder={t('projectDetailDialog.titreDeLaTache')} value={taskForm.title} onChange={e => setTaskForm(p => ({ ...p, title: e.target.value }))} />
                   <div className="grid grid-cols-2 gap-3">
                     <Select value={taskForm.priority} onValueChange={v => setTaskForm(p => ({ ...p, priority: v }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
@@ -151,7 +153,7 @@ export function ProjectDetailDialog({ project, professionals, open, onClose, onU
                       </SelectContent>
                     </Select>
                     <Select value={taskForm.assigned_to} onValueChange={v => setTaskForm(p => ({ ...p, assigned_to: v }))}>
-                      <SelectTrigger><SelectValue placeholder="Assigner à..." /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder={t('projectDetailDialog.assignerA')} /></SelectTrigger>
                       <SelectContent>
                         {professionals.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                       </SelectContent>
@@ -159,15 +161,15 @@ export function ProjectDetailDialog({ project, professionals, open, onClose, onU
                   </div>
                   <Textarea placeholder="Description..." rows={2} value={taskForm.description} onChange={e => setTaskForm(p => ({ ...p, description: e.target.value }))} />
                   <div className="flex justify-end gap-2">
-                    <Button size="sm" variant="outline" onClick={() => setShowAddTask(false)}>Annuler</Button>
-                    <Button size="sm" onClick={handleAddTask} disabled={!taskForm.title}>Ajouter</Button>
+                    <Button size="sm" variant="outline" onClick={() => setShowAddTask(false)}>{t('projectDetailDialog.annuler')}</Button>
+                    <Button size="sm" onClick={handleAddTask} disabled={!taskForm.title}>{t('projectDetailDialog.ajouter')}</Button>
                   </div>
                 </CardContent>
               </Card>
             )}
 
             {tasks.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">Aucune tâche. Ajoutez-en une !</p>
+              <p className="text-sm text-muted-foreground text-center py-6">{t('projectDetailDialog.aucuneTacheAjoutezEnUne')}</p>
             ) : (
               <div className="space-y-2">
                 {tasks.map(task => {
@@ -199,27 +201,27 @@ export function ProjectDetailDialog({ project, professionals, open, onClose, onU
                 <CardContent className="pt-4 space-y-3">
                   <div className="grid grid-cols-2 gap-3">
                     <Select value={reportForm.weather} onValueChange={v => setReportForm(p => ({ ...p, weather: v }))}>
-                      <SelectTrigger><SelectValue placeholder="Météo" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder={t('projectDetailDialog.meteo')} /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="ensoleille">☀️ Ensoleillé</SelectItem>
+                        <SelectItem value="ensoleille">{t('projectDetailDialog.ensoleille')}</SelectItem>
                         <SelectItem value="nuageux">☁️ Nuageux</SelectItem>
                         <SelectItem value="pluie">🌧️ Pluie</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Input type="number" placeholder="Ouvriers présents" value={reportForm.workers_present} onChange={e => setReportForm(p => ({ ...p, workers_present: e.target.value }))} />
+                    <Input type="number" placeholder={t('projectDetailDialog.ouvriersPresents')} value={reportForm.workers_present} onChange={e => setReportForm(p => ({ ...p, workers_present: e.target.value }))} />
                   </div>
-                  <Textarea placeholder="Résumé des travaux du jour *" rows={3} value={reportForm.summary} onChange={e => setReportForm(p => ({ ...p, summary: e.target.value }))} />
-                  <Textarea placeholder="Problèmes rencontrés (optionnel)" rows={2} value={reportForm.issues} onChange={e => setReportForm(p => ({ ...p, issues: e.target.value }))} />
+                  <Textarea placeholder={t('projectDetailDialog.resumeDesTravauxDuJour')} rows={3} value={reportForm.summary} onChange={e => setReportForm(p => ({ ...p, summary: e.target.value }))} />
+                  <Textarea placeholder={t('projectDetailDialog.problemesRencontresOptionnel')} rows={2} value={reportForm.issues} onChange={e => setReportForm(p => ({ ...p, issues: e.target.value }))} />
                   <div className="flex justify-end gap-2">
-                    <Button size="sm" variant="outline" onClick={() => setShowAddReport(false)}>Annuler</Button>
-                    <Button size="sm" onClick={handleAddReport} disabled={!reportForm.summary}>Enregistrer</Button>
+                    <Button size="sm" variant="outline" onClick={() => setShowAddReport(false)}>{t('projectDetailDialog.annuler')}</Button>
+                    <Button size="sm" onClick={handleAddReport} disabled={!reportForm.summary}>{t('projectDetailDialog.enregistrer')}</Button>
                   </div>
                 </CardContent>
               </Card>
             )}
 
             {reports.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">Aucun rapport. Ajoutez le premier !</p>
+              <p className="text-sm text-muted-foreground text-center py-6">{t('projectDetailDialog.aucunRapportAjoutezLePremier')}</p>
             ) : (
               <div className="space-y-2">
                 {reports.map(report => (

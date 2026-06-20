@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +12,7 @@ interface PDGCopilotProps {
 }
 
 export default function PDGCopilot({ mfaVerified }: PDGCopilotProps) {
+  const { t } = useTranslation();
   const [input, setInput] = useState('');
   const {
     messages,
@@ -104,7 +106,7 @@ export default function PDGCopilot({ mfaVerified }: PDGCopilotProps) {
           {/* Input */}
           <div className="flex gap-2">
             <Input
-              placeholder="Posez votre question..."
+              placeholder={t('pDGCopilot.posezVotreQuestion')}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}

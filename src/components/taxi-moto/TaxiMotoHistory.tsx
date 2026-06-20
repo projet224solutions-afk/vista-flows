@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * COMPOSANT HISTORIQUE DES COURSES TAXI-MOTO
  * Affichage de l'historique avec filtres et détails
@@ -6,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { Button } from "@/components/ui/button";
@@ -50,6 +50,7 @@ interface TaxiMotoHistoryProps {
 }
 
 export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
+    const { t } = useTranslation();
     const fc = useFormatCurrency();
     const [rides, setRides] = useState<RideHistory[]>([]);
     const [filteredRides, setFilteredRides] = useState<RideHistory[]>([]);
@@ -246,7 +247,7 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
         a.click();
         URL.revokeObjectURL(url);
 
-        toast.success('Historique exporté avec succès');
+        toast.success(t('taxiMotoHistory.historiqueExporteAvecSucces'));
     };
 
     /**
@@ -262,7 +263,7 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
             <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
                 <CardContent className="p-8 text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Chargement de l'historique...</p>
+                    <p className="text-gray-600">{t('taxiMotoHistory.chargementDeLHistorique')}</p>
                 </CardContent>
             </Card>
         );
@@ -275,7 +276,7 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                     <div className="bg-orange-50 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                         <Clock className="w-8 h-8 text-[#ff4000]" />
                     </div>
-                    <h3 className="text-lg font-semibold text-[#ff4000] mb-2">Erreur de chargement</h3>
+                    <h3 className="text-lg font-semibold text-[#ff4000] mb-2">{t('taxiMotoHistory.erreurDeChargement')}</h3>
                     <p className="text-gray-600 mb-4">{error}</p>
                     <Button onClick={loadRideHistory} variant="outline" size="sm">
                         Réessayer
@@ -291,7 +292,7 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
             <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg">
                 <CardHeader>
                     <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">Historique des courses</CardTitle>
+                        <CardTitle className="text-lg">{t('taxiMotoHistory.historiqueDesCourses')}</CardTitle>
                         <Button onClick={exportHistory} variant="outline" size="sm">
                             <Download className="w-4 h-4 mr-2" />
                             Exporter
@@ -303,7 +304,7 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                     <div className="relative">
                         <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
                         <Input
-                            placeholder="Rechercher par adresse, conducteur ou ID..."
+                            placeholder={t('taxiMotoHistory.rechercherParAdresseConducteurOu')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="pl-10"
@@ -317,9 +318,9 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                             onChange={(e) => setStatusFilter(e.target.value as unknown)}
                             className="px-3 py-2 border rounded-md text-sm"
                         >
-                            <option value="all">Tous les statuts</option>
-                            <option value="completed">Terminées</option>
-                            <option value="cancelled">Annulées</option>
+                            <option value="all">{t('taxiMotoHistory.tousLesStatuts')}</option>
+                            <option value="completed">{t('taxiMotoHistory.terminees')}</option>
+                            <option value="cancelled">{t('taxiMotoHistory.annulees')}</option>
                         </select>
 
                         <select
@@ -327,20 +328,20 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                             onChange={(e) => setDateFilter(e.target.value as unknown)}
                             className="px-3 py-2 border rounded-md text-sm"
                         >
-                            <option value="all">Toutes les dates</option>
+                            <option value="all">{t('taxiMotoHistory.toutesLesDates')}</option>
                             <option value="week">7 derniers jours</option>
                             <option value="month">30 derniers jours</option>
-                            <option value="year">Cette année</option>
+                            <option value="year">{t('taxiMotoHistory.cetteAnnee')}</option>
                         </select>
                     </div>
 
                     {/* Statistiques rapides */}
-                    <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-4 border-t">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 pt-4 border-t">
                         <div className="text-center">
                             <div className="text-lg font-bold text-blue-600">
                                 {filteredRides.filter(r => r.status === 'completed').length}
                             </div>
-                            <div className="text-xs text-gray-600">Terminées</div>
+                            <div className="text-xs text-gray-600">{t('taxiMotoHistory.terminees')}</div>
                         </div>
                         <div className="text-center">
                             <div className="text-lg font-bold text-[#ff4000]">
@@ -348,7 +349,7 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                                     .filter(r => r.status === 'completed')
                                     .reduce((sum, r) => sum + r.price, 0))}
                             </div>
-                            <div className="text-xs text-gray-600">Total dépensé</div>
+                            <div className="text-xs text-gray-600">{t('taxiMotoHistory.totalDepense')}</div>
                         </div>
                         <div className="text-center">
                             <div className="text-lg font-bold text-[#ff4000]">
@@ -440,7 +441,7 @@ export default function TaxiMotoHistory({ userId }: TaxiMotoHistoryProps) {
                                             Refaire
                                         </Button>
                                         <Button
-                                            onClick={() => toast.info('Fonctionnalité de reçu bientôt disponible')}
+                                            onClick={() => toast.info(t('taxiMotoHistory.fonctionnaliteDeRecuBientotDisponible'))}
                                             variant="outline"
                                             size="sm"
                                             className="flex-1 text-xs"

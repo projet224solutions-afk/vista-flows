@@ -5,6 +5,7 @@
  */
 
 import React, { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   PaymentElement,
   useStripe,
@@ -34,6 +35,7 @@ export function StripePaymentForm({
   onSuccess,
   onError
 }: StripePaymentFormProps) {
+  const { t } = useTranslation();
   const stripe = useStripe();
   const elements = useElements();
 
@@ -71,11 +73,11 @@ export function StripePaymentForm({
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         // Paiement réussi
         setSucceeded(true);
-        toast.success('Paiement réussi !');
+        toast.success(t('stripePaymentForm.paiementReussi'));
         onSuccess(paymentIntent.id);
       } else if (paymentIntent && paymentIntent.status === 'processing') {
         // Paiement en cours (3D Secure, etc.)
-        toast.info('Votre paiement est en cours de traitement...');
+        toast.info(t('stripePaymentForm.votrePaiementEstEnCours'));
       } else {
         setErrorMessage('Statut de paiement inattendu. Veuillez contacter le support.');
       }
@@ -101,7 +103,7 @@ export function StripePaymentForm({
               </div>
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-[#ff4000]">Paiement réussi !</h3>
+              <h3 className="text-xl font-semibold text-[#ff4000]">{t('stripePaymentForm.paiementReussi')}</h3>
               <p className="text-muted-foreground mt-2">
                 Votre paiement de <strong>{formatAmount(amount, currency)}</strong> a été traité avec succès.
               </p>
@@ -120,7 +122,7 @@ export function StripePaymentForm({
       <CardHeader>
         <div className="flex items-center gap-2">
           <Shield className="w-6 h-6 text-primary" />
-          <CardTitle>Paiement sécurisé</CardTitle>
+          <CardTitle>{t('stripePaymentForm.paiementSecurise')}</CardTitle>
         </div>
         <CardDescription>
           Paiement à <strong>{sellerName}</strong>
@@ -133,7 +135,7 @@ export function StripePaymentForm({
           {/* Montant */}
           <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Montant à payer</span>
+              <span className="text-sm text-muted-foreground">{t('stripePaymentForm.montantAPayer')}</span>
               <span className="text-2xl font-bold text-primary">
                 {formatAmount(amount, currency)}
               </span>
@@ -144,7 +146,7 @@ export function StripePaymentForm({
           <div className="space-y-2">
             <div className="flex items-center gap-2 mb-2">
               <CreditCard className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Informations de paiement</span>
+              <span className="text-sm font-medium">{t('stripePaymentForm.informationsDePaiement')}</span>
             </div>
             <PaymentElement
               options={{
@@ -166,7 +168,7 @@ export function StripePaymentForm({
           <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/50 p-3 rounded-lg">
             <Shield className="w-4 h-4 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="font-medium">Paiement 100% sécurisé</p>
+              <p className="font-medium">{t('stripePaymentForm.paiement100Securise')}</p>
               <p className="mt-1">
                 Vos informations bancaires sont protégées par Stripe et ne sont jamais stockées sur nos serveurs.
                 Compatible 3D Secure.
@@ -196,7 +198,7 @@ export function StripePaymentForm({
 
           {/* Logos cartes acceptées */}
           <div className="flex items-center justify-center gap-3 pt-2">
-            <span className="text-xs text-muted-foreground">Cartes acceptées:</span>
+            <span className="text-xs text-muted-foreground">{t('stripePaymentForm.cartesAcceptees')}</span>
             <div className="flex gap-2">
               <div className="w-10 h-6 bg-gradient-to-r from-primary to-secondary rounded flex items-center justify-center text-white text-[8px] font-bold">
                 VISA

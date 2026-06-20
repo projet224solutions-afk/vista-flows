@@ -99,7 +99,12 @@ export function useShareholders() {
       const result = await shareholderService.updateShareholder(id, updates, actorId);
       setActionLoading(false);
       if (result.success) {
-        toast.success('Actionnaire mis à jour');
+        const n = result.recalculated_revenues ?? 0;
+        toast.success(
+          n > 0
+            ? `Actionnaire mis à jour — ${n} reçu(s) en attente recalculé(s) à la nouvelle part`
+            : 'Actionnaire mis à jour',
+        );
         await load();
       } else {
         toast.error(result.error || 'Erreur lors de la mise à jour');

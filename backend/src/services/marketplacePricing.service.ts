@@ -14,6 +14,7 @@
 
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
+import { cache } from '../config/redis.js';
 
 // ─────────────────────────────────────────────────────────────────
 // TYPES
@@ -87,12 +88,16 @@ export interface OrderFinancialSummary {
   rateLockExpiresAt: string | null;
 }
 
-// Commission par type de produit (%)
+// Commission VENDEUR par type de produit (%).
+// MODÈLE « frais acheteur » (validé PDG, 2026-06-18) : la plateforme se rémunère via le FRAIS
+// ACHETEUR (system_settings.purchase_fee_percent = 5%), prélevé EN PLUS sur l'acheteur. Le VENDEUR
+// reçoit donc l'INTÉGRAL du prix produit → commission vendeur = 0. (Remettre une valeur > 0 ici
+// rétablirait un prélèvement côté vendeur.)
 export const PLATFORM_FEE_RATES: Record<string, number> = {
-  physical: 5,
-  digital:  10,
-  service:  7,
-  default:  5,
+  physical: 0,
+  digital:  0,
+  service:  0,
+  default:  0,
 };
 
 // Durée de validité d'un taux verrouillé (ms)
@@ -144,7 +149,21 @@ function currencyFromCountry(country?: string | null): string {
  * Marge 3% déjà incluse. Aucun appel API externe.
  * Supporte: direct, inverse, pivot USD.
  */
-export async function getInternalFxRate(
+/**
+ * Lecture des taux AVEC cache (couche scalabilité). Les taux changent au plus toutes les
+ * ~5 min (refreshBcrgOnly) — un cache court (45s) supprime des milliers de lectures DB
+ * répétées (prix, conversions) à grande échelle, sans risque : la prise de taux MONÉTAIRE
+ * réelle reste l'RPC atomique create_order_core (qui relit + vérifie la fraîcheur BCRG).
+ * Best-effort : si Redis est absent, lecture DB directe (comportement inchangé).
+ */
+export async function getInternalFxRate(from: string, to: string): Promise<FxResult> {
+  const f = from.toUpperCase();
+  const t = to.toUpperCase();
+  if (f === t) return { rate: 1, source: 'identity', fetched_at: new Date().toISOString() };
+  return cache.getOrSet(`fx:${f}:${t}`, 45, () => getInternalFxRateUncached(f, t));
+}
+
+async function getInternalFxRateUncached(
   from: string,
   to: string,
 ): Promise<FxResult> {

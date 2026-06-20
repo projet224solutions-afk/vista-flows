@@ -4,12 +4,14 @@
  */
 
 import React, {} from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 const ClientDeliveryTracking = React.lazy(() => import('@/components/delivery/ClientDeliveryTracking').then(m => ({ default: m.ClientDeliveryTracking })));
 
 export default function ClientTrackingPage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const deliveryId = searchParams.get('id');
@@ -18,7 +20,7 @@ export default function ClientTrackingPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="text-muted-foreground">ID de livraison manquant</p>
+          <p className="text-muted-foreground">{t('clientTrackingPage.idDeLivraisonManquant')}</p>
           <Button onClick={() => navigate('/')} className="mt-4">
             Retour à l'accueil
           </Button>

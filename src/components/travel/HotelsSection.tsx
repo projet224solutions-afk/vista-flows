@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Hotel, Star, ExternalLink, MapPin,
   Calendar, Users, Wifi, Car, Coffee
@@ -51,6 +52,7 @@ interface HotelsSectionProps {
 }
 
 export function HotelsSection({ mode, isAffiliate, affiliateCode }: HotelsSectionProps) {
+  const { t } = useTranslation();
   const [hotels, setHotels] = useState<HotelPartner[]>([]);
   const [hotelOffers, setHotelOffers] = useState<HotelOffer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,7 +102,7 @@ export function HotelsSection({ mode, isAffiliate, affiliateCode }: HotelsSectio
       }
       openExternalSafely(url);
     }
-    toast.info('Redirection vers le site partenaire...');
+    toast.info(t('hotelsSection.redirectionVersLeSitePartenaire'));
   };
 
   const handleOfferClick = (offer: HotelOffer) => {
@@ -114,7 +116,7 @@ export function HotelsSection({ mode, isAffiliate, affiliateCode }: HotelsSectio
     } else if (hotel?.website_url) {
       openExternalSafely(hotel.website_url);
     }
-    toast.info('Redirection vers le site partenaire...');
+    toast.info(t('hotelsSection.redirectionVersLeSitePartenaire'));
   };
 
   const formatPrice = useFormatCurrency();
@@ -163,7 +165,7 @@ export function HotelsSection({ mode, isAffiliate, affiliateCode }: HotelsSectio
         <Card>
           <CardContent className="p-4">
             <Input
-              placeholder="Rechercher une ville..."
+              placeholder={t('hotelsSection.rechercherUneVille')}
               value={searchCity}
               onChange={(e) => setSearchCity(e.target.value)}
               className="text-sm mb-3"
@@ -325,7 +327,7 @@ export function HotelsSection({ mode, isAffiliate, affiliateCode }: HotelsSectio
       {hotels.length === 0 && (
         <div className="text-center py-12">
           <Hotel className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
-          <p className="text-muted-foreground">Aucun hôtel partenaire disponible</p>
+          <p className="text-muted-foreground">{t('hotelsSection.aucunHotelPartenaireDisponible')}</p>
         </div>
       )}
     </div>

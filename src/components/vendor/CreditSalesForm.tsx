@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,6 +62,7 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function CreditSalesForm() {
+  const { t } = useTranslation();
   const { vendorId } = useCurrentVendor();
   const { toast } = useToast();
   const [creditSales, setCreditSales] = useState<CreditSale[]>([]);
@@ -214,33 +216,33 @@ export default function CreditSalesForm() {
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <CreditCard className="w-5 h-5 text-primary" />
-            <CardTitle className="text-lg sm:text-xl">Ventes à Crédit</CardTitle>
+            <CardTitle className="text-lg sm:text-xl">{t('creditSalesForm.ventesACredit')}</CardTitle>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm" variant="default" className="gap-2">
                 <Plus className="w-4 h-4" />
-                <span className="hidden sm:inline">Nouvelle vente</span>
-                <span className="sm:hidden">Nouveau</span>
+                <span className="hidden sm:inline">{t('creditSalesForm.nouvelleVente')}</span>
+                <span className="sm:hidden">{t('creditSalesForm.nouveau')}</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Créer une vente à crédit</DialogTitle>
+                <DialogTitle>{t('creditSalesForm.creerUneVenteACredit')}</DialogTitle>
               </DialogHeader>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Informations client */}
                 <div className="space-y-3">
-                  <h3 className="font-semibold text-sm">Informations client</h3>
+                  <h3 className="font-semibold text-sm">{t('creditSalesForm.informationsClient')}</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Input
-                      placeholder="Nom du client"
+                      placeholder={t('creditSalesForm.nomDuClient')}
                       value={formData.customer_name}
                       onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
                     />
                     <Input
-                      placeholder="Téléphone (optionnel)"
+                      placeholder={t('creditSalesForm.telephoneOptionnel')}
                       value={formData.customer_phone}
                       onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
                     />
@@ -264,14 +266,14 @@ export default function CreditSalesForm() {
                     {formData.items.map((item, index) => (
                       <div key={index} className="flex gap-2 items-end">
                         <Input
-                          placeholder="Produit"
+                          placeholder={t('creditSalesForm.produit')}
                           value={item.product_name}
                           onChange={(e) => updateItem(index, 'product_name', e.target.value)}
                           className="flex-1"
                         />
                         <Input
                           type="number"
-                          placeholder="Qté"
+                          placeholder={t('creditSalesForm.qte')}
                           value={item.quantity}
                           onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
                           min="1"
@@ -318,7 +320,7 @@ export default function CreditSalesForm() {
                 {/* Date d'échéance et notes */}
                 <div className="space-y-3">
                   <div>
-                    <label className="text-sm font-medium mb-1 block">Date d'échéance</label>
+                    <label className="text-sm font-medium mb-1 block">{t('creditSalesForm.dateDEcheance')}</label>
                     <Input
                       type="date"
                       value={formData.due_date}
@@ -367,7 +369,7 @@ export default function CreditSalesForm() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Rechercher par client ou numéro..."
+                  placeholder={t('creditSalesForm.rechercherParClientOuNumero')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -378,10 +380,10 @@ export default function CreditSalesForm() {
                 onChange={(e) => setSelectedStatus(e.target.value)}
                 className="px-3 py-2 border rounded-lg text-sm bg-background"
               >
-                <option value="">Tous les statuts</option>
+                <option value="">{t('creditSalesForm.tousLesStatuts')}</option>
                 <option value="pending">En attente</option>
-                <option value="partial">Partiellement payé</option>
-                <option value="paid">Payé</option>
+                <option value="partial">{t('creditSalesForm.partiellementPaye')}</option>
+                <option value="paid">{t('creditSalesForm.paye')}</option>
                 <option value="overdue">En retard</option>
               </select>
             </div>
@@ -394,7 +396,7 @@ export default function CreditSalesForm() {
             ) : filteredSales.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <CreditCard className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                <p>Aucune vente à crédit trouvée</p>
+                <p>{t('creditSalesForm.aucuneVenteACreditTrouvee')}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -426,11 +428,11 @@ export default function CreditSalesForm() {
                             <span className="font-semibold">${sale.total.toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span>Payé:</span>
+                            <span>{t('creditSalesForm.paye2')}</span>
                             <span className="text-[#ff4000]">${sale.paid_amount.toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span>Dû:</span>
+                            <span>{t('creditSalesForm.du')}</span>
                             <span className="text-destructive font-semibold">
                               ${sale.remaining_amount.toFixed(2)}
                             </span>
@@ -469,13 +471,13 @@ export default function CreditSalesForm() {
                             <div className="space-y-4">
                               <div className="bg-muted p-4 rounded-lg">
                                 <div className="flex justify-between text-sm mb-2">
-                                  <span>Montant dû:</span>
+                                  <span>{t('creditSalesForm.montantDu')}</span>
                                   <span className="font-semibold">${sale.remaining_amount.toFixed(2)}</span>
                                 </div>
                               </div>
                               <Input
                                 type="number"
-                                placeholder="Montant du paiement"
+                                placeholder={t('creditSalesForm.montantDuPaiement')}
                                 step="0.01"
                                 max={sale.remaining_amount}
                                 id={`payment-${sale.id}`}
@@ -527,7 +529,7 @@ export default function CreditSalesForm() {
               <Card>
                 <CardContent className="pt-6 text-center">
                   <div className="text-2xl font-bold text-[#ff4000]">{stats.paid}</div>
-                  <p className="text-xs text-muted-foreground mt-1">Payés</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t('creditSalesForm.payes')}</p>
                 </CardContent>
               </Card>
               <Card>
@@ -539,13 +541,13 @@ export default function CreditSalesForm() {
               <Card>
                 <CardContent className="pt-6 text-center">
                   <div className="text-lg font-bold text-destructive">${stats.receivable.toFixed(2)}</div>
-                  <p className="text-xs text-muted-foreground mt-1">À recevoir</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t('creditSalesForm.aRecevoir')}</p>
                 </CardContent>
               </Card>
               <Card className="sm:col-span-3">
                 <CardContent className="pt-6 text-center">
                   <div className="text-3xl font-bold text-primary">${stats.totalAmount.toFixed(2)}</div>
-                  <p className="text-sm text-muted-foreground mt-2">Montant total des ventes à crédit</p>
+                  <p className="text-sm text-muted-foreground mt-2">{t('creditSalesForm.montantTotalDesVentesA')}</p>
                 </CardContent>
               </Card>
             </div>

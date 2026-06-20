@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -88,6 +89,7 @@ interface LoyaltyClient {
 }
 
 export function HairdresserModule({ serviceId, businessName }: HairdresserModuleProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('agenda');
   const [showNewAppointmentDialog, setShowNewAppointmentDialog] = useState(false);
   const [showNewServiceDialog, setShowNewServiceDialog] = useState(false);
@@ -242,12 +244,12 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
   };
 
   const handleAddAppointment = () => {
-    toast.success('Rendez-vous confirmé !');
+    toast.success(t('hairdresserModule.rendezVousConfirme'));
     setShowNewAppointmentDialog(false);
   };
 
   const handleAddService = () => {
-    toast.success('Service ajouté au catalogue');
+    toast.success(t('hairdresserModule.serviceAjouteAuCatalogue'));
     setShowNewServiceDialog(false);
   };
 
@@ -267,7 +269,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
           </div>
           <div>
             <h2 className="text-2xl font-bold">{businessName || 'Salon de Coiffure'}</h2>
-            <p className="text-muted-foreground">Gestion du salon</p>
+            <p className="text-muted-foreground">{t('hairdresserModule.gestionDuSalon')}</p>
           </div>
         </div>
         <Dialog open={showNewAppointmentDialog} onOpenChange={setShowNewAppointmentDialog}>
@@ -277,17 +279,17 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
               Nouveau RDV
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Prendre un rendez-vous</DialogTitle>
+              <DialogTitle>{t('hairdresserModule.prendreUnRendezVous')}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="space-y-2">
-                <Label>Nom du client</Label>
+                <Label>{t('hairdresserModule.nomDuClient')}</Label>
                 <Input placeholder="Nom complet" />
               </div>
               <div className="space-y-2">
-                <Label>Téléphone</Label>
+                <Label>{t('hairdresserModule.telephone')}</Label>
                 <Input placeholder="+224 6XX XX XX XX" />
               </div>
               <div className="space-y-2">
@@ -304,9 +306,9 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Services</Label>
+                <Label>{t('hairdresserModule.services')}</Label>
                 <Select>
-                  <SelectTrigger><SelectValue placeholder="Sélectionner les services" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('hairdresserModule.selectionnerLesServices')} /></SelectTrigger>
                   <SelectContent>
                     {services.map(s => (
                       <SelectItem key={s.id} value={s.id}>
@@ -328,7 +330,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
               </div>
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowNewAppointmentDialog(false)}>Annuler</Button>
+              <Button variant="outline" onClick={() => setShowNewAppointmentDialog(false)}>{t('hairdresserModule.annuler')}</Button>
               <Button onClick={handleAddAppointment} className="bg-[#ff4000] hover:bg-[#ff4000] shadow-lg shadow-[#ff4000]/40">Confirmer</Button>
             </div>
           </DialogContent>
@@ -350,7 +352,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
           <CardContent className="p-4">
             <div className="flex items-center gap-2 opacity-90">
               <TrendingUp className="h-4 w-4" />
-              <span className="text-sm">Revenus du jour</span>
+              <span className="text-sm">{t('hairdresserModule.revenusDuJour')}</span>
             </div>
             <p className="text-xl font-bold mt-1">{formatPrice(todayRevenue)}</p>
           </CardContent>
@@ -379,9 +381,9 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="agenda">Agenda</TabsTrigger>
-          <TabsTrigger value="equipe">Équipe</TabsTrigger>
-          <TabsTrigger value="services">Services</TabsTrigger>
-          <TabsTrigger value="fidelite">Fidélité</TabsTrigger>
+          <TabsTrigger value="equipe">{t('hairdresserModule.equipe')}</TabsTrigger>
+          <TabsTrigger value="services">{t('hairdresserModule.services')}</TabsTrigger>
+          <TabsTrigger value="fidelite">{t('hairdresserModule.fidelite')}</TabsTrigger>
         </TabsList>
 
         {/* Agenda */}
@@ -417,7 +419,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
                     <div className="text-right">
                       <p className="text-lg font-bold text-primary">{formatPrice(apt.totalPrice)}</p>
                       {apt.status === 'confirmé' && (
-                        <Button size="sm" className="mt-2">Démarrer</Button>
+                        <Button size="sm" className="mt-2">{t('hairdresserModule.demarrer')}</Button>
                       )}
                       {apt.status === 'en_cours' && (
                         <Button size="sm" variant="outline" className="mt-2">Terminer</Button>
@@ -432,7 +434,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
 
         {/* Équipe */}
         <TabsContent value="equipe" className="space-y-4">
-          <h3 className="font-semibold">Notre équipe</h3>
+          <h3 className="font-semibold">{t('hairdresserModule.notreEquipe')}</h3>
           <div className="grid gap-4 md:grid-cols-2">
             {stylists.map((stylist) => (
               <Card key={stylist.id} className={!stylist.available ? 'opacity-60' : ''}>
@@ -475,7 +477,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
         {/* Services */}
         <TabsContent value="services" className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold">Catalogue des services</h3>
+            <h3 className="font-semibold">{t('hairdresserModule.catalogueDesServices')}</h3>
             <Dialog open={showNewServiceDialog} onOpenChange={setShowNewServiceDialog}>
               <DialogTrigger asChild>
                 <Button variant="outline">
@@ -485,16 +487,16 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Nouveau service</DialogTitle>
+                  <DialogTitle>{t('hairdresserModule.nouveauService')}</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="space-y-2">
-                    <Label>Nom du service</Label>
+                    <Label>{t('hairdresserModule.nomDuService')}</Label>
                     <Input placeholder="Ex: Coloration balayage" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Catégorie</Label>
+                      <Label>{t('hairdresserModule.categorie')}</Label>
                       <Select>
                         <SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger>
                         <SelectContent>
@@ -508,7 +510,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Durée (min)</Label>
+                      <Label>{t('hairdresserModule.dureeMin')}</Label>
                       <Input type="number" placeholder="45" />
                     </div>
                   </div>
@@ -522,8 +524,8 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
                   </div>
                 </div>
                 <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setShowNewServiceDialog(false)}>Annuler</Button>
-                  <Button onClick={handleAddService}>Ajouter</Button>
+                  <Button variant="outline" onClick={() => setShowNewServiceDialog(false)}>{t('hairdresserModule.annuler')}</Button>
+                  <Button onClick={handleAddService}>{t('hairdresserModule.ajouter')}</Button>
                 </div>
               </DialogContent>
             </Dialog>
@@ -562,7 +564,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
         {/* Programme fidélité */}
         <TabsContent value="fidelite" className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold">Programme Fidélité</h3>
+            <h3 className="font-semibold">{t('hairdresserModule.programmeFidelite')}</h3>
             <div className="flex gap-2">
               <Badge variant="outline" className="text-[#ff4000]">🥉 Bronze: 0-1000 pts</Badge>
               <Badge variant="outline" className="text-gray-500">🥈 Silver: 1000-2000 pts</Badge>
@@ -576,7 +578,7 @@ export function HairdresserModule({ serviceId, businessName }: HairdresserModule
               <div className="flex items-center gap-4">
                 <Gift className="h-8 w-8 text-[#ff4000]" />
                 <div>
-                  <h4 className="font-semibold">Comment ça marche ?</h4>
+                  <h4 className="font-semibold">{t('hairdresserModule.commentCaMarche')}</h4>
                   <p className="text-sm text-muted-foreground">
                     1 000 GNF dépensé = 1 point • 100 points = 10 000 GNF de réduction
                   </p>

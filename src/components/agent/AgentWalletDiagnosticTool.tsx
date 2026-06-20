@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +18,7 @@ interface AgentWalletDiagnosticToolProps {
 }
 
 export default function AgentWalletDiagnosticTool({ agentId }: AgentWalletDiagnosticToolProps) {
+  const { t } = useTranslation();
   const [results, setResults] = useState<DiagnosticResult[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -243,7 +245,7 @@ export default function AgentWalletDiagnosticTool({ agentId }: AgentWalletDiagno
 
         {results.length > 0 && (
           <div className="space-y-2">
-            <h3 className="font-semibold text-sm mb-2">Résultats:</h3>
+            <h3 className="font-semibold text-sm mb-2">{t('agentWalletDiagnosticTool.resultats')}</h3>
             {results.map((result, index) => (
               <div
                 key={index}
@@ -274,7 +276,7 @@ export default function AgentWalletDiagnosticTool({ agentId }: AgentWalletDiagno
         {results.length > 0 && (
           <div className="text-xs text-muted-foreground mt-4 p-3 bg-muted rounded">
             <p className="font-semibold mb-1">💡 Astuce:</p>
-            <p>Ouvrez la console (F12) pour voir les détails complets du diagnostic.</p>
+            <p>{t('agentWalletDiagnosticTool.ouvrezLaConsoleF12Pour')}</p>
           </div>
         )}
       </CardContent>

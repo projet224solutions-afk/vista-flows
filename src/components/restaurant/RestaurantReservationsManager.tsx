@@ -405,7 +405,7 @@ export function RestaurantReservationsManager({ serviceId }: RestaurantReservati
 
       {/* Modal de détail */}
       <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Détails de la réservation</DialogTitle>
           </DialogHeader>

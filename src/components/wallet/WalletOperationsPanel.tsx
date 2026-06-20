@@ -25,6 +25,7 @@ import { toast } from 'sonner';
 import { changeWalletPin, getWalletPinStatus, previewWalletTransfer, resetWalletPin, resolveWalletRecipient, setupWalletPin } from '@/services/walletBackendService';
 import { WalletPinPromptDialog, WalletPinSetupDialog } from '@/components/wallet/WalletPinDialogs';
 import { InternationalTransferConfirmation, type InternationalPreviewData } from '@/components/wallet/InternationalTransferConfirmation';
+import { useTranslation } from "@/hooks/useTranslation";
 
 // ChapChapPay - Mobile Money
 const PAYMENT_METHODS = [
@@ -34,6 +35,7 @@ const PAYMENT_METHODS = [
 ];
 
 export function WalletOperationsPanel() {
+  const { t } = useTranslation();
   const { wallet, balance, currency, processing, deposit, withdraw, transfer } = useWallet();
   const [pinStatus, setPinStatus] = useState<{ pin_enabled: boolean; pin_locked_until: string | null } | null>(null);
   const [pinAction, setPinAction] = useState<'withdraw' | 'transfer' | null>(null);
@@ -84,7 +86,7 @@ export function WalletOperationsPanel() {
   const handleDeposit = async () => {
     const amount = parseFloat(depositAmount);
     if (isNaN(amount) || amount <= 0) {
-      toast.error('Montant invalide');
+      toast.error(t('walletOperationsPanel.montantInvalide'));
       return;
     }
 
@@ -100,12 +102,12 @@ export function WalletOperationsPanel() {
   const handleWithdraw = async () => {
     const amount = parseFloat(withdrawAmount);
     if (isNaN(amount) || amount <= 0) {
-      toast.error('Montant invalide');
+      toast.error(t('walletOperationsPanel.montantInvalide'));
       return;
     }
 
     if (amount > balance) {
-      toast.error('Solde insuffisant');
+      toast.error(t('walletOperationsPanel.soldeInsuffisant'));
       return;
     }
 
@@ -123,7 +125,7 @@ export function WalletOperationsPanel() {
   const handleTransfer = async () => {
     const amount = parseFloat(transferAmount);
     if (isNaN(amount) || amount <= 0) {
-      toast.error('Montant invalide');
+      toast.error(t('walletOperationsPanel.montantInvalide'));
       return;
     }
 
@@ -145,7 +147,7 @@ export function WalletOperationsPanel() {
 
     const resolvedId = recipientResolution.data.userId;
     if (resolvedId === wallet.user_id) {
-      toast.error('Vous ne pouvez pas transférer à vous-même');
+      toast.error(t('walletOperationsPanel.vousNePouvezPasTransferer'));
       return;
     }
 
@@ -250,7 +252,7 @@ export function WalletOperationsPanel() {
       setPinSetupOpen(false);
 
       if (pinSetupMode === 'setup' && pinAction) {
-        toast.success('Code PIN activé. Confirmez maintenant votre opération.');
+        toast.success(t('walletOperationsPanel.codePinActiveConfirmezMaintenant'));
         setPinPromptOpen(true);
         return;
       }
@@ -276,7 +278,7 @@ export function WalletOperationsPanel() {
         <CardContent className="p-6">
           <div className="text-center text-muted-foreground">
             <WalletIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
-            <p>Wallet en cours de chargement...</p>
+            <p>{t('walletOperationsPanel.walletEnCoursDeChargement')}</p>
           </div>
         </CardContent>
       </Card>
@@ -287,7 +289,7 @@ export function WalletOperationsPanel() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Opérations Wallet</CardTitle>
+          <CardTitle>{t('walletOperationsPanel.operationsWallet')}</CardTitle>
           <CardDescription>
             Dépôt, retrait et transfert d'argent
           </CardDescription>
@@ -345,7 +347,7 @@ export function WalletOperationsPanel() {
               </div>
 
               <div>
-                <Label>Méthode de paiement</Label>
+                <Label>{t('walletOperationsPanel.methodeDePaiement')}</Label>
                 <Select value={depositMethod} onValueChange={setDepositMethod}>
                   <SelectTrigger>
                     <SelectValue />
@@ -406,7 +408,7 @@ export function WalletOperationsPanel() {
               </div>
 
               <div>
-                <Label>Méthode de retrait</Label>
+                <Label>{t('walletOperationsPanel.methodeDeRetrait')}</Label>
                 <Select value={withdrawMethod} onValueChange={setWithdrawMethod}>
                   <SelectTrigger>
                     <SelectValue />
@@ -458,7 +460,7 @@ export function WalletOperationsPanel() {
                 <Input
                   value={recipientId}
                   onChange={(e) => setRecipientId(e.target.value)}
-                  placeholder="ID, email ou téléphone"
+                  placeholder={t('walletOperationsPanel.idEmailOuTelephone')}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   Entrez l'ID (ex: CLT0001), l'email ou le numéro de téléphone
@@ -479,10 +481,10 @@ export function WalletOperationsPanel() {
               </div>
 
               <div>
-                <Label htmlFor="transfer-description">Motif du transfert</Label>
+                <Label htmlFor="transfer-description">{t('walletOperationsPanel.motifDuTransfert')}</Label>
                 <Textarea
                   id="transfer-description"
-                  placeholder="Ex: Paiement facture, Remboursement..."
+                  placeholder={t('walletOperationsPanel.exPaiementFactureRemboursement')}
                   value={transferDescription}
                   onChange={(e) => setTransferDescription(e.target.value)}
                   rows={2}

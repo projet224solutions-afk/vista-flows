@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Badge } from '@/components/ui/badge';
 import { Shield, Lock, AlertTriangle, CheckCircle2, XCircle, Award, TrendingUp } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
@@ -8,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
  * 224SOLUTIONS vs Amazon vs Alibaba vs Odoo
  */
 export const SecurityComparisonPanel = () => {
+  const { t } = useTranslation();
   const securityCategories = [
     {
       category: 'Protection des Données',
@@ -200,7 +202,7 @@ export const SecurityComparisonPanel = () => {
         <Badge variant="default" className="bg-gradient-to-r from-primary to-primary-glow">
           Analyse Sécurité & Fiabilité 2025
         </Badge>
-        <h2 className="text-3xl font-bold">Comparaison Sécurité E-Commerce</h2>
+        <h2 className="text-3xl font-bold">{t('securityComparisonPanel.comparaisonSecuriteECommerce')}</h2>
         <p className="text-muted-foreground">
           Benchmark détaillé : 224SOLUTIONS vs Géants Mondiaux
         </p>
@@ -338,27 +340,27 @@ export const SecurityComparisonPanel = () => {
             <div>
               <p className="font-semibold text-sm mb-2">🏆 MEILLEURE APPLICATION - LEADER MONDIAL</p>
               <p className="text-sm text-muted-foreground">
-                Amazon est le <strong>standard de référence absolu</strong> en matière de sécurité et fiabilité e-commerce.
+                Amazon est le <strong>{t('securityComparisonPanel.standardDeReferenceAbsolu')}</strong> en matière de sécurité et fiabilité e-commerce.
               </p>
             </div>
             <div className="space-y-2">
               <p className="text-sm font-medium text-[#ff4000]">✅ Forces :</p>
               <ul className="text-xs space-y-1 text-muted-foreground ml-4">
                 <li>• Infrastructure AWS niveau enterprise (99.99% uptime)</li>
-                <li>• ML avancé pour détection fraude en temps réel</li>
-                <li>• Certifications complètes (PCI DSS Level 1, ISO 27001)</li>
+                <li>{t('securityComparisonPanel.mlAvancePourDetectionFraude')}</li>
+                <li>{t('securityComparisonPanel.certificationsCompletesPciDssLevel')}</li>
                 <li>• Protection DDoS/WAF multi-niveaux</li>
-                <li>• Chiffrement E2E sur toutes les données</li>
+                <li>{t('securityComparisonPanel.chiffrementE2eSurToutesLes')}</li>
                 <li>• Budget sécurité illimité, équipes dédiées 24/7</li>
               </ul>
             </div>
             <div className="space-y-2">
               <p className="text-sm font-medium text-[#ff4000]">❌ Limites :</p>
               <ul className="text-xs space-y-1 text-muted-foreground ml-4">
-                <li>• Pas de wallet intégré natif</li>
-                <li>• Pas de cartes virtuelles</li>
-                <li>• Pas de système escrow pour vendeurs tiers</li>
-                <li>• Complexité d'intégration élevée</li>
+                <li>{t('securityComparisonPanel.pasDeWalletIntegreNatif')}</li>
+                <li>{t('securityComparisonPanel.pasDeCartesVirtuelles')}</li>
+                <li>{t('securityComparisonPanel.pasDeSystemeEscrowPour')}</li>
+                <li>{t('securityComparisonPanel.complexiteDIntegrationElevee')}</li>
               </ul>
             </div>
             <div className="pt-2 border-t">
@@ -385,29 +387,29 @@ export const SecurityComparisonPanel = () => {
             <div>
               <p className="font-semibold text-sm mb-2">🚀 MEILLEURE INNOVATION - LEADER AFRICAIN</p>
               <p className="text-sm text-muted-foreground">
-                224SOLUTIONS combine <strong>sécurité enterprise</strong> avec des <strong>innovations uniques</strong> adaptées au marché africain.
+                224SOLUTIONS combine <strong>{t('securityComparisonPanel.securiteEnterprise')}</strong> {t('securityComparisonPanel.avecDes')} <strong>innovations uniques</strong> adaptées au marché africain.
               </p>
             </div>
             <div className="space-y-2">
               <p className="text-sm font-medium text-[#ff4000]">✅ Forces :</p>
               <ul className="text-xs space-y-1 text-muted-foreground ml-4">
-                <li>• RLS activé sur 100% des tables (niveau Amazon)</li>
-                <li>• ML fraud detection temps réel (6 critères)</li>
-                <li>• Wallet + Cartes virtuelles intégrés (unique!)</li>
-                <li>• Escrow sécurisé natif pour vendeurs</li>
+                <li>{t('securityComparisonPanel.rlsActiveSur100Des')}</li>
+                <li>{t('securityComparisonPanel.mlFraudDetectionTempsReel')}</li>
+                <li>{t('securityComparisonPanel.walletCartesVirtuellesIntegresUnique')}</li>
+                <li>{t('securityComparisonPanel.escrowSecuriseNatifPourVendeurs')}</li>
                 <li>• PWA Score 98/100 (meilleur que tous)</li>
-                <li>• Rate limiting DB + client-side</li>
-                <li>• Optimisé mobile-first Afrique (connexion lente)</li>
-                <li>• Audit logs complets sur tous événements</li>
+                <li>{t('securityComparisonPanel.rateLimitingDbClientSide')}</li>
+                <li>{t('securityComparisonPanel.optimiseMobileFirstAfriqueConnexion')}</li>
+                <li>{t('securityComparisonPanel.auditLogsCompletsSurTous')}</li>
               </ul>
             </div>
             <div className="space-y-2">
-              <p className="text-sm font-medium text-orange-600">⚠️ À améliorer :</p>
+              <p className="text-sm font-medium text-orange-600">{t('securityComparisonPanel.aAmeliorer')}</p>
               <ul className="text-xs space-y-1 text-muted-foreground ml-4">
                 <li>• Certifications PCI DSS/ISO en cours (vs déjà obtenues)</li>
-                <li>• Budget sécurité limité vs géants</li>
+                <li>{t('securityComparisonPanel.budgetSecuriteLimiteVsGeants')}</li>
                 <li>• Chiffrement E2E partiel (vs complet Amazon)</li>
-                <li>• Multi-région à développer</li>
+                <li>{t('securityComparisonPanel.multiRegionADevelopper')}</li>
               </ul>
             </div>
             <div className="pt-2 border-t">
@@ -432,9 +434,9 @@ export const SecurityComparisonPanel = () => {
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
-              <p className="font-semibold text-sm mb-2">📦 VOLUME MASSIF - SÉCURITÉ MOYENNE</p>
+              <p className="font-semibold text-sm mb-2">{t('securityComparisonPanel.volumeMassifSecuriteMoyenne')}</p>
               <p className="text-sm text-muted-foreground">
-                Alibaba excelle en <strong>volume</strong> mais présente des <strong>failles sécurité</strong> importantes.
+                Alibaba excelle en <strong>volume</strong> {t('securityComparisonPanel.maisPresenteDes')} <strong>{t('securityComparisonPanel.faillesSecurite')}</strong> importantes.
               </p>
             </div>
             <div className="space-y-2">
@@ -442,19 +444,19 @@ export const SecurityComparisonPanel = () => {
               <ul className="text-xs space-y-1 text-muted-foreground ml-4">
                 <li>• Infrastructure cloud Alibaba solide</li>
                 <li>• CDN global performant</li>
-                <li>• Escrow partiel pour B2B</li>
-                <li>• Protection DDoS avancée</li>
+                <li>{t('securityComparisonPanel.escrowPartielPourB2b')}</li>
+                <li>{t('securityComparisonPanel.protectionDdosAvancee')}</li>
               </ul>
             </div>
             <div className="space-y-2">
               <p className="text-sm font-medium text-[#ff4000]">❌ Faiblesses :</p>
               <ul className="text-xs space-y-1 text-muted-foreground ml-4">
                 <li>• RLS partiel seulement (60%)</li>
-                <li>• Détection fraude basique</li>
+                <li>{t('securityComparisonPanel.detectionFraudeBasique')}</li>
                 <li>• Chiffrement incomplet</li>
-                <li>• Conformité GDPR limitée</li>
+                <li>{t('securityComparisonPanel.conformiteGdprLimitee')}</li>
                 <li>• Audit logs partiels</li>
-                <li>• Nombreux vendeurs frauduleux signalés</li>
+                <li>{t('securityComparisonPanel.nombreuxVendeursFrauduleuxSignales')}</li>
               </ul>
             </div>
             <div className="pt-2 border-t">
@@ -481,28 +483,28 @@ export const SecurityComparisonPanel = () => {
             <div>
               <p className="font-semibold text-sm mb-2">🏢 ERP COMPLET - E-COMMERCE FAIBLE</p>
               <p className="text-sm text-muted-foreground">
-                Odoo est un <strong>excellent ERP</strong> mais <strong>inadapté</strong> pour e-commerce sécurisé à grande échelle.
+                Odoo est un <strong>excellent ERP</strong> mais <strong>{t('securityComparisonPanel.inadapte')}</strong> pour e-commerce sécurisé à grande échelle.
               </p>
             </div>
             <div className="space-y-2">
               <p className="text-sm font-medium text-[#ff4000]">✅ Forces :</p>
               <ul className="text-xs space-y-1 text-muted-foreground ml-4">
-                <li>• Suite ERP complète intégrée</li>
+                <li>{t('securityComparisonPanel.suiteErpCompleteIntegree')}</li>
                 <li>• Gestion comptabilité/stock</li>
                 <li>• Backup automatique disponible</li>
-                <li>• ORM protège contre SQL injection</li>
+                <li>{t('securityComparisonPanel.ormProtegeContreSqlInjection')}</li>
               </ul>
             </div>
             <div className="space-y-2">
               <p className="text-sm font-medium text-[#ff4000]">❌ Faiblesses Critiques :</p>
               <ul className="text-xs space-y-1 text-muted-foreground ml-4">
-                <li>• Aucune détection fraude ML</li>
-                <li>• RLS très limité (40%)</li>
-                <li>• Performance e-commerce médiocre</li>
+                <li>{t('securityComparisonPanel.aucuneDetectionFraudeMl')}</li>
+                <li>{t('securityComparisonPanel.rlsTresLimite40')}</li>
+                <li>{t('securityComparisonPanel.performanceECommerceMediocre')}</li>
                 <li>• PWA quasi inexistant</li>
                 <li>• Pas de certifications PCI DSS/ISO</li>
                 <li>• Rate limiting partiel</li>
-                <li>• Sécurité dépend de l'hébergement choisi</li>
+                <li>{t('securityComparisonPanel.securiteDependDeLHebergement')}</li>
               </ul>
             </div>
             <div className="pt-2 border-t">
@@ -525,7 +527,7 @@ export const SecurityComparisonPanel = () => {
             {/* Classement */}
             <div className="space-y-3">
               <div className="text-center space-y-2">
-                <h4 className="text-lg font-bold">Classement Sécurité & Fiabilité</h4>
+                <h4 className="text-lg font-bold">{t('securityComparisonPanel.classementSecuriteFiabilite')}</h4>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mt-4">
                   <div className="p-4 bg-gradient-to-br from-[#ff4000]/20 to-orange-500/20 rounded-lg border-2 border-[#ff4000]">
                     <div className="text-3xl mb-1">🥇</div>
@@ -563,12 +565,12 @@ export const SecurityComparisonPanel = () => {
                   Pourquoi Amazon est 1er ?
                 </h5>
                 <ul className="text-xs space-y-1 text-muted-foreground">
-                  <li>✓ Infrastructure AWS inégalée (milliards investis)</li>
-                  <li>✓ ML fraud detection le plus avancé du marché</li>
-                  <li>✓ Toutes certifications obtenues (PCI DSS L1, ISO 27001)</li>
+                  <li>{t('securityComparisonPanel.infrastructureAwsInegaleeMilliardsInvest')}</li>
+                  <li>{t('securityComparisonPanel.mlFraudDetectionLePlus')}</li>
+                  <li>{t('securityComparisonPanel.toutesCertificationsObtenuesPciDss')}</li>
                   <li>✓ Équipes sécurité 24/7 dans le monde entier</li>
-                  <li>✓ 99.99% uptime garanti avec compensation financière</li>
-                  <li>✓ Budget R&D sécurité illimité</li>
+                  <li>{t('securityComparisonPanel.t9999UptimeGarantiAvec')}</li>
+                  <li>{t('securityComparisonPanel.budgetRDSecuriteIllimite')}</li>
                 </ul>
               </div>
               <div className="space-y-2">
@@ -577,12 +579,12 @@ export const SecurityComparisonPanel = () => {
                   Pourquoi 224SOLUTIONS est 2e ?
                 </h5>
                 <ul className="text-xs space-y-1 text-muted-foreground">
-                  <li>✓ Sécurité comparable Amazon pour fraction du coût</li>
+                  <li>{t('securityComparisonPanel.securiteComparableAmazonPourFraction')}</li>
                   <li>✓ Innovations uniques (Wallet, Cartes, Escrow)</li>
                   <li>✓ PWA meilleur que tous (98/100 vs 75 Amazon)</li>
-                  <li>✓ Optimisé marchés émergents (connexion lente)</li>
-                  <li>✓ RLS 100% activé (niveau enterprise)</li>
-                  <li>✓ Agilité startup vs bureaucratie géants</li>
+                  <li>{t('securityComparisonPanel.optimiseMarchesEmergentsConnexionLente')}</li>
+                  <li>{t('securityComparisonPanel.rls100ActiveNiveauEnterprise')}</li>
+                  <li>{t('securityComparisonPanel.agiliteStartupVsBureaucratieGeants')}</li>
                 </ul>
               </div>
             </div>
@@ -590,11 +592,11 @@ export const SecurityComparisonPanel = () => {
             {/* Conclusion */}
             <div className="pt-4 border-t space-y-3 text-center">
               <p className="text-sm font-semibold">
-                🎯 <span className="text-primary">224SOLUTIONS</span> atteint <span className="text-primary">90% du niveau Amazon</span>
+                🎯 <span className="text-primary">224SOLUTIONS</span> atteint <span className="text-primary">{t('securityComparisonPanel.t90DuNiveauAmazon')}</span>
                 pour la sécurité & fiabilité
               </p>
               <p className="text-sm text-muted-foreground">
-                Avec un score de <strong>8.5/10</strong>, 224SOLUTIONS se positionne comme la <strong className="text-primary">meilleure alternative</strong> à Amazon
+                Avec un score de <strong>8.5/10</strong>{t('securityComparisonPanel.t224solutionsSePositionneCommeLa')} <strong className="text-primary">meilleure alternative</strong> à Amazon
                 pour le marché africain, combinant sécurité enterprise et innovations uniques.
               </p>
               <p className="text-sm text-muted-foreground">

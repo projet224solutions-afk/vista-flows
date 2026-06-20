@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Activity, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
@@ -14,6 +15,7 @@ const ENDPOINTS = [
 ];
 
 export default function PDGApiSupervision() {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<'ok'|'degraded'|'down'>('ok');
   const [latency, setLatency] = useState<number|null>(null);
   const [availability, setAvailability] = useState<number|null>(null);
@@ -101,7 +103,7 @@ export default function PDGApiSupervision() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold mb-2">Supervision API</h2>
-        <p className="text-muted-foreground">Surveillez les performances et la disponibilité des API (données réelles)</p>
+        <p className="text-muted-foreground">{t('pDGApiSupervision.surveillezLesPerformancesEtLa')}</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -126,18 +128,18 @@ export default function PDGApiSupervision() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Temps de Réponse</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('pDGApiSupervision.tempsDeReponse')}</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{latency !== null ? `${latency}ms` : '...'}</div>
-            <p className="text-xs text-muted-foreground">Moyenne sur 5 endpoints</p>
+            <p className="text-xs text-muted-foreground">{t('pDGApiSupervision.moyenneSur5Endpoints')}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Disponibilité</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('pDGApiSupervision.disponibilite')}</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -153,15 +155,15 @@ export default function PDGApiSupervision() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{incidents !== null ? incidents : '...'}</div>
-            <p className="text-xs text-muted-foreground">Dernières 24h</p>
+            <p className="text-xs text-muted-foreground">{t('pDGApiSupervision.dernieres24h')}</p>
           </CardContent>
         </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Endpoints Surveillés</CardTitle>
-          <CardDescription>État en temps réel des principaux endpoints</CardDescription>
+          <CardTitle>{t('pDGApiSupervision.endpointsSurveilles')}</CardTitle>
+          <CardDescription>{t('pDGApiSupervision.etatEnTempsReelDes')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -190,11 +192,11 @@ export default function PDGApiSupervision() {
       <Card>
         <CardHeader>
           <CardTitle>Incidents critiques (24h)</CardTitle>
-          <CardDescription>Logs d'audit critiques détectés</CardDescription>
+          <CardDescription>{t('pDGApiSupervision.logsDAuditCritiquesDetectes')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {criticalEvents.length === 0 && <div className="text-muted-foreground">Aucun événement critique détecté.</div>}
+            {criticalEvents.length === 0 && <div className="text-muted-foreground">{t('pDGApiSupervision.aucunEvenementCritiqueDetecte')}</div>}
             {criticalEvents.map((evt, i) => (
               <div key={i} className="p-2 border rounded flex flex-col gap-1">
                 <span className="font-semibold">{evt.event_type}</span>
@@ -209,11 +211,11 @@ export default function PDGApiSupervision() {
       <Card>
         <CardHeader>
           <CardTitle>Incidents ouverts</CardTitle>
-          <CardDescription>Résumé par sévérité</CardDescription>
+          <CardDescription>{t('pDGApiSupervision.resumeParSeverite')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {openIncidents.length === 0 && <div className="text-muted-foreground">Aucun incident ouvert.</div>}
+            {openIncidents.length === 0 && <div className="text-muted-foreground">{t('pDGApiSupervision.aucunIncidentOuvert')}</div>}
             {openIncidents.map((inc, i) => (
               <div key={i} className="flex items-center gap-4 p-2 border rounded">
                 <span className="font-semibold">{inc.severity}</span>

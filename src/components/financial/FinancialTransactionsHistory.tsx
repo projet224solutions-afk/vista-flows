@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useFinancialTransactions } from '@/hooks/useFinancialTransactions';
@@ -7,6 +8,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 export function FinancialTransactionsHistory() {
+  const { t } = useTranslation();
   const { transactions, loadTransactions } = useFinancialTransactions();
 
   useEffect(() => {
@@ -75,7 +77,7 @@ export function FinancialTransactionsHistory() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Historique des transactions financières</CardTitle>
+        <CardTitle>{t('financialTransactionsHistory.historiqueDesTransactionsFinancieres')}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">

@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,6 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export default function WorkerSettings() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -64,7 +66,7 @@ export default function WorkerSettings() {
       });
     } catch (err) {
       console.error('Erreur chargement:', err);
-      toast.error('Erreur de chargement');
+      toast.error(t('workerSettings.erreurDeChargement'));
       navigate('/worker');
     } finally {
       setLoading(false);
@@ -77,13 +79,13 @@ export default function WorkerSettings() {
       // Vérifier le type
       const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
       if (!allowedTypes.includes(file.type)) {
-        toast.error('Format non supporté. Utilisez JPG, PNG, GIF ou WebP');
+        toast.error(t('workerSettings.formatNonSupporteUtilisezJpg'));
         return;
       }
 
       // Vérifier la taille - Max 10 Mo
       if (file.size > 10 * 1024 * 1024) {
-        toast.error('L\'image ne doit pas dépasser 10 Mo');
+        toast.error(t('workerSettings.lImageNeDoitPas'));
         return;
       }
 
@@ -162,7 +164,7 @@ export default function WorkerSettings() {
 
       if (error) throw error;
 
-      toast.success('Profil mis à jour avec succès');
+      toast.success(t('workerSettings.profilMisAJourAvec'));
       navigate('/worker');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur de sauvegarde';
@@ -190,8 +192,8 @@ export default function WorkerSettings() {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Retour
           </Button>
-          <h1 className="text-3xl font-bold">Paramètres du profil</h1>
-          <p className="text-muted-foreground">Modifiez vos informations personnelles</p>
+          <h1 className="text-3xl font-bold">{t('workerSettings.parametresDuProfil')}</h1>
+          <p className="text-muted-foreground">{t('workerSettings.modifiezVosInformationsPersonnelles')}</p>
         </div>
 
         <div className="space-y-6">
@@ -234,7 +236,7 @@ export default function WorkerSettings() {
           {/* Contact */}
           <Card>
             <CardHeader>
-              <CardTitle>Informations de contact</CardTitle>
+              <CardTitle>{t('workerSettings.informationsDeContact')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -276,7 +278,7 @@ export default function WorkerSettings() {
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   disabled={saving}
-                  placeholder="Votre adresse complète"
+                  placeholder={t('workerSettings.votreAdresseComplete')}
                 />
               </div>
             </CardContent>
@@ -293,11 +295,11 @@ export default function WorkerSettings() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="newPassword">Nouveau mot de passe</Label>
+                  <Label htmlFor="newPassword">{t('workerSettings.nouveauMotDePasse')}</Label>
                   <Input
                     id="newPassword"
                     type="password"
-                    placeholder="Min. 6 caractères"
+                    placeholder={t('workerSettings.min6Caracteres')}
                     value={formData.newPassword}
                     onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
                     disabled={saving}
@@ -308,7 +310,7 @@ export default function WorkerSettings() {
                   <Input
                     id="confirmPassword"
                     type="password"
-                    placeholder="Répéter le mot de passe"
+                    placeholder={t('workerSettings.repeterLeMotDePasse')}
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                     disabled={saving}

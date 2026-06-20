@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +21,7 @@ const ASSISTANT_ACTIONS = [
 ];
 
 export default function AIAssistant({ currentText, contractType, onTextUpdated }: AIAssistantProps) {
+  const { t } = useTranslation();
   const [action, setAction] = useState('');
   const [customPrompt, setCustomPrompt] = useState('');
   const [loading, setLoading] = useState(false);
@@ -89,7 +91,7 @@ export default function AIAssistant({ currentText, contractType, onTextUpdated }
         <div className="space-y-2">
           <Select value={action} onValueChange={setAction}>
             <SelectTrigger>
-              <SelectValue placeholder="Que voulez-vous faire ?" />
+              <SelectValue placeholder={t('aIAssistant.queVoulezVousFaire')} />
             </SelectTrigger>
             <SelectContent>
               {ASSISTANT_ACTIONS.map((item) => {
@@ -111,7 +113,7 @@ export default function AIAssistant({ currentText, contractType, onTextUpdated }
           <Textarea
             value={customPrompt}
             onChange={(e) => setCustomPrompt(e.target.value)}
-            placeholder="Instructions personnalisées (optionnel)..."
+            placeholder={t('aIAssistant.instructionsPersonnaliseesOptionnel')}
             className="min-h-[80px]"
           />
         </div>

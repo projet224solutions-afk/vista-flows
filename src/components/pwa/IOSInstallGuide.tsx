@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { motion, AnimatePresence } from 'framer-motion';
 import { Share, Plus, X, Check, ArrowDown, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,7 @@ interface IOSInstallGuideProps {
 }
 
 export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
+  const { t } = useTranslation();
   const [step, setStep] = useState(0);
   const [isSafari, setIsSafari] = useState(true);
   const [isIPad, setIsIPad] = useState(false);
@@ -78,7 +80,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
             <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center mx-auto">
               <Smartphone className="w-10 h-10 text-blue-600" />
             </div>
-            <h2 className="text-xl font-bold text-foreground">Ouvrez dans Safari</h2>
+            <h2 className="text-xl font-bold text-foreground">{t('iOSInstallGuide.ouvrezDansSafari')}</h2>
             <p className="text-muted-foreground text-sm">
               L'installation iOS ne fonctionne que depuis <strong>Safari</strong>. Depuis Google/Chrome iOS, ouvrez d'abord ce lien dans Safari.
             </p>
@@ -103,7 +105,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
               variant="outline"
               className="w-full h-12 font-semibold"
             >
-              <span id="copy-btn-text">Copier le lien</span>
+              <span id="copy-btn-text">{t('iOSInstallGuide.copierLeLien')}</span>
             </Button>
             <button onClick={() => onOpenChange(false)} className="text-sm text-muted-foreground hover:underline">
               Fermer
@@ -197,8 +199,8 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
                   <Plus className="w-6 h-6 text-white" />
                 </div>
                 <div className="text-left">
-                  <p className="font-semibold text-sm text-foreground">Sur l'écran d'accueil</p>
-                  <p className="text-xs text-muted-foreground">Ajouter à l'écran d'accueil</p>
+                  <p className="font-semibold text-sm text-foreground">{t('iOSInstallGuide.surLEcranDAccueil')}</p>
+                  <p className="text-xs text-muted-foreground">{t('iOSInstallGuide.ajouterALEcranD')}</p>
                 </div>
                 <motion.div
                   animate={{ x: [-4, 4, -4] }}
@@ -221,7 +223,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
             </div>
 
             <p className="text-muted-foreground text-sm">
-              Faites défiler et appuyez sur <strong>"Sur l'écran d'accueil"</strong>
+              Faites défiler et appuyez sur <strong>{t('iOSInstallGuide.surLEcranDAccueil2')}</strong>
             </p>
 
             <Button
@@ -258,8 +260,8 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
             {/* Simulation de la confirmation iOS */}
             <div className="bg-gray-100 dark:bg-slate-800 rounded-2xl p-5 space-y-4">
               <div className="flex items-center justify-between">
-                <button className="text-blue-600 text-sm font-medium">Annuler</button>
-                <p className="font-semibold text-sm text-foreground">Ajouter à l'écran</p>
+                <button className="text-blue-600 text-sm font-medium">{t('iOSInstallGuide.annuler')}</button>
+                <p className="font-semibold text-sm text-foreground">{t('iOSInstallGuide.ajouterALEcran')}</p>
                 <motion.button
                   animate={{ scale: [1, 1.1, 1] }}
                   transition={{ repeat: Infinity, duration: 1.5 }}
@@ -283,7 +285,7 @@ export function IOSInstallGuide({ open, onOpenChange }: IOSInstallGuideProps) {
             </div>
 
             <p className="text-muted-foreground text-sm">
-              Appuyez sur <strong>"Ajouter"</strong> en haut à droite
+              Appuyez sur <strong>{t('iOSInstallGuide.ajouter')}</strong> en haut à droite
             </p>
 
             <Button

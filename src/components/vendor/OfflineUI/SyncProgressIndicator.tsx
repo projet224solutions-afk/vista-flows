@@ -7,6 +7,7 @@ import React from 'react';
 import { RefreshCw, CheckCircle2, XCircle, Clock, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface SyncProgressIndicatorProps {
   total: number;
@@ -25,6 +26,7 @@ export function SyncProgressIndicator({
   className,
   showDetails = true
 }: SyncProgressIndicatorProps) {
+  const { t } = useTranslation();
   const isSyncing = pending > 0;
   const progressPercentage = total > 0 ? Math.round((synced / total) * 100) : 0;
 
@@ -44,17 +46,17 @@ export function SyncProgressIndicator({
           {isSyncing ? (
             <>
               <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
-              <span className="font-medium text-sm">Synchronisation en cours</span>
+              <span className="font-medium text-sm">{t('offlineSync.syncingNow')}</span>
             </>
           ) : failed > 0 ? (
             <>
               <XCircle className="w-4 h-4 text-[#ff4000]" />
-              <span className="font-medium text-sm">Synchronisation terminée (avec erreurs)</span>
+              <span className="font-medium text-sm">{t('offlineSync.syncDoneErrors')}</span>
             </>
           ) : (
             <>
               <CheckCircle2 className="w-4 h-4 text-[#ff4000]" />
-              <span className="font-medium text-sm">Synchronisation terminée</span>
+              <span className="font-medium text-sm">{t('offlineSync.syncDone')}</span>
             </>
           )}
         </div>
@@ -69,23 +71,23 @@ export function SyncProgressIndicator({
 
       {/* Détails */}
       {showDetails && (
-        <div className="grid grid-cols-3 gap-2 text-xs">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
           <div className="flex items-center gap-1.5 text-[#ff4000] dark:text-[#ff4000]">
             <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>{synced} Synchronisé{synced > 1 ? 's' : ''}</span>
+            <span>{synced} {t('offlineSync.syncedWord')}</span>
           </div>
 
           {pending > 0 && (
             <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
               <Clock className="w-3.5 h-3.5" />
-              <span>{pending} En attente</span>
+              <span>{pending} {t('offlineSync.pendingWord')}</span>
             </div>
           )}
 
           {failed > 0 && (
             <div className="flex items-center gap-1.5 text-[#ff4000] dark:text-[#ff4000]">
               <XCircle className="w-3.5 h-3.5" />
-              <span>{failed} Échoué{failed > 1 ? 's' : ''}</span>
+              <span>{failed} {t('offlineSync.failedWord')}</span>
             </div>
           )}
         </div>
@@ -104,6 +106,7 @@ export function CompactSyncIndicator({
   pending: number;
   className?: string;
 }) {
+  const { t } = useTranslation();
   if (pending === 0) {
     return (
       <div
@@ -114,7 +117,7 @@ export function CompactSyncIndicator({
         )}
       >
         <CheckCircle2 className="w-3 h-3" />
-        <span>Tout est synchronisé</span>
+        <span>{t('offlineSync.allSynced')}</span>
       </div>
     );
   }
@@ -128,7 +131,7 @@ export function CompactSyncIndicator({
       )}
     >
       <RefreshCw className="w-3 h-3 animate-spin" />
-      <span>{pending} en attente</span>
+      <span>{pending} {t('offlineSync.pending')}</span>
     </div>
   );
 }
@@ -147,6 +150,7 @@ export function SyncToast({
   total: number;
   status: 'syncing' | 'success' | 'error';
 }) {
+  const { t } = useTranslation();
   const percentage = total > 0 ? Math.round((progress / total) * 100) : 0;
 
   return (
@@ -157,9 +161,9 @@ export function SyncToast({
         {status === 'error' && <XCircle className="w-4 h-4 text-[#ff4000]" />}
 
         <span className="font-medium">
-          {status === 'syncing' && `Synchronisation ${entity}...`}
-          {status === 'success' && `${entity} synchronisé`}
-          {status === 'error' && `Erreur sync ${entity}`}
+          {status === 'syncing' && `${t('offlineSync.syncingWord')} ${entity}...`}
+          {status === 'success' && `${entity} ${t('offlineSync.syncedSuffix')}`}
+          {status === 'error' && `${t('offlineSync.errorSyncPrefix')} ${entity}`}
         </span>
       </div>
 
@@ -167,7 +171,7 @@ export function SyncToast({
         <>
           <Progress value={percentage} className="h-1" />
           <p className="text-xs text-gray-500">
-            {progress} sur {total} ({percentage}%)
+            {progress} {t('offlineSync.ofWord')} {total} ({percentage}%)
           </p>
         </>
       )}
@@ -190,11 +194,12 @@ export function SyncDetailsList({
   }>;
   className?: string;
 }) {
+  const { t } = useTranslation();
   if (items.length === 0) {
     return (
       <div className={cn('text-center py-8 text-gray-500', className)}>
         <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-[#ff4000]" />
-        <p>Aucune synchronisation en attente</p>
+        <p>{t('offlineSync.noPendingSync')}</p>
       </div>
     );
   }
@@ -216,7 +221,7 @@ export function SyncDetailsList({
               <p className="text-sm font-medium">{item.entity}</p>
               {item.retryCount !== undefined && item.retryCount > 0 && (
                 <p className="text-xs text-gray-500">
-                  Tentative {item.retryCount}
+                  {t('offlineSync.attemptWord')} {item.retryCount}
                 </p>
               )}
             </div>
@@ -233,6 +238,7 @@ export function SyncDetailsList({
  * Badge de statut
  */
 function StatusBadge({ status }: { status: 'pending' | 'syncing' | 'success' | 'error' }) {
+  const { t } = useTranslation();
   const variants = {
     pending: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
     syncing: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
@@ -241,10 +247,10 @@ function StatusBadge({ status }: { status: 'pending' | 'syncing' | 'success' | '
   };
 
   const labels = {
-    pending: 'En attente',
-    syncing: 'En cours',
-    success: 'Synchronisé',
-    error: 'Échec'
+    pending: t('offlineSync.statusPending'),
+    syncing: t('offlineSync.statusSending'),
+    success: t('offlineSync.statusSynced'),
+    error: t('offlineSync.statusFailed')
   };
 
   return (

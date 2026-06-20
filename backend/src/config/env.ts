@@ -42,11 +42,22 @@ export const env = {
   INTERNAL_API_KEY: optionalEnv('INTERNAL_API_KEY', ''),
   JWT_SECRET: optionalEnv('JWT_SECRET', ''),
 
+  // 2FA admin (step-up TOTP serveur sur les ops financières sensibles)
+  // ADMIN_MFA_ENFORCED='false' par défaut : transition non-bloquante — un admin SANS
+  // 2FA enrôlé garde l'accès (un avertissement est loggé), le temps que tous enrôlent.
+  // Passer à 'true' une fois les admins enrôlés → l'accès aux ops sensibles EXIGE la 2FA.
+  ADMIN_MFA_ENFORCED: optionalEnv('ADMIN_MFA_ENFORCED', 'false') === 'true',
+  // Clé de chiffrement du secret TOTP au repos (repli sur d'autres secrets serveur déjà
+  // présents — jamais en clair, jamais côté client). Dérivée en clé 32 octets (scrypt).
+  MFA_ENCRYPTION_KEY: optionalEnv(
+    'MFA_ENCRYPTION_KEY',
+    process.env.CCP_ENCRYPTION_KEY || process.env.TRANSACTION_SECRET_KEY || process.env.JWT_SECRET || ''
+  ),
+
   // Secrets d'intégration (paiements / cloud) — centralisés ici, jamais en dur.
   // Optionnels au boot (warn), mais requis fonctionnellement quand le service est utilisé.
   STRIPE_SECRET_KEY: optionalEnv('STRIPE_SECRET_KEY', ''),
   STRIPE_WEBHOOK_SECRET: optionalEnv('STRIPE_WEBHOOK_SECRET', ''),
-  DJOMY_CLIENT_SECRET: optionalEnv('DJOMY_CLIENT_SECRET', ''),
   PAYPAL_CLIENT_SECRET: optionalEnv('PAYPAL_CLIENT_SECRET', ''),
   TRANSACTION_SECRET_KEY: optionalEnv('TRANSACTION_SECRET_KEY', ''),
   CCP_ENCRYPTION_KEY: optionalEnv('CCP_ENCRYPTION_KEY', ''),
@@ -87,6 +98,12 @@ export const env = {
 
   // Feature flags
   ENABLE_MONITORING: optionalEnv('ENABLE_MONITORING', 'true') === 'true',
+
+  // Scaling horizontal (ECS Fargate) : les tâches de fond (file de jobs + surveillance 24/7)
+  // ne doivent tourner que sur UN worker, pas dans chaque conteneur web (sinon doublons).
+  // Défaut 'true' = comportement actuel inchangé. Mettre 'false' sur le service WEB,
+  // 'true' sur le service WORKER unique. (Un verrou Redis sert en plus de garde-fou.)
+  RUN_BACKGROUND_JOBS: optionalEnv('RUN_BACKGROUND_JOBS', 'true') === 'true',
 
   get isProduction(): boolean {
     return this.NODE_ENV === 'production';

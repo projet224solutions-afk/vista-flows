@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -45,6 +46,7 @@ const fmt = (n: number | null | undefined, cur = 'GNF') =>
 const KNOWN_ROLES = ['client', 'vendeur', 'vendor_agent', 'agent', 'livreur', 'taxi', 'prestataire', 'actionnaire', 'default'];
 
 export default function WalletProvenancePanel() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [capsDraft, setCapsDraft] = useState<Record<string, any> | null>(null);
   const [capInputs, setCapInputs] = useState<Record<string, string>>({});
@@ -110,7 +112,7 @@ export default function WalletProvenancePanel() {
   const quarantineAmount = (userId: string) => {
     const raw = qInputs[userId];
     const amount = Number(raw);
-    if (!raw || !Number.isFinite(amount) || amount <= 0) { toast.error('Montant invalide'); return; }
+    if (!raw || !Number.isFinite(amount) || amount <= 0) { toast.error(t('walletProvenancePanel.montantInvalide')); return; }
     action('Montant mis en quarantaine', () =>
       backendFetch('/api/admin/aml/quarantine-amount', { method: 'POST', body: { user_id: userId, amount } }))
       .then(() => setQInputs((p) => ({ ...p, [userId]: '' })));
@@ -192,13 +194,13 @@ export default function WalletProvenancePanel() {
             </CardHeader>
             <CardContent>
               {flagged.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-6 text-center">Aucun wallet à examiner. ✅</p>
+                <p className="text-sm text-muted-foreground py-6 text-center">{t('walletProvenancePanel.aucunWalletAExaminer')}</p>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Utilisateur</TableHead><TableHead>Rôle</TableHead>
-                      <TableHead>Solde (GNF)</TableHead><TableHead>Plafond</TableHead>
+                      <TableHead>Utilisateur</TableHead><TableHead>{t('walletProvenancePanel.role')}</TableHead>
+                      <TableHead>{t('walletProvenancePanel.soldeGnf')}</TableHead><TableHead>Plafond</TableHead>
                       <TableHead>Palier KYC</TableHead><TableHead>Plafond manuel</TableHead>
                       <TableHead>Mettre en quarantaine</TableHead><TableHead>Gel</TableHead>
                     </TableRow>
@@ -208,7 +210,7 @@ export default function WalletProvenancePanel() {
                       <TableRow key={w.user_id}>
                         <TableCell className="font-medium">
                           {w.full_name || w.user_id.slice(0, 8)}
-                          {w.is_blocked && <Badge className="ml-2 bg-red-100 text-red-700 border-red-300">gelé</Badge>}
+                          {w.is_blocked && <Badge className="ml-2 bg-red-100 text-red-700 border-red-300">{t('walletProvenancePanel.gele')}</Badge>}
                         </TableCell>
                         <TableCell><Badge variant="outline">{w.role || '?'}</Badge></TableCell>
                         <TableCell className={w.over_cap ? 'text-red-600 font-semibold' : 'font-medium'}>{fmt(w.balance_gnf)}</TableCell>
@@ -217,8 +219,8 @@ export default function WalletProvenancePanel() {
                           <Select value={String(w.kyc_level)} onValueChange={(v) => setKyc(w.user_id, Number(v))}>
                             <SelectTrigger className="w-[118px] h-8"><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="0">0 — non vérifié</SelectItem>
-                              <SelectItem value="1">1 — tél+pièce</SelectItem>
+                              <SelectItem value="0">{t('walletProvenancePanel.t0NonVerifie')}</SelectItem>
+                              <SelectItem value="1">{t('walletProvenancePanel.t1TelPiece')}</SelectItem>
                               <SelectItem value="2">2 — complet</SelectItem>
                             </SelectContent>
                           </Select>
@@ -227,7 +229,7 @@ export default function WalletProvenancePanel() {
                           <div className="flex items-center gap-1">
                             <Input className="w-[110px] h-8" placeholder="auto" type="number"
                               onChange={(e) => setCapInputs((p) => ({ ...p, [w.user_id]: e.target.value }))} />
-                            <Button size="sm" variant="outline" className="h-8" title="Enregistrer le plafond manuel" onClick={() => setOverride(w.user_id)}>
+                            <Button size="sm" variant="outline" className="h-8" title={t('walletProvenancePanel.enregistrerLePlafondManuel')} onClick={() => setOverride(w.user_id)}>
                               <Save className="w-3.5 h-3.5" />
                             </Button>
                           </div>
@@ -237,7 +239,7 @@ export default function WalletProvenancePanel() {
                             <Input className="w-[110px] h-8" placeholder="montant" type="number"
                               value={qInputs[w.user_id] ?? ''}
                               onChange={(e) => setQInputs((p) => ({ ...p, [w.user_id]: e.target.value }))} />
-                            <Button size="sm" variant="outline" className="h-8 text-amber-700 border-amber-300" title="Mettre ce montant en quarantaine" onClick={() => quarantineAmount(w.user_id)}>
+                            <Button size="sm" variant="outline" className="h-8 text-amber-700 border-amber-300" title={t('walletProvenancePanel.mettreCeMontantEnQuarantaine')} onClick={() => quarantineAmount(w.user_id)}>
                               <ShieldAlert className="w-3.5 h-3.5" />
                             </Button>
                           </div>
@@ -265,16 +267,16 @@ export default function WalletProvenancePanel() {
         {/* ───── Quarantaine ───── */}
         <TabsContent value="quarantine">
           <Card>
-            <CardHeader><CardTitle className="text-base">Fonds en quarantaine (en attente de décision)</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-base">{t('walletProvenancePanel.fondsEnQuarantaineEnAttente')}</CardTitle></CardHeader>
             <CardContent>
               {quarantine.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-6 text-center">Aucun fonds en quarantaine. ✅</p>
+                <p className="text-sm text-muted-foreground py-6 text-center">{t('walletProvenancePanel.aucunFondsEnQuarantaine')}</p>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Détenteur</TableHead><TableHead>Montant</TableHead>
-                      <TableHead>Source</TableHead><TableHead>Date</TableHead><TableHead className="text-right">Décision</TableHead>
+                      <TableHead>{t('walletProvenancePanel.detenteur')}</TableHead><TableHead>{t('walletProvenancePanel.montant')}</TableHead>
+                      <TableHead>Source</TableHead><TableHead>Date</TableHead><TableHead className="text-right">{t('walletProvenancePanel.decision')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -310,13 +312,13 @@ export default function WalletProvenancePanel() {
         <TabsContent value="caps">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2"><Lock className="w-4 h-4" /> Plafonds de détention (GNF) par rôle × palier KYC</CardTitle>
+              <CardTitle className="text-base flex items-center gap-2"><Lock className="w-4 h-4" /> {t('walletProvenancePanel.plafondsDeDetentionGnfPar')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-xs text-muted-foreground">Laisser vide = illimité. t0 = non vérifié · t1 = tél+pièce · t2 = KYC complet. PDG/système toujours exemptés.</p>
               <Table>
                 <TableHeader>
-                  <TableRow><TableHead>Rôle</TableHead><TableHead>t0 (non vérifié)</TableHead><TableHead>t1 (tél+pièce)</TableHead><TableHead>t2 (complet)</TableHead></TableRow>
+                  <TableRow><TableHead>{t('walletProvenancePanel.role')}</TableHead><TableHead>{t('walletProvenancePanel.t0NonVerifie2')}</TableHead><TableHead>{t('walletProvenancePanel.t1TelPiece2')}</TableHead><TableHead>t2 (complet)</TableHead></TableRow>
                 </TableHeader>
                 <TableBody>
                   {capRoles.map((role) => (
@@ -325,7 +327,7 @@ export default function WalletProvenancePanel() {
                       {(['t0', 't1', 't2'] as const).map((tier) => (
                         <TableCell key={tier}>
                           <Input
-                            type="number" className="w-[150px] h-8" placeholder="illimité"
+                            type="number" className="w-[150px] h-8" placeholder={t('walletProvenancePanel.illimite')}
                             value={capsDraft?.[role]?.[tier] ?? ''}
                             onChange={(e) => updateCap(role, tier, e.target.value)}
                           />

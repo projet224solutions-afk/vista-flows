@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * 🔍 SYSTÈME D'AUDIT ET DE MONITORING SÉCURITÉ
  * Surveillance complète de toutes les activités du système

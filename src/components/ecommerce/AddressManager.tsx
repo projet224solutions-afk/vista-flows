@@ -1,4 +1,5 @@
 import { useUserAddresses } from '@/hooks/useUserAddresses';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +19,7 @@ import { Label } from '@/components/ui/label';
  * Composant de gestion des adresses multiples (style Amazon)
  */
 export const AddressManager = () => {
+  const { t } = useTranslation();
   const { addresses, defaultAddress, loading, addAddress, deleteAddress, setAsDefault } = useUserAddresses();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -64,13 +66,13 @@ export const AddressManager = () => {
               Ajouter une adresse
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Nouvelle adresse de livraison</DialogTitle>
+              <DialogTitle>{t('addressManager.nouvelleAdresseDeLivraison')}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="label">Libellé</Label>
+                <Label htmlFor="label">{t('addressManager.libelle')}</Label>
                 <Input
                   id="label"
                   placeholder="Maison, Bureau, etc."
@@ -80,7 +82,7 @@ export const AddressManager = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="recipient_name">Nom du destinataire</Label>
+                <Label htmlFor="recipient_name">{t('addressManager.nomDuDestinataire')}</Label>
                 <Input
                   id="recipient_name"
                   value={formData.recipient_name}
@@ -89,7 +91,7 @@ export const AddressManager = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="phone">Téléphone</Label>
+                <Label htmlFor="phone">{t('addressManager.telephone')}</Label>
                 <Input
                   id="phone"
                   type="tel"
@@ -99,7 +101,7 @@ export const AddressManager = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="street">Adresse complète</Label>
+                <Label htmlFor="street">{t('addressManager.adresseComplete')}</Label>
                 <Input
                   id="street"
                   value={formData.street}
@@ -182,7 +184,7 @@ export const AddressManager = () => {
                   variant="destructive"
                   size="sm"
                   onClick={() => {
-                    if (confirm('Supprimer cette adresse ?')) {
+                    if (confirm(t('addressManager.supprimerCetteAdresse'))) {
                       deleteAddress(address.id);
                     }
                   }}

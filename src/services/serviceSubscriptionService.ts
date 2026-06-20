@@ -111,7 +111,12 @@ export class ServiceSubscriptionService {
         return [];
       }
 
-      return (data || []).map(plan => {
+      // Préférer les plans SPÉCIFIQUES au service quand ils existent (sinon génériques).
+      const rows = data || [];
+      const typed = serviceTypeId ? rows.filter((p: any) => p.service_type_id === serviceTypeId) : [];
+      const effective = typed.length > 0 ? typed : rows.filter((p: any) => p.service_type_id == null);
+
+      return effective.map(plan => {
         const features = plan.features;
         return {
           ...plan,
@@ -292,44 +297,18 @@ export class ServiceSubscriptionService {
   static async changePlanPrice(
     planId: string,
     newPrice: number,
-    adminUserId: string,
+    _adminUserId: string,
     reason?: string
   ): Promise<boolean> {
     try {
-      // Récupérer l'ancien prix
-      const { data: plan, error: planError } = await supabase
-        .from('service_plans')
-        .select('monthly_price_gnf')
-        .eq('id', planId)
-        .single();
-
-      if (planError) throw planError;
-
-      // Enregistrer l'historique
-      const { error: historyError } = await supabase
-        .from('service_plan_price_history')
-        .insert({
-          plan_id: planId,
-          old_price: plan.monthly_price_gnf,
-          new_price: newPrice,
-          changed_by: adminUserId,
-          reason: reason || null
-        });
-
-      if (historyError) throw historyError;
-
-      // Mettre à jour le prix
-      const { error: updateError } = await supabase
-        .from('service_plans')
-        .update({
-          monthly_price_gnf: newPrice,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', planId);
-
-      if (updateError) throw updateError;
-
-      return true;
+      // RPC ATOMIQUE + gardé admin (historique + update en 1 transaction).
+      const { data, error } = await supabase.rpc('admin_set_service_plan_price_atomic', {
+        p_plan_id: planId,
+        p_new_price: newPrice,
+        p_reason: reason || null,
+      });
+      if (error) { console.error('❌ Erreur changement prix plan service:', error.message); return false; }
+      return (data as any)?.success === true;
     } catch (error) {
       console.error('❌ Erreur changement prix plan service:', error);
       return false;

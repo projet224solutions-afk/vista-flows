@@ -12,6 +12,7 @@ import React, { createContext, useContext, useMemo, useCallback, useState, useEf
 import { useWallet } from '@/hooks/useWallet';
 import { useFxRates } from '@/hooks/useFxRates';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 const PLATFORM_BASE = 'GNF';
 /** Après ce délai sans taux disponible, on bascule en GNF plutôt que d'afficher '—' indéfiniment */
@@ -48,10 +49,32 @@ export function VendorCurrencyProvider({ children }: { children: React.ReactNode
   // authLoading guard : useWallet retourne loading=false immédiatement quand user?.id
   // est undefined (auth pas encore résolue), ce qui ferait isReady=true avec la devise
   // GNF par défaut, puis la vraie devise arriverait → clignotement.
-  const { loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { currency: walletCurrency, loading: walletLoading } = useWallet();
-  const targetCurrency = walletCurrency || PLATFORM_BASE;
-  const needsConversion = targetCurrency !== PLATFORM_BASE;
+
+  // Devise du PAYS VERROUILLÉ (profiles.country_code → countries.currency_code) : sert de devise
+  // par défaut quand le wallet est en GNF, pour qu'un vendeur sénégalais voie XOF et non GNF.
+  const [countryCurrency, setCountryCurrency] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!user?.id) { if (!cancelled) setCountryCurrency(null); return; }
+      try {
+        const { data: prof } = await supabase.from('profiles').select('country_code').eq('id', user.id).maybeSingle();
+        const cc = prof?.country_code ? String(prof.country_code) : null;
+        if (!cc) { if (!cancelled) setCountryCurrency(null); return; }
+        const { data: ctry } = await supabase.from('countries').select('currency_code').eq('country_code', cc).maybeSingle();
+        if (!cancelled) setCountryCurrency(ctry?.currency_code ? String(ctry.currency_code).toUpperCase() : null);
+      } catch { if (!cancelled) setCountryCurrency(null); }
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  // Wallet ≠ GNF prime (devise réellement détenue) ; sinon devise du pays ; sinon GNF.
+  const targetCurrency = (walletCurrency && walletCurrency.toUpperCase() !== PLATFORM_BASE)
+    ? walletCurrency
+    : (countryCurrency || PLATFORM_BASE);
+  const needsConversion = targetCurrency.toUpperCase() !== PLATFORM_BASE;
 
   const { rates, loading: ratesLoading, lastUpdated } = useFxRates({
     base: PLATFORM_BASE,

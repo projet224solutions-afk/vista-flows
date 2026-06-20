@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +12,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import TransferZoneLimitsEditor from './TransferZoneLimitsEditor';
 
 interface TransferLimit {
   key: string;
@@ -72,6 +74,7 @@ const LIMIT_CONFIG: Omit<TransferLimit, 'value'>[] = [
 ];
 
 export default function PDGTransferLimits() {
+  const { t } = useTranslation();
   const [limits, setLimits] = useState<Record<string, number>>({});
   const [editValues, setEditValues] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -103,7 +106,7 @@ export default function PDGTransferLimits() {
       setEditValues(Object.fromEntries(Object.entries(loaded).map(([k, v]) => [k, v.toString()])));
     } catch (err) {
       console.error('Error loading limits:', err);
-      toast.error('Erreur lors du chargement des limites');
+      toast.error(t('pDGTransferLimits.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -140,10 +143,10 @@ export default function PDGTransferLimits() {
       }
 
       setLimits(prev => ({ ...prev, [key]: val }));
-      toast.success('Limite mise à jour avec succès');
+      toast.success(t('pDGTransferLimits.limiteMiseAJourAvec'));
     } catch (err) {
       console.error('Error saving limit:', err);
-      toast.error('Erreur lors de la sauvegarde');
+      toast.error(t('pDGTransferLimits.erreurLorsDeLaSauvegarde'));
     } finally {
       setSaving(null);
     }
@@ -158,15 +161,15 @@ export default function PDGTransferLimits() {
     const maxIntlVal = Number(editValues['max_international_transfer_amount']);
 
     if (minVal >= maxVal) {
-      toast.error('Le minimum doit être inférieur au maximum');
+      toast.error(t('pDGTransferLimits.leMinimumDoitEtreInferieur'));
       return;
     }
     if (minIntlVal >= maxIntlVal) {
-      toast.error('Le minimum international doit être inférieur au maximum international');
+      toast.error(t('pDGTransferLimits.leMinimumInternationalDoitEtre'));
       return;
     }
     if (maxIntlVal > dailyVal) {
-      toast.error('La limite internationale ne peut pas dépasser la limite quotidienne');
+      toast.error(t('pDGTransferLimits.laLimiteInternationaleNePeut'));
       return;
     }
 
@@ -195,10 +198,10 @@ export default function PDGTransferLimits() {
 
         setLimits(prev => ({ ...prev, [cfg.key]: val }));
       }
-      toast.success('Toutes les limites ont été mises à jour');
+      toast.success(t('pDGTransferLimits.toutesLesLimitesOntEte'));
     } catch (err) {
       console.error('Error saving all limits:', err);
-      toast.error('Erreur lors de la sauvegarde globale');
+      toast.error(t('pDGTransferLimits.erreurLorsDeLaSauvegarde2'));
     } finally {
       setSavingAll(false);
     }
@@ -370,6 +373,9 @@ export default function PDGTransferLimits() {
           </CardContent>
         </Card>
       )}
+
+      {/* Plafonds cumulés par rôle × KYC (réellement appliqués par les RPC de transfert) */}
+      <TransferZoneLimitsEditor />
     </div>
   );
 }

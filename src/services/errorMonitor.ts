@@ -135,7 +135,7 @@ class ErrorMonitorService {
 
   private isDuplicate(error: SystemError): boolean {
     const hash = this.generateErrorHash(error);
-    const _now = Date.now();
+    const now = Date.now();
 
     // Vérifier si l'erreur a déjà été traitée récemment
     if (this.processedErrors.has(hash)) {
@@ -307,8 +307,16 @@ class ErrorMonitorService {
 
         // Utiliser le filtrage centralisé
         if (this.shouldIgnoreError('', resourceUrl) ||
-            resourceType === 'audio' ||
-            resourceType === 'video') {
+          resourceType === 'audio' ||
+          resourceType === 'video' ||
+          // Échecs de chargement d'IMAGE : NON persistés. Ils ont déjà un repli visuel (placeholder
+          // via onError), sont majoritairement transitoires (cache/réseau/course) — les fichiers
+          // existent réellement (HTTP 200) — et généraient un bruit massif (mêmes URLs re-loggées à
+          // chaque session). La santé réelle du stockage est surveillée séparément côté backend.
+          resourceType === 'img' ||
+          resourceType === 'image' ||
+          resourceType === 'source' ||
+          /\.(png|jpe?g|gif|webp|svg|avif|bmp|ico)(\?|$)/i.test(resourceUrl || '')) {
           return;
         }
 
@@ -465,7 +473,7 @@ class ErrorMonitorService {
     }
   }
 
-  private async applyFix(fix: AutoFix, _error: SystemError): Promise<boolean> {
+  private async applyFix(fix: AutoFix, error: SystemError): Promise<boolean> {
     try {
       switch (fix.fix_type) {
         case 'reconnect_db':

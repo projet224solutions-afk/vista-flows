@@ -23,9 +23,10 @@ import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
 import { orderCreateRateLimit, orderManageRateLimit } from '../middlewares/routeRateLimiter.js';
 import { cache } from '../config/redis.js';
-import { createNotification } from '../services/notification.service.js';
+import { createNotification, createNotifications } from '../services/notification.service.js';
 import { buildOrderFinancialSummary } from '../services/marketplacePricing.service.js';
 import { triggerAffiliateCommission } from '../services/commission.service.js';
+import { recordAffiliateConversions, confirmAffiliateCommissions, cancelAffiliateCommissions } from './vendorAffiliate.routes.js';
 import { z } from 'zod';
 
 const router = Router();
@@ -519,16 +520,22 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
     };
     let buyerFeePercentForLog = 0;
 
-    if (payment_method === 'wallet') {
-      const summary = await buildOrderFinancialSummary({
-        buyerUserId: userId,
-        vendorId: vendor_id,
-        items: items.map(i => ({ productId: i.product_id, quantity: i.quantity })),
-        productType: 'physical',
-      });
-      // Devise réelle du prix produit → cohérente avec le subtotal calculé par le RPC.
-      currency = summary.sellerCurrency;
+    // COMMISSION VENDEUR — calculée pour TOUS les moyens de paiement (wallet, carte, mobile money,
+    // paiement à la livraison) → stockée sur l'escrow et prélevée au vendeur à la libération.
+    // 🔴 AVANT : seulement pour 'wallet' → les commandes carte/Orange/MTN/COD étaient libérées SANS
+    //    commission (commission_amount NULL = fuite). buildOrderFinancialSummary recalcule depuis la
+    //    DB (prix + type produit + devise), jamais le frontend.
+    const summary = await buildOrderFinancialSummary({
+      buyerUserId: userId,
+      vendorId: vendor_id,
+      items: items.map(i => ({ productId: i.product_id, quantity: i.quantity })),
+      productType: 'physical',
+    });
+    // Devise réelle du prix produit → cohérente avec le subtotal calculé par le RPC.
+    currency = summary.sellerCurrency;
+    walletDebitParams.p_seller_commission_amount = summary.platformFeeAmount;
 
+    if (payment_method === 'wallet') {
       // COMMISSION ACHETEUR (purchase_fee_percent, gérée par le PDG) — prélevée EN PLUS sur
       // l'acheteur et gardée par la plateforme. Calculée ICI (backend, autoritaire) sur le
       // montant payé converti, dans la devise du wallet acheteur, puis débitée + créditée au PDG
@@ -583,7 +590,7 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
         quantity: i.quantity,
         variant_id: i.variant_id || null,
       })),
-      p_auto_release_days: 7,
+      p_auto_release_days: 14, // fenêtre de retour/remboursement de 14 jours avant libération escrow au vendeur
       ...walletDebitParams,
     });
 
@@ -717,6 +724,8 @@ router.post('/', verifyJWT, orderCreateRateLimit, idempotencyGuard, async (req: 
         logger.warn(`commission agent achat non bloquante (commande ${result.order_id}): ${commErr?.message || commErr}`);
       }
     }
+
+    // (Affiliation = produits NUMÉRIQUES uniquement → gérée dans l'endpoint /digital, pas ici.)
 
     let escrowStatus = result.escrow_status as string;
     const { error: escrowUpdateError } = await supabaseAdmin
@@ -965,6 +974,13 @@ router.post('/digital', verifyJWT, orderCreateRateLimit, idempotencyGuard, async
       },
     });
 
+    // 🤝 AFFILIATION (produits numériques) : crée la commission `pending` si une attribution
+    // valide existe (clic < 30j). La confirmation/paiement se fait après la fenêtre de protection
+    // acheteur (job affiliate.confirm-digital). Best-effort, non bloquant.
+    if (insertedOrder?.id) {
+      await recordAffiliateConversions(insertedOrder.id, userId);
+    }
+
     const [enrichedOrder] = await attachEscrowToOrders([insertedOrder]);
 
     res.status(201).json({ success: true, data: enrichedOrder });
@@ -1088,6 +1104,9 @@ router.post('/:orderId([0-9a-fA-F-]{36})/cancel', verifyJWT, orderManageRateLimi
       res.status(500).json({ success: false, error: 'Échec du remboursement. Réessayez ou contactez le support.' });
       return;
     }
+
+    // 🤝 Commande annulée/remboursée → annuler les commissions d'affiliation pending.
+    await cancelAffiliateCommissions(orderId);
 
     // Update order
     const cancellationReason = reason.trim();
@@ -1280,6 +1299,9 @@ router.post('/:orderId([0-9a-fA-F-]{36})/confirm-delivery', verifyJWT, orderMana
       return;
     }
 
+    // 🤝 Escrow libéré → confirmer + payer les commissions d'affiliation de cette commande.
+    await confirmAffiliateCommissions(orderId);
+
     const nowIso = new Date().toISOString();
     const { data: updated } = await supabaseAdmin
       .from('orders')
@@ -1352,65 +1374,107 @@ router.post('/:orderId([0-9a-fA-F-]{36})/request-refund', verifyJWT, orderManage
       return;
     }
 
-    // Litige déjà ouvert ?
-    const { data: existing } = await supabaseAdmin
-      .from('disputes')
+    // Litige déjà ouvert ? On lit `escrow_disputes` — LA table reliée à l'interface
+    // PDG (PDGEscrowDisputes) ET à la résolution réelle (Edge resolve-dispute).
+    const { data: existingRows } = await supabaseAdmin
+      .from('escrow_disputes')
       .select('id, status')
       .eq('escrow_id', escrow.id)
-      .maybeSingle();
-    if (existing && existing.status !== 'resolved') {
+      .neq('status', 'resolved')
+      .limit(1);
+    if (existingRows && existingRows.length > 0) {
       res.status(400).json({ success: false, error: 'Un litige est déjà en cours pour cette commande' });
       return;
     }
 
+    // ⚠️ CORRECTIF : on crée le litige dans `escrow_disputes` (et NON `disputes`,
+    // qui était une table orpheline jamais lue par le PDG → demande perdue +
+    // contraintes CHECK incompatibles → "Erreur lors de la création du litige").
+    // Ainsi : la demande apparaît côté PDG, qui peut la résoudre ("refund_to_buyer"
+    // → escrow 'refunded' = remboursement réel). L'argent ne bouge qu'à la résolution.
     const { data: dispute, error: disputeErr } = await supabaseAdmin
-      .from('disputes')
+      .from('escrow_disputes')
       .insert({
         escrow_id: escrow.id,
-        client_id: (order as any).customer_id,
-        vendor_id: (order as any).vendor_id,
-        order_id: orderId,
-        dispute_type: 'refund_request',
-        request_type: 'full_refund',
-        requested_amount: typeof requested_amount === 'number' && requested_amount > 0 ? requested_amount : escrow.amount,
-        description: `${reason}${evidence_text ? '\n\nDétails: ' + evidence_text : ''}`,
+        initiator_user_id: userId,
+        initiator_role: 'buyer',
+        reason: `${reason}${evidence_text ? '\n\nDétails: ' + evidence_text : ''}`,
         status: 'open',
+        metadata: {
+          order_id: orderId,
+          client_id: (order as any).customer_id,
+          vendor_id: (order as any).vendor_id,
+          request_type: 'full_refund',
+          requested_amount: typeof requested_amount === 'number' && requested_amount > 0 ? requested_amount : escrow.amount,
+          evidence_text: evidence_text || null,
+        },
       })
       .select('id')
       .single();
     if (disputeErr || !dispute) {
-      logger.error(`request-refund dispute creation failed (order ${orderId}): ${disputeErr?.message}`);
+      // Garde atomique : l'index unique partiel (uniq_open_escrow_dispute_per_escrow)
+      // empêche 2 litiges non résolus sur le même escrow (double-clic / concurrence).
+      if ((disputeErr as any)?.code === '23505') {
+        res.status(400).json({ success: false, error: 'Un litige est déjà en cours pour cette commande' });
+        return;
+      }
+      logger.error(`request-refund escrow_dispute creation failed (order ${orderId}): ${disputeErr?.message}`);
       res.status(500).json({ success: false, error: 'Erreur lors de la création du litige' });
       return;
     }
 
-    // Preuve + action (best-effort, non bloquant)
+    // 1er message du fil = la raison détaillée du CLIENT (lié au litige escrow_disputes).
+    // Best-effort : ne bloque pas si la colonne escrow_dispute_id n'est pas encore en place.
     try {
-      if (evidence_text) {
-        await supabaseAdmin.from('dispute_evidence').insert({
-          dispute_id: dispute.id, submitted_by: userId,
-          evidence_type: 'text', evidence_data: { description: evidence_text },
-        });
-      }
-      await supabaseAdmin.from('dispute_actions').insert({
-        dispute_id: dispute.id, actor_id: userId, action_type: 'opened', notes: reason,
+      await supabaseAdmin.from('dispute_messages').insert({
+        escrow_dispute_id: dispute.id,
+        sender_id: userId,
+        sender_type: 'client',
+        message: `${reason}${evidence_text ? '\n\n' + evidence_text : ''}`,
       });
     } catch (e: any) {
-      logger.warn(`request-refund evidence/action non bloquant: ${e?.message || e}`);
+      logger.warn(`request-refund client message non bloquant: ${e?.message || e}`);
     }
 
-    // Notifier le vendeur (résolution de son user_id, non bloquant)
+    // Notifier SIMULTANÉMENT les 3 parties du litige : client (confirmation),
+    // vendeur (donner sa version), PDG/admins (arbitrer). Non bloquant.
     try {
+      const orderNo = (order as any).order_number || orderId.slice(0, 8);
+      const meta = { order_id: orderId, escrow_dispute_id: dispute.id, escrow_id: escrow.id };
+      const notifs: any[] = [
+        {
+          userId,
+          type: 'dispute',
+          title: 'Litige ouvert',
+          message: `Votre demande de remboursement (commande ${orderNo}) a ouvert un litige. Le vendeur et notre équipe ont été notifiés ; vous serez informé de la décision.`,
+          metadata: { ...meta, party: 'client' },
+        },
+      ];
       const { data: vendor } = await supabaseAdmin.from('vendors').select('user_id').eq('id', (order as any).vendor_id).maybeSingle();
       if (vendor?.user_id) {
-        await createNotification({
+        notifs.push({
           userId: vendor.user_id,
-          type: 'order',
-          title: 'Demande de remboursement',
-          message: `Le client a demandé un remboursement pour la commande ${(order as any).order_number || ''}. Motif : ${reason}`,
-          metadata: { order_id: orderId, dispute_id: dispute.id, escrow_id: escrow.id },
+          type: 'dispute',
+          title: 'Litige : remboursement demandé',
+          message: `Le client conteste la commande ${orderNo} (motif : ${reason}). Donnez votre version des faits dans le litige.`,
+          metadata: { ...meta, party: 'vendor' },
         });
       }
+      // PDG / admins : tous notifiés en même temps
+      const { data: admins } = await supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .in('role', ['admin', 'pdg', 'ceo']);
+      for (const a of (admins || [])) {
+        notifs.push({
+          userId: (a as any).id,
+          type: 'dispute',
+          title: 'Nouveau litige à arbitrer',
+          message: `Demande de remboursement — commande ${orderNo}. Motif : ${reason}.`,
+          metadata: { ...meta, party: 'pdg' },
+        });
+      }
+      await createNotifications(notifs);
     } catch (e: any) {
       logger.warn(`request-refund notification non bloquant: ${e?.message || e}`);
     }
@@ -1585,7 +1649,7 @@ router.patch('/:orderId([0-9a-fA-F-]{36})/status', verifyJWT, orderManageRateLim
         .from('escrow_transactions')
         .update({
           seller_confirmed_at: new Date().toISOString(),
-          auto_release_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          auto_release_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // fenêtre retour 14j
         })
         .eq('order_id', orderId);
     }
@@ -1603,6 +1667,8 @@ router.patch('/:orderId([0-9a-fA-F-]{36})/status', verifyJWT, orderManageRateLim
       if (refundErr) {
         logger.error(`Refund escrow (vendor cancel) failed (order ${orderId}): ${refundErr.message}`);
       }
+      // 🤝 Annuler les commissions d'affiliation pending de cette commande.
+      await cancelAffiliateCommissions(orderId);
     }
 
     const { data: updated, error } = await supabaseAdmin
@@ -1642,6 +1708,163 @@ router.patch('/:orderId([0-9a-fA-F-]{36})/status', verifyJWT, orderManageRateLim
   } catch (error: any) {
     logger.error(`Order status update error: ${error.message}`);
     res.status(500).json({ success: false, error: 'Erreur' });
+  }
+});
+
+/**
+ * GET /api/orders/escrow/my-transactions
+ * Transactions escrow de l'UTILISATEUR courant (vendeur = receiver_id, ou acheteur = payer_id).
+ * Via service_role mais STRICTEMENT scopé à req.user.id → pas de fuite, pas de blocage RLS
+ * (la RLS payer/receiver = auth.uid() masquait des lignes selon le contexte du JWT côté client).
+ * Enrichi côté serveur (order + litige ouvert lié) en requêtes groupées = rapide (zéro N+1).
+ * Remplace l'ancienne lecture client (cassée depuis que le hook pointait vers la route PDG).
+ */
+router.get('/escrow/my-transactions', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ success: false, error: 'Non authentifié' });
+
+    const { data: txs, error } = await supabaseAdmin
+      .from('escrow_transactions')
+      .select('*')
+      .or(`receiver_id.eq.${userId},payer_id.eq.${userId}`)
+      .order('created_at', { ascending: false })
+      .limit(500);
+    if (error) throw error;
+
+    const rows: any[] = txs || [];
+    const ids = rows.map((t) => t.id);
+    const orderIds = [...new Set(rows.map((t) => t.order_id).filter(Boolean))];
+
+    const [ordersRes, disputesRes] = await Promise.all([
+      orderIds.length
+        ? supabaseAdmin.from('orders').select('id, order_number').in('id', orderIds)
+        : Promise.resolve({ data: [] as any[] }),
+      ids.length
+        ? supabaseAdmin.from('escrow_disputes')
+            .select('id, escrow_id, status, reason, initiator_role, created_at')
+            .in('escrow_id', ids).neq('status', 'resolved')
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
+    const oById = new Map((ordersRes.data || []).map((o: any) => [o.id, o]));
+    const dByEscrow = new Map((disputesRes.data || []).map((d: any) => [d.escrow_id, d]));
+
+    const enriched = rows.map((t) => ({
+      ...t,
+      order: oById.get(t.order_id) || null,
+      dispute: dByEscrow.get(t.id) || null,
+    }));
+    res.json({ success: true, data: enriched });
+  } catch (error: any) {
+    logger.error(`[escrow/my-transactions] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur chargement escrow' });
+  }
+});
+
+/**
+ * POST /api/orders/escrow/:escrowId/request-release
+ * Le vendeur demande la libération des fonds bloqués. L'ancienne version (côté client)
+ * ne faisait QUE journaliser l'action → NI le PDG NI le client n'étaient notifiés.
+ * Ici : on journalise ET on notifie SIMULTANÉMENT le client (qui peut confirmer la
+ * réception pour libérer) ET les PDG/admins (qui peuvent libérer). Scopé : seul le
+ * vendeur destinataire de l'escrow peut déclencher.
+ */
+router.post('/escrow/:escrowId([0-9a-fA-F-]{36})/request-release', verifyJWT, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ success: false, error: 'Non authentifié' });
+    const { escrowId } = req.params;
+
+    const { data: escrow, error: escErr } = await supabaseAdmin
+      .from('escrow_transactions')
+      .select('id, payer_id, receiver_id, order_id, amount, currency, status')
+      .eq('id', escrowId)
+      .maybeSingle();
+    if (escErr) throw escErr;
+    if (!escrow) return res.status(404).json({ success: false, error: 'Transaction escrow introuvable' });
+
+    // Sécurité : seul le vendeur destinataire peut demander la libération.
+    if (escrow.receiver_id !== userId) {
+      return res.status(403).json({ success: false, error: 'Action réservée au vendeur de cette transaction' });
+    }
+    if (!['pending', 'held'].includes(escrow.status)) {
+      return res.status(400).json({ success: false, error: `Libération impossible (statut: ${escrow.status})` });
+    }
+
+    // Anti-spam / idempotence : si une demande a déjà été faite il y a < 10 min, ne pas
+    // re-notifier (évite le matraquage du client et du PDG par double-clic ou retry).
+    try {
+      const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+      const { data: recent } = await supabaseAdmin
+        .from('escrow_logs')
+        .select('id')
+        .eq('escrow_id', escrowId)
+        .eq('action', 'requested_release')
+        .gte('created_at', since)
+        .limit(1);
+      if (recent && recent.length) {
+        return res.json({ success: true, message: 'Demande déjà envoyée récemment', notified: 0, deduped: true });
+      }
+    } catch { /* la table de logs peut être absente : on continue */ }
+
+    // Journalisation (best-effort, ne bloque pas la notification)
+    try {
+      await supabaseAdmin.rpc('log_escrow_action', {
+        p_escrow_id: escrowId,
+        p_action: 'requested_release',
+        p_performed_by: userId,
+        p_note: 'Demande de libération par le vendeur',
+      });
+    } catch (e: any) {
+      logger.warn(`request-release log non bloquant: ${e?.message || e}`);
+    }
+
+    // Numéro de commande lisible
+    let orderNo = escrow.order_id ? String(escrow.order_id).slice(0, 8) : escrowId.slice(0, 8);
+    if (escrow.order_id) {
+      const { data: ord } = await supabaseAdmin.from('orders').select('order_number').eq('id', escrow.order_id).maybeSingle();
+      if (ord?.order_number) orderNo = ord.order_number;
+    }
+
+    const meta = { escrow_id: escrowId, order_id: escrow.order_id, kind: 'release_request' };
+    const notifs: any[] = [];
+
+    // 1) Le client (payeur) : il peut confirmer la réception pour libérer automatiquement.
+    if (escrow.payer_id) {
+      notifs.push({
+        userId: escrow.payer_id,
+        type: 'escrow',
+        title: 'Le vendeur demande la libération',
+        message: `Le vendeur a expédié la commande ${orderNo} et demande la libération des fonds. Confirmez la réception pour finaliser, ou ouvrez un litige si un problème subsiste.`,
+        metadata: { ...meta, party: 'client' },
+      });
+    }
+
+    // 2) Les PDG / admins : ils peuvent libérer les fonds.
+    const { data: admins } = await supabaseAdmin
+      .from('profiles')
+      .select('id')
+      .in('role', ['admin', 'pdg', 'ceo']);
+    for (const a of (admins || [])) {
+      notifs.push({
+        userId: (a as any).id,
+        type: 'escrow',
+        title: 'Demande de libération escrow',
+        message: `Le vendeur demande la libération des fonds — commande ${orderNo} (${Number(escrow.amount || 0).toLocaleString()} ${escrow.currency || 'GNF'}).`,
+        metadata: { ...meta, party: 'pdg' },
+      });
+    }
+
+    if (notifs.length) {
+      try { await createNotifications(notifs); }
+      catch (e: any) { logger.warn(`request-release notification non bloquant: ${e?.message || e}`); }
+    }
+
+    logger.info(`Escrow ${escrowId} release requested by vendor ${userId} → notified client+${(admins || []).length} admins`);
+    res.json({ success: true, message: 'Demande de libération envoyée', notified: notifs.length });
+  } catch (error: any) {
+    logger.error(`[escrow/request-release] ${error.message}`);
+    res.status(500).json({ success: false, error: 'Erreur lors de la demande de libération' });
   }
 });
 

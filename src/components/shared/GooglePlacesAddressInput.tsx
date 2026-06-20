@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -78,6 +79,7 @@ export function GooglePlacesAddressInput({
   inputClassName,
   variant = 'default',
 }: GooglePlacesAddressInputProps) {
+  const { t } = useTranslation();
   // États
   const [inputValue, setInputValue] = useState(initialValue);
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
@@ -187,13 +189,13 @@ export function GooglePlacesAddressInput({
         onChange?.(validatedAddress);
         onValidChange?.(true);
 
-        toast.success('Adresse validée avec coordonnées GPS précises');
+        toast.success(t('googlePlacesAddressInput.adresseValideeAvecCoordonneesGps'));
       } else {
-        toast.error('Impossible d\'obtenir les coordonnées de cette adresse');
+        toast.error(t('googlePlacesAddressInput.impossibleDObtenirLesCoordonnees'));
       }
     } catch (error) {
       console.error('[GooglePlacesInput] Erreur détails:', error);
-      toast.error('Erreur lors de la validation de l\'adresse');
+      toast.error(t('googlePlacesAddressInput.erreurLorsDeLaValidation'));
     } finally {
       setIsLoading(false);
     }

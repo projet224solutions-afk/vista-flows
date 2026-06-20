@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * DIAGNOSTIC ET RÉPARATION VENDEUR
  * Système de diagnostic automatique pour l'interface vendeur
@@ -6,6 +5,7 @@
  */
 
 import React, { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +41,7 @@ interface VendorDiagnosticProps {
 }
 
 export default function VendorDiagnostic({ onComplete }: VendorDiagnosticProps) {
+    const { t } = useTranslation();
     const { user, profile } = useAuth();
     const { toast } = useToast();
     const [isRunning, setIsRunning] = useState(false);
@@ -356,7 +357,7 @@ export default function VendorDiagnostic({ onComplete }: VendorDiagnosticProps) 
                     {isRunning && (
                         <div className="space-y-2">
                             <div className="flex justify-between text-sm">
-                                <span>Progression du diagnostic</span>
+                                <span>{t('vendorDiagnostic.progressionDuDiagnostic')}</span>
                                 <span>{Math.round(progress)}%</span>
                             </div>
                             <Progress value={progress} className="w-full" />
@@ -365,7 +366,7 @@ export default function VendorDiagnostic({ onComplete }: VendorDiagnosticProps) 
 
                     {results.length > 0 && (
                         <div className="space-y-3">
-                            <h3 className="font-semibold">Résultats du diagnostic</h3>
+                            <h3 className="font-semibold">{t('vendorDiagnostic.resultatsDuDiagnostic')}</h3>
                             {results.map((result, index) => (
                                 <div key={index} className="flex items-start gap-3 p-3 border rounded-lg">
                                     {getStatusIcon(result.status)}

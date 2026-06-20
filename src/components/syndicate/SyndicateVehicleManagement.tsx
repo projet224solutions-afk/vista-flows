@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * GESTION DES VÉHICULES ET BADGES NUMÉRIQUES ULTRA PROFESSIONNELLE
  * Interface complète pour l'enregistrement et gestion des véhicules avec QR codes
@@ -6,7 +5,9 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from "@/integrations/supabase/client";
+import { bureauFetch } from "@/lib/bureauApi";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,6 +71,7 @@ interface SyndicateVehicleManagementProps {
 }
 
 export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicleManagementProps) {
+    const { t } = useTranslation();
     const [vehicles, setVehicles] = useState<SyndicateVehicle[]>([]);
     const [loading, setLoading] = useState(true);
     const [showAddDialog, setShowAddDialog] = useState(false);
@@ -246,7 +248,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
             setVehicles(formattedVehicles);
         } catch (error) {
             console.error('Erreur chargement véhicules:', error);
-            toast.error('Impossible de charger les véhicules');
+            toast.error(t('syndicateVehicleManagement.impossibleDeChargerLesVehicules'));
         } finally {
             setLoading(false);
         }
@@ -261,19 +263,19 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
 
         // Vérifier le type de fichier
         if (!file.type.startsWith('image/')) {
-            toast.error('Veuillez sélectionner une image');
+            toast.error(t('syndicateVehicleManagement.veuillezSelectionnerUneImage'));
             return;
         }
 
         // Vérifier la taille (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
-            toast.error('L\'image ne doit pas dépasser 5MB');
+            toast.error(t('syndicateVehicleManagement.lImageNeDoitPas'));
             return;
         }
 
         try {
             setUploadingPhoto(true);
-            toast.info('Upload de la photo en cours...');
+            toast.info(t('syndicateVehicleManagement.uploadDeLaPhotoEn'));
 
             // Créer un nom de fichier unique
             const fileExt = file.name.split('.').pop();
@@ -296,10 +298,10 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                 .getPublicUrl(filePath);
 
             setFormData(prev => ({ ...prev, driver_photo_url: publicUrl }));
-            toast.success('Photo uploadée avec succès');
+            toast.success(t('syndicateVehicleManagement.photoUploadeeAvecSucces'));
         } catch (error) {
             console.error('Error uploading photo:', error);
-            toast.error('Erreur lors de l\'upload de la photo');
+            toast.error(t('syndicateVehicleManagement.erreurLorsDeLUpload'));
         } finally {
             setUploadingPhoto(false);
         }
@@ -312,13 +314,13 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
         console.log('[VehicleAdd] Début ajout véhicule:', formData);
 
         if (!formData.serial_number || !formData.license_plate) {
-            toast.error('Veuillez remplir le numéro de série et la plaque d\'immatriculation');
+            toast.error(t('syndicateVehicleManagement.veuillezRemplirLeNumeroDe'));
             return;
         }
 
         // Vérifier qu'un membre existe ou qu'un nouveau nom est fourni
         if (!formData.member_id && !formData.owner_name) {
-            toast.error('Veuillez sélectionner un membre existant ou saisir le nom d\'un nouveau propriétaire');
+            toast.error(t('syndicateVehicleManagement.veuillezSelectionnerUnMembreExistant'));
             return;
         }
 
@@ -331,31 +333,34 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                 license_plate: formData.license_plate
             });
 
-            // Utiliser la fonction RPC sécurisée qui contourne les problèmes RLS
-            const { data: result, error: rpcError } = await supabase.rpc('add_vehicle_for_bureau', {
-                p_bureau_id: bureauId,
-                p_owner_name: formData.member_id ? null : formData.owner_name,
-                p_member_id: formData.member_id || null,
-                p_serial_number: formData.serial_number,
-                p_license_plate: formData.license_plate,
-                p_vehicle_type: formData.vehicle_type || 'motorcycle',
-                p_brand: formData.brand || null,
-                p_model: formData.model || null,
-                p_year: formData.year ? parseInt(formData.year) : null,
-                p_color: formData.color || null,
-                p_driver_photo_url: formData.driver_photo_url || null,
-                p_driver_date_of_birth: formData.driver_date_of_birth || null
+            // Via le BACKEND (JWT bureau) — le bureau_id vient du token, jamais du client.
+            const resp = await bureauFetch<any>('/api/v2/bureau/vehicle', {
+                method: 'POST',
+                body: {
+                    owner_name: formData.member_id ? null : formData.owner_name,
+                    member_id: formData.member_id || null,
+                    serial_number: formData.serial_number,
+                    license_plate: formData.license_plate,
+                    vehicle_type: formData.vehicle_type || 'motorcycle',
+                    brand: formData.brand || null,
+                    model: formData.model || null,
+                    year: formData.year ? parseInt(formData.year) : null,
+                    color: formData.color || null,
+                    driver_photo_url: formData.driver_photo_url || null,
+                    driver_date_of_birth: formData.driver_date_of_birth || null,
+                },
             });
 
-            if (rpcError) {
-                console.error('[VehicleAdd] Erreur RPC:', rpcError);
-                throw new Error(`Erreur RPC: ${rpcError.message}`);
+            if (!resp.success) {
+                console.error('[VehicleAdd] Erreur backend:', resp.error);
+                throw new Error(resp.error || 'Erreur lors de l\'ajout du véhicule');
             }
 
-            console.log('[VehicleAdd] Résultat RPC:', result);
+            const result = (resp as any).result;
+            console.log('[VehicleAdd] Résultat:', result);
 
             // Vérifier le résultat de la fonction
-            if (!result?.success) {
+            if (result && result.success === false) {
                 const errorMsg = result?.error || 'Erreur inconnue lors de l\'ajout du véhicule';
                 console.error('[VehicleAdd] Échec:', errorMsg);
                 toast.error(errorMsg);
@@ -430,10 +435,10 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
             if (error) throw error;
 
             await loadVehicles();
-            toast.success('Véhicule vérifié avec succès');
+            toast.success(t('syndicateVehicleManagement.vehiculeVerifieAvecSucces'));
         } catch (error) {
             console.error('Erreur vérification véhicule:', error);
-            toast.error('Erreur lors de la vérification');
+            toast.error(t('syndicateVehicleManagement.erreurLorsDeLaVerification'));
         }
     };
 
@@ -453,10 +458,10 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
             if (error) throw error;
 
             await loadVehicles();
-            toast.success('Véhicule suspendu');
+            toast.success(t('syndicateVehicleManagement.vehiculeSuspendu'));
         } catch (error) {
             console.error('Erreur suspension véhicule:', error);
-            toast.error('Erreur lors de la suspension');
+            toast.error(t('syndicateVehicleManagement.erreurLorsDeLaSuspension'));
         }
     };
 
@@ -473,10 +478,10 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
             if (error) throw error;
 
             await loadVehicles();
-            toast.success('Véhicule réactivé avec succès');
+            toast.success(t('syndicateVehicleManagement.vehiculeReactiveAvecSucces'));
         } catch (error) {
             console.error('Erreur réactivation véhicule:', error);
-            toast.error('Erreur lors de la réactivation');
+            toast.error(t('syndicateVehicleManagement.erreurLorsDeLaReactivation'));
         }
     };
 
@@ -496,7 +501,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                 : v
         ));
 
-        toast.success('Nouveau badge généré avec succès');
+        toast.success(t('syndicateVehicleManagement.nouveauBadgeGenereAvecSucces'));
     };
 
     /**
@@ -593,7 +598,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
             <Card>
                 <CardContent className="p-8 text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Chargement des véhicules...</p>
+                    <p className="text-gray-600">{t('syndicateVehicleManagement.chargementDesVehicules')}</p>
                 </CardContent>
             </Card>
         );
@@ -607,7 +612,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                     <CardContent className="p-4 text-center">
                         <Car className="w-8 h-8 mx-auto mb-2 text-blue-600" />
                         <div className="text-2xl font-bold text-blue-600">{vehicles.length}</div>
-                        <div className="text-sm text-gray-600">Total Véhicules</div>
+                        <div className="text-sm text-gray-600">{t('syndicateVehicleManagement.totalVehicules')}</div>
                     </CardContent>
                 </Card>
 
@@ -617,7 +622,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                         <div className="text-2xl font-bold text-[#ff4000]">
                             {vehicles.filter(v => v.verified).length}
                         </div>
-                        <div className="text-sm text-gray-600">Vérifiés</div>
+                        <div className="text-sm text-gray-600">{t('syndicateVehicleManagement.verifies')}</div>
                     </CardContent>
                 </Card>
 
@@ -627,7 +632,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                         <div className="text-2xl font-bold text-[#04439e]">
                             {vehicles.filter(v => v.digital_badge_id).length}
                         </div>
-                        <div className="text-sm text-gray-600">Badges Générés</div>
+                        <div className="text-sm text-gray-600">{t('syndicateVehicleManagement.badgesGeneres')}</div>
                     </CardContent>
                 </Card>
 
@@ -650,7 +655,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                             <div className="relative flex-1 max-w-md">
                                 <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
                                 <Input
-                                    placeholder="Rechercher un véhicule..."
+                                    placeholder={t('syndicateVehicleManagement.rechercherUnVehicule')}
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="pl-10"
@@ -662,7 +667,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                     <SelectValue placeholder="Statut" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">Tous les statuts</SelectItem>
+                                    <SelectItem value="all">{t('syndicateVehicleManagement.tousLesStatuts')}</SelectItem>
                                     <SelectItem value="active">Actifs</SelectItem>
                                     <SelectItem value="suspended">Suspendus</SelectItem>
                                     <SelectItem value="maintenance">Maintenance</SelectItem>
@@ -674,7 +679,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                     <SelectValue placeholder="Type" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="all">Tous les types</SelectItem>
+                                    <SelectItem value="all">{t('syndicateVehicleManagement.tousLesTypes')}</SelectItem>
                                     <SelectItem value="motorcycle">Motos</SelectItem>
                                     <SelectItem value="tricycle">Tricycles</SelectItem>
                                     <SelectItem value="car">Voitures</SelectItem>
@@ -691,11 +696,11 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                             </DialogTrigger>
                             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                                 <DialogHeader>
-                                    <DialogTitle>Enregistrement de Véhicule</DialogTitle>
+                                    <DialogTitle>{t('syndicateVehicleManagement.enregistrementDeVehicule')}</DialogTitle>
                                 </DialogHeader>
                                 <div className="space-y-6 pb-4">
                                     <div>
-                                        <Label htmlFor="member_select">Propriétaire *</Label>
+                                        <Label htmlFor="member_select">{t('syndicateVehicleManagement.proprietaire')}</Label>
                                         <Select
                                             value={formData.member_id || 'new'}
                                             onValueChange={(value) => {
@@ -712,10 +717,10 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                             }}
                                         >
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Sélectionner un membre existant ou créer nouveau" />
+                                                <SelectValue placeholder={t('syndicateVehicleManagement.selectionnerUnMembreExistantOu')} />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="new">➕ Nouveau propriétaire</SelectItem>
+                                                <SelectItem value="new">{t('syndicateVehicleManagement.nouveauProprietaire')}</SelectItem>
                                                 {members.map(member => (
                                                     <SelectItem key={member.id} value={member.id}>
                                                         {member.name}
@@ -727,18 +732,18 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
 
                                     {(!formData.member_id || formData.member_id === '') && (
                                         <div>
-                                            <Label htmlFor="owner_name">Nom du Nouveau Propriétaire *</Label>
+                                            <Label htmlFor="owner_name">{t('syndicateVehicleManagement.nomDuNouveauProprietaire')}</Label>
                                             <Input
                                                 id="owner_name"
                                                 value={formData.owner_name}
                                                 onChange={(e) => setFormData(prev => ({ ...prev, owner_name: e.target.value }))}
-                                                placeholder="Nom complet du propriétaire"
+                                                placeholder={t('syndicateVehicleManagement.nomCompletDuProprietaire')}
                                             />
                                         </div>
                                     )}
 
                                     <div>
-                                        <Label htmlFor="serial_number">Numéro de Série *</Label>
+                                        <Label htmlFor="serial_number">{t('syndicateVehicleManagement.numeroDeSerie')}</Label>
                                         <Input
                                             id="serial_number"
                                             value={formData.serial_number}
@@ -758,7 +763,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                     </div>
 
                                     <div>
-                                        <Label htmlFor="vehicle_type">Type de Véhicule *</Label>
+                                        <Label htmlFor="vehicle_type">{t('syndicateVehicleManagement.typeDeVehicule')}</Label>
                                         <Select
                                             value={formData.vehicle_type}
                                             onValueChange={(value: unknown) => setFormData(prev => ({ ...prev, vehicle_type: value }))}
@@ -785,7 +790,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                             />
                                         </div>
                                         <div>
-                                            <Label htmlFor="model">Modèle</Label>
+                                            <Label htmlFor="model">{t('syndicateVehicleManagement.modele')}</Label>
                                             <Input
                                                 id="model"
                                                 value={formData.model}
@@ -797,7 +802,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <Label htmlFor="year">Année</Label>
+                                            <Label htmlFor="year">{t('syndicateVehicleManagement.annee')}</Label>
                                             <Input
                                                 id="year"
                                                 type="number"
@@ -823,7 +828,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                             <Upload className="w-5 h-5" />
                                             Téléchargement de Documents et Photos
                                         </h3>
-                                        <p className="text-sm text-gray-600 mb-4">Formats acceptés: PDF, JPG, PNG. Taille max: 5MB par fichier</p>
+                                        <p className="text-sm text-gray-600 mb-4">{t('syndicateVehicleManagement.formatsAcceptesPdfJpgPng')}</p>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             {/* Document d'immatriculation */}
@@ -840,12 +845,12 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                         const file = e.target.files?.[0];
                                                         if (file) {
                                                             if (file.size > 5 * 1024 * 1024) {
-                                                                toast.error('Le fichier ne doit pas dépasser 5MB');
+                                                                toast.error(t('syndicateVehicleManagement.leFichierNeDoitPas'));
                                                                 e.target.value = '';
                                                                 return;
                                                             }
                                                             setUploadedFiles(prev => ({ ...prev, registration_document: file }));
-                                                            toast.success('Document d\'immatriculation ajouté');
+                                                            toast.success(t('syndicateVehicleManagement.documentDImmatriculationAjoute'));
                                                         }
                                                     }}
                                                     className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
@@ -874,12 +879,12 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                         const file = e.target.files?.[0];
                                                         if (file) {
                                                             if (file.size > 5 * 1024 * 1024) {
-                                                                toast.error('Le fichier ne doit pas dépasser 5MB');
+                                                                toast.error(t('syndicateVehicleManagement.leFichierNeDoitPas'));
                                                                 e.target.value = '';
                                                                 return;
                                                             }
                                                             setUploadedFiles(prev => ({ ...prev, insurance_document: file }));
-                                                            toast.success('Document d\'assurance ajouté');
+                                                            toast.success(t('syndicateVehicleManagement.documentDAssuranceAjoute'));
                                                         }
                                                     }}
                                                     className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
@@ -908,12 +913,12 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                         const file = e.target.files?.[0];
                                                         if (file) {
                                                             if (file.size > 5 * 1024 * 1024) {
-                                                                toast.error('Le fichier ne doit pas dépasser 5MB');
+                                                                toast.error(t('syndicateVehicleManagement.leFichierNeDoitPas'));
                                                                 e.target.value = '';
                                                                 return;
                                                             }
                                                             setUploadedFiles(prev => ({ ...prev, technical_control: file }));
-                                                            toast.success('Document de contrôle technique ajouté');
+                                                            toast.success(t('syndicateVehicleManagement.documentDeControleTechniqueAjoute'));
                                                         }
                                                     }}
                                                     className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
@@ -942,12 +947,12 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                         const file = e.target.files?.[0];
                                                         if (file) {
                                                             if (file.size > 5 * 1024 * 1024) {
-                                                                toast.error('La photo ne doit pas dépasser 5MB');
+                                                                toast.error(t('syndicateVehicleManagement.laPhotoNeDoitPas'));
                                                                 e.target.value = '';
                                                                 return;
                                                             }
                                                             setUploadedFiles(prev => ({ ...prev, vehicle_photo: file }));
-                                                            toast.success('Photo du véhicule ajoutée');
+                                                            toast.success(t('syndicateVehicleManagement.photoDuVehiculeAjoutee'));
                                                         }
                                                     }}
                                                     className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
@@ -974,7 +979,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                     <div className="flex justify-center mb-2">
                                                         <img
                                                             src={formData.driver_photo_url}
-                                                            alt="Photo du conducteur"
+                                                            alt={t('syndicateVehicleManagement.photoDuConducteur')}
                                                             className="w-20 h-20 object-cover rounded-lg border-2 border-border"
                                                         />
                                                     </div>
@@ -1036,10 +1041,10 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Numéro de Série</TableHead>
+                                <TableHead>{t('syndicateVehicleManagement.numeroDeSerie2')}</TableHead>
                                 <TableHead>Plaque</TableHead>
-                                <TableHead>Propriétaire</TableHead>
-                                <TableHead>Véhicule</TableHead>
+                                <TableHead>{t('syndicateVehicleManagement.proprietaire2')}</TableHead>
+                                <TableHead>{t('syndicateVehicleManagement.vehicule')}</TableHead>
                                 <TableHead>Badge</TableHead>
                                 <TableHead>Statut</TableHead>
                                 <TableHead>Actions</TableHead>
@@ -1083,7 +1088,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                             {vehicle.verified && (
                                                 <div className="flex items-center gap-1">
                                                     <CheckCircle className="w-3 h-3 text-[#ff4000]" />
-                                                    <span className="text-xs text-[#ff4000]">Vérifié</span>
+                                                    <span className="text-xs text-[#ff4000]">{t('syndicateVehicleManagement.verifie')}</span>
                                                 </div>
                                             )}
                                         </div>
@@ -1099,7 +1104,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                         setSelectedVehicleForEdit(vehicle);
                                                         setShowEditVehicleDialog(true);
                                                     }}
-                                                    title="Modifier le véhicule"
+                                                    title={t('syndicateVehicleManagement.modifierLeVehicule')}
                                                 >
                                                     <Settings className="w-4 h-4" />
                                                 </Button>
@@ -1110,7 +1115,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                         setSelectedVehicleForEdit(vehicle);
                                                         setShowEditBadgeDialog(true);
                                                     }}
-                                                    title="Modifier infos badge"
+                                                    title={t('syndicateVehicleManagement.modifierInfosBadge')}
                                                 >
                                                     <Edit className="w-4 h-4" />
                                                 </Button>
@@ -1118,7 +1123,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                                     size="sm"
                                                     variant="outline"
                                                     onClick={() => openProfessionalBadge(vehicle)}
-                                                    title="Générer badge professionnel"
+                                                    title={t('syndicateVehicleManagement.genererBadgeProfessionnel')}
                                                 >
                                                     <IdCard className="w-4 h-4" />
                                                 </Button>
@@ -1183,15 +1188,15 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
 
             {/* Dialog pour afficher le badge */}
             <Dialog open={showBadgeDialog} onOpenChange={setShowBadgeDialog}>
-                <DialogContent className="max-w-md">
+                <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>Badge Numérique</DialogTitle>
+                        <DialogTitle>{t('syndicateVehicleManagement.badgeNumerique')}</DialogTitle>
                     </DialogHeader>
                     {selectedVehicle && (
                         <div className="space-y-4">
                             <div className="text-center p-6 border-2 border-dashed border-gray-300 rounded-lg">
                                 <QrCode className="w-24 h-24 mx-auto mb-4 text-gray-600" />
-                                <p className="text-sm text-gray-600 mb-2">QR Code du Badge</p>
+                                <p className="text-sm text-gray-600 mb-2">{t('syndicateVehicleManagement.qrCodeDuBadge')}</p>
                                 <p className="font-mono text-xs bg-gray-100 p-2 rounded">
                                     {selectedVehicle.digital_badge_id}
                                 </p>
@@ -1199,7 +1204,7 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
 
                             <div className="space-y-2 text-sm">
                                 <div className="flex justify-between">
-                                    <span className="text-gray-600">Véhicule:</span>
+                                    <span className="text-gray-600">{t('syndicateVehicleManagement.vehicule2')}</span>
                                     <span className="font-medium">{selectedVehicle.serial_number}</span>
                                 </div>
                                 <div className="flex justify-between">
@@ -1207,11 +1212,11 @@ export default function SyndicateVehicleManagement({ bureauId }: SyndicateVehicl
                                     <span className="font-medium">{selectedVehicle.license_plate}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-gray-600">Propriétaire:</span>
+                                    <span className="text-gray-600">{t('syndicateVehicleManagement.proprietaire3')}</span>
                                     <span className="font-medium">{selectedVehicle.member_name}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-gray-600">Généré le:</span>
+                                    <span className="text-gray-600">{t('syndicateVehicleManagement.genereLe')}</span>
                                     <span className="font-medium">{formatDate(selectedVehicle.badge_generated_at)}</span>
                                 </div>
                             </div>

@@ -46,6 +46,7 @@ interface PaymentLinkData {
   ownerType: string;
   remise?: number;
   typeRemise?: string;
+  items?: { product_id?: string; name: string; price: number; qty: number; image?: string | null }[];
 }
 
 interface OwnerInfo {
@@ -209,10 +210,18 @@ export default function PaymentLinkPage() {
   const processPaymentLinkRequest = async (payload: Record<string, unknown>) => {
     const requestBody = { token, ...payload };
 
+    // Le paiement par wallet exige d'identifier l'acheteur côté backend → on joint le JWT
+    // de la session si elle existe (sinon le backend renvoie 401 « Connexion requise »).
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+    } catch { /* pas de session → paiement invité (Orange Money / carte) */ }
+
     try {
       const resp = await fetch(`${backendConfig.baseUrl}/api/payment-links/process`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(requestBody),
       });
       const data = await resp.json();
@@ -439,7 +448,10 @@ export default function PaymentLinkPage() {
 
   // -------- MAIN PAYMENT PAGE --------
   return (
-    <div className="min-h-screen bg-background py-6 px-4">
+    <div
+      className="min-h-screen bg-background pt-6 px-4"
+      style={{ paddingBottom: 'calc(7rem + env(safe-area-inset-bottom, 0px))' }}
+    >
       <div className="max-w-lg mx-auto space-y-4">
         {/* Header */}
         <div className="text-center">
@@ -486,8 +498,47 @@ export default function PaymentLinkPage() {
               )}
             </div>
 
-            {/* Product image if available */}
-            {productInfo?.images?.[0] && (
+            {/* Devis détaillé — le client vérifie chaque produit et son prix avant de payer */}
+            {linkData.items && linkData.items.length > 0 && (
+              <div className="border rounded-lg overflow-hidden">
+                <div className="flex items-center justify-between px-3 py-2 bg-primary/5 border-b">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-primary flex items-center gap-1.5">
+                    <Receipt className="w-3.5 h-3.5" /> Récapitulatif de votre commande
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {linkData.items.length} article{linkData.items.length > 1 ? 's' : ''}
+                  </span>
+                </div>
+                <div className="divide-y">
+                  {linkData.items.map((it, i) => (
+                    <div key={i} className="flex items-center gap-3 p-3">
+                      <div className="w-12 h-12 rounded-lg bg-muted overflow-hidden flex items-center justify-center shrink-0 border">
+                        {it.image ? (
+                          <img src={it.image} alt={it.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <ShoppingCart className="w-5 h-5 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium leading-tight">{it.name}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Prix unitaire : <span className="font-medium text-foreground">{formatCurrency(it.price, linkData.currency)}</span>
+                          {'  •  '}Qté : <span className="font-medium text-foreground">{it.qty}</span>
+                        </p>
+                      </div>
+                      <span className="text-sm font-bold shrink-0">{formatCurrency(it.price * it.qty, linkData.currency)}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between px-3 py-2.5 bg-muted/50 border-t">
+                  <span className="text-sm font-semibold">Total à payer</span>
+                  <span className="text-base font-bold text-primary">{formatCurrency(linkData.amount, linkData.currency)}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Product image if available (lien produit unique) */}
+            {(!linkData.items || linkData.items.length === 0) && productInfo?.images?.[0] && (
               <div className="rounded-lg overflow-hidden border">
                 <img src={productInfo.images[0]} alt={productInfo.name} className="w-full h-32 object-cover" />
               </div>
@@ -499,7 +550,7 @@ export default function PaymentLinkPage() {
                 <span>Montant</span>
                 <span>{formatCurrency(linkData.grossAmount || linkData.amount, linkData.currency)}</span>
               </div>
-              {linkData.remise && linkData.remise > 0 && (
+              {(linkData.remise || 0) > 0 && (
                 <div className="flex justify-between text-sm text-[#ff4000]">
                   <span>Remise</span>
                   <span>-{linkData.remise}{linkData.typeRemise === 'percentage' ? '%' : ` ${linkData.currency}`}</span>
@@ -617,23 +668,32 @@ export default function PaymentLinkPage() {
               </div>
             </button>
 
-            {/* Wallet (only if logged in) */}
-            {user && (
-              <button
-                onClick={() => setPaymentMethod('wallet')}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
-                  paymentMethod === 'wallet' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'
-                }`}
-              >
-                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <Wallet className="w-5 h-5 text-[#ff4000]" />
-                </div>
-                <div className="text-left">
-                  <p className="font-semibold text-sm">Wallet 224SOLUTIONS</p>
-                  <p className="text-xs text-muted-foreground">Paiement depuis votre solde</p>
-                </div>
-              </button>
-            )}
+            {/* Wallet — toujours proposé ; si pas connecté, on redirige vers la connexion
+                (les clients qui ont un compte peuvent payer avec leur solde). */}
+            <button
+              onClick={() => {
+                if (!user) {
+                  try { sessionStorage.setItem('post_auth_redirect', window.location.pathname + window.location.search); } catch { /* ignore */ }
+                  toast({ title: 'Connexion requise', description: 'Connectez-vous pour payer avec votre Wallet 224SOLUTIONS.' });
+                  navigate('/auth');
+                  return;
+                }
+                setPaymentMethod('wallet');
+              }}
+              className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 transition-all ${
+                paymentMethod === 'wallet' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'
+              }`}
+            >
+              <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                <Wallet className="w-5 h-5 text-[#ff4000]" />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-sm">Wallet 224SOLUTIONS</p>
+                <p className="text-xs text-muted-foreground">
+                  {user ? 'Paiement depuis votre solde' : 'Connectez-vous pour utiliser votre solde'}
+                </p>
+              </div>
+            </button>
 
             {paymentMethod === 'card' && cardError && (
               <Alert variant="destructive" className="mt-2">

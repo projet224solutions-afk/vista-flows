@@ -123,6 +123,53 @@ router.post('/validate-purchase', verifyJWT, async (req: AuthenticatedRequest, r
 });
 
 /**
+ * POST /api/inventory/pay-supplier-debt
+ * Règle une tranche de dette fournisseur ATOMIQUEMENT (RPC pay_supplier_debt) :
+ * débit wallet + maj dette + statut. Agent-aware + propriété.
+ */
+router.post('/pay-supplier-debt', verifyJWT, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { debt_id, amount, idempotency_key } = req.body || {};
+    if (!debt_id || typeof debt_id !== 'string') { res.status(400).json({ success: false, error: 'debt_id requis' }); return; }
+    const amt = Number(amount);
+    if (!Number.isFinite(amt) || amt <= 0) { res.status(400).json({ success: false, error: 'Montant invalide' }); return; }
+
+    const ctx = await resolveVendorContext(req.user!.id);
+    if (!ctx.vendorId) { res.status(403).json({ success: false, error: 'Boutique non trouvée' }); return; }
+    if (ctx.isAgent && !vendorContextHasPermission(ctx, 'manage_suppliers') && !vendorContextHasPermission(ctx, 'manage_inventory')) {
+      res.status(403).json({ success: false, error: 'Permission insuffisante pour régler une dette' });
+      return;
+    }
+
+    const { data, error } = await supabaseAdmin.rpc('pay_supplier_debt', {
+      p_debt_id: debt_id,
+      p_vendor_id: ctx.vendorId,
+      p_amount: amt,
+      p_idempotency_key: idempotency_key || null,
+    });
+    if (error) {
+      logger.error(`[inventory/pay-supplier-debt] RPC: ${error.message}`);
+      res.status(500).json({ success: false, error: 'Erreur lors du règlement' });
+      return;
+    }
+    const result = data as any;
+    if (result && result.success === false) {
+      const msg = String(result.error || '');
+      const code = msg.includes('INSUFFICIENT_FUNDS') ? 402 : msg.includes('EXCEEDS') ? 400 : 400;
+      const friendly = msg.includes('INSUFFICIENT_FUNDS') ? 'Solde insuffisant'
+        : msg.includes('AMOUNT_EXCEEDS_REMAINING') ? 'Le montant dépasse le restant dû'
+        : msg.includes('DEBT_NOT_FOUND') ? 'Dette introuvable' : 'Échec du règlement';
+      res.status(code).json({ success: false, error: friendly });
+      return;
+    }
+    res.json({ success: true, data: result, ...result });
+  } catch (err: any) {
+    logger.error(`[inventory/pay-supplier-debt] ${err?.message}`);
+    res.status(500).json({ success: false, error: 'Erreur serveur interne' });
+  }
+});
+
+/**
  * GET /api/inventory/stock
  * Vue d'ensemble du stock du vendeur
  */

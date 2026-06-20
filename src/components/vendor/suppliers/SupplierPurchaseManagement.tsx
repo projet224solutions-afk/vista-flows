@@ -7,9 +7,10 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Building2, ShoppingCart, TrendingUp, Package } from 'lucide-react';
+import { Building2, ShoppingCart, TrendingUp, Package, DollarSign } from 'lucide-react';
 import { VendorSuppliersList } from './VendorSuppliersList';
 import { PurchasesList } from './PurchasesList';
+import { SupplierDebts } from './SupplierDebts';
 import { ValidatedPurchasesSheet } from './ValidatedPurchasesSheet';
 import { DraftPurchasesSheet } from './DraftPurchasesSheet';
 import { Badge } from '@/components/ui/badge';
@@ -145,7 +146,7 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2 mb-4 h-12 md:h-10">
+            <TabsList className="grid w-full grid-cols-3 mb-4 h-12 md:h-10">
               <TabsTrigger value="purchases" className="flex items-center gap-2 text-sm md:text-xs">
                 <ShoppingCart className="w-5 h-5 md:w-4 md:h-4" />
                 <span>{t('suppliers.tab.purchases')}</span>
@@ -159,6 +160,10 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
                   </Badge>
                 ) : null}
               </TabsTrigger>
+              <TabsTrigger value="debts" className="flex items-center gap-2 text-sm md:text-xs">
+                <DollarSign className="w-5 h-5 md:w-4 md:h-4" />
+                <span>Dettes</span>
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="purchases" className="mt-0">
@@ -167,6 +172,10 @@ export function SupplierPurchaseManagement({ vendorId }: SupplierPurchaseManagem
 
             <TabsContent value="suppliers" className="mt-0">
               <VendorSuppliersList vendorId={vendorId} />
+            </TabsContent>
+
+            <TabsContent value="debts" className="mt-0">
+              <SupplierDebts vendorId={vendorId} />
             </TabsContent>
           </Tabs>
         </CardContent>

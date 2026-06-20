@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +16,7 @@ import GenerateBureauInstallLink from '@/components/admin/GenerateBureauInstallL
 import DualSyncDashboard from '@/components/admin/DualSyncDashboard';
 
 export default function PDGSyndicatManagement() {
+  const { t } = useTranslation();
   const {
     bureaus,
     workers,
@@ -128,7 +130,7 @@ export default function PDGSyndicatManagement() {
   };
 
   const handleDeleteBureau = async (bureauId: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer ce bureau ? Cette action supprimera également tous les travailleurs, membres et véhicules associés.")) return;
+    if (!confirm(t('pDGSyndicatManagement.etesVousSurDeVouloir'))) return;
     await deleteBureauAction(bureauId);
   };
 
@@ -142,7 +144,7 @@ export default function PDGSyndicatManagement() {
     const bureau = bureauOverride || resetPasswordBureau;
     if (!bureau) return;
     if (newPassword.length < 8) {
-      toast.error('Le mot de passe doit contenir au moins 8 caractères');
+      toast.error(t('pDGSyndicatManagement.leMotDePasseDoit'));
       return;
     }
     setIsResettingPassword(true);
@@ -189,7 +191,7 @@ export default function PDGSyndicatManagement() {
   };
 
   const handleDeleteWorker = async (workerId: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer ce travailleur ?")) return;
+    if (!confirm(t('pDGSyndicatManagement.etesVousSurDeVouloir2'))) return;
     await deleteWorker(workerId);
   };
 
@@ -215,7 +217,7 @@ export default function PDGSyndicatManagement() {
   };
 
   const handleDeleteMember = async (memberId: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer ce membre ?")) return;
+    if (!confirm(t('pDGSyndicatManagement.etesVousSurDeVouloir3'))) return;
     await deleteMember(memberId);
   };
 
@@ -238,8 +240,8 @@ export default function PDGSyndicatManagement() {
       {/* En-tête */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold">Gestion des Bureaux Syndicaux</h2>
-          <p className="text-muted-foreground mt-1">Administration des bureaux syndicaux de taxi-motos</p>
+          <h2 className="text-3xl font-bold">{t('pDGSyndicatManagement.gestionDesBureauxSyndicaux')}</h2>
+          <p className="text-muted-foreground mt-1">{t('pDGSyndicatManagement.administrationDesBureauxSyndicauxDe')}</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
@@ -250,7 +252,7 @@ export default function PDGSyndicatManagement() {
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Créer un nouveau bureau syndical</DialogTitle>
+              <DialogTitle>{t('pDGSyndicatManagement.creerUnNouveauBureauSyndical')}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleCreateBureau} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -265,7 +267,7 @@ export default function PDGSyndicatManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="prefecture">Préfecture *</Label>
+                  <Label htmlFor="prefecture">{t('pDGSyndicatManagement.prefecture')}</Label>
                   <Input
                     id="prefecture"
                     required
@@ -288,20 +290,20 @@ export default function PDGSyndicatManagement() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="full_location">Adresse complète</Label>
+                <Label htmlFor="full_location">{t('pDGSyndicatManagement.adresseComplete')}</Label>
                 <Input
                   id="full_location"
                   value={formData.full_location}
                   onChange={(e) => setFormData({ ...formData, full_location: e.target.value })}
-                  placeholder="Ex: Avenue de la République, près du marché central"
+                  placeholder={t('pDGSyndicatManagement.exAvenueDeLaRepublique')}
                 />
               </div>
 
               <div className="border-t pt-4">
-                <h3 className="font-semibold mb-3">Informations du Président</h3>
+                <h3 className="font-semibold mb-3">{t('pDGSyndicatManagement.informationsDuPresident')}</h3>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="president_name">Nom complet du président</Label>
+                    <Label htmlFor="president_name">{t('pDGSyndicatManagement.nomCompletDuPresident')}</Label>
                     <Input
                       id="president_name"
                       value={formData.president_name}
@@ -321,7 +323,7 @@ export default function PDGSyndicatManagement() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="president_phone">Téléphone</Label>
+                      <Label htmlFor="president_phone">{t('pDGSyndicatManagement.telephone')}</Label>
                       <Input
                         id="president_phone"
                         type="tel"
@@ -332,7 +334,7 @@ export default function PDGSyndicatManagement() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password">Mot de passe * (min. 8 caractères)</Label>
+                    <Label htmlFor="password">{t('pDGSyndicatManagement.motDePasseMin8')}</Label>
                     <Input
                       id="password"
                       type="password"
@@ -396,7 +398,7 @@ export default function PDGSyndicatManagement() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Véhicules</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('pDGSyndicatManagement.totalVehicules')}</CardTitle>
             <Bike className="w-4 h-4 text-[#04439e]" />
           </CardHeader>
           <CardContent>
@@ -450,13 +452,13 @@ export default function PDGSyndicatManagement() {
           {/* Recherche */}
           <Card>
             <CardHeader>
-              <CardTitle>Rechercher un bureau</CardTitle>
+              <CardTitle>{t('pDGSyndicatManagement.rechercherUnBureau')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="relative">
                 <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Rechercher par code, préfecture ou commune..."
+                  placeholder={t('pDGSyndicatManagement.rechercherParCodePrefectureOu')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -607,7 +609,7 @@ export default function PDGSyndicatManagement() {
         <TabsContent value="workers" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Liste des Travailleurs</CardTitle>
+              <CardTitle>{t('pDGSyndicatManagement.listeDesTravailleurs')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -660,9 +662,9 @@ export default function PDGSyndicatManagement() {
 
         {/* Dialog pour modifier un travailleur */}
         <Dialog open={isWorkerDialogOpen} onOpenChange={setIsWorkerDialogOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Modifier le travailleur</DialogTitle>
+              <DialogTitle>{t('pDGSyndicatManagement.modifierLeTravailleur')}</DialogTitle>
             </DialogHeader>
             {editingWorker && (
               <div className="space-y-4">
@@ -684,7 +686,7 @@ export default function PDGSyndicatManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="worker_phone">Téléphone</Label>
+                  <Label htmlFor="worker_phone">{t('pDGSyndicatManagement.telephone')}</Label>
                   <Input
                     id="worker_phone"
                     value={editingWorker.telephone || ''}
@@ -692,7 +694,7 @@ export default function PDGSyndicatManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="worker_access">Niveau d'accès</Label>
+                  <Label htmlFor="worker_access">{t('pDGSyndicatManagement.niveauDAcces')}</Label>
                   <Input
                     id="worker_access"
                     value={editingWorker.access_level}
@@ -725,7 +727,7 @@ export default function PDGSyndicatManagement() {
         <TabsContent value="members" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Liste des Membres</CardTitle>
+              <CardTitle>{t('pDGSyndicatManagement.listeDesMembres')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -778,9 +780,9 @@ export default function PDGSyndicatManagement() {
 
         {/* Dialog pour modifier un membre */}
         <Dialog open={isMemberDialogOpen} onOpenChange={setIsMemberDialogOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Modifier le membre</DialogTitle>
+              <DialogTitle>{t('pDGSyndicatManagement.modifierLeMembre')}</DialogTitle>
             </DialogHeader>
             {editingMember && (
               <div className="space-y-4">
@@ -802,7 +804,7 @@ export default function PDGSyndicatManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="member_phone">Téléphone</Label>
+                  <Label htmlFor="member_phone">{t('pDGSyndicatManagement.telephone')}</Label>
                   <Input
                     id="member_phone"
                     value={editingMember.phone || ''}
@@ -871,7 +873,7 @@ export default function PDGSyndicatManagement() {
         <TabsContent value="features" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Fonctionnalités Disponibles</CardTitle>
+              <CardTitle>{t('pDGSyndicatManagement.fonctionnalitesDisponibles')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4">
@@ -914,7 +916,7 @@ export default function PDGSyndicatManagement() {
           if (!open) { setResetPasswordBureau(null); setNewPassword(''); }
         }}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <KeyRound className="w-5 h-5 text-primary" />
@@ -932,13 +934,13 @@ export default function PDGSyndicatManagement() {
               </div>
 
               <div className="space-y-2">
-                <Label>Nouveau mot de passe</Label>
+                <Label>{t('pDGSyndicatManagement.nouveauMotDePasse')}</Label>
                 <div className="relative">
                   <Input
                     type={showNewPassword ? 'text' : 'password'}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Minimum 8 caractères"
+                    placeholder={t('pDGSyndicatManagement.minimum8Caracteres')}
                     className="pr-10"
                   />
                   <button
@@ -950,7 +952,7 @@ export default function PDGSyndicatManagement() {
                   </button>
                 </div>
                 {newPassword.length > 0 && newPassword.length < 8 && (
-                  <p className="text-xs text-destructive">Au moins 8 caractères requis</p>
+                  <p className="text-xs text-destructive">{t('pDGSyndicatManagement.auMoins8CaracteresRequis')}</p>
                 )}
               </div>
 
@@ -989,7 +991,7 @@ export default function PDGSyndicatManagement() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Modifier le bureau</DialogTitle>
+            <DialogTitle>{t('pDGSyndicatManagement.modifierLeBureau')}</DialogTitle>
           </DialogHeader>
           {editingBureau && (
             <div className="space-y-4">
@@ -1009,21 +1011,21 @@ export default function PDGSyndicatManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Préfecture</Label>
+                  <Label>{t('pDGSyndicatManagement.prefecture2')}</Label>
                   <Input
                     value={editingBureau.prefecture}
                     onChange={(e) => setEditingBureau({...editingBureau, prefecture: e.target.value})}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Nom du Président</Label>
+                  <Label>{t('pDGSyndicatManagement.nomDuPresident')}</Label>
                   <Input
                     value={editingBureau.president_name || ''}
                     onChange={(e) => setEditingBureau({...editingBureau, president_name: e.target.value})}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Email du Président</Label>
+                  <Label>{t('pDGSyndicatManagement.emailDuPresident')}</Label>
                   <Input
                     type="email"
                     value={editingBureau.president_email || ''}
@@ -1031,14 +1033,14 @@ export default function PDGSyndicatManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Téléphone du Président</Label>
+                  <Label>{t('pDGSyndicatManagement.telephoneDuPresident')}</Label>
                   <Input
                     value={editingBureau.president_phone || ''}
                     onChange={(e) => setEditingBureau({...editingBureau, president_phone: e.target.value})}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Localisation complète</Label>
+                  <Label>{t('pDGSyndicatManagement.localisationComplete')}</Label>
                   <Input
                     value={editingBureau.full_location || ''}
                     onChange={(e) => setEditingBureau({...editingBureau, full_location: e.target.value})}
@@ -1067,7 +1069,7 @@ export default function PDGSyndicatManagement() {
                       type={showNewPassword ? 'text' : 'password'}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Nouveau mot de passe (min. 8 caractères)"
+                      placeholder={t('pDGSyndicatManagement.nouveauMotDePasseMin')}
                       className="pr-10"
                     />
                     <button
@@ -1079,7 +1081,7 @@ export default function PDGSyndicatManagement() {
                     </button>
                   </div>
                   {newPassword.length > 0 && newPassword.length < 8 && (
-                    <p className="text-xs text-destructive">Au moins 8 caractères requis</p>
+                    <p className="text-xs text-destructive">{t('pDGSyndicatManagement.auMoins8CaracteresRequis')}</p>
                   )}
                   <Button
                     type="button"
@@ -1090,9 +1092,9 @@ export default function PDGSyndicatManagement() {
                     className="gap-2 w-full"
                   >
                     {isResettingPassword ? (
-                      <><RefreshCw className="w-4 h-4 animate-spin" />Réinitialisation en cours...</>
+                      <><RefreshCw className="w-4 h-4 animate-spin" />{t('pDGSyndicatManagement.reinitialisationEnCours')}</>
                     ) : (
-                      <><KeyRound className="w-4 h-4" />Réinitialiser le mot de passe</>
+                      <><KeyRound className="w-4 h-4" />{t('pDGSyndicatManagement.reinitialiserLeMotDePasse')}</>
                     )}
                   </Button>
                 </div>

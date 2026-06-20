@@ -113,20 +113,20 @@ export function MarketplaceProductCard({
     const fullStars = Math.floor(rating);
     const hasHalf = rating % 1 >= 0.5;
     const starSize = size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5';
-    
+
     return (
       <div className="flex items-center gap-0.5">
         {[...Array(5)].map((_, i) => (
-          <Star 
-            key={i} 
+          <Star
+            key={i}
             className={cn(
               starSize,
-              i < fullStars 
-                ? 'fill-[#ff4000] text-[#ff4000]' 
+              i < fullStars
+                ? 'fill-[#ff4000] text-[#ff4000]'
                 : i === fullStars && hasHalf
                   ? 'fill-[#ff4000]/50 text-[#ff4000]'
                   : 'text-muted-foreground/30'
-            )} 
+            )}
           />
         ))}
       </div>
@@ -201,8 +201,8 @@ export function MarketplaceProductCard({
           <span className="text-[11px] font-medium text-foreground ml-1">{rating.toFixed(1)}</span>
           <span className="text-[10px] text-muted-foreground">({reviewCount})</span>
         </div>
-        
-        {/* Vendor Info avec localisation */}
+
+        {/* Vendor Info avec localisation (entre la note et le prix) */}
         <div className="marketplace-card-vendor">
           <span className="truncate flex-1 flex items-center gap-1">
             {vendorPublicId && (
@@ -270,7 +270,7 @@ export function MarketplaceProductCard({
             </span>
           )}
         </div>
-        
+
         {/* Actions - CTA compacts pour mobile */}
         <div className="marketplace-card-actions" onClick={(e) => e.stopPropagation()}>
           <Button 

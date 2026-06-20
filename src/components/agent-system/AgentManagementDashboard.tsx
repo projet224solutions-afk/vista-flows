@@ -1,10 +1,10 @@
-// @ts-nocheck
 /**
  * 🏢 Dashboard de Gestion des Agents - Interface PDG
  * Composant ultra-professionnel pour la gestion complète des agents
  */
 
 import React, { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,7 @@ interface AgentManagementDashboardProps {
 }
 
 export default function AgentManagementDashboard({ pdgId }: AgentManagementDashboardProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("overview");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -66,7 +67,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
   const handleCreateAgent = async () => {
     try {
       if (!newAgent.name || !newAgent.email || !newAgent.phone) {
-        toast.error("Veuillez remplir tous les champs obligatoires");
+        toast.error(t('agentManagementDashboard.veuillezRemplirTousLesChamps'));
         return;
       }
 
@@ -119,7 +120,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">Chargement du système d'agents...</p>
+          <p className="text-muted-foreground">{t('agentManagementDashboard.chargementDuSystemeDAgents')}</p>
         </div>
       </div>
     );
@@ -163,7 +164,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Utilisateurs Créés</p>
+                <p className="text-sm text-muted-foreground">{t('agentManagementDashboard.utilisateursCrees')}</p>
                 <p className="text-2xl font-bold text-[#04439e]">{overview.totalUsers}</p>
                 <p className="text-xs text-muted-foreground">
                   Par le réseau
@@ -199,7 +200,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
             <TabsTrigger value="agents">Agents</TabsTrigger>
             <TabsTrigger value="commissions">Commissions</TabsTrigger>
-            <TabsTrigger value="settings">Paramètres</TabsTrigger>
+            <TabsTrigger value="settings">{t('agentManagementDashboard.parametres')}</TabsTrigger>
             <TabsTrigger value="communication">Communication</TabsTrigger>
           </TabsList>
 
@@ -211,7 +212,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                   Créer Agent
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
+              <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
                     <Crown className="w-5 h-5 text-primary" />
@@ -241,7 +242,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="phone">Téléphone *</Label>
+                    <Label htmlFor="phone">{t('agentManagementDashboard.telephone')}</Label>
                     <Input
                       id="phone"
                       value={newAgent.phone}
@@ -342,7 +343,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                     </div>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">Avec Sous-Agents</span>
+                    <span className="text-sm">{t('agentManagementDashboard.avecSousAgents')}</span>
                     <div className="flex items-center gap-2">
                       <div className="w-20 h-2 bg-gray-200 rounded-full">
                         <div
@@ -356,7 +357,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                     </div>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">Performance Élevée</span>
+                    <span className="text-sm">{t('agentManagementDashboard.performanceElevee')}</span>
                     <div className="flex items-center gap-2">
                       <div className="w-20 h-2 bg-gray-200 rounded-full">
                         <div
@@ -383,7 +384,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
-                  placeholder="Rechercher un agent..."
+                  placeholder={t('agentManagementDashboard.rechercherUnAgent')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -395,7 +396,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                 <SelectValue placeholder="Statut" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous</SelectItem>
+                <SelectItem value="all">{t('agentManagementDashboard.tous')}</SelectItem>
                 <SelectItem value="active">Actifs</SelectItem>
                 <SelectItem value="inactive">Inactifs</SelectItem>
               </SelectContent>
@@ -456,7 +457,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                       <TableCell>
                         <div className="text-center">
                           <p className="font-bold text-lg">{agent.total_users_created}</p>
-                          <p className="text-xs text-muted-foreground">créés</p>
+                          <p className="text-xs text-muted-foreground">{t('agentManagementDashboard.crees')}</p>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -464,7 +465,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                           <p className="font-bold text-[#ff4000]">
                             {formatCurrency(agent.total_commissions_earned)}
                           </p>
-                          <p className="text-xs text-muted-foreground">gagnées</p>
+                          <p className="text-xs text-muted-foreground">{t('agentManagementDashboard.gagnees')}</p>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -511,7 +512,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
           <Alert className="border-blue-200 bg-blue-50">
             <DollarSign className="h-4 w-4 text-blue-600" />
             <AlertDescription className="text-blue-900">
-              🎯 <strong>Impact direct sur les paiements Stripe :</strong> Les modifications de commission s'appliquent immédiatement aux prochains achats.
+              🎯 <strong>{t('agentManagementDashboard.impactDirectSurLesPaiements')}</strong> Les modifications de commission s'appliquent immédiatement aux prochains achats.
               Les agents reçoivent automatiquement leur commission dans leur wallet.
             </AlertDescription>
           </Alert>
@@ -550,11 +551,11 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
 
                         {/* Exemple de calcul */}
                         <div className="bg-white p-3 rounded border border-blue-200 text-sm">
-                          <p className="font-medium text-blue-900 mb-1">📊 Exemple de calcul :</p>
+                          <p className="font-medium text-blue-900 mb-1">{t('agentManagementDashboard.exempleDeCalcul')}</p>
                           <div className="space-y-1 text-xs">
-                            <p>• Client achète: <strong>50,000 GNF</strong></p>
-                            <p>• Agent reçoit: <strong>{Math.round(50000 * (setting.setting_value || 0))} GNF</strong> ({((setting.setting_value || 0) * 100).toFixed(1)}%)</p>
-                            <p className="text-muted-foreground mt-2">La commission est créditée automatiquement dans le wallet de l'agent</p>
+                            <p>{t('agentManagementDashboard.clientAchete')} <strong>50,000 GNF</strong></p>
+                            <p>{t('agentManagementDashboard.agentRecoit')} <strong>{Math.round(50000 * (setting.setting_value || 0))} GNF</strong> ({((setting.setting_value || 0) * 100).toFixed(1)}%)</p>
+                            <p className="text-muted-foreground mt-2">{t('agentManagementDashboard.laCommissionEstCrediteeAutomatiquement')}</p>
                           </div>
                         </div>
                       </div>
@@ -564,7 +565,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                           <p className="text-3xl font-bold text-blue-600">
                             {((setting.setting_value || 0) * 100).toFixed(1)}
                           </p>
-                          <p className="text-sm text-muted-foreground">pour cent</p>
+                          <p className="text-sm text-muted-foreground">{t('agentManagementDashboard.pourCent')}</p>
                         </div>
                         <div className="flex flex-col gap-2">
                           <Input
@@ -588,7 +589,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
 
                     {/* Statistiques d'impact */}
                     {setting.setting_key === 'base_user_commission' && (
-                      <div className="grid grid-cols-3 gap-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                         <Card className="border-orange-200">
                           <CardContent className="p-4">
                             <p className="text-sm text-muted-foreground">Taux Actuel</p>
@@ -599,7 +600,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                         </Card>
                         <Card className="border-blue-200">
                           <CardContent className="p-4">
-                            <p className="text-sm text-muted-foreground">Commission sur 100k</p>
+                            <p className="text-sm text-muted-foreground">{t('agentManagementDashboard.commissionSur100k')}</p>
                             <p className="text-2xl font-bold text-blue-600">
                               {Math.round(100000 * (setting.setting_value || 0))} GNF
                             </p>
@@ -607,7 +608,7 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                         </Card>
                         <Card className="border-blue-200">
                           <CardContent className="p-4">
-                            <p className="text-sm text-muted-foreground">Commission sur 1M</p>
+                            <p className="text-sm text-muted-foreground">{t('agentManagementDashboard.commissionSur1m')}</p>
                             <p className="text-2xl font-bold text-[#04439e]">
                               {Math.round(1000000 * (setting.setting_value || 0)).toLocaleString()} GNF
                             </p>
@@ -633,11 +634,11 @@ export default function AgentManagementDashboard({ pdgId }: AgentManagementDashb
                   Comment ça fonctionne ?
                 </h5>
                 <ul className="text-sm text-muted-foreground space-y-2">
-                  <li>✅ Un agent crée un client utilisateur</li>
-                  <li>✅ Le client effectue un achat sur la plateforme</li>
-                  <li>✅ L'agent reçoit automatiquement sa commission dans son wallet</li>
-                  <li>✅ La commission est enregistrée dans l'historique de l'agent</li>
-                  <li>⚙️ Les modifications s'appliquent aux <strong>prochains achats uniquement</strong></li>
+                  <li>{t('agentManagementDashboard.unAgentCreeUnClient')}</li>
+                  <li>{t('agentManagementDashboard.leClientEffectueUnAchat')}</li>
+                  <li>{t('agentManagementDashboard.lAgentRecoitAutomatiquementSa')}</li>
+                  <li>{t('agentManagementDashboard.laCommissionEstEnregistreeDans')}</li>
+                  <li>{t('agentManagementDashboard.lesModificationsSAppliquentAux')} <strong>prochains achats uniquement</strong></li>
                 </ul>
               </div>
             </CardContent>

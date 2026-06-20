@@ -7,6 +7,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { motion, AnimatePresence } from 'framer-motion';
 import { WifiOff, RefreshCw, Database, X, Loader2, CheckCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ export default function OfflineBanner({
   pendingCount: externalPendingCount,
   position = 'bottom'
 }: OfflineBannerProps) {
+  const { t } = useTranslation();
   const { isOnline, isOffline, offlineDuration } = useOfflineStatus({
     showToasts: true, // Les toasts sont gérés par le hook
     onOnline: async () => {
@@ -113,9 +115,9 @@ export default function OfflineBanner({
     setIsSyncing(true);
     try {
       await onSync();
-      toast.success('Synchronisation terminée');
+      toast.success(t('offlineBanner.synchronisationTerminee'));
     } catch {
-      toast.error('Erreur de synchronisation');
+      toast.error(t('offlineBanner.erreurDeSynchronisation'));
     } finally {
       setIsSyncing(false);
     }
@@ -146,7 +148,7 @@ export default function OfflineBanner({
                   <CheckCircle className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="font-semibold">Connexion rétablie</p>
+                  <p className="font-semibold">{t('offlineBanner.connexionRetablie')}</p>
                   <p className="text-sm text-white/90">
                     Toutes les données ont été synchronisées
                   </p>
@@ -159,7 +161,7 @@ export default function OfflineBanner({
                   setWasOffline(false);
                 }}
                 className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-                aria-label="Fermer"
+                aria-label={t('offlineBanner.fermer')}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -260,7 +262,7 @@ export default function OfflineBanner({
                   <button
                     onClick={() => setIsDismissed(true)}
                     className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-                    aria-label="Fermer"
+                    aria-label={t('offlineBanner.fermer')}
                   >
                     <X className="w-5 h-5" />
                   </button>

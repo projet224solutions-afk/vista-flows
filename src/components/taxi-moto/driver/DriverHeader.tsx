@@ -5,6 +5,7 @@
  */
 
 import { Bell, LogOut, Wifi, WifiOff, MapPin, Home } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { TaxiMotoSOSButton } from "@/components/taxi-moto/TaxiMotoSOSButton";
@@ -32,6 +33,7 @@ export function DriverHeader({
   driverPhone,
   onSignOut
 }: DriverHeaderProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const handleBackToDashboard = () => {
@@ -53,7 +55,7 @@ export function DriverHeader({
               variant="ghost"
               size="icon"
               className="text-gray-300 hover:text-white hover:bg-white/10 h-8 w-8 rounded-lg shrink-0"
-              title="Retour"
+              title={t('driverHeader.retour')}
             >
               <Home className="w-4 h-4" />
             </Button>

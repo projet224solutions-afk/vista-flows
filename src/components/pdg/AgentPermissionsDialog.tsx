@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,7 @@ const CATEGORY_TITLES: Record<string, string> = {
 };
 
 export function AgentPermissionsDialog({ agent, open, onOpenChange }: AgentPermissionsDialogProps) {
+  const { t } = useTranslation();
   const { permissions, loading, setAgentPermissions } = useAgentPermissions(agent?.id);
   const [localPermissions, setLocalPermissions] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
@@ -78,7 +80,7 @@ export function AgentPermissionsDialog({ agent, open, onOpenChange }: AgentPermi
               <Shield className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <DialogTitle>Permissions de l'Agent</DialogTitle>
+              <DialogTitle>{t('agentPermissionsDialog.permissionsDeLAgent')}</DialogTitle>
               <DialogDescription>
                 {agent.name} - Gérez les permissions d'accès
               </DialogDescription>

@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +32,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 export default function SubscriptionManagement() {
+  const { t } = useTranslation();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [priceHistory, setPriceHistory] = useState<PriceHistory[]>([]);
   const [stats, setStats] = useState<any>(null);
@@ -58,7 +60,8 @@ export default function SubscriptionManagement() {
   useEffect(() => {
     fetchData();
     loadAllSubscriptionsOnMount();
-    setupRealtimeSubscription();
+    const cleanup = setupRealtimeSubscription();
+    return cleanup;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -124,8 +127,9 @@ export default function SubscriptionManagement() {
       const userIds = [...new Set(allSubs.map(sub => sub.user_id))];
       let profiles: any[] = [];
       let vendors: any[] = [];
+      let serviceTypes: any[] = [];
       if (userIds.length > 0) {
-        const [{ data: profilesData }, { data: vendorsData }] = await Promise.all([
+        const [{ data: profilesData }, { data: vendorsData }, { data: stData }] = await Promise.all([
           supabase
             .from('profiles')
             .select('id, email, first_name, last_name, role')
@@ -134,15 +138,25 @@ export default function SubscriptionManagement() {
             .from('vendors')
             .select('user_id, business_name, business_type')
             .in('user_id', userIds),
+          supabase
+            .from('service_types')
+            .select('id, code, name'),
         ]);
         profiles = profilesData || [];
         vendors = vendorsData || [];
+        serviceTypes = stData || [];
       }
+      const serviceTypeMap = new Map(serviceTypes.map((s: any) => [s.id, s.name || s.code]));
 
       // 5. Enrichir avec profils + statut réel calculé
       const enrichedData = allSubs.map(sub => {
         const realStatus = computeRealStatus(sub);
         const vendor = vendors.find(v => v.user_id === sub.user_id);
+        const typeLabel = sub.source === 'service'
+          ? (serviceTypeMap.get((sub.service_plans as any)?.service_type_id) || 'Service')
+          : (vendor?.business_type === 'digital' ? 'Vendeur Digital'
+             : vendor?.business_type === 'hybrid' ? 'Vendeur Hybride'
+             : 'Boutique');
         return {
           ...sub,
           profiles: profiles.find(p => p.id === sub.user_id),
@@ -150,6 +164,7 @@ export default function SubscriptionManagement() {
           vendor_business_type: vendor?.business_type || null,
           acquisition_type: determineAcquisitionType(sub),
           real_status: realStatus,
+          type_label: typeLabel,
         };
       });
 
@@ -231,6 +246,12 @@ export default function SubscriptionManagement() {
   };
 
   const setupRealtimeSubscription = () => {
+    // Défensif : retirer un éventuel canal homonyme déjà souscrit (StrictMode / re-render)
+    // pour éviter « cannot add postgres_changes callbacks after subscribe() ».
+    for (const c of supabase.getChannels()) {
+      if (c.topic === 'realtime:subscription_changes') supabase.removeChannel(c);
+    }
+
     const channel = supabase
       .channel('subscription_changes')
       .on(
@@ -567,6 +588,19 @@ export default function SubscriptionManagement() {
     return warnings;
   };
 
+  // Regroupe les abonnements par type (type de service ou type de vendeur), triés.
+  const groupByType = (subs: any[]) => {
+    const map = new Map<string, any[]>();
+    for (const sub of subs) {
+      const key = sub.type_label || 'Autre';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(sub);
+    }
+    return [...map.entries()]
+      .map(([type, rows]) => ({ type, rows }))
+      .sort((a, b) => a.type.localeCompare(b.type, 'fr'));
+  };
+
   const renderSubscriptionTable = (subs: any[], title: string, description: string, showExpiredBadge: boolean) => (
     <Card>
       <CardHeader>
@@ -601,19 +635,26 @@ export default function SubscriptionManagement() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Vendeur</TableHead>
+                  <TableHead>{t('subscriptionManagement.vendeur')}</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Source</TableHead>
                   <TableHead>Plan</TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead>Acquisition</TableHead>
                   <TableHead>Cycle</TableHead>
-                  <TableHead>Début</TableHead>
+                  <TableHead>{t('subscriptionManagement.debut')}</TableHead>
                   <TableHead>Fin</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {subs.map((sub) => (
+                {groupByType(subs).map((g) => (
+                  <Fragment key={g.type}>
+                    <TableRow className="bg-muted/40 hover:bg-muted/40">
+                      <TableCell colSpan={9} className="py-2 font-semibold text-foreground">
+                        {g.type} · {g.rows.length} abonnement(s)
+                      </TableCell>
+                    </TableRow>
+                    {g.rows.map((sub) => (
                   <TableRow key={`${sub.source}-${sub.id}`}>
                     <TableCell className="font-medium">
                       <div className="space-y-1">
@@ -628,13 +669,13 @@ export default function SubscriptionManagement() {
                     </TableCell>
                     <TableCell>
                       {sub.source === 'service' ? (
-                        <Badge variant="secondary">🏪 Service</Badge>
+                        <Badge variant="secondary">{t('subscriptionManagement.service')}</Badge>
                       ) : sub.vendor_business_type === 'digital' ? (
-                        <Badge variant="outline" className="border-blue-200 bg-blue-50 text-[#04439e]">Vendeur digital</Badge>
+                        <Badge variant="outline" className="border-blue-200 bg-blue-50 text-[#04439e]">{t('subscriptionManagement.vendeurDigital')}</Badge>
                       ) : sub.vendor_business_type === 'hybrid' ? (
-                        <Badge variant="outline" className="border-orange-200 bg-orange-50 text-[#ff4000]">Vendeur hybride</Badge>
+                        <Badge variant="outline" className="border-orange-200 bg-orange-50 text-[#ff4000]">{t('subscriptionManagement.vendeurHybride')}</Badge>
                       ) : (
-                        <Badge variant="outline">🛒 Boutique</Badge>
+                        <Badge variant="outline">{t('subscriptionManagement.boutique')}</Badge>
                       )}
                     </TableCell>
                     <TableCell>
@@ -644,11 +685,11 @@ export default function SubscriptionManagement() {
                       {sub.real_status === 'active' ? (
                         <Badge variant="default">✓ Actif</Badge>
                       ) : sub.real_status === 'expired' ? (
-                        <Badge variant="destructive">⛔ Expiré</Badge>
+                        <Badge variant="destructive">{t('subscriptionManagement.expire')}</Badge>
                       ) : sub.real_status === 'past_due' ? (
-                        <Badge variant="destructive">⚠️ Impayé</Badge>
+                        <Badge variant="destructive">{t('subscriptionManagement.impaye')}</Badge>
                       ) : sub.real_status === 'cancelled' ? (
-                        <Badge variant="outline" className="text-muted-foreground">Annulé</Badge>
+                        <Badge variant="outline" className="text-muted-foreground">{t('subscriptionManagement.annule')}</Badge>
                       ) : (
                         <Badge variant="outline">{sub.status}</Badge>
                       )}
@@ -659,16 +700,16 @@ export default function SubscriptionManagement() {
                       ) : sub.acquisition_type === 'free' ? (
                         <Badge variant="outline" className="text-muted-foreground">Gratuit</Badge>
                       ) : (
-                        <Badge variant="default">💰 Acheté</Badge>
+                        <Badge variant="default">{t('subscriptionManagement.achete')}</Badge>
                       )}
                     </TableCell>
                     <TableCell>
                       {sub.billing_cycle === 'lifetime' ? (
-                        <Badge variant="default">À vie</Badge>
+                        <Badge variant="default">{t('subscriptionManagement.aVie')}</Badge>
                       ) : sub.billing_cycle === 'yearly' ? (
                         <Badge variant="outline">Annuel</Badge>
                       ) : sub.billing_cycle === 'custom' ? (
-                        <Badge variant="outline">Personnalisé</Badge>
+                        <Badge variant="outline">{t('subscriptionManagement.personnalise')}</Badge>
                       ) : (
                         <Badge variant="outline">{sub.billing_cycle || 'Mensuel'}</Badge>
                       )}
@@ -680,6 +721,8 @@ export default function SubscriptionManagement() {
                       {sub.current_period_end ? format(new Date(sub.current_period_end), 'dd/MM/yyyy', { locale: fr }) : '-'}
                     </TableCell>
                   </TableRow>
+                    ))}
+                  </Fragment>
                 ))}
               </TableBody>
             </Table>
@@ -701,7 +744,7 @@ export default function SubscriptionManagement() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-foreground">Gestion des Abonnements</h2>
+          <h2 className="text-3xl font-bold text-foreground">{t('subscriptionManagement.gestionDesAbonnements')}</h2>
           <p className="text-muted-foreground">
             Gérez les plans, prix et suivez les statistiques d'abonnement
           </p>
@@ -744,7 +787,7 @@ export default function SubscriptionManagement() {
                 allSubscriptions.reduce((sum, s) => sum + (s.price_paid_gnf || 0), 0) || stats?.total_revenue || 0
               )}
             </div>
-            <p className="text-xs text-muted-foreground">Tous les abonnements</p>
+            <p className="text-xs text-muted-foreground">{t('subscriptionManagement.tousLesAbonnements')}</p>
           </CardContent>
         </Card>
 
@@ -763,7 +806,7 @@ export default function SubscriptionManagement() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">💰 Achetés</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('subscriptionManagement.achetes')}</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -779,15 +822,15 @@ export default function SubscriptionManagement() {
       {getLimitWarnings().length > 0 && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>⚠️ Incohérences détectées dans les limites</AlertTitle>
+          <AlertTitle>{t('subscriptionManagement.incoherencesDetecteesDansLesLimites')}</AlertTitle>
           <AlertDescription>
-            <p className="mb-2">Les plans moins chers ont plus d'avantages que les plans plus chers :</p>
+            <p className="mb-2">{t('subscriptionManagement.lesPlansMoinsChersOnt')}</p>
             <ul className="list-disc list-inside space-y-1">
               {getLimitWarnings().map((warning, idx) => (
                 <li key={idx} className="text-sm">{warning}</li>
               ))}
             </ul>
-            <p className="mt-2 font-medium">Cliquez sur les boutons d'édition pour corriger.</p>
+            <p className="mt-2 font-medium">{t('subscriptionManagement.cliquezSurLesBoutonsD')}</p>
           </AlertDescription>
         </Alert>
       )}
@@ -800,8 +843,8 @@ export default function SubscriptionManagement() {
           <TabsTrigger value="expired">
             ⛔ Expirés ({allSubscriptions.filter(s => s.real_status !== 'active').length})
           </TabsTrigger>
-          <TabsTrigger value="plans">Plans et Prix</TabsTrigger>
-          <TabsTrigger value="history">Historique des Prix</TabsTrigger>
+          <TabsTrigger value="plans">{t('subscriptionManagement.plansEtPrix')}</TabsTrigger>
+          <TabsTrigger value="history">{t('subscriptionManagement.historiqueDesPrix')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="active" className="space-y-4">
@@ -848,7 +891,7 @@ export default function SubscriptionManagement() {
                         Images/Produit
                       </div>
                     </TableHead>
-                    <TableHead>Fonctionnalités</TableHead>
+                    <TableHead>{t('subscriptionManagement.fonctionnalites')}</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -873,7 +916,7 @@ export default function SubscriptionManagement() {
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {plan.max_products === null ? (
-                              <Badge variant="secondary">Illimité</Badge>
+                              <Badge variant="secondary">{t('subscriptionManagement.illimite')}</Badge>
                             ) : (
                               <span className={`font-medium ${hasProductWarning ? 'text-destructive' : ''}`}>
                                 {plan.max_products}
@@ -891,7 +934,7 @@ export default function SubscriptionManagement() {
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {plan.max_images_per_product === null ? (
-                              <Badge variant="secondary">Illimité</Badge>
+                              <Badge variant="secondary">{t('subscriptionManagement.illimite')}</Badge>
                             ) : (
                               <span className={`font-medium ${hasImageWarning ? 'text-destructive' : ''}`}>
                                 {plan.max_images_per_product}
@@ -936,7 +979,7 @@ export default function SubscriptionManagement() {
         <TabsContent value="history" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Historique des Changements de Prix</CardTitle>
+              <CardTitle>{t('subscriptionManagement.historiqueDesChangementsDePrix')}</CardTitle>
               <CardDescription>
                 Consultez l'historique complet des modifications de prix
               </CardDescription>
@@ -948,7 +991,7 @@ export default function SubscriptionManagement() {
                     <TableHead>Date</TableHead>
                     <TableHead>Plan</TableHead>
                     <TableHead>Ancien Prix</TableHead>
-                    <TableHead>Nouveau Prix</TableHead>
+                    <TableHead>{t('subscriptionManagement.nouveauPrix')}</TableHead>
                     <TableHead>Raison</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -994,7 +1037,7 @@ export default function SubscriptionManagement() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Modifier le Prix du Plan</DialogTitle>
+            <DialogTitle>{t('subscriptionManagement.modifierLePrixDuPlan')}</DialogTitle>
             <DialogDescription>
               {selectedPlan && `Plan: ${selectedPlan.display_name}`}
             </DialogDescription>
@@ -1002,23 +1045,23 @@ export default function SubscriptionManagement() {
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="newPrice">Nouveau Prix (GNF)</Label>
+              <Label htmlFor="newPrice">{t('subscriptionManagement.nouveauPrixGnf')}</Label>
               <Input
                 id="newPrice"
                 type="number"
                 value={newPrice}
                 onChange={(e) => setNewPrice(e.target.value)}
-                placeholder="Entrez le nouveau prix"
+                placeholder={t('subscriptionManagement.entrezLeNouveauPrix')}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="reason">Raison du changement</Label>
+              <Label htmlFor="reason">{t('subscriptionManagement.raisonDuChangement')}</Label>
               <Textarea
                 id="reason"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="Expliquez la raison de ce changement..."
+                placeholder={t('subscriptionManagement.expliquezLaRaisonDeCe')}
                 rows={3}
               />
             </div>
@@ -1039,7 +1082,7 @@ export default function SubscriptionManagement() {
       <Dialog open={isProductLimitDialogOpen} onOpenChange={setIsProductLimitDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Modifier la Limite de Produits</DialogTitle>
+            <DialogTitle>{t('subscriptionManagement.modifierLaLimiteDeProduits')}</DialogTitle>
             <DialogDescription>
               {selectedPlan && `Plan: ${selectedPlan.display_name}`}
             </DialogDescription>
@@ -1047,13 +1090,13 @@ export default function SubscriptionManagement() {
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="maxProducts">Nombre Maximum de Produits</Label>
+              <Label htmlFor="maxProducts">{t('subscriptionManagement.nombreMaximumDeProduits')}</Label>
               <Input
                 id="maxProducts"
                 type="number"
                 value={newMaxProducts}
                 onChange={(e) => setNewMaxProducts(e.target.value)}
-                placeholder="Laissez vide pour illimité"
+                placeholder={t('subscriptionManagement.laissezVidePourIllimite')}
               />
               <p className="text-xs text-muted-foreground">
                 Laissez le champ vide pour autoriser un nombre illimité de produits
@@ -1061,12 +1104,12 @@ export default function SubscriptionManagement() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="reasonProducts">Raison du changement (optionnel)</Label>
+              <Label htmlFor="reasonProducts">{t('subscriptionManagement.raisonDuChangementOptionnel')}</Label>
               <Textarea
                 id="reasonProducts"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="Expliquez la raison de ce changement..."
+                placeholder={t('subscriptionManagement.expliquezLaRaisonDeCe')}
                 rows={3}
               />
             </div>
@@ -1087,7 +1130,7 @@ export default function SubscriptionManagement() {
       <Dialog open={isImageLimitDialogOpen} onOpenChange={setIsImageLimitDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Modifier la Limite d'Images par Produit</DialogTitle>
+            <DialogTitle>{t('subscriptionManagement.modifierLaLimiteDImages')}</DialogTitle>
             <DialogDescription>
               {selectedPlan && `Plan: ${selectedPlan.display_name}`}
             </DialogDescription>
@@ -1095,7 +1138,7 @@ export default function SubscriptionManagement() {
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="maxImages">Nombre Maximum d'Images par Produit</Label>
+              <Label htmlFor="maxImages">{t('subscriptionManagement.nombreMaximumDImagesPar')}</Label>
               <Input
                 id="maxImages"
                 type="number"
@@ -1110,12 +1153,12 @@ export default function SubscriptionManagement() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="reasonImages">Raison du changement (optionnel)</Label>
+              <Label htmlFor="reasonImages">{t('subscriptionManagement.raisonDuChangementOptionnel')}</Label>
               <Textarea
                 id="reasonImages"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="Expliquez la raison de ce changement..."
+                placeholder={t('subscriptionManagement.expliquezLaRaisonDeCe')}
                 rows={3}
               />
             </div>
@@ -1136,7 +1179,7 @@ export default function SubscriptionManagement() {
       <Dialog open={isFreeSubscriptionDialogOpen} onOpenChange={setIsFreeSubscriptionDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Offrir un Abonnement Gratuit</DialogTitle>
+            <DialogTitle>{t('subscriptionManagement.offrirUnAbonnementGratuit')}</DialogTitle>
             <DialogDescription>
               Attribuez un abonnement gratuit à un utilisateur pour une durée déterminée
             </DialogDescription>
@@ -1150,7 +1193,7 @@ export default function SubscriptionManagement() {
                 type="text"
                 value={freeSubscriptionData.userId}
                 onChange={(e) => setFreeSubscriptionData({ ...freeSubscriptionData, userId: e.target.value })}
-                placeholder="UUID de l'utilisateur"
+                placeholder={t('subscriptionManagement.uuidDeLUtilisateur')}
               />
               <p className="text-xs text-muted-foreground">
                 L'identifiant unique de l'utilisateur (UUID)
@@ -1165,7 +1208,7 @@ export default function SubscriptionManagement() {
                 value={freeSubscriptionData.planId}
                 onChange={(e) => setFreeSubscriptionData({ ...freeSubscriptionData, planId: e.target.value })}
               >
-                <option value="">Sélectionnez un plan</option>
+                <option value="">{t('subscriptionManagement.selectionnezUnPlan')}</option>
                 {plans.map((plan) => (
                   <option key={plan.id} value={plan.id}>
                     {plan.display_name} - {SubscriptionService.formatAmount(plan.monthly_price_gnf)}
@@ -1175,7 +1218,7 @@ export default function SubscriptionManagement() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="days">Nombre de Jours</Label>
+              <Label htmlFor="days">{t('subscriptionManagement.nombreDeJours')}</Label>
               <Input
                 id="days"
                 type="number"
@@ -1205,7 +1248,7 @@ export default function SubscriptionManagement() {
       <Dialog open={isSubscriptionsListOpen} onOpenChange={setIsSubscriptionsListOpen}>
         <DialogContent className="max-w-6xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Liste des Abonnements</DialogTitle>
+            <DialogTitle>{t('subscriptionManagement.listeDesAbonnements')}</DialogTitle>
             <DialogDescription>
               {allSubscriptions.length} abonnement(s) au total
             </DialogDescription>
@@ -1223,11 +1266,11 @@ export default function SubscriptionManagement() {
                   <TableRow>
                     <TableHead>Utilisateur</TableHead>
                     <TableHead>Email</TableHead>
-                    <TableHead>Rôle</TableHead>
+                    <TableHead>{t('subscriptionManagement.role')}</TableHead>
                     <TableHead>Plan</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead>Cycle</TableHead>
-                    <TableHead>Début</TableHead>
+                    <TableHead>{t('subscriptionManagement.debut')}</TableHead>
                     <TableHead>Fin</TableHead>
                   </TableRow>
                 </TableHeader>

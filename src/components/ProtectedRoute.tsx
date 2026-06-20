@@ -1,143 +1,37 @@
 import { ReactNode, useEffect, useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { Loader2, WifiOff } from 'lucide-react';
-import CryptoJS from 'crypto-js';
 
-// Clé de chiffrement dérivée de l'ID utilisateur (unique par session)
-const getEncryptionKey = (): string => {
-  // Utilise une combinaison de données navigateur pour clé unique
-  return CryptoJS.SHA256(
-    navigator.userAgent + window.location.hostname
-  ).toString();
-};
-
-// Chiffrer données sensibles
-const encryptData = (data: string): string => {
-  try {
-    return CryptoJS.AES.encrypt(data, getEncryptionKey()).toString();
-  } catch (e) {
-    console.error('🔴 Erreur chiffrement');
-    return data;
-  }
-};
-
-// Déchiffrer données
-const decryptData = (encryptedData: string): string | null => {
-  try {
-    const bytes = CryptoJS.AES.decrypt(encryptedData, getEncryptionKey());
-    return bytes.toString(CryptoJS.enc.Utf8);
-  } catch (e) {
-    console.error('🔴 Erreur déchiffrement');
-    return null;
-  }
-};
-
+/**
+ * Garde de route (UI). La frontière de sécurité RÉELLE est la RLS + `verifyJWT` backend ;
+ * ce composant ne contrôle que l'affichage.
+ *
+ * 🔒 DURCISSEMENT (audit auth 2026-06-17) : l'ancienne « session custom » agent/bureau lue dans
+ * localStorage (« chiffrée » avec une clé non secrète = userAgent+hostname → FORGEABLE) a été
+ * SUPPRIMÉE. Elle était de toute façon du code mort : aucun login n'écrivait agent_session/
+ * agent_user/bureau_user. Les vrais accès agent/bureau passent par un TOKEN dans l'URL
+ * (/agent/:token, /bureau/:token) validé côté backend (access_token / JWT signé), hors de ce garde.
+ * Ici on ne fait confiance qu'à la session Supabase réelle (+ cache profil offline, purgé au logout).
+ */
 interface ProtectedRouteProps {
   children: ReactNode;
   allowedRoles: string[];
 }
 
-// Fonction pour vérifier les sessions custom (Agent/Bureau)
-function checkCustomSession(allowedRoles: string[]): { isValid: boolean; role: string | null } {
-  // Vérifier session Agent (localStorage puis sessionStorage pour compatibilité)
-  if (allowedRoles.includes('agent') || allowedRoles.includes('admin')) {
-    const agentSessionRaw = localStorage.getItem('agent_session') || sessionStorage.getItem('agent_session');
-    const agentUserRaw = localStorage.getItem('agent_user') || sessionStorage.getItem('agent_user');
-
-    // Déchiffrer si données présentes
-    const agentSession = agentSessionRaw ? (decryptData(agentSessionRaw) || agentSessionRaw) : null;
-    const agentUser = agentUserRaw ? (decryptData(agentUserRaw) || agentUserRaw) : null;
-
-    if (agentSession && agentUser) {
-      try {
-        const userData = JSON.parse(agentUser);
-        // Vérifier que la session n'est pas expirée
-        if (userData.expires_at && new Date(userData.expires_at) > new Date()) {
-          console.log('✅ Session Agent valide détectée');
-          return { isValid: true, role: 'agent' };
-        } else if (!userData.expires_at) {
-          // Ajouter expiration par défaut (24h) pour anciennes sessions
-          const defaultExpiry = new Date();
-          defaultExpiry.setHours(defaultExpiry.getHours() + 24);
-          userData.expires_at = defaultExpiry.toISOString();
-          // Sauvegarder avec expiration
-          const encrypted = encryptData(JSON.stringify(userData));
-          localStorage.setItem('agent_user', encrypted);
-          console.log('✅ Session Agent détectée (expiration ajoutée)');
-          return { isValid: true, role: 'agent' };
-        } else {
-          console.warn('⚠️ Session Agent expirée');
-          // Nettoyer session expirée
-          localStorage.removeItem('agent_session');
-          localStorage.removeItem('agent_user');
-          sessionStorage.removeItem('agent_session');
-          sessionStorage.removeItem('agent_user');
-        }
-      } catch (e) {
-        console.error('❌ Erreur parsing session agent:', e);
-      }
-    }
-  }
-
-  // Vérifier session Bureau (localStorage puis sessionStorage pour compatibilité)
-  if (allowedRoles.includes('syndicat') || allowedRoles.includes('bureau') || allowedRoles.includes('admin')) {
-    const bureauSessionRaw = localStorage.getItem('bureau_session') || sessionStorage.getItem('bureau_session');
-    const bureauUserRaw = localStorage.getItem('bureau_user') || sessionStorage.getItem('bureau_user');
-
-    // Déchiffrer si données présentes
-    const bureauSession = bureauSessionRaw ? (decryptData(bureauSessionRaw) || bureauSessionRaw) : null;
-    const bureauUser = bureauUserRaw ? (decryptData(bureauUserRaw) || bureauUserRaw) : null;
-
-    if (bureauSession && bureauUser) {
-      try {
-        const userData = JSON.parse(bureauUser);
-        // Vérifier que la session n'est pas expirée
-        if (userData.expires_at && new Date(userData.expires_at) > new Date()) {
-          console.log('✅ Session Bureau valide détectée');
-          return { isValid: true, role: 'syndicat' };
-        } else if (!userData.expires_at) {
-          // Ajouter expiration par défaut (24h)
-          const defaultExpiry = new Date();
-          defaultExpiry.setHours(defaultExpiry.getHours() + 24);
-          userData.expires_at = defaultExpiry.toISOString();
-          const encrypted = encryptData(JSON.stringify(userData));
-          localStorage.setItem('bureau_user', encrypted);
-          console.log('✅ Session Bureau détectée (expiration ajoutée)');
-          return { isValid: true, role: 'syndicat' };
-        } else {
-          console.warn('⚠️ Session Bureau expirée');
-          localStorage.removeItem('bureau_session');
-          localStorage.removeItem('bureau_user');
-          sessionStorage.removeItem('bureau_session');
-          sessionStorage.removeItem('bureau_user');
-        }
-      } catch (e) {
-        console.error('❌ Erreur parsing session bureau:', e);
-      }
-    }
-  }
-
-  return { isValid: false, role: null };
-}
-
 export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+  const { t } = useTranslation();
   const { user, profile, loading, profileLoading } = useAuth();
   const { isOnline } = useOnlineStatus();
   const navigate = useNavigate();
-  const [customAuth, setCustomAuth] = useState<{ checked: boolean; isValid: boolean; role: string | null }>({
-    checked: false,
-    isValid: false,
-    role: null
-  });
 
-  // En mode offline, vérifier le profil en cache localStorage
+  // Cache profil pour le mode hors ligne (ne sert que si réellement offline ET pas de session live).
   const [offlineProfile, setOfflineProfile] = useState<{ role: string } | null>(null);
 
   useEffect(() => {
     if (!isOnline && !user) {
-      // Chercher un profil en cache dans localStorage
       try {
         const keys = Object.keys(localStorage);
         const profileKey = keys.find(k => k.startsWith('profile_cache_'));
@@ -148,33 +42,20 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
             setOfflineProfile(cached);
           }
         }
-      } catch (e) {
+      } catch {
         console.warn('⚠️ Erreur lecture profil offline');
       }
     }
   }, [isOnline, user]);
 
-  // Vérifier les sessions custom au montage
+  // Redirection si non authentifié — JAMAIS en mode réellement offline (pour ne pas couper l'app).
   useEffect(() => {
-    const result = checkCustomSession(allowedRoles);
-    setCustomAuth({ checked: true, ...result });
-  }, [allowedRoles]);
-
-  // Vérification d'authentification sécurisée - NE PAS rediriger si offline
-  useEffect(() => {
-    if (!loading && customAuth.checked && !user && !customAuth.isValid) {
+    if (!loading && !user) {
       const browserOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
-      // En mode vraiment offline (navigator.onLine=false), ne pas rediriger si profil cache
-      if (!browserOnline && offlineProfile) {
-        console.log("📡 [ProtectedRoute] Mode offline - pas de redirection (profil cache disponible)");
-        return;
-      }
-      // En mode vraiment offline sans profil cache, ne pas rediriger non plus
       if (!browserOnline) {
-        console.log("📡 [ProtectedRoute] Mode offline - pas de redirection (offline)");
+        console.log("📡 [ProtectedRoute] Mode offline - pas de redirection");
         return;
       }
-      // Mémoriser la destination pour redirection post-login
       const currentPath = window.location.pathname + window.location.search + window.location.hash;
       if (currentPath && currentPath !== '/' && currentPath !== '/auth') {
         sessionStorage.setItem('post_auth_redirect', currentPath);
@@ -183,10 +64,9 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
       console.log("🔒 Utilisateur non authentifié, redirection vers /auth");
       navigate('/auth');
     }
-  }, [user, loading, navigate, customAuth, isOnline, offlineProfile]);
+  }, [user, loading, navigate]);
 
-  // Attendre que les vérifications soient terminées
-  if (loading || profileLoading || !customAuth.checked) {
+  if (loading || profileLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex items-center space-x-2">
@@ -197,21 +77,16 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     );
   }
 
-  // Vérifier si l'utilisateur est authentifié via Supabase OU session custom OU offline cache
   const browserOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
-  const isAuthenticated = !!user || customAuth.isValid || (!browserOnline && !!offlineProfile);
-  const rawRole = profile?.role || customAuth.role || offlineProfile?.role || 'client';
+  const isAuthenticated = !!user || (!browserOnline && !!offlineProfile);
+  const rawRole = profile?.role || offlineProfile?.role || 'client';
 
-  // Normaliser les rôles équivalents (pdg/ceo/admin sont tous des rôles PDG)
+  // pdg/ceo/admin sont équivalents côté PDG ; ceo → pdg.
   const normalizeRole = (role: string): string => {
     const r = role.toLowerCase();
-    // ceo est équivalent à pdg
-    if (r === 'ceo') return 'pdg';
-    return r;
+    return r === 'ceo' ? 'pdg' : r;
   };
-
   const effectiveRole = normalizeRole(rawRole);
-  // Vrai mode offline = navigator.onLine est false (pas juste le health check)
   const trulyOffline = !isOnline && (typeof navigator === 'undefined' || !navigator.onLine);
 
   if (!isAuthenticated) {
@@ -224,19 +99,14 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
             <p className="text-muted-foreground mb-4">
               Connectez-vous une première fois avec Internet pour activer le mode hors ligne.
             </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="bg-primary text-primary-foreground px-4 py-2 rounded"
-            >
+            <button onClick={() => window.location.reload()} className="bg-primary text-primary-foreground px-4 py-2 rounded">
               🔄 Réessayer
             </button>
           </div>
         </div>
       );
     }
-    // Non authentifié (déconnexion volontaire ou session expirée) : NE PAS afficher de page d'erreur.
-    // Le useEffect ci-dessus sauvegarde la destination et redirige vers /auth — on montre juste un loader
-    // le temps de la redirection (évite le flash « Accès non autorisé » à la sortie de l'application).
+    // Redirection en cours (gérée par le useEffect) : loader, pas de page d'erreur (évite le flash).
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex items-center space-x-2">
@@ -247,17 +117,13 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     );
   }
 
-  // Authentifié mais rôle non autorisé : vraie page « Accès non autorisé ».
   if (effectiveRole && !allowedRoles.includes(effectiveRole)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-bold mb-4">Accès non autorisé</h2>
-          <p className="mb-4">Vous n'avez pas les permissions pour accéder à cette page.</p>
-          <button
-            onClick={() => navigate('/auth')}
-            className="bg-primary text-primary-foreground px-4 py-2 rounded"
-          >
+          <h2 className="text-xl font-bold mb-4">{t('protectedRoute.accesNonAutorise')}</h2>
+          <p className="mb-4">{t('protectedRoute.vousNAvezPasLes')}</p>
+          <button onClick={() => navigate('/auth')} className="bg-primary text-primary-foreground px-4 py-2 rounded">
             Se connecter
           </button>
         </div>
@@ -265,10 +131,5 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     );
   }
 
-  // S'assurer qu'il y a assez d'espace pour le footer fixe
-  return (
-    <div className="min-h-screen pb-24">
-      {children}
-    </div>
-  );
+  return <div className="min-h-screen pb-24">{children}</div>;
 }

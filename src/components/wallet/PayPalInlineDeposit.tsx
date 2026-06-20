@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { getSortedCurrencies, getCurrencyByCode } from '@/data/currencies';
+import { useTranslation } from "@/hooks/useTranslation";
 
 const PAYPAL_NATIVE_CODES = new Set([
   'USD','EUR','GBP','CAD','AUD','JPY','CHF','SEK','NOK','DKK','PLN',
@@ -34,6 +35,7 @@ interface PayPalInlineDepositProps {
 const QUICK_AMOUNTS = [10, 25, 50, 100, 250, 500];
 
 export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInlineDepositProps) {
+  const { t } = useTranslation();
   const { currency: userCurrency } = useCurrency();
   const allCurrencies = getSortedCurrencies().filter(c => PAYPAL_NATIVE_CODES.has(c.code));
   const defaultCurrency = PAYPAL_NATIVE_CODES.has(userCurrency) ? userCurrency : 'USD';
@@ -109,7 +111,7 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
       if (error) throw new Error(error.message);
       if (!captureData?.success) throw new Error(captureData?.error || 'Capture échouée');
 
-      toast.success('Dépôt réussi !', {
+      toast.success(t('payPalInlineDeposit.depotReussi'), {
         description: `${captureData.netAmount?.toFixed(2)} ${selectedCurrency} crédités sur votre wallet`,
       });
       window.dispatchEvent(new Event('wallet-updated'));
@@ -131,7 +133,7 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
           <Label>Devise de dépôt {currencyInfo?.flag && <span>{currencyInfo.flag}</span>}</Label>
           <Select value={selectedCurrency} onValueChange={setSelectedCurrency}>
             <SelectTrigger>
-              <SelectValue placeholder="Choisir une devise">
+              <SelectValue placeholder={t('payPalInlineDeposit.choisirUneDevise')}>
                 {currencyInfo && (
                   <span className="flex items-center gap-1.5">
                     {currencyInfo.flag && <span>{currencyInfo.flag}</span>}
@@ -160,7 +162,7 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
 
         <div className="space-y-3">
           <Label>Montants rapides ({selectedCurrency})</Label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {QUICK_AMOUNTS.map((amt) => (
               <Button
                 key={amt}
@@ -196,7 +198,7 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
         {isValidAmount && (
           <div className="p-3 rounded-lg bg-muted space-y-1">
             <div className="flex justify-between text-sm">
-              <span>Montant</span>
+              <span>{t('payPalInlineDeposit.montant')}</span>
               <span className="font-medium">{symbol}{numAmount.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm text-muted-foreground">
@@ -204,7 +206,7 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
               <span>-{symbol}{fee.toFixed(2)}</span>
             </div>
             <div className="border-t pt-1 flex justify-between text-sm font-bold">
-              <span>Crédité</span>
+              <span>{t('payPalInlineDeposit.credite')}</span>
               <span className="text-primary">{symbol}{netAmount.toFixed(2)}</span>
             </div>
           </div>
@@ -212,7 +214,7 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
 
         <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
           <Shield className="w-4 h-4 text-primary flex-shrink-0" />
-          <p className="text-xs text-muted-foreground">Paiement sécurisé via PayPal — Visa, Mastercard, Amex acceptés</p>
+          <p className="text-xs text-muted-foreground">{t('payPalInlineDeposit.paiementSecuriseViaPaypalVisa')}</p>
         </div>
 
         <Button
@@ -232,14 +234,14 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
   return (
     <div className="space-y-4">
       <div className="p-3 rounded-lg bg-muted text-center">
-        <p className="text-sm font-medium">Montant: <span className="text-primary">{symbol}{numAmount.toFixed(2)} {selectedCurrency}</span></p>
+        <p className="text-sm font-medium">{t('payPalInlineDeposit.montant2')} <span className="text-primary">{symbol}{numAmount.toFixed(2)} {selectedCurrency}</span></p>
         <p className="text-xs text-muted-foreground">Crédité après frais: {symbol}{netAmount.toFixed(2)}</p>
       </div>
 
       {processing && (
         <div className="flex items-center justify-center gap-2 p-4">
           <Loader2 className="w-5 h-5 animate-spin text-primary" />
-          <span className="text-sm">Traitement du paiement...</span>
+          <span className="text-sm">{t('payPalInlineDeposit.traitementDuPaiement')}</span>
         </div>
       )}
 
@@ -280,9 +282,9 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
                 onApprove={async (data) => { await onApprove(data); }}
                 onError={(err: any) => {
                   console.error('[PayPal] SDK error:', err);
-                  toast.error('Erreur PayPal. Veuillez réessayer.');
+                  toast.error(t('payPalInlineDeposit.erreurPaypalVeuillezReessayer'));
                 }}
-                onCancel={() => toast.info('Paiement annulé')}
+                onCancel={() => toast.info(t('payPalInlineDeposit.paiementAnnule'))}
               />
             </TabsContent>
 
@@ -297,13 +299,13 @@ export default function PayPalInlineDeposit({ onSuccess, onClose }: PayPalInline
                 onApprove={async (data) => { await onApprove(data); }}
                 onError={(err: any) => {
                   console.error('[PayPal Card] SDK error:', err);
-                  toast.error('Erreur paiement carte. Veuillez réessayer.');
+                  toast.error(t('payPalInlineDeposit.erreurPaiementCarteVeuillezReessayer'));
                 }}
-                onCancel={() => toast.info('Paiement annulé')}
+                onCancel={() => toast.info(t('payPalInlineDeposit.paiementAnnule'))}
               />
               <div className="flex items-center gap-2 mt-3 justify-center">
                 <Shield className="w-3.5 h-3.5 text-muted-foreground" />
-                <p className="text-xs text-muted-foreground">Visa, Mastercard, Amex — sans compte PayPal</p>
+                <p className="text-xs text-muted-foreground">{t('payPalInlineDeposit.visaMastercardAmexSansCompte')}</p>
               </div>
             </TabsContent>
           </Tabs>

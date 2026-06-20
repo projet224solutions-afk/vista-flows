@@ -1,10 +1,10 @@
-// @ts-nocheck
 /**
  * Confirmation de réception d'un transfert
  * 224SOLUTIONS - Gestion des pertes et manquants
  */
 
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, _CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,6 +61,7 @@ const LOSS_REASONS = [
 ];
 
 export default function TransferReception({ transfer, onSuccess, onCancel }: TransferReceptionProps) {
+  const { t } = useTranslation();
   const { confirmTransferReception } = useMultiWarehouse();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -224,11 +225,11 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
       </Card>
 
       {/* Statistiques */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-4 text-center">
             <p className="text-3xl font-bold">{totals.sent}</p>
-            <p className="text-sm text-muted-foreground">Envoyé(s)</p>
+            <p className="text-sm text-muted-foreground">{t('transferReception.envoyeS')}</p>
           </CardContent>
         </Card>
         <Card className={cn(
@@ -241,7 +242,7 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
             )}>
               {totals.received}
             </p>
-            <p className="text-sm text-muted-foreground">Reçu(s)</p>
+            <p className="text-sm text-muted-foreground">{t('transferReception.recuS')}</p>
           </CardContent>
         </Card>
         <Card className={cn(
@@ -272,7 +273,7 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
       {/* Liste des items */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Vérification des articles</CardTitle>
+          <CardTitle className="text-lg">{t('transferReception.verificationDesArticles')}</CardTitle>
           <CardDescription>
             Indiquez la quantité réellement reçue pour chaque article
           </CardDescription>
@@ -309,7 +310,7 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
 
                   {/* Quantité reçue */}
                   <div className="md:w-1/3">
-                    <Label className="text-sm">Quantité reçue</Label>
+                    <Label className="text-sm">{t('transferReception.quantiteRecue')}</Label>
                     <div className="flex items-center gap-2 mt-1">
                       <Input
                         type="number"
@@ -338,13 +339,13 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
                   {/* Raison si manquant */}
                   {item.quantity_missing > 0 && (
                     <div className="md:w-1/3">
-                      <Label className="text-sm">Raison du manquant *</Label>
+                      <Label className="text-sm">{t('transferReception.raisonDuManquant')}</Label>
                       <Select
                         value={item.loss_reason || ''}
                         onValueChange={(v) => updateLossReason(item.product_id, v)}
                       >
                         <SelectTrigger className="mt-1">
-                          <SelectValue placeholder="Sélectionner..." />
+                          <SelectValue placeholder={t('transferReception.selectionner')} />
                         </SelectTrigger>
                         <SelectContent>
                           {LOSS_REASONS.map(reason => (
@@ -363,7 +364,7 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
                   <div className="mt-3 pl-15 md:pl-0 md:ml-[33.33%]">
                     <Label className="text-sm">Notes (optionnel)</Label>
                     <Textarea
-                      placeholder="Détails sur les manquants..."
+                      placeholder={t('transferReception.detailsSurLesManquants')}
                       value={item.notes || ''}
                       onChange={(e) => updateNotes(item.product_id, e.target.value)}
                       rows={2}
@@ -381,7 +382,7 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
       {totals.missing > 0 && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Pertes détectées</AlertTitle>
+          <AlertTitle>{t('transferReception.pertesDetectees')}</AlertTitle>
           <AlertDescription>
             {totals.missing} unité(s) seront enregistrées comme pertes dans le système.
             Un rapport sera généré pour suivi.
@@ -392,7 +393,7 @@ export default function TransferReception({ transfer, onSuccess, onCancel }: Tra
       {isComplete && (
         <Alert className="border-orange-300 bg-orange-50 dark:bg-[#ff4000]/20">
           <CheckCircle2 className="h-4 w-4 text-[#ff4000]" />
-          <AlertTitle className="text-[#ff4000] dark:text-orange-200">Réception complète</AlertTitle>
+          <AlertTitle className="text-[#ff4000] dark:text-orange-200">{t('transferReception.receptionComplete')}</AlertTitle>
           <AlertDescription className="text-[#ff4000] dark:text-orange-300">
             Tous les articles ont été reçus en totalité.
           </AlertDescription>

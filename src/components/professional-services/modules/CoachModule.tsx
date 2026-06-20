@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -78,6 +79,7 @@ interface Session {
 }
 
 export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('clients');
   const [showNewClientDialog, setShowNewClientDialog] = useState(false);
   const [showNewSessionDialog, setShowNewSessionDialog] = useState(false);
@@ -231,17 +233,17 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
   };
 
   const handleAddClient = () => {
-    toast.success('Client ajouté avec succès');
+    toast.success(t('coachModule.clientAjouteAvecSucces'));
     setShowNewClientDialog(false);
   };
 
   const handleAddSession = () => {
-    toast.success('Séance planifiée avec succès');
+    toast.success(t('coachModule.seancePlanifieeAvecSucces'));
     setShowNewSessionDialog(false);
   };
 
   const handleAddProgram = () => {
-    toast.success('Programme créé avec succès');
+    toast.success(t('coachModule.programmeCreeAvecSucces'));
     setShowNewProgramDialog(false);
   };
 
@@ -261,7 +263,7 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
           </div>
           <div>
             <h2 className="text-2xl font-bold">{businessName || 'Coach Sportif'}</h2>
-            <p className="text-muted-foreground">Gestion du coaching</p>
+            <p className="text-muted-foreground">{t('coachModule.gestionDuCoaching')}</p>
           </div>
         </div>
       </div>
@@ -281,7 +283,7 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-[#ff4000]" />
-              <span className="text-sm text-muted-foreground">Séances aujourd'hui</span>
+              <span className="text-sm text-muted-foreground">{t('coachModule.seancesAujourdHui')}</span>
             </div>
             <p className="text-2xl font-bold mt-1">{todaySessions}</p>
           </CardContent>
@@ -310,7 +312,7 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="clients">Clients</TabsTrigger>
-          <TabsTrigger value="seances">Séances</TabsTrigger>
+          <TabsTrigger value="seances">{t('coachModule.seances')}</TabsTrigger>
           <TabsTrigger value="programmes">Programmes</TabsTrigger>
         </TabsList>
 
@@ -327,20 +329,20 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Ajouter un client</DialogTitle>
+                  <DialogTitle>{t('coachModule.ajouterUnClient')}</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="space-y-2">
                     <Label>Nom complet</Label>
-                    <Input placeholder="Nom et prénom" />
+                    <Input placeholder={t('coachModule.nomEtPrenom')} />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Téléphone</Label>
+                      <Label>{t('coachModule.telephone')}</Label>
                       <Input placeholder="+224 6XX XX XX XX" />
                     </div>
                     <div className="space-y-2">
-                      <Label>Âge</Label>
+                      <Label>{t('coachModule.age')}</Label>
                       <Input type="number" placeholder="25" />
                     </div>
                   </div>
@@ -353,13 +355,13 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
                       <Label>Objectif</Label>
                       <Select>
                         <SelectTrigger>
-                          <SelectValue placeholder="Sélectionner" />
+                          <SelectValue placeholder={t('coachModule.selectionner')} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="prise_masse">Prise de masse</SelectItem>
-                          <SelectItem value="perte_poids">Perte de poids</SelectItem>
+                          <SelectItem value="prise_masse">{t('coachModule.priseDeMasse')}</SelectItem>
+                          <SelectItem value="perte_poids">{t('coachModule.perteDePoids')}</SelectItem>
                           <SelectItem value="endurance">Endurance</SelectItem>
-                          <SelectItem value="competition">Préparation compétition</SelectItem>
+                          <SelectItem value="competition">{t('coachModule.preparationCompetition')}</SelectItem>
                           <SelectItem value="remise_forme">Remise en forme</SelectItem>
                         </SelectContent>
                       </Select>
@@ -368,12 +370,12 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
                       <Label>Niveau</Label>
                       <Select>
                         <SelectTrigger>
-                          <SelectValue placeholder="Sélectionner" />
+                          <SelectValue placeholder={t('coachModule.selectionner')} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="débutant">Débutant</SelectItem>
-                          <SelectItem value="intermédiaire">Intermédiaire</SelectItem>
-                          <SelectItem value="avancé">Avancé</SelectItem>
+                          <SelectItem value="débutant">{t('coachModule.debutant')}</SelectItem>
+                          <SelectItem value="intermédiaire">{t('coachModule.intermediaire')}</SelectItem>
+                          <SelectItem value="avancé">{t('coachModule.avance')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -382,7 +384,7 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
                     <Label>Programme</Label>
                     <Select>
                       <SelectTrigger>
-                        <SelectValue placeholder="Assigner un programme" />
+                        <SelectValue placeholder={t('coachModule.assignerUnProgramme')} />
                       </SelectTrigger>
                       <SelectContent>
                         {programs.map((p) => (
@@ -443,7 +445,7 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
         {/* Onglet Séances */}
         <TabsContent value="seances" className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold">Planning des séances</h3>
+            <h3 className="font-semibold">{t('coachModule.planningDesSeances')}</h3>
             <Dialog open={showNewSessionDialog} onOpenChange={setShowNewSessionDialog}>
               <DialogTrigger asChild>
                 <Button>
@@ -453,14 +455,14 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Planifier une séance</DialogTitle>
+                  <DialogTitle>{t('coachModule.planifierUneSeance')}</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="space-y-2">
-                    <Label>Client</Label>
+                    <Label>{t('coachModule.client')}</Label>
                     <Select>
                       <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner un client" />
+                        <SelectValue placeholder={t('coachModule.selectionnerUnClient')} />
                       </SelectTrigger>
                       <SelectContent>
                         {clients.map((c) => (
@@ -481,17 +483,17 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Durée (minutes)</Label>
+                      <Label>{t('coachModule.dureeMinutes')}</Label>
                       <Input type="number" placeholder="60" />
                     </div>
                     <div className="space-y-2">
                       <Label>Lieu</Label>
-                      <Input placeholder="Lieu de la séance" />
+                      <Input placeholder={t('coachModule.lieuDeLaSeance')} />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Notes</Label>
-                    <Textarea placeholder="Notes pour la séance..." />
+                    <Textarea placeholder={t('coachModule.notesPourLaSeance')} />
                   </div>
                 </div>
                 <div className="flex justify-end gap-2">
@@ -557,20 +559,20 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Créer un programme</DialogTitle>
+                  <DialogTitle>{t('coachModule.creerUnProgramme')}</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="space-y-2">
-                    <Label>Nom du programme</Label>
+                    <Label>{t('coachModule.nomDuProgramme')}</Label>
                     <Input placeholder="Ex: Musculation intensive" />
                   </div>
                   <div className="space-y-2">
                     <Label>Description</Label>
-                    <Textarea placeholder="Décrivez le programme..." />
+                    <Textarea placeholder={t('coachModule.decrivezLeProgramme')} />
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label>Durée</Label>
+                      <Label>{t('coachModule.duree')}</Label>
                       <Input placeholder="Ex: 3 mois" />
                     </div>
                     <div className="space-y-2">
@@ -584,9 +586,9 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
                           <SelectValue placeholder="Niveau" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="débutant">Débutant</SelectItem>
-                          <SelectItem value="intermédiaire">Intermédiaire</SelectItem>
-                          <SelectItem value="avancé">Avancé</SelectItem>
+                          <SelectItem value="débutant">{t('coachModule.debutant')}</SelectItem>
+                          <SelectItem value="intermédiaire">{t('coachModule.intermediaire')}</SelectItem>
+                          <SelectItem value="avancé">{t('coachModule.avance')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -621,7 +623,7 @@ export function CoachModule({ serviceId, businessName }: CoachModuleProps) {
                   <p className="text-sm text-muted-foreground mb-3">{program.description}</p>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Durée</span>
+                      <span className="text-muted-foreground">{t('coachModule.duree')}</span>
                       <span className="font-medium">{program.duration}</span>
                     </div>
                     <div className="flex justify-between">

@@ -1,12 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { usePaymentLinks } from "@/hooks/usePaymentLinks";
+import { useToast } from "@/hooks/use-toast";
 import { CreditCard, AlertTriangle, CheckCircle, Clock, Filter, Download } from "lucide-react";
 import { useState, useMemo } from "react";
-import EscrowManagementDialog from "./EscrowManagementDialog";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -29,11 +30,12 @@ const statusLabels = {
 };
 
 export default function PaymentManagement() {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const { paymentLinks, loading, stats } = usePaymentLinks();
+  const { toast } = useToast();
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [escrowDialogOpen, setEscrowDialogOpen] = useState(false);
 
   // Calculer les statuts dynamiques basés sur le temps
   const linksWithStatus = useMemo(() => {
@@ -66,7 +68,7 @@ export default function PaymentManagement() {
   const successCount = linksWithStatus.filter(l => l.displayStatus === 'success').length;
   const totalRevenue = linksWithStatus
     .filter(l => l.displayStatus === 'success')
-    .reduce((sum, l) => sum + l.total, 0); // Utiliser total (montant après réduction)
+    .reduce((sum, l) => sum + (l.net_amount || l.total), 0); // revenu NET réellement reçu par le vendeur (hors frais plateforme)
 
   const overdueAmount = linksWithStatus
     .filter(l => l.displayStatus === 'overdue')
@@ -75,23 +77,47 @@ export default function PaymentManagement() {
     .filter(l => l.displayStatus === 'pending')
     .reduce((sum, l) => sum + l.total, 0);
 
+  // Export CSV des paiements affichés (respecte le filtre + la recherche en cours).
+  const exportCsv = () => {
+    if (filteredLinks.length === 0) {
+      toast({ title: "Rien à exporter", description: "Aucun paiement dans la sélection." });
+      return;
+    }
+    const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const headers = ['Produit', 'ID', 'Client', 'Statut', 'Montant', 'Total payé', 'Net reçu', 'Devise', 'Créé le'];
+    const lines = filteredLinks.map(l => [
+      l.produit, l.payment_id, l.client?.name || '',
+      statusLabels[l.displayStatus] || l.displayStatus,
+      l.montant, l.total, l.net_amount ?? '', l.devise || 'GNF',
+      new Date(l.created_at).toLocaleString('fr-FR'),
+    ].map(esc).join(','));
+    const csv = '﻿' + [headers.join(','), ...lines].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `paiements-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "Export généré", description: `${filteredLinks.length} paiement(s) exporté(s).` });
+  };
+
   if (loading) {
-    return <div className="p-4">Chargement des données de paiement...</div>;
+    return <div className="p-4">{t('paymentManagement.chargementDesDonneesDePaiement')}</div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Gestion des Paiements</h2>
-          <p className="text-muted-foreground">Suivez vos liens de paiement et leur statut</p>
+          <h2 className="text-2xl font-bold">{t('paymentManagement.gestionDesPaiements')}</h2>
+          <p className="text-muted-foreground">{t('paymentManagement.suivezVosLiensDePaiement')}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={exportCsv}>
             <Download className="w-4 h-4 mr-2" />
             Exporter
           </Button>
-          <Button onClick={() => setEscrowDialogOpen(true)}>Escrow</Button>
         </div>
       </div>
 
@@ -102,7 +128,7 @@ export default function PaymentManagement() {
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-[#ff4000]" />
               <div>
-                <p className="text-sm text-muted-foreground">Paiements en retard</p>
+                <p className="text-sm text-muted-foreground">{t('paymentManagement.paiementsEnRetard')}</p>
                 <p className="text-2xl font-bold">{overdueCount}</p>
                 <p className="text-sm text-[#ff4000]">{fc(overdueAmount)}</p>
               </div>
@@ -126,9 +152,9 @@ export default function PaymentManagement() {
             <div className="flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-[#ff4000]" />
               <div>
-                <p className="text-sm text-muted-foreground">Paiements réussis</p>
+                <p className="text-sm text-muted-foreground">{t('paymentManagement.paiementsReussis')}</p>
                 <p className="text-2xl font-bold">{successCount}</p>
-                <p className="text-sm text-[#ff4000]">Total payé</p>
+                <p className="text-sm text-[#ff4000]">{t('paymentManagement.totalPaye')}</p>
               </div>
             </div>
           </CardContent>
@@ -139,8 +165,8 @@ export default function PaymentManagement() {
               <CreditCard className="w-5 h-5 text-blue-600" />
               <div>
                 <p className="text-sm text-muted-foreground">Revenu total</p>
-                <p className="text-2xl font-bold">{totalRevenue.toFixed(0)}</p>
-                <p className="text-sm text-blue-600">GNF</p>
+                <p className="text-2xl font-bold">{fc(totalRevenue)}</p>
+                <p className="text-sm text-blue-600">Net reçu</p>
               </div>
             </div>
           </CardContent>
@@ -152,7 +178,7 @@ export default function PaymentManagement() {
         <CardContent className="p-4">
           <div className="flex gap-4 items-center">
             <Input
-              placeholder="Rechercher un paiement..."
+              placeholder={t('paymentManagement.rechercherUnPaiement')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="max-w-sm"
@@ -162,12 +188,12 @@ export default function PaymentManagement() {
               onChange={(e) => setFilterStatus(e.target.value)}
               className="px-3 py-2 border rounded-md"
             >
-              <option value="all">Tous les statuts</option>
+              <option value="all">{t('paymentManagement.tousLesStatuts')}</option>
               <option value="pending">En attente</option>
               <option value="overdue">En retard</option>
-              <option value="success">Payés</option>
-              <option value="expired">Expirés</option>
-              <option value="cancelled">Annulés</option>
+              <option value="success">{t('paymentManagement.payes')}</option>
+              <option value="expired">{t('paymentManagement.expires')}</option>
+              <option value="cancelled">{t('paymentManagement.annules')}</option>
             </select>
             <Filter className="w-4 h-4 text-muted-foreground" />
           </div>
@@ -177,7 +203,7 @@ export default function PaymentManagement() {
       {/* Liste des paiements */}
       <Card>
         <CardHeader>
-          <CardTitle>Liens de paiement</CardTitle>
+          <CardTitle>{t('paymentManagement.liensDePaiement')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -239,10 +265,6 @@ export default function PaymentManagement() {
         </CardContent>
       </Card>
 
-      <EscrowManagementDialog
-        open={escrowDialogOpen}
-        onOpenChange={setEscrowDialogOpen}
-      />
     </div>
   );
 }

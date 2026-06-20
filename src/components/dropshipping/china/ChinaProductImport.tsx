@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +30,7 @@ import {
 } from '@/components/ui/dialog';
 
 export function ChinaProductImport() {
+  const { t } = useTranslation();
   const { imports, loading, importFromUrl, createProductFromImport } = useDropshippingChina();
   const [url, setUrl] = useState('');
   const [selectedImport, setSelectedImport] = useState<ChinaImport | null>(null);
@@ -62,9 +64,9 @@ export function ChinaProductImport() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge variant="default" className="bg-[#ff4000]"><CheckCircle2 className="h-3 w-3 mr-1" /> Terminé</Badge>;
+        return <Badge variant="default" className="bg-[#ff4000]"><CheckCircle2 className="h-3 w-3 mr-1" /> {t('chinaProductImport.termine')}</Badge>;
       case 'failed':
-        return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" /> Échec</Badge>;
+        return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" /> {t('chinaProductImport.echec')}</Badge>;
       case 'processing':
         return <Badge variant="secondary"><Loader2 className="h-3 w-3 mr-1 animate-spin" /> En cours</Badge>;
       default:
@@ -126,13 +128,13 @@ export function ChinaProductImport() {
       {/* Historique imports */}
       <Card>
         <CardHeader>
-          <CardTitle>Historique des Imports</CardTitle>
+          <CardTitle>{t('chinaProductImport.historiqueDesImports')}</CardTitle>
         </CardHeader>
         <CardContent>
           {imports.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Package className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p>Aucun import effectué</p>
+              <p>{t('chinaProductImport.aucunImportEffectue')}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -195,7 +197,7 @@ export function ChinaProductImport() {
       <Dialog open={!!selectedImport} onOpenChange={() => setSelectedImport(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Créer le Produit</DialogTitle>
+            <DialogTitle>{t('chinaProductImport.creerLeProduit')}</DialogTitle>
           </DialogHeader>
 
           {selectedImport && (
@@ -213,7 +215,7 @@ export function ChinaProductImport() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="selling_price">Prix de vente (GNF) *</Label>
+                <Label htmlFor="selling_price">{t('chinaProductImport.prixDeVenteGnf')}</Label>
                 <Input
                   id="selling_price"
                   type="number"

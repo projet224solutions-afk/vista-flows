@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +30,7 @@ interface RecentClient {
 }
 
 export default function AIContractForm({ onSuccess }: AIContractFormProps) {
+  const { t } = useTranslation();
   const [contractType, setContractType] = useState('');
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
@@ -166,7 +168,7 @@ export default function AIContractForm({ onSuccess }: AIContractFormProps) {
       <CardHeader>
         <div className="flex items-center gap-2">
           <Zap className="w-5 h-5 text-primary" />
-          <CardTitle>Générer un contrat avec l'IA</CardTitle>
+          <CardTitle>{t('aIContractForm.genererUnContratAvecL')}</CardTitle>
         </div>
         <CardDescription>
           Sélectionnez le type de contrat et entrez les informations du client
@@ -176,10 +178,10 @@ export default function AIContractForm({ onSuccess }: AIContractFormProps) {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Type de contrat */}
           <div className="space-y-2">
-            <Label htmlFor="contractType">Type de contrat *</Label>
+            <Label htmlFor="contractType">{t('aIContractForm.typeDeContrat')}</Label>
             <Select value={contractType} onValueChange={setContractType}>
               <SelectTrigger>
-                <SelectValue placeholder="Sélectionnez le type de contrat" />
+                <SelectValue placeholder={t('aIContractForm.selectionnezLeTypeDeContrat')} />
               </SelectTrigger>
               <SelectContent>
                 {CONTRACT_TYPES.map((type) => (
@@ -199,7 +201,7 @@ export default function AIContractForm({ onSuccess }: AIContractFormProps) {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <History className="w-4 h-4 text-muted-foreground" />
-                <Label>Clients récents</Label>
+                <Label>{t('aIContractForm.clientsRecents')}</Label>
               </div>
               <div className="flex flex-wrap gap-2">
                 {recentClients.map((client) => (
@@ -218,7 +220,7 @@ export default function AIContractForm({ onSuccess }: AIContractFormProps) {
 
           {/* Téléphone avec auto-remplissage */}
           <div className="space-y-2">
-            <Label htmlFor="clientPhone">Numéro de téléphone *</Label>
+            <Label htmlFor="clientPhone">{t('aIContractForm.numeroDeTelephone')}</Label>
             <div className="relative">
               <Phone className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
               <Input
@@ -240,7 +242,7 @@ export default function AIContractForm({ onSuccess }: AIContractFormProps) {
 
           {/* Nom du client */}
           <div className="space-y-2">
-            <Label htmlFor="clientName">Nom du client *</Label>
+            <Label htmlFor="clientName">{t('aIContractForm.nomDuClient')}</Label>
             <Input
               id="clientName"
               value={clientName}
@@ -252,7 +254,7 @@ export default function AIContractForm({ onSuccess }: AIContractFormProps) {
 
           {/* Adresse */}
           <div className="space-y-2">
-            <Label htmlFor="clientAddress">Adresse du client *</Label>
+            <Label htmlFor="clientAddress">{t('aIContractForm.adresseDuClient')}</Label>
             <Input
               id="clientAddress"
               value={clientAddress}

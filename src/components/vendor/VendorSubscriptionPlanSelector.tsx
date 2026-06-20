@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
@@ -107,6 +108,7 @@ export function VendorSubscriptionPlanSelector({
   onOpenChange,
   onSuccess
 }: VendorSubscriptionPlanSelectorProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
@@ -131,7 +133,7 @@ export function VendorSubscriptionPlanSelector({
       setPlans(data);
     } catch (error) {
       console.error("Erreur chargement plans:", error);
-      toast.error("Erreur de chargement des plans");
+      toast.error(t('vendorSubscriptionPlanSelector.erreurDeChargementDesPlans'));
     } finally {
       setLoading(false);
     }
@@ -195,7 +197,7 @@ export function VendorSubscriptionPlanSelector({
       });
 
       if (subscriptionId) {
-        toast.success("Abonnement active avec succes", {
+        toast.success(t('vendorSubscriptionPlanSelector.abonnementActiveAvecSucces'), {
           description: `Plan ${selectedPlan.display_name} - ${BILLING_CYCLE_LABELS[billingCycle]}`
         });
 
@@ -203,11 +205,11 @@ export function VendorSubscriptionPlanSelector({
         onOpenChange(false);
         onSuccess?.();
       } else {
-        toast.error("Erreur lors de l'activation de l'abonnement");
+        toast.error(t('vendorSubscriptionPlanSelector.erreurLorsDeLActivation'));
       }
     } catch (error) {
       console.error("Erreur souscription:", error);
-      toast.error("Erreur systeme lors de la souscription");
+      toast.error(t('vendorSubscriptionPlanSelector.erreurSystemeLorsDeLa'));
     } finally {
       setSubscribing(false);
     }
@@ -217,15 +219,15 @@ export function VendorSubscriptionPlanSelector({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Choisir un plan d'abonnement</DialogTitle>
+          <DialogTitle>{t('vendorSubscriptionPlanSelector.choisirUnPlanDAbonnement')}</DialogTitle>
           <DialogDescription>
             Selectionnez le plan et la duree qui vous conviennent
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
-          <label className="text-sm font-medium">Duree de l'abonnement</label>
-          <div className="grid grid-cols-3 gap-3">
+          <label className="text-sm font-medium">{t('vendorSubscriptionPlanSelector.dureeDeLAbonnement')}</label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {(Object.keys(BILLING_CYCLE_LABELS) as BillingCycle[]).map((cycle) => (
               <Card
                 key={cycle}
@@ -250,7 +252,7 @@ export function VendorSubscriptionPlanSelector({
         </div>
 
         <div className="space-y-3">
-          <label className="text-sm font-medium">Choisissez votre plan</label>
+          <label className="text-sm font-medium">{t('vendorSubscriptionPlanSelector.choisissezVotrePlan')}</label>
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -289,7 +291,7 @@ export function VendorSubscriptionPlanSelector({
                             <Package className="w-3.5 h-3.5" />
                             <span>
                               {isUnlimited ? (
-                                <span className="inline-flex items-center gap-1"><Infinity className="w-3.5 h-3.5" /> produits illimites</span>
+                                <span className="inline-flex items-center gap-1"><Infinity className="w-3.5 h-3.5" /> {t('vendorSubscriptionPlanSelector.produitsIllimites')}</span>
                               ) : `${plan.max_products} produits max`}
                             </span>
                           </div>
@@ -323,7 +325,7 @@ export function VendorSubscriptionPlanSelector({
         <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
           <div className="flex items-center gap-2">
             <Wallet className="w-4 h-4" />
-            <span className="text-sm font-medium">Solde wallet</span>
+            <span className="text-sm font-medium">{t('vendorSubscriptionPlanSelector.soldeWallet')}</span>
           </div>
           <span className="font-bold"><Money amount={walletBalance} from={walletCurrency} /></span>
         </div>

@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -47,6 +48,7 @@ interface Vendor {
 }
 
 export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsModuleProps) {
+  const { t } = useTranslation();
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -95,7 +97,7 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
       });
     } catch (error) {
       console.error('Erreur chargement vendeurs:', error);
-      toast.error('Erreur lors du chargement');
+      toast.error(t('agentVendorsModule.erreurLorsDuChargement'));
     } finally {
       setLoading(false);
     }
@@ -103,7 +105,7 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
 
   const toggleVendorStatus = async (vendorId: string, currentStatus: boolean) => {
     if (!canManage) {
-      toast.error('Permission refusée');
+      toast.error(t('agentVendorsModule.permissionRefusee'));
       return;
     }
 
@@ -117,7 +119,7 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
       toast.success(currentStatus ? 'Vendeur désactivé' : 'Vendeur activé');
       loadVendors();
     } catch (_error) {
-      toast.error('Erreur lors de la modification');
+      toast.error(t('agentVendorsModule.erreurLorsDeLaModification'));
     }
   };
 
@@ -129,10 +131,10 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
 
   const getKycBadge = (status: string | null, isVerified: boolean) => {
     if (isVerified || status === 'verified') {
-      return <Badge className="bg-orange-100 text-[#ff4000] border-orange-200">Vérifié</Badge>;
+      return <Badge className="bg-orange-100 text-[#ff4000] border-orange-200">{t('agentVendorsModule.verifie')}</Badge>;
     }
     if (status === 'rejected') {
-      return <Badge className="bg-orange-100 text-[#ff4000] border-orange-200">Rejeté</Badge>;
+      return <Badge className="bg-orange-100 text-[#ff4000] border-orange-200">{t('agentVendorsModule.rejete')}</Badge>;
     }
     return <Badge className="bg-orange-100 text-[#ff4000] border-orange-200">En attente</Badge>;
   };
@@ -156,8 +158,8 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
                 <Store className="w-6 h-6 text-white" />
               </div>
               <div>
-                <CardTitle className="text-xl">Gestion des Vendeurs</CardTitle>
-                <CardDescription>Vue d'ensemble des vendeurs de la plateforme</CardDescription>
+                <CardTitle className="text-xl">{t('agentVendorsModule.gestionDesVendeurs')}</CardTitle>
+                <CardDescription>{t('agentVendorsModule.vueDEnsembleDesVendeurs')}</CardDescription>
               </div>
             </div>
             <Button variant="outline" size="sm" onClick={loadVendors}>
@@ -187,7 +189,7 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
             <div className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl p-4 text-center">
               <Shield className="w-6 h-6 text-blue-600 mx-auto mb-2" />
               <p className="text-2xl font-bold text-blue-700">{stats.verified}</p>
-              <p className="text-xs text-blue-500">Vérifiés</p>
+              <p className="text-xs text-blue-500">{t('agentVendorsModule.verifies')}</p>
             </div>
           </div>
 
@@ -195,7 +197,7 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
-              placeholder="Rechercher par nom, code vendeur, email..."
+              placeholder={t('agentVendorsModule.rechercherParNomCodeVendeur')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -212,7 +214,7 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
               {filteredVendors.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Store className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>Aucun vendeur trouvé</p>
+                  <p>{t('agentVendorsModule.aucunVendeurTrouve')}</p>
                 </div>
               ) : (
                 filteredVendors.map((vendor) => (
@@ -277,7 +279,7 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
 
       {/* Detail Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Store className="w-5 h-5 text-primary" />
@@ -289,7 +291,7 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Code Vendeur</p>
+                  <p className="text-sm text-muted-foreground">{t('agentVendorsModule.codeVendeur')}</p>
                   <p className="font-mono font-medium">{selectedVendor.vendor_code}</p>
                 </div>
                 <div className="space-y-1">
@@ -299,11 +301,11 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
                   </Badge>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Téléphone</p>
+                  <p className="text-sm text-muted-foreground">{t('agentVendorsModule.telephone')}</p>
                   <p className="font-medium">{selectedVendor.profiles?.phone}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Téléphone</p>
+                  <p className="text-sm text-muted-foreground">{t('agentVendorsModule.telephone')}</p>
                   <p className="font-medium">{selectedVendor.profiles?.phone || 'N/A'}</p>
                 </div>
                 <div className="space-y-1">
@@ -311,7 +313,7 @@ export function AgentVendorsModule({ agentId, canManage = false }: AgentVendorsM
                   {getKycBadge(selectedVendor.kyc_status, selectedVendor.is_verified)}
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-muted-foreground">Inscrit le</p>
+                  <p className="text-sm text-muted-foreground">{t('agentVendorsModule.inscritLe')}</p>
                   <p className="font-medium">
                     {format(new Date(selectedVendor.created_at), 'dd MMM yyyy', { locale: fr })}
                   </p>

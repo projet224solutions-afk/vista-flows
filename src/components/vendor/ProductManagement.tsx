@@ -4,7 +4,10 @@
  */
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
+import { useFormatCurrency } from "@/hooks/useFormatCurrency";
 import { formatCurrency } from '@/lib/formatters';
+import { readSectionCache, writeSectionCache, isBrowserOffline } from '@/lib/offline/sectionCache';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -73,6 +76,10 @@ interface Category {
 }
 
 export default function ProductManagement() {
+  const { t } = useTranslation();
+  // fc CONVERTIT le montant (stocké en GNF) vers la devise du vendeur au taux BCRG,
+  // contrairement à formatCurrency() qui ne fait que formater sans convertir.
+  const fc = useFormatCurrency();
   const { vendorId, user, loading: vendorLoading } = useCurrentVendor();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -348,7 +355,7 @@ export default function ProductManagement() {
     // Check if user has premium subscription
     const isPremium = await checkPremiumStatus();
     if (!isPremium) {
-      toast.error('⭐ Fonctionnalité Premium uniquement', {
+      toast.error(t('productManagement.fonctionnalitePremiumUniquement'), {
         description: 'Passez à un abonnement Premium pour télécharger des vidéos publicitaires',
         action: {
           label: 'Voir les offres',
@@ -360,21 +367,21 @@ export default function ProductManagement() {
 
     // Validate file type
     if (!file.type.startsWith('video/')) {
-      toast.error('Format invalide. Veuillez sélectionner une vidéo');
+      toast.error(t('productManagement.formatInvalideVeuillezSelectionnerUne'));
       return;
     }
 
     // Validate file size (max 50MB)
     const maxSize = 50 * 1024 * 1024; // 50MB
     if (file.size > maxSize) {
-      toast.error('Vidéo trop volumineuse. Taille maximale : 50MB');
+      toast.error(t('productManagement.videoTropVolumineuseTailleMaximale'));
       return;
     }
 
     // Check max 2 videos (including existing ones)
     const totalVideos = selectedVideos.length + (editingProduct?.promotional_videos?.length || 0);
     if (totalVideos >= 2) {
-      toast.error('Maximum 2 vidéos par produit');
+      toast.error(t('productManagement.maximum2VideosParProduit'));
       return;
     }
 
@@ -401,9 +408,9 @@ export default function ProductManagement() {
       toast.success(`✅ Vidéo ${selectedVideos.length + 1}/2 ajoutée`);
     } catch (error: any) {
       if (error.message === 'Durée maximale dépassée') {
-        toast.error('Vidéo trop longue. Durée maximale : 45 secondes');
+        toast.error(t('productManagement.videoTropLongueDureeMaximale'));
       } else {
-        toast.error('Erreur lors de la validation de la vidéo');
+        toast.error(t('productManagement.erreurLorsDeLaValidation'));
       }
     } finally {
       setUploadingVideo(false);
@@ -417,7 +424,7 @@ export default function ProductManagement() {
       await Promise.all([fetchProducts(), fetchCategories()]);
     } catch (error: any) {
       captureError('product', 'Failed to fetch products', error);
-      toast.error('Erreur lors du chargement des données');
+      toast.error(t('productManagement.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -425,6 +432,13 @@ export default function ProductManagement() {
 
   const fetchProducts = async () => {
     if (!vendorId) return;
+
+    // 📴 Hors ligne : afficher le dernier catalogue connu (cache), sans réseau.
+    if (isBrowserOffline()) {
+      const cached = readSectionCache<Product>('products', vendorId);
+      if (cached) setProducts(cached);
+      return;
+    }
 
     try {
       // 1. Appliquer les limites d'abonnement et désactiver les produits en excès
@@ -445,10 +459,14 @@ export default function ProductManagement() {
 
       if (error) {
         captureError('product', 'Failed to fetch products', error);
+        // Échec réseau silencieux → repli sur le cache.
+        const cached = readSectionCache<Product>('products', vendorId);
+        if (cached) setProducts(cached);
         return;
       }
 
-      setProducts(data || []);
+      setProducts((data || []) as Product[]);
+      writeSectionCache('products', vendorId, (data || []) as Product[]);
     } catch (error: any) {
       captureError('product', 'Failed to enforce product limits', error);
       console.error('[ProductLimit] Error:', error);
@@ -461,7 +479,11 @@ export default function ProductManagement() {
         .order('created_at', { ascending: false });
 
       if (!fetchError) {
-        setProducts(data || []);
+        setProducts((data || []) as Product[]);
+        writeSectionCache('products', vendorId, (data || []) as Product[]);
+      } else {
+        const cached = readSectionCache<Product>('products', vendorId);
+        if (cached) setProducts(cached);
       }
     }
   };
@@ -490,14 +512,14 @@ export default function ProductManagement() {
     if (payload.sell_by_carton) {
       const unitsPerCarton = parseInt(payload.units_per_carton || '', 10);
       if (!unitsPerCarton || Number.isNaN(unitsPerCarton) || unitsPerCarton < 1) {
-        toast.error("Veuillez renseigner 'Unités par carton'");
+        toast.error(t('productManagement.veuillezRenseignerUnitesParCarton'));
         return;
       }
 
       if (payload.cartons_in_stock && payload.cartons_in_stock.trim() !== '') {
         const cartons = parseInt(payload.cartons_in_stock, 10);
         if (Number.isNaN(cartons) || cartons < 0) {
-          toast.error('Nombre de cartons invalide');
+          toast.error(t('productManagement.nombreDeCartonsInvalide'));
           return;
         }
         payload.stock_quantity = String(cartons * unitsPerCarton);
@@ -505,7 +527,7 @@ export default function ProductManagement() {
     }
 
     if (!payload.name || !payload.price || !payload.stock_quantity) {
-      toast.error('Veuillez remplir tous les champs obligatoires');
+      toast.error(t('productManagement.veuillezRemplirTousLesChamps'));
       return;
     }
 
@@ -514,7 +536,7 @@ export default function ProductManagement() {
       const comparePrice = parseFloat(payload.compare_price);
       const sellPrice = parseFloat(payload.price);
       if (!Number.isNaN(comparePrice) && comparePrice > 0 && comparePrice <= sellPrice) {
-        toast.error('Le prix barré doit être supérieur au prix de vente');
+        toast.error(t('productManagement.lePrixBarreDoitEtre'));
         return;
       }
     }
@@ -523,7 +545,7 @@ export default function ProductManagement() {
     const hasExistingImages = editingProduct?.images && editingProduct.images.length > 0;
     const hasNewImages = selectedImages.length > 0;
     if (!hasExistingImages && !hasNewImages) {
-      toast.error('Veuillez ajouter au moins une image pour le produit');
+      toast.error(t('productManagement.veuillezAjouterAuMoinsUne'));
       return;
     }
 
@@ -605,7 +627,7 @@ export default function ProductManagement() {
   };
 
   const handleDelete = async (productId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) return;
+    if (!confirm(t('productManagement.etesVousSurDeVouloir'))) return;
 
     try {
       const success = await deleteProduct(productId);
@@ -616,16 +638,16 @@ export default function ProductManagement() {
       }
     } catch (error: any) {
       captureError('product', 'Failed to delete product', error);
-      toast.error('Erreur lors de la suppression');
+      toast.error(t('productManagement.erreurLorsDeLaSuppression'));
     }
   };
 
   const handleDuplicate = async (productId: string) => {
-    if (!confirm('Voulez-vous créer une copie de ce produit ?')) return;
+    if (!confirm(t('productManagement.voulezVousCreerUneCopie'))) return;
 
     try {
       await duplicateProduct(productId);
-      toast.success('Produit dupliqué avec succès');
+      toast.success(t('productManagement.produitDupliqueAvecSucces'));
       fetchProducts();
     } catch (error: any) {
       captureError('product', 'Failed to duplicate product', error);
@@ -692,13 +714,13 @@ export default function ProductManagement() {
   // AI Generation Functions
   const handleGenerateDescription = async () => {
     if (!formData.name) {
-      toast.error('Veuillez entrer le nom du produit');
+      toast.error(t('productManagement.veuillezEntrerLeNomDu'));
       return;
     }
 
     try {
       setGeneratingDescription(true);
-      toast.info('🤖 Génération IA en cours...');
+      toast.info(t('productManagement.generationIaEnCours'));
 
       const categoryName = categoryMode === 'existing' && formData.category_id
         ? categories.find(c => c.id === formData.category_id)?.name
@@ -716,7 +738,7 @@ export default function ProductManagement() {
 
       if (data?.description) {
         setFormData(prev => ({ ...prev, description: data.description }));
-        toast.success('✅ Description générée par IA');
+        toast.success(t('productManagement.descriptionGenereeParIa'));
       } else if (data?.error) {
         throw new Error(data.error);
       }
@@ -730,7 +752,7 @@ export default function ProductManagement() {
 
   const handleGenerateImage = async () => {
     if (!formData.name) {
-      toast.error('Veuillez entrer le nom du produit');
+      toast.error(t('productManagement.veuillezEntrerLeNomDu'));
       return;
     }
 
@@ -742,30 +764,33 @@ export default function ProductManagement() {
         : formData.category_name || undefined;
 
       // Image de référence : image existante du produit, sinon 1ère image sélectionnée
-      let referenceUrl: string | null = editingProduct?.images?.[0] || null;
-      if (!referenceUrl && selectedImages[0]) {
-        referenceUrl = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          reader.readAsDataURL(selectedImages[0]);
-        });
-      }
+      // ⚠️ Ne JAMAIS envoyer une image en base64 (data:) à l'edge function :
+      // payload énorme → "Failed to send a request", et l'IA ne sait pas fetch une URL data:.
+      // generate-similar-image n'est utilisé QUE si on a une vraie URL http(s) (produit existant).
+      const referenceUrl: string | null = editingProduct?.images?.[0] || null;
+      const hasHttpRef = !!referenceUrl && /^https?:\/\//i.test(referenceUrl);
 
       let generatedUrl: string | undefined;
 
-      if (referenceUrl) {
-        // Imiter l'image existante (même style/cadrage) en tenant compte du titre + description
-        toast.info("🎨 Génération d'une image similaire à l'existante...");
-        const { data, error } = await supabase.functions.invoke('generate-similar-image', {
-          body: { imageUrl: referenceUrl, productName: formData.name, description: formData.description }
-        });
-        if (error) throw error;
-        if (data?.error) throw new Error(data.error);
-        generatedUrl = data?.similarImageUrl;
-      } else {
-        // Génération fraîche basée sur le titre + description
-        toast.info('🎨 Génération image IA en cours...');
+      // 1) Image "similaire" (URL réelle uniquement) — avec repli si échec
+      if (hasHttpRef) {
+        try {
+          toast.info(t('productManagement.generationDUneImageSimilaire'));
+          const { data, error } = await supabase.functions.invoke('generate-similar-image', {
+            body: { imageUrl: referenceUrl, productName: formData.name, description: formData.description }
+          });
+          if (error) throw error;
+          if (data?.error) throw new Error(data.error);
+          generatedUrl = data?.similarImageUrl;
+        } catch (simErr) {
+          console.warn('[AI image] generate-similar-image échoué → repli generate-product-image', simErr);
+          generatedUrl = undefined; // repli ci-dessous
+        }
+      }
+
+      // 2) Repli (ou nouveau produit) : génération fraîche depuis le titre + description
+      if (!generatedUrl) {
+        toast.info(t('productManagement.generationImageIaEnCours'));
         const { data, error } = await supabase.functions.invoke('generate-product-image', {
           body: { productName: formData.name, category: categoryName, description: formData.description }
         });
@@ -781,7 +806,7 @@ export default function ProductManagement() {
       const blob = await response.blob();
       const file = new File([blob], `ai-generated-${Date.now()}.png`, { type: 'image/png' });
       setSelectedImages(prev => [...prev, file]);
-      toast.success('✅ Image générée par IA');
+      toast.success(t('productManagement.imageGenereeParIa'));
     } catch (error: any) {
       console.error('Erreur génération image:', error);
       toast.error(error.message || 'Erreur lors de la génération');
@@ -796,7 +821,7 @@ export default function ProductManagement() {
     const random = Math.random().toString(36).substring(2, 6).toUpperCase();
     const sku = `SKU-${timestamp}-${random}`;
     setFormData(prev => ({ ...prev, sku }));
-    toast.success('SKU généré');
+    toast.success(t('productManagement.skuGenere'));
   };
 
   // Generate Barcode (EAN-13 format)
@@ -815,7 +840,7 @@ export default function ProductManagement() {
 
     const barcode = baseCode + checkDigit;
     setFormData(prev => ({ ...prev, barcode }));
-    toast.success('Code-barres EAN-13 généré');
+    toast.success(t('productManagement.codeBarresEan13Genere'));
   };
 
   // Helpers (stock exact basé sur inventory si disponible)
@@ -988,7 +1013,7 @@ export default function ProductManagement() {
             disabled={productLimit && !productLimit.can_add}
           >
             <Plus className="h-4 w-4 mr-1 shrink-0" />
-            <span className="truncate">Nouveau</span>
+            <span className="truncate">{t('productManagement.nouveau')}</span>
           </Button>
         </div>
       </div>
@@ -997,7 +1022,7 @@ export default function ProductManagement() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
         <Card className="p-2 md:p-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 md:p-6 pb-1 md:pb-2">
-            <CardTitle className="text-xs md:text-sm font-medium">Total Produits</CardTitle>
+            <CardTitle className="text-xs md:text-sm font-medium">{t('productManagement.totalProduits')}</CardTitle>
             <Package className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="p-2 md:p-6 pt-0">
@@ -1031,7 +1056,7 @@ export default function ProductManagement() {
           </CardHeader>
           <CardContent className="p-2 md:p-6 pt-0">
             <div className="text-sm md:text-2xl font-bold truncate">
-              {formatCurrency(stats.totalValue, 'GNF')}
+              {fc(stats.totalValue)}
             </div>
             <p className="text-[10px] md:text-xs text-muted-foreground line-clamp-1">
               Valeur inventaire
@@ -1041,7 +1066,7 @@ export default function ProductManagement() {
 
         <Card className="p-2 md:p-0">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 p-2 md:p-6 pb-1 md:pb-2">
-            <CardTitle className="text-xs md:text-sm font-medium">Catégories</CardTitle>
+            <CardTitle className="text-xs md:text-sm font-medium">{t('productManagement.categories')}</CardTitle>
             <FolderOpen className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="p-2 md:p-6 pt-0">
@@ -1061,7 +1086,7 @@ export default function ProductManagement() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher un produit..."
+                placeholder={t('productManagement.rechercherUnProduit')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 h-9 md:h-10 text-sm"
@@ -1076,7 +1101,7 @@ export default function ProductManagement() {
                   <SelectValue placeholder="Statut" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tous</SelectItem>
+                  <SelectItem value="all">{t('productManagement.tous')}</SelectItem>
                   <SelectItem value="active">Actifs</SelectItem>
                   <SelectItem value="inactive">Inactifs</SelectItem>
                 </SelectContent>
@@ -1086,10 +1111,10 @@ export default function ProductManagement() {
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger className="w-[140px] h-9 text-xs md:text-sm">
                   <FolderOpen className="h-3 w-3 mr-1" />
-                  <SelectValue placeholder="Catégorie" />
+                  <SelectValue placeholder={t('productManagement.categorie')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Toutes catégories</SelectItem>
+                  <SelectItem value="all">{t('productManagement.toutesCategories')}</SelectItem>
                   {usedCategories.map((cat) => (
                     <SelectItem key={cat.id} value={cat.id}>
                       {cat.name}
@@ -1175,11 +1200,11 @@ export default function ProductManagement() {
               {/* Price */}
               <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                 <span className="text-sm md:text-xl font-bold text-primary truncate">
-                  {formatCurrency(product.price, 'GNF')}
+                  {fc(product.price)}
                 </span>
                 {product.compare_price && product.compare_price > product.price && (
                   <span className="text-[10px] md:text-sm line-through text-muted-foreground">
-                    {formatCurrency(product.compare_price, 'GNF')}
+                    {fc(product.compare_price)}
                   </span>
                 )}
               </div>
@@ -1212,7 +1237,7 @@ export default function ProductManagement() {
                   className="flex-1 h-7 md:h-9 text-[10px] md:text-sm px-1 md:px-3"
                 >
                   <Edit className="h-3 w-3 md:mr-1" />
-                  <span className="hidden md:inline">Éditer</span>
+                  <span className="hidden md:inline">{t('productManagement.editer')}</span>
                 </Button>
                 <Button
                   size="sm"
@@ -1240,7 +1265,7 @@ export default function ProductManagement() {
         <Card>
           <CardContent className="py-12 text-center">
             <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">Aucun produit trouvé</p>
+            <p className="text-muted-foreground">{t('productManagement.aucunProduitTrouve')}</p>
             <Button
               variant="outline"
               className="mt-4"
@@ -1273,7 +1298,7 @@ export default function ProductManagement() {
             {/* Tab 1: Basic Info */}
             <TabsContent value="info" className="space-y-4 mt-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Nom du produit *</Label>
+                <Label htmlFor="name">{t('productManagement.nomDuProduit')}</Label>
                 <Input
                   id="name"
                   value={formData.name}
@@ -1304,7 +1329,7 @@ export default function ProductManagement() {
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Description détaillée du produit..."
+                  placeholder={t('productManagement.descriptionDetailleeDuProduit')}
                   rows={4}
                 />
               </div>
@@ -1347,9 +1372,9 @@ export default function ProductManagement() {
                     </PopoverTrigger>
                     <PopoverContent className="w-full p-0" align="start">
                       <Command>
-                        <CommandInput placeholder="Rechercher catégorie..." />
+                        <CommandInput placeholder={t('productManagement.rechercherCategorie')} />
                         <CommandList>
-                          <CommandEmpty>Aucune catégorie trouvée.</CommandEmpty>
+                          <CommandEmpty>{t('productManagement.aucuneCategorieTrouvee')}</CommandEmpty>
                           <CommandGroup>
                             {categories.map((cat) => (
                               <CommandItem
@@ -1380,7 +1405,7 @@ export default function ProductManagement() {
                       autoFocus
                       value={formData.category_name}
                       onChange={(e) => setFormData({ ...formData, category_name: e.target.value })}
-                      placeholder="Tapez le nom de la nouvelle catégorie..."
+                      placeholder={t('productManagement.tapezLeNomDeLa')}
                       className="border-primary/50 focus:border-primary"
                     />
                     <p className="text-xs text-muted-foreground">
@@ -1419,7 +1444,7 @@ export default function ProductManagement() {
                   id="tags"
                   value={formData.tags}
                   onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                  placeholder="été, promo, nouveauté"
+                  placeholder={t('productManagement.etePromoNouveaute')}
                 />
               </div>
             </TabsContent>
@@ -1428,7 +1453,7 @@ export default function ProductManagement() {
             <TabsContent value="pricing" className="space-y-4 mt-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="price">Prix de vente * (GNF)</Label>
+                  <Label htmlFor="price">{t('productManagement.prixDeVenteGnf')}</Label>
                   <Input
                     id="price"
                     type="number"
@@ -1438,7 +1463,7 @@ export default function ProductManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="compare_price">Prix barré (GNF)</Label>
+                  <Label htmlFor="compare_price">{t('productManagement.prixBarreGnf')}</Label>
                   <Input
                     id="compare_price"
                     type="number"
@@ -1448,7 +1473,7 @@ export default function ProductManagement() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="cost_price">Prix de revient (GNF)</Label>
+                  <Label htmlFor="cost_price">{t('productManagement.prixDeRevientGnf')}</Label>
                   <Input
                     id="cost_price"
                     type="number"
@@ -1461,7 +1486,7 @@ export default function ProductManagement() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="stock">Quantité en stock (unités) *</Label>
+                  <Label htmlFor="stock">{t('productManagement.quantiteEnStockUnites')}</Label>
                   <Input
                     id="stock"
                     type="number"
@@ -1564,7 +1589,7 @@ export default function ProductManagement() {
                   <div className="space-y-4 pt-3 border-t border-border/30">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="units_per_carton">Unités par carton *</Label>
+                        <Label htmlFor="units_per_carton">{t('productManagement.unitesParCarton')}</Label>
                         <Input
                           id="units_per_carton"
                           type="number"
@@ -1597,7 +1622,7 @@ export default function ProductManagement() {
                         </p>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="price_carton">Prix du carton (GNF) *</Label>
+                        <Label htmlFor="price_carton">{t('productManagement.prixDuCartonGnf')}</Label>
                         <Input
                           id="price_carton"
                           type="number"
@@ -1618,7 +1643,7 @@ export default function ProductManagement() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="cartons_in_stock">Nombre de cartons en stock</Label>
+                        <Label htmlFor="cartons_in_stock">{t('productManagement.nombreDeCartonsEnStock')}</Label>
                         <Input
                           id="cartons_in_stock"
                           type="number"
@@ -1651,7 +1676,7 @@ export default function ProductManagement() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label>Stock calculé (unités)</Label>
+                        <Label>{t('productManagement.stockCalculeUnites')}</Label>
                         <Input
                           value={(() => {
                             const cartons = parseInt(formData.cartons_in_stock || '0', 10);
@@ -1681,8 +1706,8 @@ export default function ProductManagement() {
             {/* Tab 3: Media */}
             <TabsContent value="media" className="space-y-4 mt-4">
               <div className="space-y-3">
-                <Label>Images du produit</Label>
-                <div className="grid grid-cols-3 gap-2">
+                <Label>{t('productManagement.imagesDuProduit')}</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   <Button
                     type="button"
                     variant="outline"
@@ -1713,7 +1738,7 @@ export default function ProductManagement() {
                     variant="outline"
                     onClick={() => {
                       if (!isPremium) {
-                        toast.error('⭐ Fonctionnalité Premium uniquement', {
+                        toast.error(t('productManagement.fonctionnalitePremiumUniquement'), {
                           description: 'Passez à un abonnement Premium/Pro/Business pour ajouter des vidéos',
                           action: {
                             label: 'Voir les offres',
@@ -1828,7 +1853,7 @@ export default function ProductManagement() {
               {(selectedImages.length > 0 || (editingProduct?.images?.length || 0) > 0) && (
                 <div className="space-y-2">
                   <Label>Aperçu ({selectedImages.length} nouvelle(s))</Label>
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {/* Existing Images */}
                     {editingProduct?.images?.map((url, index) => (
                       <div key={`existing-${index}`} className="relative aspect-square rounded-lg overflow-hidden border">

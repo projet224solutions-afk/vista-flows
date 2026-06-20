@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +27,7 @@ import EscrowService, { EscrowInvoice, EscrowTransaction } from '../../services/
 type PaymentPageProps = Record<string, never>
 
 const PaymentPage: React.FC<PaymentPageProps> = () => {
+    const { t } = useTranslation();
     const fc = useFormatCurrency();
     const { invoiceId } = useParams<{ invoiceId: string }>();
     const navigate = useNavigate();
@@ -68,7 +70,7 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
 
     const handlePayment = async () => {
         if (!selectedPaymentMethod || !invoice) {
-            alert('Veuillez sélectionner une méthode de paiement');
+            alert(t('paymentPage.veuillezSelectionnerUneMethodeDe'));
             return;
         }
 
@@ -94,7 +96,7 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
             console.log('💳 Paiement initié:', transaction.id);
         } catch (err) {
             console.error('Erreur paiement:', err);
-            alert('Erreur lors du traitement du paiement');
+            alert(t('paymentPage.erreurLorsDuTraitementDu'));
         } finally {
             setIsProcessing(false);
         }
@@ -105,7 +107,7 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="text-center">
                     <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-                    <p className="text-gray-600">Chargement de la facture...</p>
+                    <p className="text-gray-600">{t('paymentPage.chargementDeLaFacture')}</p>
                 </div>
             </div>
         );
@@ -134,7 +136,7 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
                 <Card className="max-w-md w-full mx-4">
                     <CardContent className="p-6 text-center">
                         <CheckCircle className="w-12 h-12 text-[#ff4000] mx-auto mb-4" />
-                        <h2 className="text-xl font-semibold text-gray-800 mb-2">Paiement sécurisé !</h2>
+                        <h2 className="text-xl font-semibold text-gray-800 mb-2">{t('paymentPage.paiementSecurise')}</h2>
                         <p className="text-gray-600 mb-4">
                             Votre paiement de <strong>{fc(transaction.totalAmount)}</strong> est sécurisé par 224SECURE.
                         </p>
@@ -159,8 +161,8 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
                 <Card className="max-w-md w-full mx-4">
                     <CardContent className="p-6 text-center">
                         <AlertCircle className="w-12 h-12 text-[#ff4000] mx-auto mb-4" />
-                        <h2 className="text-xl font-semibold text-gray-800 mb-2">Facture non trouvée</h2>
-                        <p className="text-gray-600 mb-4">Cette facture n'existe pas ou a expiré.</p>
+                        <h2 className="text-xl font-semibold text-gray-800 mb-2">{t('paymentPage.factureNonTrouvee')}</h2>
+                        <p className="text-gray-600 mb-4">{t('paymentPage.cetteFactureNExistePas')}</p>
                         <Button onClick={() => navigate('/')} variant="outline">
                             Retour à l'accueil
                         </Button>
@@ -182,7 +184,7 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
                             <Shield className="w-8 h-8 text-blue-600 mr-2" />
                             <span className="text-2xl font-bold text-blue-600">224SECURE</span>
                         </div>
-                        <CardTitle className="text-lg">Paiement sécurisé</CardTitle>
+                        <CardTitle className="text-lg">{t('paymentPage.paiementSecurise2')}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {/* Détails de la facture */}
@@ -206,7 +208,7 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
                         {/* Résumé des frais */}
                         <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                             <div className="flex justify-between text-sm">
-                                <span>Montant du trajet:</span>
+                                <span>{t('paymentPage.montantDuTrajet')}</span>
                                 <span className="font-medium">{fc(invoice.amount)}</span>
                             </div>
                             <div className="flex justify-between text-sm">
@@ -214,14 +216,14 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
                                 <span className="font-medium">{fc(feeAmount)}</span>
                             </div>
                             <div className="border-t pt-2 flex justify-between font-semibold">
-                                <span>Total à payer:</span>
+                                <span>{t('paymentPage.totalAPayer')}</span>
                                 <span className="text-[#ff4000]">{fc(totalAmount)}</span>
                             </div>
                         </div>
 
                         {/* Méthodes de paiement */}
                         <div className="space-y-3">
-                            <h3 className="font-semibold text-gray-800">Méthode de paiement</h3>
+                            <h3 className="font-semibold text-gray-800">{t('paymentPage.methodeDePaiement')}</h3>
 
                             <div className="space-y-2">
                                 <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
@@ -270,8 +272,8 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
                             <div className="flex items-start gap-2">
                                 <Shield className="w-5 h-5 text-blue-600 mt-0.5" />
                                 <div className="text-sm text-blue-800">
-                                    <p className="font-semibold mb-1">Paiement sécurisé par 224SECURE</p>
-                                    <p>Votre argent est protégé. Le livreur sera payé uniquement après confirmation de la livraison.</p>
+                                    <p className="font-semibold mb-1">{t('paymentPage.paiementSecurisePar224secure')}</p>
+                                    <p>{t('paymentPage.votreArgentEstProtegeLe')}</p>
                                 </div>
                             </div>
                         </div>
@@ -297,9 +299,9 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
 
                         {/* Informations supplémentaires */}
                         <div className="text-xs text-gray-500 text-center space-y-1">
-                            <p>• Paiement sécurisé par 224SECURE</p>
-                            <p>• Frais de 1% inclus dans le total</p>
-                            <p>• Remboursement possible en cas de problème</p>
+                            <p>{t('paymentPage.paiementSecurisePar224secure2')}</p>
+                            <p>{t('paymentPage.fraisDe1InclusDans')}</p>
+                            <p>{t('paymentPage.remboursementPossibleEnCasDe')}</p>
                         </div>
                     </CardContent>
                 </Card>

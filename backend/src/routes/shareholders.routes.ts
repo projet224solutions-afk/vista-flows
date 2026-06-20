@@ -22,6 +22,107 @@ const ACTIONNAIRE_ROLES = ['actionnaire', 'pdg', 'admin', 'ceo'];
 const coalesceCountry = (profile: any): string | null =>
   profile?.country || profile?.detected_country || null;
 
+/**
+ * Recalcule les revenus EN ATTENTE (non encore crédités) d'un actionnaire après
+ * une modification de son attribution (part d'action %, catégorie, portée, pays).
+ *
+ * → Chaque revenu `pending` est ré-évalué via `calculate_shareholder_revenue`
+ *   pour SA période, avec les NOUVEAUX paramètres de l'attribution. Le reçu PDF
+ *   (généré depuis la ligne `shareholder_revenues`) reflète alors la nouvelle part.
+ * → Le paiement associé (s'il est encore `pending`) est mis à jour au même montant.
+ * → Les revenus déjà versés (`sent_to_wallet` / `withdrawn`) ne sont JAMAIS touchés
+ *   (vérité comptable historique au taux de l'époque).
+ *
+ * La période (period_start/period_end/assignment_id) n'est pas modifiée → le trigger
+ * anti-chevauchement n'est pas déclenché.
+ */
+async function recalcPendingRevenuesForShareholder(
+  shareholderId: string,
+  actorId: string,
+): Promise<{ updated: number }> {
+  let updated = 0;
+
+  // Revenus encore en attente de cet actionnaire (jamais crédités au wallet)
+  const { data: pendingRevenues, error: revErr } = await supabaseAdmin
+    .from('shareholder_revenues')
+    .select('id, assignment_id, period_start, period_end')
+    .eq('shareholder_id', shareholderId)
+    .eq('payment_status', 'pending');
+
+  if (revErr || !pendingRevenues?.length) return { updated };
+
+  for (const rev of pendingRevenues) {
+    if (!rev.assignment_id) continue;
+
+    // Ré-évaluation avec les nouveaux paramètres de l'attribution
+    const { data: calc, error: calcErr } = await supabaseAdmin.rpc(
+      'calculate_shareholder_revenue',
+      {
+        p_assignment_id: rev.assignment_id,
+        p_period_start:  rev.period_start,
+        p_period_end:    rev.period_end,
+      },
+    );
+
+    if (calcErr || !calc || (calc as any).error) {
+      logger.warn(`recalcPendingRevenues - skip revenue ${rev.id}: ${calcErr?.message || (calc as any)?.error}`);
+      continue;
+    }
+
+    const c = calc as any;
+
+    // Mise à jour de l'instantané du revenu (source du reçu PDF)
+    const { error: upErr } = await supabaseAdmin
+      .from('shareholder_revenues')
+      .update({
+        category:                 c.category,
+        action_scope:             c.action_scope,
+        country:                  c.country || null,
+        paid_subscriptions_count: c.paid_subscriptions_count || 0,
+        free_subscriptions_count: c.free_subscriptions_count || 0,
+        total_paid_revenue_brut:  c.total_paid_revenue_brut ?? c.total_paid_revenue ?? 0,
+        total_agent_commission:   c.total_agent_commission   ?? 0,
+        total_paid_revenue:       c.total_paid_revenue || 0,
+        percentage:               c.percentage,
+        shareholder_amount:       c.shareholder_amount || 0,
+        currency:                 c.currency || 'GNF',
+        updated_at:               new Date().toISOString(),
+      })
+      .eq('id', rev.id)
+      .eq('payment_status', 'pending'); // garde-fou : n'écrase pas un revenu crédité entre-temps
+
+    if (upErr) {
+      logger.warn(`recalcPendingRevenues - update revenue ${rev.id} failed: ${upErr.message}`);
+      continue;
+    }
+
+    // Mise à jour du paiement associé s'il est encore en attente
+    await supabaseAdmin
+      .from('shareholder_payments')
+      .update({
+        amount:   c.shareholder_amount || 0,
+        currency: c.currency || 'GNF',
+      })
+      .eq('revenue_id', rev.id)
+      .eq('status', 'pending');
+
+    updated++;
+  }
+
+  if (updated > 0) {
+    supabaseAdmin.from('shareholder_audit_logs').insert({
+      actor_id:    actorId,
+      action:      'recalc_pending_revenues',
+      entity_type: 'shareholder',
+      entity_id:   shareholderId,
+      new_value:   { recalculated_revenues: updated },
+    });
+    logger.info(`recalcPendingRevenues - ${updated} revenu(s) recalculé(s) pour actionnaire ${shareholderId}`);
+  }
+
+  return { updated };
+}
+
 // ─── MIDDLEWARE commun ────────────────────────────────────────────────────────
 // Toutes les routes actionnaires nécessitent un JWT valide
 router.use(verifyJWT);
@@ -279,7 +380,10 @@ router.put('/:id', requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res
     }
 
     // Mise à jour de l'assignment si nécessaire
-    if (category || action_scope || percentage !== undefined || country !== undefined) {
+    const assignmentChanged =
+      Boolean(category) || Boolean(action_scope) || percentage !== undefined || country !== undefined;
+
+    if (assignmentChanged) {
       const aUpdate: any = {};
       if (category)              aUpdate.category      = category;
       if (action_scope)          aUpdate.action_scope  = action_scope;
@@ -297,6 +401,20 @@ router.put('/:id', requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res
       }
     }
 
+    // Si la part d'action (ou la catégorie/portée/pays) a changé, on recalcule les
+    // revenus EN ATTENTE → leurs reçus PDF reflètent la nouvelle part. Les revenus
+    // déjà crédités au wallet restent figés (vérité comptable historique).
+    let recalculatedRevenues = 0;
+    if (assignmentChanged) {
+      try {
+        const { updated } = await recalcPendingRevenuesForShareholder(id, req.user!.id);
+        recalculatedRevenues = updated;
+      } catch (recalcErr: any) {
+        // Non bloquant : la mise à jour de l'attribution a réussi
+        logger.warn(`shareholders.update - recalc revenus échoué pour ${id}: ${recalcErr?.message}`);
+      }
+    }
+
     // Audit log
     supabaseAdmin.from('shareholder_audit_logs').insert({
       actor_id:    req.user!.id,
@@ -306,7 +424,7 @@ router.put('/:id', requireRole(PDG_ROLES), async (req: AuthenticatedRequest, res
       new_value:   req.body,
     });
 
-    res.json({ success: true });
+    res.json({ success: true, recalculated_revenues: recalculatedRevenues });
   } catch (err: any) {
     res.status(500).json({ success: false, error: 'Erreur interne' });
   }
@@ -584,11 +702,14 @@ router.post('/revenues/save', requireRole(PDG_ROLES), async (req: AuthenticatedR
       .single();
 
     if (error) {
-      // Doublon (constraint unique période)
+      // Doublon (période identique) OU chevauchement de période (trigger anti-double-comptage)
       if (error.code === '23505') {
+        const isOverlap = /overlapping_revenue_period/i.test(error.message || '');
         res.status(409).json({
           success: false,
-          error: 'Revenus déjà calculés pour cette période et cet actionnaire.',
+          error: isOverlap
+            ? 'Cette période chevauche une période de revenu déjà enregistrée pour cet actionnaire. Utilisez des périodes disjointes (évite le double comptage).'
+            : 'Revenus déjà calculés pour cette période et cet actionnaire.',
           error_code: 'DUPLICATE_REVENUE',
         });
         return;

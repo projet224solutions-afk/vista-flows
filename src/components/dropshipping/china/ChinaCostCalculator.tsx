@@ -4,6 +4,7 @@
  */
 
 import { useState, useMemo } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Input } from '@/components/ui/input';
@@ -29,6 +30,7 @@ import {
 import { useDropshippingChina } from '@/hooks/useDropshippingChina';
 
 export function ChinaCostCalculator() {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const { calculateFullCosts, settings } = useDropshippingChina();
 
@@ -105,7 +107,7 @@ export function ChinaCostCalculator() {
             </div>
 
             <div className="space-y-2">
-              <Label>Méthode de transport</Label>
+              <Label>{t('chinaCostCalculator.methodeDeTransport')}</Label>
               <Select value={transportMethod} onValueChange={setTransportMethod}>
                 <SelectTrigger>
                   <SelectValue />
@@ -121,7 +123,7 @@ export function ChinaCostCalculator() {
             </div>
 
             <div className="space-y-2">
-              <Label>Prix de vente (GNF)</Label>
+              <Label>{t('chinaCostCalculator.prixDeVenteGnf')}</Label>
               <Input
                 type="number"
                 value={sellingPrice}
@@ -130,7 +132,7 @@ export function ChinaCostCalculator() {
             </div>
 
             <div className="space-y-2">
-              <Label>Quantité</Label>
+              <Label>{t('chinaCostCalculator.quantite')}</Label>
               <Input
                 type="number"
                 min="1"
@@ -144,7 +146,7 @@ export function ChinaCostCalculator() {
           <div className="grid md:grid-cols-2 gap-6">
             <Card className="bg-muted/50">
               <CardHeader className="pb-3">
-                <CardTitle className="text-base">Décomposition des Coûts</CardTitle>
+                <CardTitle className="text-base">{t('chinaCostCalculator.decompositionDesCouts')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between items-center">
@@ -187,7 +189,7 @@ export function ChinaCostCalculator() {
 
                 <div className="border-t pt-3 mt-3">
                   <div className="flex justify-between items-center">
-                    <span className="font-semibold">Coût total unitaire</span>
+                    <span className="font-semibold">{t('chinaCostCalculator.coutTotalUnitaire')}</span>
                     <span className="text-lg font-bold">${costs.total_cost_usd?.toFixed(2)}</span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -254,7 +256,7 @@ export function ChinaCostCalculator() {
 
           {/* Options transport */}
           <div>
-            <Label className="mb-3 block">Options de Transport</Label>
+            <Label className="mb-3 block">{t('chinaCostCalculator.optionsDeTransport')}</Label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {transportOptions.map((opt) => (
                 <button

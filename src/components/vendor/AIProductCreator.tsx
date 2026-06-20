@@ -6,6 +6,7 @@
  */
 
 import { useState } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +30,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useStorageUpload } from "@/hooks/useStorageUpload";
 
 export function AIProductCreator() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [productName, setProductName] = useState("");
   const [productDescription, setProductDescription] = useState("");
@@ -46,7 +48,7 @@ export function AIProductCreator() {
    */
   const handleAnalyze = async () => {
     if (!productName.trim() || !user?.id) {
-      toast.error("Veuillez remplir le nom du produit");
+      toast.error(t('aIProductCreator.veuillezRemplirLeNomDu'));
       return;
     }
 
@@ -66,7 +68,7 @@ export function AIProductCreator() {
 
       setAnalysis(result);
 
-      toast.success("✅ Analyse terminée !", {
+      toast.success(t('aIProductCreator.analyseTerminee'), {
         description: `Produit classé en ${result.category}`
       });
 
@@ -143,7 +145,7 @@ export function AIProductCreator() {
         }
       }
 
-      toast.success("✅ Produit créé avec succès !", {
+      toast.success(t('aIProductCreator.produitCreeAvecSucces'), {
         description: "Votre produit est maintenant en ligne"
       });
 
@@ -155,7 +157,7 @@ export function AIProductCreator() {
 
     } catch (error: any) {
       console.error("❌ Erreur sauvegarde:", error);
-      toast.error("Erreur lors de la création", {
+      toast.error(t('aIProductCreator.erreurLorsDeLaCreation'), {
         description: error.message
       });
     } finally {
@@ -183,7 +185,7 @@ export function AIProductCreator() {
               Nom du produit *
             </label>
             <Input
-              placeholder="Ex: iPhone 12 Pro, Marmite électrique 5L, Samsung A34..."
+              placeholder={t('aIProductCreator.exIphone12ProMarmite')}
               value={productName}
               onChange={(e) => setProductName(e.target.value)}
               disabled={analyzing}
@@ -324,7 +326,7 @@ export function AIProductCreator() {
 
               {/* Caractéristiques techniques */}
               <div>
-                <h4 className="font-semibold mb-2">⚙️ Caractéristiques techniques</h4>
+                <h4 className="font-semibold mb-2">{t('aIProductCreator.caracteristiquesTechniques')}</h4>
                 <div className="grid grid-cols-2 gap-2">
                   {Object.entries(analysis.enrichedDescription.technicalSpecs).map(([key, value]) => (
                     <div key={key} className="text-sm">
@@ -339,7 +341,7 @@ export function AIProductCreator() {
                 <>
                   <Separator />
                   <div>
-                    <h4 className="font-semibold mb-2">📦 Contenu du paquet</h4>
+                    <h4 className="font-semibold mb-2">{t('aIProductCreator.contenuDuPaquet')}</h4>
                     <ul className="text-sm space-y-1">
                       {analysis.enrichedDescription.packageContent.map((item, idx) => (
                         <li key={idx}>• {item}</li>

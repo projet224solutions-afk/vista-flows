@@ -5,6 +5,7 @@
  */
 
 import { MapPin, Navigation2, ExternalLink, Route, Clock, ArrowRight } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +35,7 @@ export default function DestinationPreview({
     routeInfo,
     onClear
 }: DestinationPreviewProps) {
+    const { t } = useTranslation();
     if (!destinationCoords || !destinationAddress) return null;
 
     // Ouvrir dans Google Maps
@@ -90,7 +92,7 @@ export default function DestinationPreview({
                                 <Navigation2 className="w-4 h-4 text-[#ff4000]" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="text-xs text-gray-500 uppercase tracking-wide">Départ</p>
+                                <p className="text-xs text-gray-500 uppercase tracking-wide">{t('destinationPreview.depart')}</p>
                                 <p className="font-medium text-gray-900 truncate">
                                     {pickupParsed.main}
                                 </p>
@@ -142,7 +144,7 @@ export default function DestinationPreview({
                     <div className="grid grid-cols-2 gap-3">
                         {pickupCoords && (
                             <div className="bg-white/60 rounded-lg p-2">
-                                <p className="text-xs text-gray-500 mb-1">GPS Départ</p>
+                                <p className="text-xs text-gray-500 mb-1">{t('destinationPreview.gpsDepart')}</p>
                                 <p className="text-xs font-mono text-gray-700">
                                     {pickupCoords.latitude.toFixed(6)},
                                     <br />

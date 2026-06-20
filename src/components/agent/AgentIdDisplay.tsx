@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -16,6 +17,7 @@ export function AgentIdDisplay({
   className = '',
   layout = 'horizontal'
 }: AgentIdDisplayProps) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -49,7 +51,7 @@ export function AgentIdDisplay({
     <div
       className={`inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg cursor-pointer hover:bg-primary/20 transition-colors ${className}`}
       onClick={handleCopy}
-      title="Cliquer pour copier l'ID"
+      title={t('agentIdDisplay.cliquerPourCopierLId')}
     >
       <span className="text-xs font-medium text-primary">ID Agent:</span>
       <span className="text-xs font-mono font-bold text-primary">

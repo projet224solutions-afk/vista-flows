@@ -2,6 +2,7 @@
  * Page détail d'un bien immobilier
  */
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +41,7 @@ const amenityIcons: Record<string, string> = {
 };
 
 export function PropertyDetailDialog({ property, open, onClose, onRefresh, isOwner }: PropertyDetailDialogProps) {
+  const { t } = useTranslation();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const formatPrice = useFormatCurrency();
 
@@ -98,7 +100,7 @@ export function PropertyDetailDialog({ property, open, onClose, onRefresh, isOwn
             <div className="flex items-center justify-center h-full text-muted-foreground">
               <div className="text-center">
                 <Building2 className="h-16 w-16 mx-auto mb-2 opacity-30" />
-                <p className="text-sm">Aucune photo</p>
+                <p className="text-sm">{t('propertyDetailDialog.aucunePhoto')}</p>
               </div>
             </div>
           )}
@@ -192,7 +194,7 @@ export function PropertyDetailDialog({ property, open, onClose, onRefresh, isOwn
           {/* Amenities */}
           {property.amenities?.length > 0 && (
             <div>
-              <h3 className="font-semibold mb-2">Équipements</h3>
+              <h3 className="font-semibold mb-2">{t('propertyDetailDialog.equipements')}</h3>
               <div className="flex flex-wrap gap-2">
                 {property.amenities.map(a => (
                   <Badge key={a} variant="outline" className="gap-1">
@@ -207,7 +209,7 @@ export function PropertyDetailDialog({ property, open, onClose, onRefresh, isOwn
           {isOwner && (
             <div>
               <Separator className="my-4" />
-              <h3 className="font-semibold mb-3">📸 Photos du bien</h3>
+              <h3 className="font-semibold mb-3">{t('propertyDetailDialog.photosDuBien')}</h3>
               <PropertyImageUpload
                 propertyId={property.id}
                 existingImages={images as any}

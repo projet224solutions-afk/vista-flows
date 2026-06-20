@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +31,7 @@ export default function VendorRatingDialog({
   vendorName,
   onRatingSubmitted
 }: VendorRatingDialogProps) {
+  const { t } = useTranslation();
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [comment, setComment] = useState('');
@@ -37,7 +39,7 @@ export default function VendorRatingDialog({
 
   const handleSubmit = async () => {
     if (rating === 0) {
-      toast.error('Veuillez sélectionner une note');
+      toast.error(t('vendorRatingDialog.veuillezSelectionnerUneNote'));
       return;
     }
 
@@ -61,7 +63,7 @@ export default function VendorRatingDialog({
 
       if (error) throw error;
 
-      toast.success('Merci pour votre avis !', {
+      toast.success(t('vendorRatingDialog.merciPourVotreAvis'), {
         description: `Vous avez noté ${vendorName} avec ${rating}/5 étoiles`
       });
 
@@ -73,7 +75,7 @@ export default function VendorRatingDialog({
       setComment('');
     } catch (error) {
       console.error('Error submitting rating:', error);
-      toast.error('Erreur lors de l\'envoi de la note');
+      toast.error(t('vendorRatingDialog.erreurLorsDeLEnvoi'));
     } finally {
       setSubmitting(false);
     }
@@ -81,9 +83,9 @@ export default function VendorRatingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Notez votre expérience</DialogTitle>
+          <DialogTitle>{t('vendorRatingDialog.notezVotreExperience')}</DialogTitle>
           <DialogDescription>
             Comment évaluez-vous votre expérience avec <strong>{vendorName}</strong> ?
           </DialogDescription>
@@ -130,7 +132,7 @@ export default function VendorRatingDialog({
               Commentaire (optionnel)
             </label>
             <Textarea
-              placeholder="Partagez votre expérience avec ce vendeur..."
+              placeholder={t('vendorRatingDialog.partagezVotreExperienceAvecCe')}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               rows={4}

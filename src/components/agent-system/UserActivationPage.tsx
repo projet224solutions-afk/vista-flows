@@ -1,10 +1,10 @@
-// @ts-nocheck
 /**
  * 🎯 Page d'Activation Utilisateur - 224Solutions
  * Interface d'activation pour les utilisateurs invités par les agents
  */
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 export default function UserActivationPage() {
+  const { t } = useTranslation();
   const { invitationToken } = useParams<{ invitationToken: string }>();
   const navigate = useNavigate();
   const { activateUser, loading, error } = useUserActivation();
@@ -128,7 +129,7 @@ export default function UserActivationPage() {
             </Alert>
 
             <div className="text-center space-y-4">
-              <h3 className="text-lg font-semibold">Téléchargez l'Application</h3>
+              <h3 className="text-lg font-semibold">{t('userActivationPage.telechargezLApplication')}</h3>
               <p className="text-muted-foreground">
                 Pour une expérience optimale, téléchargez notre application :
               </p>
@@ -158,12 +159,12 @@ export default function UserActivationPage() {
             </div>
 
             <div className="border-t pt-4">
-              <h4 className="font-medium mb-2">Prochaines étapes :</h4>
+              <h4 className="font-medium mb-2">{t('userActivationPage.prochainesEtapes')}</h4>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Téléchargez et installez l'application</li>
-                <li>• Connectez-vous avec vos identifiants</li>
-                <li>• Explorez toutes les fonctionnalités</li>
-                <li>• Contactez votre agent pour toute question</li>
+                <li>{t('userActivationPage.telechargezEtInstallezLApplication')}</li>
+                <li>{t('userActivationPage.connectezVousAvecVosIdentifiants')}</li>
+                <li>{t('userActivationPage.explorezToutesLesFonctionnalites')}</li>
+                <li>{t('userActivationPage.contactezVotreAgentPourToute')}</li>
               </ul>
             </div>
           </CardContent>
@@ -243,11 +244,11 @@ export default function UserActivationPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-[#ff4000]" />
-                <span>Accès complet à la plateforme</span>
+                <span>{t('userActivationPage.accesCompletALaPlateforme')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-[#ff4000]" />
-                <span>Support de votre agent</span>
+                <span>{t('userActivationPage.supportDeVotreAgent')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-[#ff4000]" />
@@ -291,7 +292,7 @@ export default function UserActivationPage() {
             En activant votre compte, vous acceptez nos{' '}
             <a href="#" className="text-blue-600 hover:underline">conditions d'utilisation</a>
             {' '}et notre{' '}
-            <a href="#" className="text-blue-600 hover:underline">politique de confidentialité</a>.
+            <a href="#" className="text-blue-600 hover:underline">{t('userActivationPage.politiqueDeConfidentialite')}</a>.
           </div>
         </CardContent>
       </Card>

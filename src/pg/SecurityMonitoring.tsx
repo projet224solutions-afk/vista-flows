@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ import type { SystemHealth } from '@/services/MonitoringService';
 import type { SystemHealthReport, HealthCheckResult } from '@/services/HealthCheckService';
 
 export default function SecurityMonitoring() {
+  const { t } = useTranslation();
   const [health, setHealth] = React.useState<SystemHealth | null>(null);
   const [healthReport, setHealthReport] = React.useState<SystemHealthReport | null>(null);
   const [violations, setViolations] = React.useState<any[]>([]);
@@ -115,7 +117,7 @@ export default function SecurityMonitoring() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Monitoring Sécurité</h1>
+          <h1 className="text-3xl font-bold">{t('securityMonitoring.monitoringSecurite')}</h1>
           <p className="text-gray-500">
             Dernière mise à jour: {lastUpdate.toLocaleTimeString()}
           </p>
@@ -175,7 +177,7 @@ export default function SecurityMonitoring() {
             {/* Security */}
             <div className="text-center">
               <Shield className="h-5 w-5 mx-auto mb-2 text-gray-600" />
-              <p className="text-sm text-gray-500 mb-2">Sécurité</p>
+              <p className="text-sm text-gray-500 mb-2">{t('securityMonitoring.securite')}</p>
               <Badge className={getStatusColor(health?.security || 'unknown')}>
                 {health?.security?.toUpperCase() || 'UNKNOWN'}
               </Badge>
@@ -184,7 +186,7 @@ export default function SecurityMonitoring() {
             {/* Database */}
             <div className="text-center">
               <Database className="h-5 w-5 mx-auto mb-2 text-gray-600" />
-              <p className="text-sm text-gray-500 mb-2">Base de Données</p>
+              <p className="text-sm text-gray-500 mb-2">{t('securityMonitoring.baseDeDonnees')}</p>
               <Badge className={getStatusColor(health?.database || 'unknown')}>
                 {health?.database?.toUpperCase() || 'UNKNOWN'}
               </Badge>
@@ -294,7 +296,7 @@ export default function SecurityMonitoring() {
         <TabsContent value="health-checks" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Vérifications Santé Détaillées</CardTitle>
+              <CardTitle>{t('securityMonitoring.verificationsSanteDetaillees')}</CardTitle>
               <CardDescription>
                 {healthReport?.checksPerformed || 0} checks effectués -
                 {healthReport?.checksPassed || 0} réussis -
@@ -343,8 +345,8 @@ export default function SecurityMonitoring() {
               {violations.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <CheckCircle className="h-12 w-12 mx-auto mb-3 text-[#ff4000]" />
-                  <p>Aucune violation CSP détectée</p>
-                  <p className="text-sm">Le système est sécurisé</p>
+                  <p>{t('securityMonitoring.aucuneViolationCspDetectee')}</p>
+                  <p className="text-sm">{t('securityMonitoring.leSystemeEstSecurise')}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -378,7 +380,7 @@ export default function SecurityMonitoring() {
         <TabsContent value="diagnostics" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Diagnostic Système</CardTitle>
+              <CardTitle>{t('securityMonitoring.diagnosticSysteme')}</CardTitle>
               <CardDescription>
                 Informations détaillées sur l'état du système
               </CardDescription>
@@ -387,7 +389,7 @@ export default function SecurityMonitoring() {
               {/* Uptime */}
               <div className="p-4 border rounded-lg">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="font-medium">Uptime Système</p>
+                  <p className="font-medium">{t('securityMonitoring.uptimeSysteme')}</p>
                   <TrendingUp className="h-5 w-5 text-[#ff4000]" />
                 </div>
                 <p className="text-2xl font-bold">
@@ -398,14 +400,14 @@ export default function SecurityMonitoring() {
 
               {/* Services Status */}
               <div className="p-4 border rounded-lg">
-                <p className="font-medium mb-3">Services Sécurité</p>
+                <p className="font-medium mb-3">{t('securityMonitoring.servicesSecurite')}</p>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm">Monitoring Service</span>
+                    <span className="text-sm">{t('securityMonitoring.monitoringService')}</span>
                     <Badge className="bg-[#ff4000]">Actif</Badge>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm">Health Check Service</span>
+                    <span className="text-sm">{t('securityMonitoring.healthCheckService')}</span>
                     <Badge className="bg-[#ff4000]">Actif</Badge>
                   </div>
                   <div className="flex items-center justify-between">
@@ -435,7 +437,7 @@ export default function SecurityMonitoring() {
                     <li>Investiguer les {violations.length} violations CSP</li>
                   )}
                   {health?.overall === 'healthy' && (
-                    <li>Système en bon état, continuer la surveillance</li>
+                    <li>{t('securityMonitoring.systemeEnBonEtatContinuer')}</li>
                   )}
                 </ul>
               </div>

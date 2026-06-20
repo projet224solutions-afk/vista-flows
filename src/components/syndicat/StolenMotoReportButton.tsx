@@ -5,6 +5,7 @@
  */
 
 import React, { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
@@ -37,6 +38,7 @@ interface Props {
 }
 
 export default function StolenMotoReportButton({ moto, bureauName, bureauLocation }: Props) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -44,7 +46,7 @@ export default function StolenMotoReportButton({ moto, bureauName, bureauLocatio
 
   const handleReport = async () => {
     if (!description.trim()) {
-      toast.error('Veuillez décrire les circonstances du vol');
+      toast.error(t('stolenMotoReportButton.veuillezDecrireLesCirconstancesDu'));
       return;
     }
 
@@ -78,7 +80,7 @@ export default function StolenMotoReportButton({ moto, bureauName, bureauLocatio
 
         console.log('✅ Véhicule déclaré volé via RPC:', result);
 
-        toast.success('🚨 Alerte de vol enregistrée', {
+        toast.success(t('stolenMotoReportButton.alerteDeVolEnregistree'), {
           description: 'Tous les bureaux ont été notifiés. Le véhicule est bloqué.'
         });
       } else {
@@ -94,7 +96,7 @@ export default function StolenMotoReportButton({ moto, bureauName, bureauLocatio
 
         await storeOfflineEvent('security_alert', alertData);
 
-        toast.success('📴 Alerte enregistrée localement', {
+        toast.success(t('stolenMotoReportButton.alerteEnregistreeLocalement'), {
           description: 'Elle sera synchronisée à la reconnexion'
         });
       }
@@ -103,7 +105,7 @@ export default function StolenMotoReportButton({ moto, bureauName, bureauLocatio
       setDescription('');
     } catch (error: any) {
       console.error('❌ Erreur déclaration vol:', error);
-      toast.error('Erreur lors de la déclaration', {
+      toast.error(t('stolenMotoReportButton.erreurLorsDeLaDeclaration'), {
         description: error.message || 'Impossible d\'enregistrer l\'alerte de vol'
       });
     } finally {
@@ -119,7 +121,7 @@ export default function StolenMotoReportButton({ moto, bureauName, bureauLocatio
           Déclarer vol
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-[#ff4000]">
             <Shield className="w-5 h-5" />
@@ -133,19 +135,19 @@ export default function StolenMotoReportButton({ moto, bureauName, bureauLocatio
         <div className="space-y-4">
           {/* Informations de la moto */}
           <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-            <h4 className="font-semibold text-[#ff4000] mb-2">Moto concernée</h4>
+            <h4 className="font-semibold text-[#ff4000] mb-2">{t('stolenMotoReportButton.motoConcernee')}</h4>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
                 <span className="text-[#ff4000] font-medium">Plaque:</span> {moto.plate_number}
               </div>
               <div>
-                <span className="text-[#ff4000] font-medium">Châssis:</span> {moto.serial_number}
+                <span className="text-[#ff4000] font-medium">{t('stolenMotoReportButton.chassis')}</span> {moto.serial_number}
               </div>
               <div>
                 <span className="text-[#ff4000] font-medium">Marque:</span> {moto.brand} {moto.model}
               </div>
               <div>
-                <span className="text-[#ff4000] font-medium">Propriétaire:</span> {moto.owner_name}
+                <span className="text-[#ff4000] font-medium">{t('stolenMotoReportButton.proprietaire')}</span> {moto.owner_name}
               </div>
             </div>
           </div>
@@ -157,7 +159,7 @@ export default function StolenMotoReportButton({ moto, bureauName, bureauLocatio
             </Label>
             <Textarea
               id="description"
-              placeholder="Décrivez les circonstances du vol: date, heure, lieu, témoins, etc."
+              placeholder={t('stolenMotoReportButton.decrivezLesCirconstancesDuVol')}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}

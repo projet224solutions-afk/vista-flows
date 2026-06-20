@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -28,8 +29,17 @@ import { useGeoDistance, calculateDistance as calcDistanceFn } from '@/hooks/use
 // Rayon maximum en km (même logique que la page de proximité)
 const RADIUS_KM = 20;
 
+// ⚠️ `vendors` a des grants au niveau colonne: address/phone/email/kyc_status sont
+// interdits au rôle anonyme et font échouer TOUTE la requête (42501). On ne demande
+// que des colonnes publiques, avec un repli minimal garanti lisible.
+const VENDOR_PUBLIC_COLS =
+  'id, user_id, business_name, description, logo_url, rating, city, neighborhood, latitude, longitude, business_type, service_type, is_verified, shop_slug';
+const VENDOR_MINIMAL_COLS =
+  'id, user_id, business_name, latitude, longitude, city, neighborhood, logo_url, business_type, service_type, shop_slug';
+
 interface Vendor {
   id: string;
+  user_id?: string | null;
   business_name: string;
   description?: string | null;
   address?: string | null;
@@ -52,6 +62,7 @@ interface NearbyVendorsModalProps {
 }
 
 export function NearbyVendorsModal({ open, onOpenChange }: NearbyVendorsModalProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { userPosition, positionReady, usingRealLocation, refreshPosition, DEFAULT_POSITION } = useGeoDistance();
 
@@ -69,21 +80,27 @@ export function NearbyVendorsModal({ open, onOpenChange }: NearbyVendorsModalPro
       setLoading(true);
       setError(null);
       try {
-        let query = supabase
-          .from('vendors')
-          .select(
-            'id, business_name, description, address, logo_url, rating, city, neighborhood, latitude, longitude, business_type, service_type, is_verified, shop_slug'
-          )
-          .eq('is_active', true)
-          .limit(200);
+        const runQuery = (columns: string) => {
+          let query = supabase
+            .from('vendors')
+            .select(columns)
+            .eq('is_active', true)
+            .limit(200);
 
-        if (businessTypeFilter !== 'all') query = query.eq('business_type', businessTypeFilter);
-        if (serviceTypeFilter !== 'all') query = query.eq('service_type', serviceTypeFilter);
+          if (businessTypeFilter !== 'all') query = query.eq('business_type', businessTypeFilter);
+          if (serviceTypeFilter !== 'all') query = query.eq('service_type', serviceTypeFilter);
+          return query;
+        };
 
-        const { data, error: dbError } = await query;
-        if (dbError) throw dbError;
+        // 1) Colonnes publiques complètes, 2) repli blindé sur le strict minimum.
+        let { data, error: dbError } = await runQuery(VENDOR_PUBLIC_COLS);
+        if (dbError) {
+          console.warn('[NearbyVendorsModal] select public refusé, repli colonnes minimales:', dbError.message);
+          ({ data, error: dbError } = await runQuery(VENDOR_MINIMAL_COLS));
+          if (dbError) throw dbError;
+        }
 
-        let list: Vendor[] = (data || []).map((v) => ({
+        let list: Vendor[] = (data || []).map((v: any) => ({
           ...v,
           business_type: v.business_type as Vendor['business_type'],
           service_type: v.service_type as Vendor['service_type'],
@@ -178,7 +195,7 @@ export function NearbyVendorsModal({ open, onOpenChange }: NearbyVendorsModalPro
           <DialogHeader className="space-y-1">
             <div className="flex items-center gap-2 text-white/80 text-xs sm:text-sm font-medium">
               <Navigation className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span>Boutiques à proximité</span>
+              <span>{t('nearbyVendorsModal.boutiquesAProximite')}</span>
             </div>
             <DialogTitle className="text-lg sm:text-2xl font-bold text-white flex items-center gap-2 sm:gap-3">
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
@@ -192,7 +209,7 @@ export function NearbyVendorsModal({ open, onOpenChange }: NearbyVendorsModalPro
           <div className="mt-4 relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
-              placeholder="Rechercher par nom, ville, quartier..."
+              placeholder={t('nearbyVendorsModal.rechercherParNomVilleQuartier')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-12 h-12 rounded-xl bg-white border-0 text-foreground placeholder:text-muted-foreground shadow-lg"
@@ -273,14 +290,14 @@ export function NearbyVendorsModal({ open, onOpenChange }: NearbyVendorsModalPro
               <div className="w-16 h-16 rounded-2xl bg-vendeur-primary/10 flex items-center justify-center mb-4">
                 <RefreshCw className="w-8 h-8 animate-spin text-vendeur-primary" />
               </div>
-              <p className="text-sm font-medium">Chargement des boutiques...</p>
+              <p className="text-sm font-medium">{t('nearbyVendorsModal.chargementDesBoutiques')}</p>
             </div>
           ) : error ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center mb-4">
                 <MapPin className="w-8 h-8 text-destructive" />
               </div>
-              <p className="text-sm font-medium text-foreground mb-2">Erreur de chargement</p>
+              <p className="text-sm font-medium text-foreground mb-2">{t('nearbyVendorsModal.erreurDeChargement')}</p>
               <p className="text-sm text-muted-foreground mb-4">{error}</p>
               <Button variant="outline" onClick={handleRefresh} className="gap-2">
                 <RefreshCw className="w-4 h-4" />
@@ -292,7 +309,7 @@ export function NearbyVendorsModal({ open, onOpenChange }: NearbyVendorsModalPro
               <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mb-4">
                 <Store className="w-8 h-8 text-muted-foreground" />
               </div>
-              <p className="text-sm font-medium text-foreground mb-2">Aucune boutique trouvée</p>
+              <p className="text-sm font-medium text-foreground mb-2">{t('nearbyVendorsModal.aucuneBoutiqueTrouvee')}</p>
               <p className="text-sm text-muted-foreground mb-4">
                 {searchQuery ? 'Essayez un autre terme de recherche' : `Aucune boutique dans un rayon de ${RADIUS_KM} km`}
               </p>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { backendFetch } from '@/services/backendApi';
 
 export interface Bureau {
   id: string;
@@ -195,6 +196,7 @@ export const usePDGSyndicatData = () => {
     president_email?: string;
     president_phone?: string;
     full_location?: string;
+    password?: string;
   }) => {
     try {
       // Vérifier si l'email est déjà utilisé par un autre bureau
@@ -246,6 +248,25 @@ export const usePDGSyndicatData = () => {
 
       if (error) throw error;
 
+      // Provisionner le compte de connexion du président (email + mot de passe).
+      // ⚠️ Sans cette étape, le président ne peut PAS se connecter : aucun compte Auth
+      // n'existe. Le mot de passe saisi à la création était auparavant ignoré.
+      let loginProvisioned = false;
+      if (formData.president_email && formData.password && bureau?.id) {
+        const provision = await backendFetch<{ success: boolean; action?: string; error?: string }>(
+          '/edge-functions/auth/reset-bureau-password',
+          { method: 'POST', body: { bureau_id: bureau.id, new_password: formData.password } },
+        );
+        loginProvisioned = provision.success;
+        if (!provision.success) {
+          console.error('Provisionnement compte président échoué:', provision.error);
+          toast.warning(
+            "Bureau créé, mais le compte de connexion du président n'a pas pu être créé. " +
+            "Utilisez « Réinitialiser le mot de passe » pour réessayer.",
+          );
+        }
+      }
+
       // Envoyer l'email avec le lien permanent
       if (formData.president_email) {
         await supabase.functions.invoke('send-bureau-access-email', {
@@ -257,7 +278,9 @@ export const usePDGSyndicatData = () => {
             access_token: access_token
           }
         });
-        toast.success('Bureau créé et email envoyé avec le lien d\'accès');
+        if (loginProvisioned || !formData.password) {
+          toast.success('Bureau créé et email envoyé avec le lien d\'accès');
+        }
       } else {
         toast.success('Bureau créé avec succès');
       }

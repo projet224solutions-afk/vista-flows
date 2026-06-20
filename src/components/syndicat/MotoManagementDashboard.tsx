@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,6 +37,7 @@ interface Props {
 }
 
 export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau Syndicat' }: Props) {
+  const { t } = useTranslation();
   const [motos, setMotos] = useState<Moto[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -106,7 +108,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
       setMotos(transformedData);
     } catch (error) {
       console.error('Erreur chargement motos:', error);
-      toast.error('Erreur lors du chargement');
+      toast.error(t('motoManagementDashboard.erreurLorsDuChargement'));
     } finally {
       setLoading(false);
     }
@@ -136,7 +138,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
 
       if (error) throw error;
 
-      toast.success('Véhicule validé avec succès!');
+      toast.success(t('motoManagementDashboard.vehiculeValideAvecSucces'));
       setValidationComment('');
       setSelectedMoto(null);
       loadMotos();
@@ -165,7 +167,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
 
       if (error) throw error;
 
-      toast.success('Véhicule signalé volé! Alerte diffusée à tous les bureaux.');
+      toast.success(t('motoManagementDashboard.vehiculeSignaleVoleAlerteDiffusee'));
       setValidationComment('');
       setSelectedMoto(null);
       loadMotos();
@@ -196,7 +198,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
       <div className="flex justify-between items-center gap-4">
         <div className="flex-1">
           <Input
-            placeholder="Rechercher par immatriculation, châssis, propriétaire..."
+            placeholder={t('motoManagementDashboard.rechercherParImmatriculationChassisPropr')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -206,11 +208,11 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tous les statuts</SelectItem>
+            <SelectItem value="all">{t('motoManagementDashboard.tousLesStatuts')}</SelectItem>
             <SelectItem value="pending">En attente</SelectItem>
-            <SelectItem value="validated">Validés</SelectItem>
-            <SelectItem value="rejected">Refusés</SelectItem>
-            <SelectItem value="stolen">Volées</SelectItem>
+            <SelectItem value="validated">{t('motoManagementDashboard.valides')}</SelectItem>
+            <SelectItem value="rejected">{t('motoManagementDashboard.refuses')}</SelectItem>
+            <SelectItem value="stolen">{t('motoManagementDashboard.volees')}</SelectItem>
             <SelectItem value="suspended">Suspendus</SelectItem>
           </SelectContent>
         </Select>
@@ -221,7 +223,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
               setMotoForBadge(motos[0]);
               setShowBadgeGenerator(true);
             } else {
-              toast.error('Aucune moto disponible pour générer un badge');
+              toast.error(t('motoManagementDashboard.aucuneMotoDisponiblePourGenerer'));
             }
           }}
           className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -233,7 +235,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
 
       <Card>
         <CardHeader>
-          <CardTitle>Liste des Motos Enregistrées</CardTitle>
+          <CardTitle>{t('motoManagementDashboard.listeDesMotosEnregistrees')}</CardTitle>
           <CardDescription>{filteredMotos.length} moto(s) trouvée(s)</CardDescription>
         </CardHeader>
         <CardContent>
@@ -248,8 +250,8 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
                   <TableRow>
                     <TableHead>Immatriculation</TableHead>
                     <TableHead>Marque/Modèle</TableHead>
-                    <TableHead>Propriétaire</TableHead>
-                    <TableHead>Téléphone</TableHead>
+                    <TableHead>{t('motoManagementDashboard.proprietaire')}</TableHead>
+                    <TableHead>{t('motoManagementDashboard.telephone')}</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Actions</TableHead>
@@ -279,7 +281,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
                             </DialogTrigger>
                           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                             <DialogHeader>
-                              <DialogTitle>Détails de la Moto</DialogTitle>
+                              <DialogTitle>{t('motoManagementDashboard.detailsDeLaMoto')}</DialogTitle>
                             </DialogHeader>
                             {selectedMoto && (
                               <div className="space-y-6">
@@ -290,7 +292,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
                                     <p className="font-medium">{selectedMoto.plate_number}</p>
                                   </div>
                                   <div>
-                                    <p className="text-sm text-muted-foreground">Numéro de série</p>
+                                    <p className="text-sm text-muted-foreground">{t('motoManagementDashboard.numeroDeSerie')}</p>
                                     <p className="font-medium">{selectedMoto.serial_number}</p>
                                   </div>
                                   <div>
@@ -298,15 +300,15 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
                                     <p className="font-medium">{selectedMoto.brand}</p>
                                   </div>
                                   <div>
-                                    <p className="text-sm text-muted-foreground">Modèle</p>
+                                    <p className="text-sm text-muted-foreground">{t('motoManagementDashboard.modele')}</p>
                                     <p className="font-medium">{selectedMoto.model}</p>
                                   </div>
                                   <div>
-                                    <p className="text-sm text-muted-foreground">Propriétaire</p>
+                                    <p className="text-sm text-muted-foreground">{t('motoManagementDashboard.proprietaire')}</p>
                                     <p className="font-medium">{selectedMoto.owner_name}</p>
                                   </div>
                                   <div>
-                                    <p className="text-sm text-muted-foreground">Téléphone</p>
+                                    <p className="text-sm text-muted-foreground">{t('motoManagementDashboard.telephone')}</p>
                                     <p className="font-medium">{selectedMoto.owner_phone}</p>
                                   </div>
                                   <div>
@@ -323,7 +325,7 @@ export default function MotoManagementDashboard({ bureauId, bureauName = 'Bureau
                                       <Textarea
                                         value={validationComment}
                                         onChange={(e) => setValidationComment(e.target.value)}
-                                        placeholder="Ajouter un commentaire (optionnel)"
+                                        placeholder={t('motoManagementDashboard.ajouterUnCommentaireOptionnel')}
                                         rows={3}
                                       />
                                     </div>

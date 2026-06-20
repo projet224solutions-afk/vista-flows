@@ -1,377 +1,142 @@
 /**
- * MODULE AGRICULTURE PROFESSIONNEL
- * Inspiré de: FarmLogs, AgroStar, Agrimarket
- * Gestion complète: catalogue produits, commandes, traçabilité, saisons
+ * MODULE AGRICULTURE PROFESSIONNEL (réel) — catalogue + QR traçabilité + commandes temps réel.
+ * Inspiré de : JD Agriculture (traçabilité QR) + FarmLogs (parcelles/saisons).
  */
 
-import { useState } from 'react';
+import { useMemo } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Money } from '@/components/Money';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Progress } from '@/components/ui/progress';
-import {
-  Sprout, Apple, Egg, Fish, DollarSign, TrendingUp,
-  Plus, Package, ShoppingCart, Users, Calendar,
-  MapPin, Truck, Sun, CloudRain, Leaf, Scale
-} from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
+import { Sprout, TrendingUp, Package, ShoppingCart, Users, Sun, CloudRain, Calendar, Leaf, AlertTriangle } from 'lucide-react';
+import { useFarmProducts, useFarmOrders } from '@/hooks/useFarm';
+import { FarmProductCatalog } from '@/components/professional-services/modules/agriculture/FarmProductCatalog';
+import { FarmOrdersKanban } from '@/components/professional-services/modules/agriculture/FarmOrdersKanban';
 
-interface AgricultureModuleProps {
-  serviceId: string;
-  businessName?: string;
-}
+interface AgricultureModuleProps { serviceId: string; businessName?: string; }
 
-interface AgriProduct {
-  id: string;
-  name: string;
-  category: string;
-  unit: string;
-  pricePerUnit: number;
-  stockQuantity: number;
-  season: string;
-  origin: string;
-  organic: boolean;
-  status: 'disponible' | 'stock_bas' | 'rupture' | 'hors_saison';
-}
-
-interface AgriOrder {
-  id: string;
-  clientName: string;
-  clientPhone: string;
-  clientType: 'particulier' | 'grossiste' | 'restaurant' | 'marche';
-  items: { product: string; quantity: number; unit: string }[];
-  total: number;
-  status: 'nouveau' | 'prepare' | 'livre' | 'termine';
-  date: string;
-  deliveryType: 'collecte' | 'livraison';
-}
-
-const CATEGORIES = [
-  { id: 'fruits', name: 'Fruits & Légumes', icon: Apple, emoji: '🍎', color: '' },
-  { id: 'cereals', name: 'Céréales & Grains', icon: Sprout, emoji: '🌾', color: '' },
-  { id: 'dairy', name: 'Produits Laitiers', icon: Egg, emoji: '🥛', color: '' },
-  { id: 'meat', name: 'Viandes & Volaille', icon: Fish, emoji: '🥩', color: '' },
-  { id: 'fish', name: 'Poissons', icon: Fish, emoji: '🐟', color: '' },
-  { id: 'spices', name: 'Épices & Condiments', icon: Leaf, emoji: '🌿', color: '' },
-];
-
-const SEASONS = ['Toute l\'année', 'Saison sèche (Nov-Avr)', 'Saison des pluies (Mai-Oct)', 'Été', 'Hiver'];
-
-const ORDER_STATUS: Record<string, { label: string; color: string }> = {
-  nouveau: { label: 'Nouveau', color: 'bg-blue-100 text-blue-800' },
-  prepare: { label: 'Préparé', color: 'bg-orange-100 text-[#ff4000]' },
-  livre: { label: 'Livré', color: 'bg-orange-100 text-[#ff4000]' },
-  termine: { label: 'Terminé', color: 'bg-muted text-muted-foreground' },
-};
+const SEASONS = ['Saison sèche (Nov-Avr)', 'Saison des pluies (Mai-Oct)', "Toute l'année"];
 
 export function AgricultureModule({ serviceId, businessName }: AgricultureModuleProps) {
-  const [activeTab, setActiveTab] = useState('produits');
-  const [showNewProduct, setShowNewProduct] = useState(false);
+  const { t } = useTranslation();
+  const { products, lowStock } = useFarmProducts(serviceId);
+  const { columns, active } = useFarmOrders(serviceId);
 
-  const [products] = useState<AgriProduct[]>([
-    { id: '1', name: 'Mangues Kent', category: 'fruits', unit: 'kg', pricePerUnit: 15000, stockQuantity: 500, season: 'Saison sèche (Nov-Avr)', origin: 'Kankan', organic: true, status: 'disponible' },
-    { id: '2', name: 'Riz local étuvé', category: 'cereals', unit: 'sac 50kg', pricePerUnit: 350000, stockQuantity: 80, season: "Toute l'année", origin: 'Faranah', organic: false, status: 'disponible' },
-    { id: '3', name: 'Poulet fermier', category: 'meat', unit: 'pièce', pricePerUnit: 85000, stockQuantity: 25, season: "Toute l'année", origin: 'Kindia', organic: true, status: 'disponible' },
-    { id: '4', name: 'Tomates fraîches', category: 'fruits', unit: 'caisse 20kg', pricePerUnit: 120000, stockQuantity: 8, season: 'Saison sèche (Nov-Avr)', origin: 'Dalaba', organic: true, status: 'stock_bas' },
-    { id: '5', name: 'Miel de forêt', category: 'spices', unit: 'litre', pricePerUnit: 45000, stockQuantity: 0, season: 'Saison sèche (Nov-Avr)', origin: 'N\'Zérékoré', organic: true, status: 'rupture' },
-    { id: '6', name: 'Poisson fumé', category: 'fish', unit: 'kg', pricePerUnit: 35000, stockQuantity: 40, season: "Toute l'année", origin: 'Boffa', organic: false, status: 'disponible' },
-  ]);
+  const availableCount = products.filter((p) => p.is_active && p.stock_quantity > 0).length;
+  const organicCount = products.filter((p) => p.organic).length;
+  const pendingOrders = columns.nouvelles.length;
+  const ordersValue = active.reduce((s, o) => s + (Number(o.total) || 0), 0);
 
-  const [orders] = useState<AgriOrder[]>([
-    { id: '1', clientName: 'Restaurant Le Jardin', clientPhone: '+224 621 00 00 00', clientType: 'restaurant', items: [{ product: 'Mangues Kent', quantity: 50, unit: 'kg' }, { product: 'Tomates fraîches', quantity: 2, unit: 'caisse' }], total: 990000, status: 'prepare', date: '2026-03-19', deliveryType: 'livraison' },
-    { id: '2', clientName: 'Mamadou Grossiste', clientPhone: '+224 622 00 00 00', clientType: 'grossiste', items: [{ product: 'Riz local étuvé', quantity: 10, unit: 'sac' }], total: 3500000, status: 'nouveau', date: '2026-03-19', deliveryType: 'collecte' },
-    { id: '3', clientName: 'Mme Sow', clientPhone: '+224 623 00 00 00', clientType: 'particulier', items: [{ product: 'Poulet fermier', quantity: 3, unit: 'pièce' }], total: 255000, status: 'livre', date: '2026-03-18', deliveryType: 'livraison' },
-  ]);
+  const nextHarvest = useMemo(() => {
+    const dates = products.map((p) => p.harvest_date).filter((d): d is string => !!d && new Date(d) >= new Date()).sort();
+    if (!dates.length) return null;
+    return Math.max(0, Math.ceil((new Date(dates[0]).getTime() - Date.now()) / 86_400_000));
+  }, [products]);
 
-  // Stats
-  const totalProducts = products.length;
-  const availableProducts = products.filter(p => p.status === 'disponible').length;
-  const lowStock = products.filter(p => p.status === 'stock_bas' || p.status === 'rupture').length;
-  const organicCount = products.filter(p => p.organic).length;
-  const totalOrderValue = orders.reduce((acc, o) => acc + o.total, 0);
-  const pendingOrders = orders.filter(o => o.status === 'nouveau' || o.status === 'prepare').length;
+  const Kpi = ({ label, value, Icon, accent, badge }: { label: string; value: React.ReactNode; Icon: any; accent?: string; badge?: number }) => (
+    <Card className={accent || ''}>
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between"><Icon className="h-4 w-4 opacity-80" />{badge ? <Badge className="bg-red-500">{badge}</Badge> : null}</div>
+        <p className="mt-1 text-2xl font-bold">{value}</p>
+        <p className="text-xs opacity-80">{label}</p>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-gradient-to-br from-[#ff4000] to-[#ff4000] rounded-xl">
-            <Sprout className="w-8 h-8 text-white" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold">{businessName || 'Exploitation Agricole'}</h2>
-            <p className="text-muted-foreground">Produits frais & locaux</p>
-          </div>
+      <div className="flex items-center gap-3">
+        <div className="rounded-xl bg-gradient-to-br from-green-600 to-[#ff4000] p-3"><Sprout className="h-8 w-8 text-white" /></div>
+        <div>
+          <h2 className="text-2xl font-bold">{businessName || 'Exploitation Agricole'}</h2>
+          <p className="text-muted-foreground">{t('agricultureModule.produitsFraisLocauxTracabiliteGarantie')}</p>
         </div>
-        <div className="flex gap-2">
-          {organicCount > 0 && (
-            <Badge className="bg-orange-100 text-[#ff4000] gap-1">
-              <Leaf className="w-3 h-3" /> {organicCount} Bio
-            </Badge>
-          )}
-        </div>
+        {organicCount > 0 && <Badge className="ml-auto gap-1 bg-green-100 text-green-700"><Leaf className="h-3 w-3" />{organicCount} Bio</Badge>}
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <Card className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white">
-          <CardContent className="p-4">
-            <Package className="h-4 w-4 opacity-80" />
-            <p className="text-2xl font-bold mt-1">{totalProducts}</p>
-            <p className="text-xs opacity-80">Produits</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white">
-          <CardContent className="p-4">
-            <Apple className="h-4 w-4 opacity-80" />
-            <p className="text-2xl font-bold mt-1">{availableProducts}</p>
-            <p className="text-xs opacity-80">Disponibles</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-[#ff4000] to-[#ff4000] text-white">
-          <CardContent className="p-4">
-            <ShoppingCart className="h-4 w-4 opacity-80" />
-            <p className="text-2xl font-bold mt-1">{pendingOrders}</p>
-            <p className="text-xs opacity-80">Commandes en cours</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-[#04439e] text-white">
-          <CardContent className="p-4">
-            <DollarSign className="h-4 w-4 opacity-80" />
-            <p className="text-lg font-bold mt-1">{(totalOrderValue / 1e6).toFixed(1)}M</p>
-            <p className="text-xs opacity-80">Ventes GNF</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-[#ff4000] to-orange-500 text-white">
-          <CardContent className="p-4">
-            <TrendingUp className="h-4 w-4 opacity-80" />
-            <p className="text-2xl font-bold mt-1">{lowStock}</p>
-            <p className="text-xs opacity-80">Alertes stock</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-[#ff4000] to-[#04439e] text-white">
-          <CardContent className="p-4">
-            <Leaf className="h-4 w-4 opacity-80" />
-            <p className="text-2xl font-bold mt-1">{organicCount}</p>
-            <p className="text-xs opacity-80">Produits Bio</p>
-          </CardContent>
-        </Card>
+      {/* KPIs réels */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+        <Kpi label={t('agricultureModule.produitsEnVente')} value={availableCount} Icon={Package} />
+        <Kpi label={t('agricultureModule.commandesEnAttente')} value={pendingOrders} Icon={ShoppingCart} badge={pendingOrders || undefined} />
+        <Kpi label={t('agricultureModule.valeurCommandesActives')} value={`${(ordersValue / 1e6).toFixed(1)}M`} Icon={TrendingUp} />
+        <Kpi label="Stock faible" value={lowStock.length} Icon={AlertTriangle} accent={lowStock.length ? 'border-red-200' : ''} />
+        <Kpi label={t('agricultureModule.prochaineRecolte')} value={nextHarvest === null ? '—' : `${nextHarvest} j`} Icon={Calendar} />
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      {lowStock.length > 0 && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="flex flex-wrap items-center gap-2 py-3 text-sm text-amber-800">
+            <AlertTriangle className="h-4 w-4" />Stock faible :
+            {lowStock.slice(0, 3).map((p) => <Badge key={p.id} variant="outline" className="border-amber-300">{p.name} ({p.stock_quantity} {p.unit})</Badge>)}
+          </CardContent>
+        </Card>
+      )}
+
+      <Tabs defaultValue="produits">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="produits"><Package className="h-4 w-4 mr-1 hidden sm:inline" /> Produits</TabsTrigger>
-          <TabsTrigger value="commandes"><ShoppingCart className="h-4 w-4 mr-1 hidden sm:inline" /> Commandes</TabsTrigger>
-          <TabsTrigger value="clients"><Users className="h-4 w-4 mr-1 hidden sm:inline" /> Clients</TabsTrigger>
-          <TabsTrigger value="saisons"><Sun className="h-4 w-4 mr-1 hidden sm:inline" /> Saisons</TabsTrigger>
+          <TabsTrigger value="produits"><Package className="mr-1 h-4 w-4 hidden sm:inline" />{t('agricultureModule.produits')}</TabsTrigger>
+          <TabsTrigger value="commandes"><ShoppingCart className="mr-1 h-4 w-4 hidden sm:inline" />{t('agricultureModule.commandes')}</TabsTrigger>
+          <TabsTrigger value="clients"><Users className="mr-1 h-4 w-4 hidden sm:inline" />Clients</TabsTrigger>
+          <TabsTrigger value="saisons"><Sun className="mr-1 h-4 w-4 hidden sm:inline" />Saisons</TabsTrigger>
         </TabsList>
 
-        {/* PRODUITS */}
-        <TabsContent value="produits" className="space-y-4">
-          {/* Categories */}
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-            {CATEGORIES.map(cat => {
-              const _Icon = cat.icon;
-              const count = products.filter(p => p.category === cat.id).length;
-              return (
-                <Card key={cat.id} className="cursor-pointer hover:shadow-md transition-all group">
-                  <CardContent className="p-3 text-center">
-                    <div className={`w-10 h-10 mx-auto mb-2 rounded-xl bg-gradient-to-br ${cat.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                      <span className="text-lg">{cat.emoji}</span>
-                    </div>
-                    <p className="text-xs font-medium">{cat.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{count} articles</p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-
-          <div className="flex justify-between items-center">
-            <h3 className="font-semibold">Mes produits ({products.length})</h3>
-            <Dialog open={showNewProduct} onOpenChange={setShowNewProduct}>
-              <DialogTrigger asChild>
-                <Button size="sm"><Plus className="h-4 w-4 mr-1" /> Nouveau produit</Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle>Ajouter un produit agricole</DialogTitle></DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label>Nom du produit</Label><Input placeholder="Ex: Mangues Kent" /></div>
-                    <div className="space-y-2">
-                      <Label>Catégorie</Label>
-                      <Select><SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger>
-                        <SelectContent>{CATEGORIES.map(c => <SelectItem key={c.id} value={c.id}>{c.emoji} {c.name}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2"><Label>Prix/unité (GNF)</Label><Input type="number" placeholder="0" /></div>
-                    <div className="space-y-2"><Label>Unité</Label><Input placeholder="kg, pièce, sac..." /></div>
-                    <div className="space-y-2"><Label>Stock</Label><Input type="number" placeholder="0" /></div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label>Origine</Label><Input placeholder="Région de production" /></div>
-                    <div className="space-y-2">
-                      <Label>Saison</Label>
-                      <Select><SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger>
-                        <SelectContent>{SEASONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setShowNewProduct(false)}>Annuler</Button>
-                  <Button onClick={() => { toast.success('Produit ajouté'); setShowNewProduct(false); }}>Ajouter</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          {/* Product list */}
-          <div className="space-y-3">
-            {products.map(product => {
-              const cat = CATEGORIES.find(c => c.id === product.category);
-              const stockBadge = product.status === 'disponible'
-                ? <Badge className="bg-orange-100 text-[#ff4000] text-xs">{product.stockQuantity} {product.unit}</Badge>
-                : product.status === 'stock_bas'
-                ? <Badge className="bg-orange-100 text-[#ff4000] text-xs">Stock bas ({product.stockQuantity})</Badge>
-                : <Badge className="bg-orange-100 text-[#ff4000] text-xs">Rupture</Badge>;
-              return (
-                <Card key={product.id} className="hover:shadow-sm transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <span className="text-2xl">{cat?.emoji || '🌱'}</span>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h4 className="font-semibold text-sm">{product.name}</h4>
-                            {stockBadge}
-                            {product.organic && <Badge className="bg-orange-50 text-[#ff4000] text-[10px] border-orange-200">🌿 Bio</Badge>}
-                          </div>
-                          <div className="flex gap-3 text-xs text-muted-foreground mt-0.5">
-                            <span><MapPin className="w-3 h-3 inline" /> {product.origin}</span>
-                            <span><Calendar className="w-3 h-3 inline" /> {product.season}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0 ml-4">
-                        <p className="font-bold text-primary"><Money amount={product.pricePerUnit} from="GNF" /></p>
-                        <p className="text-xs text-muted-foreground">/{product.unit}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+        <TabsContent value="produits" className="mt-4">
+          <FarmProductCatalog serviceId={serviceId} />
         </TabsContent>
 
-        {/* COMMANDES */}
-        <TabsContent value="commandes" className="space-y-4">
-          <h3 className="font-semibold">Commandes ({orders.length})</h3>
-          <div className="space-y-3">
-            {orders.map(order => {
-              const st = ORDER_STATUS[order.status];
-              return (
-                <Card key={order.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="font-semibold text-sm">{order.clientName}</h4>
-                          <Badge className={st.color}>{st.label}</Badge>
-                          <Badge variant="outline" className="text-xs">
-                            {order.clientType === 'grossiste' ? '📦 Grossiste' : order.clientType === 'restaurant' ? '🍽️ Restaurant' : order.clientType === 'marche' ? '🏪 Marché' : '👤 Particulier'}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {order.deliveryType === 'livraison' ? <><Truck className="w-3 h-3 inline" /> Livraison</> : <><MapPin className="w-3 h-3 inline" /> Collecte sur place</>}
-                          {' • '}{order.date}
-                        </p>
-                      </div>
-                      <p className="font-bold text-primary"><Money amount={order.total} from="GNF" /></p>
-                    </div>
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {order.items.map((item, i) => (
-                        <Badge key={i} variant="outline" className="text-xs">{item.quantity} {item.unit} {item.product}</Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+        <TabsContent value="commandes" className="mt-4">
+          <FarmOrdersKanban serviceId={serviceId} />
         </TabsContent>
 
-        {/* CLIENTS */}
-        <TabsContent value="clients" className="space-y-4">
+        <TabsContent value="clients" className="mt-4">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Users className="w-5 h-5" /> Réseau de distribution</CardTitle>
-              <CardDescription>Vos acheteurs réguliers et partenaires</CardDescription>
-            </CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" />Mes acheteurs</CardTitle><CardDescription>{t('agricultureModule.clientsAyantCommandeChezVous')}</CardDescription></CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                  { type: 'Particuliers', icon: '👤', count: 45, color: 'bg-blue-100' },
-                  { type: 'Restaurants', icon: '🍽️', count: 12, color: 'bg-orange-100' },
-                  { type: 'Grossistes', icon: '📦', count: 8, color: 'bg-blue-100' },
-                  { type: 'Marchés', icon: '🏪', count: 5, color: 'bg-orange-100' },
-                ].map(seg => (
-                  <Card key={seg.type} className={`${seg.color} border-none`}>
-                    <CardContent className="p-4 text-center">
-                      <span className="text-3xl">{seg.icon}</span>
-                      <p className="text-2xl font-bold mt-1">{seg.count}</p>
-                      <p className="text-xs font-medium">{seg.type}</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+              {(() => {
+                const buyers = new Map<string, { name: string; phone: string | null; count: number; total: number }>();
+                active.forEach((o) => {
+                  const key = o.customer_name || o.customer_phone || o.id;
+                  const cur = buyers.get(key) || { name: o.customer_name || 'Client', phone: o.customer_phone, count: 0, total: 0 };
+                  cur.count++; cur.total += Number(o.total) || 0; buyers.set(key, cur);
+                });
+                const list = [...buyers.values()].sort((a, b) => b.total - a.total);
+                if (list.length === 0) return <p className="text-sm text-muted-foreground">{t('agricultureModule.aucunAcheteurPourLInstant')}</p>;
+                return (
+                  <div className="space-y-2">
+                    {list.map((b, i) => (
+                      <div key={i} className="flex items-center gap-3 rounded-lg border p-2 text-sm">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100 text-green-700">{b.name.charAt(0).toUpperCase()}</div>
+                        <div className="min-w-0"><div className="font-medium">{b.name}</div>{b.phone && <div className="text-xs text-muted-foreground">{b.phone}</div>}</div>
+                        <div className="ml-auto text-right"><div className="font-semibold">{(b.total / 1000).toFixed(0)}k GNF</div><div className="text-xs text-muted-foreground">{b.count} cmd</div></div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* SAISONS */}
-        <TabsContent value="saisons" className="space-y-4">
+        <TabsContent value="saisons" className="mt-4">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Sun className="w-5 h-5 text-[#ff4000]" /> Calendrier de production</CardTitle>
-              <CardDescription>Disponibilité saisonnière de vos produits</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {['Saison sèche (Nov-Avr)', 'Saison des pluies (Mai-Oct)', "Toute l'année"].map(season => {
-                  const seasonProducts = products.filter(p => p.season === season);
-                  return (
-                    <div key={season} className="p-4 bg-muted/30 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        {season.includes('sèche') ? <Sun className="w-4 h-4 text-[#ff4000]" /> :
-                         season.includes('pluie') ? <CloudRain className="w-4 h-4 text-blue-500" /> :
-                         <Calendar className="w-4 h-4 text-[#ff4000]" />}
-                        <h4 className="font-semibold text-sm">{season}</h4>
-                        <Badge variant="outline" className="text-xs">{seasonProducts.length} produits</Badge>
-                      </div>
-                      <div className="flex flex-wrap gap-1">
-                        {seasonProducts.map(p => {
-                          const cat = CATEGORIES.find(c => c.id === p.category);
-                          return <Badge key={p.id} variant="secondary" className="text-xs">{cat?.emoji} {p.name}</Badge>;
-                        })}
-                        {seasonProducts.length === 0 && <p className="text-xs text-muted-foreground">Aucun produit pour cette saison</p>}
-                      </div>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Sun className="h-5 w-5 text-[#ff4000]" />{t('agricultureModule.calendrierDeProduction')}</CardTitle><CardDescription>{t('agricultureModule.disponibiliteSaisonniereDeVosProduits')}</CardDescription></CardHeader>
+            <CardContent className="space-y-3">
+              {SEASONS.map((season) => {
+                const sp = products.filter((p) => p.season === season);
+                return (
+                  <div key={season} className="rounded-lg bg-muted/30 p-4">
+                    <div className="mb-2 flex items-center gap-2">
+                      {season.includes('sèche') ? <Sun className="h-4 w-4 text-[#ff4000]" /> : season.includes('pluie') ? <CloudRain className="h-4 w-4 text-blue-500" /> : <Calendar className="h-4 w-4 text-[#ff4000]" />}
+                      <h4 className="text-sm font-semibold">{season}</h4>
+                      <Badge variant="outline" className="text-xs">{sp.length} produits</Badge>
                     </div>
-                  );
-                })}
-              </div>
+                    <div className="flex flex-wrap gap-1">
+                      {sp.map((p) => <Badge key={p.id} variant="secondary" className="text-xs">{p.name}</Badge>)}
+                      {sp.length === 0 && <p className="text-xs text-muted-foreground">{t('agricultureModule.aucunProduitPourCetteSaison')}</p>}
+                    </div>
+                  </div>
+                );
+              })}
             </CardContent>
           </Card>
         </TabsContent>
@@ -379,3 +144,5 @@ export function AgricultureModule({ serviceId, businessName }: AgricultureModule
     </div>
   );
 }
+
+export default AgricultureModule;

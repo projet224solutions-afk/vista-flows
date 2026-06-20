@@ -17,6 +17,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Globe, Clock, ArrowRight, AlertTriangle, Loader2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { useTranslation } from "@/hooks/useTranslation";
 
 export interface InternationalPreviewData {
   success: boolean;
@@ -65,6 +66,7 @@ export function InternationalTransferConfirmation({
   onConfirm,
   loading = false,
 }: InternationalTransferConfirmationProps) {
+  const { t } = useTranslation();
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [expired, setExpired] = useState(false);
   const [timerStarted, setTimerStarted] = useState(false);
@@ -156,7 +158,7 @@ export function InternationalTransferConfirmation({
               {/* Breakdown */}
               <div className="space-y-2 p-4 bg-muted/30 rounded-lg">
                 <div className="flex justify-between text-sm">
-                  <span>💰 Montant envoyé</span>
+                  <span>{t('internationalTransferConfirmation.montantEnvoye')}</span>
                   <span className="font-bold">{preview.amount_sent.toLocaleString()} {preview.currency_sent}</span>
                 </div>
 
@@ -172,14 +174,14 @@ export function InternationalTransferConfirmation({
                   const displayedRate = preview.rate_displayed * (1 + commissionPct / 100);
                   return (
                     <div className="flex justify-between text-blue-600 dark:text-blue-400 text-sm">
-                      <span>💱 Taux de change</span>
+                      <span>{t('internationalTransferConfirmation.tauxDeChange')}</span>
                       <span className="font-medium">1 {preview.currency_sent} = {displayedRate.toLocaleString(undefined, { maximumFractionDigits: 4 })} {preview.currency_received}</span>
                     </div>
                   );
                 })()}
 
                 <div className="border-t pt-2 flex justify-between">
-                  <span className="text-sm font-medium">✅ Montant reçu</span>
+                  <span className="text-sm font-medium">{t('internationalTransferConfirmation.montantRecu')}</span>
                   <span className="text-lg font-bold text-[#ff4000] dark:text-[#ff4000]">
                     {preview.amount_received.toLocaleString()} {preview.currency_received}
                   </span>
@@ -187,13 +189,13 @@ export function InternationalTransferConfirmation({
 
                 {typeof preview.current_balance === 'number' && (
                   <div className="flex justify-between text-sm text-muted-foreground border-t pt-2">
-                    <span>Solde actuel</span>
+                    <span>{t('internationalTransferConfirmation.soldeActuel')}</span>
                     <span className="font-semibold">{preview.current_balance.toLocaleString()} {preview.currency_sent}</span>
                   </div>
                 )}
                 {typeof preview.balance_after === 'number' && (
                   <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Solde après transfert</span>
+                    <span>{t('internationalTransferConfirmation.soldeApresTransfert')}</span>
                     <span className="font-semibold">{preview.balance_after.toLocaleString()} {preview.currency_sent}</span>
                   </div>
                 )}
@@ -233,7 +235,7 @@ export function InternationalTransferConfirmation({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={loading}>Annuler</AlertDialogCancel>
+          <AlertDialogCancel disabled={loading}>{t('internationalTransferConfirmation.annuler')}</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirm}
             disabled={loading || expired}

@@ -168,6 +168,22 @@ export const cache = {
       return keys.length;
     } catch { return 0; }
   },
+
+  /**
+   * Cache-aside : renvoie la valeur en cache, sinon exécute `producer()`, met en cache
+   * et renvoie. Si Redis est absent → exécute `producer()` directement (aucun cache, mais
+   * comportement identique). Ne met JAMAIS en cache une valeur null/undefined (évite de
+   * figer une absence transitoire). Tout échec cache est silencieux (best-effort).
+   */
+  async getOrSet<T>(key: string, ttlSeconds: number, producer: () => Promise<T>): Promise<T> {
+    const cached = (await this.get(key)) as T | null;
+    if (cached !== null && cached !== undefined) return cached;
+    const fresh = await producer();
+    if (fresh !== null && fresh !== undefined) {
+      await this.set(key, fresh, ttlSeconds);
+    }
+    return fresh;
+  },
 };
 
 // ==================== DISTRIBUTED LOCKS ====================

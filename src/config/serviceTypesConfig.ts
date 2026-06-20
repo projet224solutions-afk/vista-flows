@@ -228,7 +228,9 @@ export const SERVICE_TYPES_CONFIG: ServiceTypeConfig[] = [
     description: 'Pharmacie & soins',
     lucideIcon: 'Heart',
     section: 'professional',
-    legacyCodes: ['health', 'medical', 'pharmacie', 'pharma'],
+    // 'pharmacie'/'pharma' retirés : la pharmacie est un type à part entière (code 'pharmacie'),
+    // ne doit plus être résolue vers 'sante'.
+    legacyCodes: ['health', 'medical'],
     showInVendorSignup: true,
     showInProximity: false,
   },
@@ -241,6 +243,35 @@ export const SERVICE_TYPES_CONFIG: ServiceTypeConfig[] = [
     lucideIcon: 'Home',
     section: 'professional',
     legacyCodes: ['home_decor', 'decoration', 'interieur', 'ameublement'],
+    showInVendorSignup: true,
+    showInProximity: false,
+  },
+  {
+    // Service à part entière (≠ 'sante' générique) : ordonnance scannée → validation pharmacien.
+    // service_type DB id : b8f7e6d5-c4a3-4b21-9e0f-1a2b3c4d5e6f
+    code: 'pharmacie',
+    name: 'Pharmacie',
+    category: 'Santé',
+    icon: '💊',
+    description: 'Ordonnances & médicaments',
+    lucideIcon: 'Pill',
+    section: 'professional',
+    legacyCodes: ['pharmacy', 'officine'],
+    showInVendorSignup: true,
+    // Pas d'onglet séparé dans Proximité : la pharmacie relève de « Santé & Bien-être »
+    // et possède déjà sa page de découverte dédiée (/pharmacie).
+    showInProximity: false,
+  },
+  {
+    // Sous-type du domaine Santé (consultations, analyses) — proposé sous « Santé & Bien-être ».
+    code: 'clinique',
+    name: 'Clinique',
+    category: 'Santé',
+    icon: '🏥',
+    description: 'Consultations & analyses',
+    lucideIcon: 'Building2',
+    section: 'professional',
+    legacyCodes: ['clinic', 'cabinet_medical', 'centre_sante'],
     showInVendorSignup: true,
     showInProximity: false,
   },
@@ -269,6 +300,55 @@ export const SERVICE_TYPES_CONFIG: ServiceTypeConfig[] = [
     showInVendorSignup: false,
     showInProximity: false,
   },
+  // ===== ARTISANS DU BÂTIMENT =====
+  {
+    code: 'plomberie',
+    name: 'Plomberie',
+    category: 'Bâtiment',
+    icon: '🔧',
+    description: 'Plombier / Chauffagiste',
+    lucideIcon: 'Wrench',
+    section: 'proximity',
+    legacyCodes: ['plombier', 'plumbing', 'chauffagiste'],
+    showInVendorSignup: true,
+    showInProximity: true,
+  },
+  {
+    code: 'vitrerie',
+    name: 'Vitrerie',
+    category: 'Bâtiment',
+    icon: '🪟',
+    description: 'Vitrier / Miroitier',
+    lucideIcon: 'Square',
+    section: 'proximity',
+    legacyCodes: ['vitrier', 'glazier', 'miroitier'],
+    showInVendorSignup: true,
+    showInProximity: true,
+  },
+  {
+    code: 'menuiserie',
+    name: 'Menuiserie',
+    category: 'Bâtiment',
+    icon: '🪚',
+    description: 'Menuisier / Ébéniste',
+    lucideIcon: 'Hammer',
+    section: 'proximity',
+    legacyCodes: ['menuisier', 'carpenter', 'ebeniste'],
+    showInVendorSignup: true,
+    showInProximity: true,
+  },
+  {
+    code: 'soudure',
+    name: 'Soudure / Métallerie',
+    category: 'Bâtiment',
+    icon: '🔥',
+    description: 'Soudeur / Métallier',
+    lucideIcon: 'Flame',
+    section: 'proximity',
+    legacyCodes: ['soudeur', 'welder', 'metallier', 'ferronnier'],
+    showInVendorSignup: true,
+    showInProximity: true,
+  },
 ];
 
 // ===== SERVICES DIGITAUX (extensions) =====
@@ -283,6 +363,25 @@ export const DIGITAL_SERVICES: { code: string; name: string; icon: string; descr
 /**
  * Obtenir un type de service par son code (officiel ou legacy)
  */
+/**
+ * Localise un libellé de service (name/category/description) via le dictionnaire i18n.
+ * Repli sur le texte FR de la config si la clé n'existe pas (jamais de clé brute affichée).
+ * `t` est passé en paramètre (ce fichier n'est pas un composant React).
+ */
+export function localizeServiceField(
+  t: (k: string) => string,
+  code: string,
+  field: 'name' | 'category' | 'description',
+  fallback?: string,
+): string {
+  const svc = getServiceTypeByCode(code);
+  const c = svc?.code || code;
+  const key = `serviceType.${c}.${field === 'description' ? 'desc' : field}`;
+  const v = t(key);
+  if (v && v !== key) return v;
+  return fallback || (svc ? (svc as any)[field] : '') || code;
+}
+
 export function getServiceTypeByCode(code: string): ServiceTypeConfig | undefined {
   // Chercher par code exact
   const exact = SERVICE_TYPES_CONFIG.find(s => s.code === code);

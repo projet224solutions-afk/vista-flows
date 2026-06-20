@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -70,6 +71,7 @@ interface BureauData {
 }
 
 export default function StolenMotoDeclaration() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -117,7 +119,7 @@ export default function StolenMotoDeclaration() {
 
   const handleSearch = async () => {
     if (!searchId.trim() && !searchPlate.trim()) {
-      toast.error('Veuillez entrer un ID ou un numéro de plaque');
+      toast.error(t('stolenMotoDeclaration.veuillezEntrerUnIdOu'));
       return;
     }
 
@@ -197,7 +199,7 @@ export default function StolenMotoDeclaration() {
       }
 
       setVerified(true);
-      toast.success('Moto trouvée et vérifiée');
+      toast.success(t('stolenMotoDeclaration.motoTrouveeEtVerifiee'));
 
     } catch (error: any) {
       console.error('Erreur recherche:', error);
@@ -209,17 +211,17 @@ export default function StolenMotoDeclaration() {
 
   const handleSubmitDeclaration = async () => {
     if (!vehicle) {
-      toast.error('Aucune moto sélectionnée');
+      toast.error(t('stolenMotoDeclaration.aucuneMotoSelectionnee'));
       return;
     }
 
     if (!confirmStolen) {
-      toast.error('Vous devez confirmer que cette moto est réellement volée');
+      toast.error(t('stolenMotoDeclaration.vousDevezConfirmerQueCette'));
       return;
     }
 
     if (!stolenLocation.trim()) {
-      toast.error('Veuillez indiquer le lieu du vol');
+      toast.error(t('stolenMotoDeclaration.veuillezIndiquerLeLieuDu'));
       return;
     }
 
@@ -245,7 +247,7 @@ export default function StolenMotoDeclaration() {
       const result = data as { success: boolean; error?: string; message?: string };
 
       if (result.success) {
-        toast.success('🚨 MOTO DÉCLARÉE VOLÉE', {
+        toast.success(t('stolenMotoDeclaration.motoDeclareeVolee'), {
           description: `Plaque: ${vehicle.license_plate} - Blocage global activé. Tous les bureaux sont alertés.`,
           duration: 10000
         });
@@ -293,7 +295,7 @@ export default function StolenMotoDeclaration() {
         {/* Alerte d'avertissement */}
         <Alert className="border-orange-300 bg-orange-50">
           <AlertTriangle className="h-5 w-5 text-[#ff4000]" />
-          <AlertTitle className="text-[#ff4000]">Action Irréversible</AlertTitle>
+          <AlertTitle className="text-[#ff4000]">{t('stolenMotoDeclaration.actionIrreversible')}</AlertTitle>
           <AlertDescription className="text-[#ff4000]">
             La déclaration de vol entraëne le blocage immédiat et global de la moto.
             Cette action sera enregistrée et notifiée à tous les bureaux syndicats.
@@ -321,7 +323,7 @@ export default function StolenMotoDeclaration() {
                   id="searchId"
                   value={searchId}
                   onChange={(e) => setSearchId(e.target.value)}
-                  placeholder="Ex: SN-2024-001 ou UUID"
+                  placeholder={t('stolenMotoDeclaration.exSn2024001Ou')}
                   className="border-slate-300"
                 />
               </div>
@@ -395,7 +397,7 @@ export default function StolenMotoDeclaration() {
                       <p className="font-medium text-slate-800">{vehicle.brand || 'N/A'}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-slate-500">Modèle</p>
+                      <p className="text-xs text-slate-500">{t('stolenMotoDeclaration.modele')}</p>
                       <p className="font-medium text-slate-800">{vehicle.model || 'N/A'}</p>
                     </div>
                     <div>
@@ -403,7 +405,7 @@ export default function StolenMotoDeclaration() {
                       <p className="font-medium text-slate-800">{vehicle.color || 'N/A'}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-slate-500">N° Série</p>
+                      <p className="text-xs text-slate-500">{t('stolenMotoDeclaration.nSerie')}</p>
                       <p className="font-medium text-slate-800">{vehicle.serial_number}</p>
                     </div>
                     <div>
@@ -411,7 +413,7 @@ export default function StolenMotoDeclaration() {
                       <p className="font-semibold text-lg text-blue-700">{vehicle.license_plate}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-slate-500">N° Châssis</p>
+                      <p className="text-xs text-slate-500">{t('stolenMotoDeclaration.nChassis')}</p>
                       <p className="font-medium text-slate-800">{vehicle.chassis_number || 'N/A'}</p>
                     </div>
                   </div>
@@ -419,7 +421,7 @@ export default function StolenMotoDeclaration() {
                     <div className="mt-4">
                       <img
                         src={vehicle.photo_url}
-                        alt="Photo du véhicule"
+                        alt={t('stolenMotoDeclaration.photoDuVehicule')}
                         className="w-32 h-32 object-cover rounded-lg border-2 border-slate-200"
                       />
                     </div>
@@ -449,7 +451,7 @@ export default function StolenMotoDeclaration() {
                       )}
                       <div className="flex-1 grid grid-cols-2 gap-3">
                         <div>
-                          <p className="text-xs text-slate-500">Nom & Prénom</p>
+                          <p className="text-xs text-slate-500">{t('stolenMotoDeclaration.nomPrenom')}</p>
                           <p className="font-medium text-slate-800">{member.name}</p>
                         </div>
                         <div>
@@ -458,7 +460,7 @@ export default function StolenMotoDeclaration() {
                         </div>
                         {member.phone && (
                           <div className="col-span-2">
-                            <p className="text-xs text-slate-500">Téléphone</p>
+                            <p className="text-xs text-slate-500">{t('stolenMotoDeclaration.telephone')}</p>
                             <p className="font-medium text-slate-800 flex items-center gap-1">
                               <Phone className="w-4 h-4" />
                               {member.phone}
@@ -526,7 +528,7 @@ export default function StolenMotoDeclaration() {
                         id="stolenLocation"
                         value={stolenLocation}
                         onChange={(e) => setStolenLocation(e.target.value)}
-                        placeholder="Ex: Kipé, Conakry"
+                        placeholder={t('stolenMotoDeclaration.exKipeConakry')}
                         className="pl-10 border-slate-300"
                         required
                       />
@@ -570,7 +572,7 @@ export default function StolenMotoDeclaration() {
                     id="additionalNotes"
                     value={additionalNotes}
                     onChange={(e) => setAdditionalNotes(e.target.value)}
-                    placeholder="Décrivez les circonstances du vol, témoins éventuels, etc."
+                    placeholder={t('stolenMotoDeclaration.decrivezLesCirconstancesDuVol')}
                     className="min-h-[100px] border-slate-300"
                   />
                 </div>
@@ -599,12 +601,12 @@ export default function StolenMotoDeclaration() {
                 {/* Avertissement final */}
                 <Alert className="border-orange-300 bg-orange-50">
                   <Lock className="h-5 w-5 text-orange-600" />
-                  <AlertTitle className="text-orange-800">Conséquences de la déclaration</AlertTitle>
+                  <AlertTitle className="text-orange-800">{t('stolenMotoDeclaration.consequencesDeLaDeclaration')}</AlertTitle>
                   <AlertDescription className="text-orange-700 space-y-1">
-                    <p>• La moto sera immédiatement bloquée globalement</p>
-                    <p>• Le compte du conducteur sera suspendu</p>
-                    <p>• Tous les bureaux syndicats seront alertés</p>
-                    <p>• Cette action est enregistrée avec votre identité et horodatage</p>
+                    <p>{t('stolenMotoDeclaration.laMotoSeraImmediatementBloquee')}</p>
+                    <p>{t('stolenMotoDeclaration.leCompteDuConducteurSera')}</p>
+                    <p>{t('stolenMotoDeclaration.tousLesBureauxSyndicatsSeront')}</p>
+                    <p>{t('stolenMotoDeclaration.cetteActionEstEnregistreeAvec')}</p>
                   </AlertDescription>
                 </Alert>
 

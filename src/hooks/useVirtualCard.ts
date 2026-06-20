@@ -145,7 +145,9 @@ export function useVirtualCard() {
    */
   const toggleCardStatus = useCallback(async (
     cardId: string,
-    newStatus: 'active' | 'frozen'
+    // 'inactive' = état « gelée » (valeur autorisée par la contrainte CHECK de la table,
+    // qui n'accepte que 'active' | 'inactive')
+    newStatus: 'active' | 'inactive'
   ): Promise<boolean> => {
     try {
       const { error } = await supabase
@@ -155,7 +157,7 @@ export function useVirtualCard() {
 
       if (error) throw error;
 
-      toast.success(newStatus === 'frozen' ? 'Carte gelée' : 'Carte réactivée');
+      toast.success(newStatus === 'inactive' ? 'Carte gelée' : 'Carte réactivée');
       return true;
     } catch (error: any) {
       console.error('[useVirtualCard] Toggle status error:', error);

@@ -9,6 +9,7 @@ import React from 'react';
 import { WifiOff, Lock, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useOfflineFeatureAccess } from '@/hooks/useOfflineFeatureAccess';
+import { useTranslation } from '@/hooks/useTranslation';
 import type { Feature } from '@/lib/offline/featureGate';
 import {
   Tooltip,
@@ -36,6 +37,7 @@ export function OfflineBadge({
   showTooltip = true,
   variant = 'badge'
 }: OfflineBadgeProps) {
+  const { t } = useTranslation();
   const { isAllowed, reason, requiresOnline } = useOfflineFeatureAccess(feature);
 
   // Si autorisé, retourner l'enfant tel quel
@@ -53,7 +55,7 @@ export function OfflineBadge({
             <TooltipTrigger asChild>
               <div className="absolute -top-2 -right-2 flex items-center gap-1 px-2 py-0.5 bg-orange-500 text-white text-xs font-medium rounded-full shadow-lg">
                 <WifiOff className="w-3 h-3" />
-                {showTooltip && <span className="hidden sm:inline">Connexion requise</span>}
+                {showTooltip && <span className="hidden sm:inline">{t('offlineBadge.connectionRequired')}</span>}
               </div>
             </TooltipTrigger>
             {showTooltip && reason && (
@@ -82,7 +84,7 @@ export function OfflineBadge({
                 <div className="flex flex-col items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
                   <Lock className="w-5 h-5 text-orange-500" />
                   <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                    Nécessite connexion
+                    {t('offlineBadge.requiresConnection')}
                   </span>
                 </div>
               </div>
@@ -105,7 +107,7 @@ export function OfflineBadge({
       <div className="opacity-50">{children}</div>
       <div className="flex items-center gap-1.5 px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-xs font-medium rounded">
         <WifiOff className="w-3 h-3" />
-        <span>Connexion requise</span>
+        <span>{t('offlineBadge.connectionRequired')}</span>
       </div>
     </div>
   );
@@ -121,6 +123,7 @@ export function RequiresOnlineBadge({
   className?: string;
   size?: 'xs' | 'sm' | 'md';
 }) {
+  const { t } = useTranslation();
   const sizeClasses = {
     xs: 'px-1.5 py-0.5 text-[10px]',
     sm: 'px-2 py-1 text-xs',
@@ -143,7 +146,7 @@ export function RequiresOnlineBadge({
       )}
     >
       <WifiOff className={iconSizes[size]} />
-      <span>Nécessite connexion</span>
+      <span>{t('offlineBadge.requiresConnection')}</span>
     </span>
   );
 }

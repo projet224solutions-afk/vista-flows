@@ -6,7 +6,8 @@ import { useState, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const UniversalWalletDashboard = lazy(() => import('@/components/wallet/UniversalWalletDashboard'));
-const CopiloteChat = lazy(() => import('@/components/copilot/CopiloteChat'));
+// Copilot 224 unifié (mode intégré) — remplace l'ancien CopiloteChat.
+const Copilot224 = lazy(() => import('@/components/service-common/Copilot224'));
 const MyPurchasesOrdersList = lazy(() => import('@/components/shared/MyPurchasesOrdersList'));
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -841,7 +842,7 @@ function SubscriptionsTab({
     <div className="space-y-5">
 
       {/* ── 6 cartes cliquables ── */}
-      <div className="grid grid-cols-6 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
 
         {/* Payant */}
         <button
@@ -1511,9 +1512,11 @@ export default function ActionnaireDashboard() {
                 <RefreshCw className="w-6 h-6 animate-spin text-blue-500" />
               </div>
             }>
-              <CopiloteChat
+              <Copilot224
+                variant="embedded"
+                service=""
+                title="Copilot 224"
                 height="calc(100vh - 200px)"
-                userRole="client"
               />
             </Suspense>
           </TabsContent>

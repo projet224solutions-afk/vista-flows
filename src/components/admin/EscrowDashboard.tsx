@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ interface EscrowDashboardData {
 }
 
 export function EscrowDashboard() {
+  const { t } = useTranslation();
   const [escrows, setEscrows] = useState<EscrowDashboardData[]>([]);
   const [stats, setStats] = useState({ pending: 0, released: 0, refunded: 0, total: 0 });
   const [loading, setLoading] = useState(true);
@@ -54,7 +56,7 @@ export function EscrowDashboard() {
         total: escrowData.length,
       });
     } catch (err: any) {
-      toast.error("Erreur lors du chargement des escrows");
+      toast.error(t('escrowDashboard.erreurLorsDuChargementDes'));
       console.error(err);
     } finally {
       setLoading(false);
@@ -93,7 +95,7 @@ export function EscrowDashboard() {
         if (error) throw error;
         if (!data?.success) throw new Error(data?.error || 'Erreur lors de la libération');
 
-        toast.success("Fonds libérés avec succès");
+        toast.success(t('escrowDashboard.fondsLiberesAvecSucces'));
       } else if (actionType === "refund") {
         // Utiliser la fonction Edge pour rembourser l'escrow
         const { data, error } = await supabase.functions.invoke('escrow-refund', {
@@ -106,7 +108,7 @@ export function EscrowDashboard() {
         if (error) throw error;
         if (!data?.success) throw new Error(data?.error || 'Erreur lors du remboursement');
 
-        toast.success("Remboursement effectué");
+        toast.success(t('escrowDashboard.remboursementEffectue'));
       } else if (actionType === "hold") {
         // Utiliser la fonction Edge pour ouvrir un litige
         const { data, error } = await supabase.functions.invoke('escrow-dispute', {
@@ -158,7 +160,7 @@ export function EscrowDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Dashboard Escrow</h1>
-          <p className="text-muted-foreground">Gérez les transactions en séquestre</p>
+          <p className="text-muted-foreground">{t('escrowDashboard.gerezLesTransactionsEnSequestre')}</p>
         </div>
       </div>
 
@@ -184,7 +186,7 @@ export function EscrowDashboard() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Libérés</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('escrowDashboard.liberes')}</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -193,7 +195,7 @@ export function EscrowDashboard() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Remboursés</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('escrowDashboard.rembourses')}</CardTitle>
             <XCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -226,11 +228,11 @@ export function EscrowDashboard() {
               <CardContent className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <p className="text-sm text-muted-foreground">Montant</p>
+                    <p className="text-sm text-muted-foreground">{t('escrowDashboard.montant')}</p>
                     <p className="text-lg font-semibold">{formatAmount(escrow.amount, escrow.currency)}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Libération auto</p>
+                    <p className="text-sm text-muted-foreground">{t('escrowDashboard.liberationAuto')}</p>
                     <p className="text-sm">{escrow.available_to_release_at ? new Date(escrow.available_to_release_at).toLocaleDateString("fr-FR") : "N/A"}</p>
                   </div>
                 </div>
@@ -290,7 +292,7 @@ export function EscrowDashboard() {
               <CardContent>
                 <div className="grid gap-4 md:grid-cols-3">
                   <div>
-                    <p className="text-sm text-muted-foreground">Montant</p>
+                    <p className="text-sm text-muted-foreground">{t('escrowDashboard.montant')}</p>
                     <p className="font-semibold">{formatAmount(escrow.amount, escrow.currency)}</p>
                   </div>
                   <div>
@@ -300,7 +302,7 @@ export function EscrowDashboard() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Créé le</p>
+                    <p className="text-sm text-muted-foreground">{t('escrowDashboard.creeLe')}</p>
                     <p className="text-sm">{new Date(escrow.created_at).toLocaleDateString("fr-FR")}</p>
                   </div>
                 </div>
@@ -345,7 +347,7 @@ export function EscrowDashboard() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel>{t('escrowDashboard.annuler')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleAction}>Confirmer</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

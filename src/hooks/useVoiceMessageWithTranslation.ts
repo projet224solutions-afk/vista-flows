@@ -8,7 +8,9 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { autoConvertIfNeeded, needsConversionForIOS, isIOS } from '@/services/AudioConversionService';
+import { convertBlobToWav, isProblematicAudio } from '@/services/audioToWav';
 import { audioTranslationService } from '@/services/audioTranslationService';
+import { backendFetch } from '@/services/backendApi';
 import { useToast } from '@/hooks/use-toast';
 import { useStorageUpload } from '@/hooks/useStorageUpload';
 
@@ -47,8 +49,17 @@ export function useVoiceMessageWithTranslation() {
     try {
       const { senderId, recipientId, conversationId, additionalMetadata } = options;
 
+      // 0. Compatibilité UNIVERSELLE : le webm/opus (Chrome/Android) est illisible sur
+      //    iOS/Safari → on transcode en WAV côté client (lu partout). Best-effort : si la
+      //    conversion échoue, on garde l'original (comportement précédent).
+      let workingBlob = audioBlob;
+      if (isProblematicAudio(audioBlob.type)) {
+        const wav = await convertBlobToWav(audioBlob);
+        if (wav) { workingBlob = wav; console.log('🎧 Audio transcodé en WAV (compat iOS/Safari)'); }
+      }
+
       // 1. Détecter le format audio depuis le blob
-      const blobMimeType = audioBlob.type || 'audio/webm';
+      const blobMimeType = workingBlob.type || 'audio/webm';
       console.log('🎙️ Audio blob MIME type:', blobMimeType);
 
       // Déterminer le format et l'extension depuis le MIME type
@@ -71,7 +82,7 @@ export function useVoiceMessageWithTranslation() {
 
       // 2. Créer un fichier à partir du blob pour l'upload vers GCS
       const fileName = `voice-${senderId}-${Date.now()}.${audioFormat}`;
-      const audioFile = new File([audioBlob], fileName, { type: mimeType });
+      const audioFile = new File([workingBlob], fileName, { type: mimeType });
 
       console.log('🎙️ Uploading voice message to GCS...', { fileName, mimeType, audioFormat });
 
@@ -143,9 +154,10 @@ export function useVoiceMessageWithTranslation() {
         translationStatus: insertedMessage.audio_translation_status
       });
 
-      // 7. Si la traduction est nécessaire et le webhook n'est pas configuré,
-      // déclencher manuellement la traduction en arrière-plan
-      if (insertedMessage.audio_translation_status === 'pending') {
+      // 7. Déclencher la traduction dès que les langues diffèrent (ne PAS dépendre d'un
+      // trigger SQL : on déclenche côté client via le backend Node.js). Idempotent côté
+      // backend (statut du message), donc sans risque de double traitement.
+      if (needsTranslation || insertedMessage.audio_translation_status === 'pending') {
         triggerManualTranslation(insertedMessage.id, audioUrl, senderId, recipientId);
       }
 
@@ -199,10 +211,11 @@ export function useVoiceMessageWithTranslation() {
 
       if (senderLang === recipientLang) return;
 
-      console.log('🎙️ Triggering manual translation...');
+      console.log('🎙️ Triggering manual translation (backend)...');
 
-      // Appeler l'Edge Function de traduction
-      const { data, error } = await supabase.functions.invoke('translate-audio', {
+      // Pipeline 100% backend Node.js (Whisper STT → traduction → TTS).
+      const data: any = await backendFetch('/edge-functions/translate-audio', {
+        method: 'POST',
         body: {
           audioUrl,
           messageId,
@@ -211,8 +224,8 @@ export function useVoiceMessageWithTranslation() {
         }
       });
 
-      if (error) {
-        console.error('Manual translation error:', error);
+      if (!data?.success) {
+        console.error('Manual translation error:', data?.error);
         setTranslationStatus('failed');
       } else {
         setTranslationStatus('completed');

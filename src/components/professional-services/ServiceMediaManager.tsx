@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from '@/lib/supabaseClient';
 import { useStorageUpload } from '@/hooks/useStorageUpload';
 import { Button } from '@/components/ui/button';
@@ -33,6 +34,7 @@ const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100 MB
 const MAX_ITEMS = 20;
 
 export function ServiceMediaManager({ serviceId, readonly = false, isPremium: isPremiumProp }: ServiceMediaManagerProps) {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const { uploadFile } = useStorageUpload();
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -45,10 +47,17 @@ export function ServiceMediaManager({ serviceId, readonly = false, isPremium: is
   const [lightbox, setLightbox] = useState<{ open: boolean; index: number }>({ open: false, index: 0 });
   const [dragOver, setDragOver] = useState(false);
   const [isPremiumInternal, setIsPremiumInternal] = useState(false);
+  const [premiumPrice, setPremiumPrice] = useState<number | null>(null);
 
   // Si le parent fournit isPremium (depuis useServiceSubscription), on l'utilise directement.
   // Sinon, on le détermine nous-mêmes via le RPC (comportement standalone).
   const isPremium = isPremiumProp !== undefined ? isPremiumProp : isPremiumInternal;
+
+  // Libellé de prix : on affiche le VRAI prix du plan Premium du type de service (40 000 / 50 000 /
+  // 150 000 GNF selon le métier) au lieu d'un montant codé en dur. Repli neutre si indisponible.
+  const premiumLabel = premiumPrice != null
+    ? `Premium à ${premiumPrice.toLocaleString('fr-FR')} GNF/mois`
+    : 'un abonnement Premium';
 
   const loadSubscription = useCallback(async () => {
     // Skip si le parent gère l'état ou si readonly
@@ -65,18 +74,31 @@ export function ServiceMediaManager({ serviceId, readonly = false, isPremium: is
       }
 
       const row = (data as any[])?.[0];
-      // Priorité 1 : flag can_upload_video (plus fiable que le nom du plan)
-      // Priorité 2 : plan_name pour compatibilité avec les anciens RPC sans le champ
-      const canUploadVideo: boolean = row?.can_upload_video === true;
-      const planName: string = row?.plan_name ?? 'free';
-      const planAllowsVideo = planName === 'premium' || planName === 'pro';
-
-      setIsPremiumInternal(canUploadVideo || planAllowsVideo);
+      // Source de vérité UNIQUE = le flag can_upload_video du plan (défini par le PDG, aligné sur
+      // l'enforcement DB du trigger). On NE se rabat PLUS sur le nom du plan (incohérent : certains
+      // 'pro' ont can_upload_video=false).
+      setIsPremiumInternal(row?.can_upload_video === true);
     } catch (err) {
       console.warn('loadSubscription exception:', err);
       setIsPremiumInternal(false);
     }
   }, [serviceId, readonly, isPremiumProp]);
+
+  // Prix réel du plan Premium pour ce type de service (pour l'invite d'upgrade).
+  const loadPremiumPrice = useCallback(async () => {
+    if (readonly) return;
+    try {
+      const { data: svc } = await supabase
+        .from('professional_services').select('service_type_id').eq('id', serviceId).single();
+      if (!svc?.service_type_id) return;
+      const { data: plan } = await supabase
+        .from('service_plans')
+        .select('monthly_price_gnf')
+        .eq('service_type_id', svc.service_type_id).eq('name', 'premium').eq('is_active', true)
+        .maybeSingle();
+      if (plan?.monthly_price_gnf != null) setPremiumPrice(Number(plan.monthly_price_gnf));
+    } catch { /* prix optionnel : repli sur le libellé neutre */ }
+  }, [serviceId, readonly]);
 
   const loadMedia = useCallback(async () => {
     try {
@@ -96,7 +118,7 @@ export function ServiceMediaManager({ serviceId, readonly = false, isPremium: is
     }
   }, [serviceId]);
 
-  useEffect(() => { loadMedia(); loadSubscription(); }, [loadMedia, loadSubscription]);
+  useEffect(() => { loadMedia(); loadSubscription(); loadPremiumPrice(); }, [loadMedia, loadSubscription, loadPremiumPrice]);
 
   // ─── Sync cover_image_url dans professional_services ─────────────
   const syncCoverToService = async (imageUrl: string) => {
@@ -155,6 +177,12 @@ export function ServiceMediaManager({ serviceId, readonly = false, isPremium: is
 
   // ─── Upload vidéo ──────────────────────────────────────────────
   const uploadVideo = async (file: File) => {
+    // Garde de droit AVANT tout upload (évite d'uploader un fichier qui serait ensuite rejeté
+    // par le trigger DB = fuite de stockage). Le paywall reste verrouillé en base de toute façon.
+    if (!isPremium) {
+      toast({ title: 'Abonnement Premium requis', description: `Passez à ${premiumLabel} pour ajouter des vidéos.`, variant: 'destructive' });
+      return;
+    }
     if (file.size > MAX_VIDEO_SIZE) {
       toast({ title: 'Vidéo trop volumineuse', description: 'Maximum 100 MB par vidéo', variant: 'destructive' });
       return;
@@ -205,7 +233,7 @@ export function ServiceMediaManager({ serviceId, readonly = false, isPremium: is
       if (!isPremium) {
         toast({
           title: 'Abonnement Premium requis',
-          description: 'Passez à l\'abonnement Premium (150 000 GNF/mois) pour ajouter des vidéos.',
+          description: `Passez à ${premiumLabel} pour ajouter des vidéos.`,
           variant: 'destructive',
         });
         return;
@@ -217,13 +245,20 @@ export function ServiceMediaManager({ serviceId, readonly = false, isPremium: is
   // ─── Supprimer ────────────────────────────────────────────────
   const handleDelete = async (item: MediaItem) => {
     try {
-      // Supprimer du storage Supabase uniquement si l'URL pointe vers Supabase
+      // Supprimer du storage Supabase : on extrait le bucket ET le chemin EXACTS depuis l'URL
+      // publique (.../storage/v1/object/public/{bucket}/{chemin}). L'ancien code ciblait un
+      // bucket/chemin erronés (service-gallery + slice(-2)) → le fichier n'était JAMAIS supprimé
+      // (fuite de stockage). Les vrais buckets sont product-images (images) / communication-files (vidéos).
       const url = item.media_type === 'video' ? item.video_url : item.image_url;
-      if (url && (url.includes('.supabase.co/storage') || url.includes('supabase.co/storage'))) {
-        const bucket = item.media_type === 'video' ? 'service-gallery-videos' : 'service-gallery';
-        const pathParts = url.split('/');
-        const storagePath = pathParts.slice(-2).join('/');
-        await supabase.storage.from(bucket).remove([storagePath]);
+      const marker = '/storage/v1/object/public/';
+      if (url && url.includes(marker)) {
+        const after = url.split('?')[0].split(marker)[1] || '';
+        const slash = after.indexOf('/');
+        if (slash > 0) {
+          const bucket = after.slice(0, slash);
+          const storagePath = decodeURIComponent(after.slice(slash + 1));
+          await supabase.storage.from(bucket).remove([storagePath]);
+        }
       }
       // Pour les URLs GCS, pas de suppression côté storage (géré côté admin GCS)
       // Supprimer de la DB
@@ -317,7 +352,7 @@ export function ServiceMediaManager({ serviceId, readonly = false, isPremium: is
                 if (!isPremium) {
                   toast({
                     title: 'Abonnement Premium requis',
-                    description: 'Passez à l\'abonnement Premium (150 000 GNF/mois) pour débloquer les vidéos.',
+                    description: `Passez à ${premiumLabel} pour débloquer les vidéos.`,
                     variant: 'destructive',
                   });
                   return;
@@ -325,7 +360,7 @@ export function ServiceMediaManager({ serviceId, readonly = false, isPremium: is
                 videoInputRef.current?.click();
               }}
               disabled={!canAdd || uploading}
-              title={!isPremium ? 'Disponible avec l\'abonnement Premium à 150 000 GNF/mois' : undefined}
+              title={!isPremium ? `Disponible avec ${premiumLabel}` : undefined}
             >
               {isPremium ? <Video className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
               Vidéo
@@ -354,10 +389,10 @@ export function ServiceMediaManager({ serviceId, readonly = false, isPremium: is
         <div className="flex items-start gap-3 p-3 rounded-xl bg-orange-50 dark:bg-[#ff4000]/20 border border-orange-200 dark:border-[#ff4000]">
           <Lock className="w-4 h-4 shrink-0 mt-0.5 text-[#ff4000] dark:text-[#ff4000]" />
           <div className="text-sm">
-            <span className="font-semibold text-[#ff4000] dark:text-[#ff4000]">Vidéos verrouillées</span>
-            <span className="text-[#ff4000] dark:text-[#ff4000]"> — L'ajout de vidéos est disponible avec l'abonnement </span>
-            <span className="font-bold text-[#ff4000] dark:text-[#ff4000]">Premium à 150 000 GNF/mois</span>
-            <span className="text-[#ff4000] dark:text-[#ff4000]">. Les photos sont disponibles gratuitement.</span>
+            <span className="font-semibold text-[#ff4000] dark:text-[#ff4000]">{t('serviceMediaManager.videosVerrouillees')}</span>
+            <span className="text-[#ff4000] dark:text-[#ff4000]"> {t('serviceMediaManager.lAjoutDeVideosEst')} </span>
+            <span className="font-bold text-[#ff4000] dark:text-[#ff4000]">{premiumLabel}</span>
+            <span className="text-[#ff4000] dark:text-[#ff4000]">{t('serviceMediaManager.lesPhotosSontDisponiblesGratuitement')}</span>
           </div>
         </div>
       )}
@@ -388,8 +423,8 @@ export function ServiceMediaManager({ serviceId, readonly = false, isPremium: is
               <Upload className="w-8 h-8 text-primary" />
             </div>
             <div>
-              <p className="font-semibold text-foreground">Glissez vos photos et vidéos ici</p>
-              <p className="text-sm text-muted-foreground mt-1">ou utilisez les boutons ci-dessus</p>
+              <p className="font-semibold text-foreground">{t('serviceMediaManager.glissezVosPhotosEtVideos')}</p>
+              <p className="text-sm text-muted-foreground mt-1">{t('serviceMediaManager.ouUtilisezLesBoutonsCi')}</p>
               <p className="text-xs text-muted-foreground/70 mt-2">Photos : max 8 MB · Vidéos : max 100 MB · {MAX_ITEMS} médias max</p>
             </div>
           </div>
@@ -435,7 +470,7 @@ export function ServiceMediaManager({ serviceId, readonly = false, isPremium: is
                     <button
                       onClick={e => { e.stopPropagation(); handleDelete(item); }}
                       className="w-8 h-8 rounded-full bg-destructive/90 text-white flex items-center justify-center shadow-lg hover:bg-destructive transition-colors"
-                      title="Supprimer"
+                      title={t('serviceMediaManager.supprimer')}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -443,7 +478,7 @@ export function ServiceMediaManager({ serviceId, readonly = false, isPremium: is
                       <button
                         onClick={e => { e.stopPropagation(); handleSetCover(item); }}
                         className="w-8 h-8 rounded-full bg-[#ff4000]/90 text-white flex items-center justify-center shadow-lg hover:bg-[#ff4000] transition-colors"
-                        title="Définir comme couverture"
+                        title={t('serviceMediaManager.definirCommeCouverture')}
                       >
                         <Star className="w-3.5 h-3.5" />
                       </button>
@@ -467,7 +502,7 @@ export function ServiceMediaManager({ serviceId, readonly = false, isPremium: is
                 className="rounded-2xl aspect-square border-2 border-dashed border-border hover:border-primary/50 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-primary transition-all duration-200 hover:bg-primary/5"
               >
                 <ImagePlus className="w-6 h-6" />
-                <span className="text-xs font-medium">Ajouter</span>
+                <span className="text-xs font-medium">{t('serviceMediaManager.ajouter')}</span>
               </button>
             )}
           </div>
@@ -496,7 +531,7 @@ export function ServiceMediaManager({ serviceId, readonly = false, isPremium: is
                   <button
                     onClick={() => handleDelete(item)}
                     className="absolute top-2 right-2 w-8 h-8 rounded-full bg-destructive/90 text-white flex items-center justify-center shadow-lg hover:bg-destructive transition-colors opacity-0 group-hover:opacity-100 z-10"
-                    title="Supprimer"
+                    title={t('serviceMediaManager.supprimer')}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -523,7 +558,7 @@ export function ServiceMediaManager({ serviceId, readonly = false, isPremium: is
                 className="rounded-2xl border-2 border-dashed border-blue-200 dark:border-[#04439e] hover:border-[#04439e] h-40 flex flex-col items-center justify-center gap-2 text-[#04439e] hover:text-[#04439e] transition-all duration-200 hover:bg-blue-50 dark:hover:bg-[#04439e]/20"
               >
                 <Video className="w-6 h-6" />
-                <span className="text-xs font-medium">Ajouter une vidéo</span>
+                <span className="text-xs font-medium">{t('serviceMediaManager.ajouterUneVideo')}</span>
               </button>
             )}
           </div>
@@ -551,14 +586,14 @@ export function ServiceMediaManager({ serviceId, readonly = false, isPremium: is
         <Card className="rounded-2xl border-0 shadow-sm">
           <CardContent className="py-12 text-center">
             <Camera className="w-12 h-12 mx-auto text-muted-foreground/30 mb-3" />
-            <p className="text-muted-foreground">Aucun média pour le moment</p>
+            <p className="text-muted-foreground">{t('serviceMediaManager.aucunMediaPourLeMoment')}</p>
           </CardContent>
         </Card>
       )}
 
       {/* ─── Lightbox ────────────────────────────────────────── */}
       <Dialog open={lightbox.open} onOpenChange={open => !open && closeLightbox()}>
-        <DialogContent className="max-w-4xl w-full p-2 bg-black/95 border-0">
+        <DialogContent className="max-w-4xl w-full p-2 bg-black/95 border-0 max-h-[90vh] overflow-y-auto">
           <div className="relative">
             {/* Fermer */}
             <button

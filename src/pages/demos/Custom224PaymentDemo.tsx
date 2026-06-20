@@ -1,3 +1,4 @@
+import { useTranslation } from "@/hooks/useTranslation";
 /**
  * PAGE DE DÉMONSTRATION - PAIEMENT 224SOLUTIONS
  * Exemple d'intégration du formulaire de paiement personnalisé
@@ -14,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 export function Custom224PaymentDemo() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [showPayment, setShowPayment] = useState(false);
   const [paymentData, setPaymentData] = useState({
@@ -25,7 +27,7 @@ export function Custom224PaymentDemo() {
 
   const handlePaymentSuccess = (paymentIntentId: string) => {
     console.log('Paiement réussi:', paymentIntentId);
-    toast.success('Paiement effectué avec succès !');
+    toast.success(t('custom224PaymentDemo.paiementEffectueAvecSucces'));
     
     // Redirection ou action après paiement
     setTimeout(() => {
@@ -88,11 +90,11 @@ export function Custom224PaymentDemo() {
         {/* Configuration du paiement */}
         <Card className="shadow-xl">
           <CardHeader>
-            <CardTitle>Configurer le paiement de test</CardTitle>
+            <CardTitle>{t('custom224PaymentDemo.configurerLePaiementDeTest')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="amount">Montant (en GNF)</Label>
+              <Label htmlFor="amount">{t('custom224PaymentDemo.montantEnGnf')}</Label>
               <Input
                 id="amount"
                 type="number"
@@ -103,22 +105,22 @@ export function Custom224PaymentDemo() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="seller">Nom du vendeur</Label>
+              <Label htmlFor="seller">{t('custom224PaymentDemo.nomDuVendeur')}</Label>
               <Input
                 id="seller"
                 value={paymentData.sellerName}
                 onChange={(e) => setPaymentData({ ...paymentData, sellerName: e.target.value })}
-                placeholder="Boutique 224"
+                placeholder={t('custom224PaymentDemo.boutique224')}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="sellerId">ID Vendeur</Label>
+              <Label htmlFor="sellerId">{t('custom224PaymentDemo.idVendeur')}</Label>
               <Input
                 id="sellerId"
                 value={paymentData.sellerId}
                 onChange={(e) => setPaymentData({ ...paymentData, sellerId: e.target.value })}
-                placeholder="UUID du vendeur"
+                placeholder={t('custom224PaymentDemo.uuidDuVendeur')}
               />
             </div>
 
@@ -128,7 +130,7 @@ export function Custom224PaymentDemo() {
                 id="description"
                 value={paymentData.orderDescription}
                 onChange={(e) => setPaymentData({ ...paymentData, orderDescription: e.target.value })}
-                placeholder="Commande #12345"
+                placeholder={t('custom224PaymentDemo.commande12345')}
               />
             </div>
 
@@ -151,21 +153,21 @@ export function Custom224PaymentDemo() {
         {/* Caractéristiques */}
         <Card className="shadow-xl border-2 border-primary/20">
           <CardContent className="pt-6 space-y-4">
-            <h3 className="text-xl font-bold text-center mb-4">✨ Caractéristiques</h3>
+            <h3 className="text-xl font-bold text-center mb-4">{t('custom224PaymentDemo.caracteristiques')}</h3>
             
             <div className="grid md:grid-cols-2 gap-4">
               <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
                 <span className="text-2xl">🎨</span>
                 <div>
-                  <h4 className="font-semibold text-[#ff4000]">Design personnalisé</h4>
-                  <p className="text-sm text-[#ff4000]">Logo et couleurs 224Solutions</p>
+                  <h4 className="font-semibold text-[#ff4000]">{t('custom224PaymentDemo.designPersonnalise')}</h4>
+                  <p className="text-sm text-[#ff4000]">{t('custom224PaymentDemo.logoEtCouleurs224solutions')}</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
                 <span className="text-2xl">🔒</span>
                 <div>
-                  <h4 className="font-semibold text-blue-900">Sécurité Stripe</h4>
+                  <h4 className="font-semibold text-blue-900">{t('custom224PaymentDemo.securiteStripe')}</h4>
                   <p className="text-sm text-blue-700">PCI-DSS, 3D Secure, SSL</p>
                 </div>
               </div>
@@ -173,7 +175,7 @@ export function Custom224PaymentDemo() {
               <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
                 <span className="text-2xl">💳</span>
                 <div>
-                  <h4 className="font-semibold text-[#04439e]">Toutes les cartes</h4>
+                  <h4 className="font-semibold text-[#04439e]">{t('custom224PaymentDemo.toutesLesCartes')}</h4>
                   <p className="text-sm text-[#04439e]">VISA, Mastercard, AMEX</p>
                 </div>
               </div>
@@ -181,8 +183,8 @@ export function Custom224PaymentDemo() {
               <div className="flex items-start gap-3 p-3 bg-orange-50 rounded-lg">
                 <span className="text-2xl">⚡</span>
                 <div>
-                  <h4 className="font-semibold text-orange-900">Temps réel</h4>
-                  <p className="text-sm text-orange-700">Confirmation instantanée</p>
+                  <h4 className="font-semibold text-orange-900">{t('custom224PaymentDemo.tempsReel')}</h4>
+                  <p className="text-sm text-orange-700">{t('custom224PaymentDemo.confirmationInstantanee')}</p>
                 </div>
               </div>
             </div>
@@ -192,7 +194,7 @@ export function Custom224PaymentDemo() {
         {/* Carte de test Stripe */}
         <Card className="shadow-xl bg-gradient-to-r from-[#04439e] to-[#ff4000] text-white">
           <CardContent className="pt-6 space-y-3">
-            <h3 className="text-xl font-bold">🧪 Carte de test Stripe</h3>
+            <h3 className="text-xl font-bold">{t('custom224PaymentDemo.carteDeTestStripe')}</h3>
             <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 space-y-2">
               <p className="font-mono text-lg">4242 4242 4242 4242</p>
               <div className="grid grid-cols-2 gap-4">

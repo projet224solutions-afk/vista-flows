@@ -18,8 +18,10 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 
 export function WalletTransactionsList() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { transactions, loading, refresh } = useWallet();
   const [filter, setFilter] = useState<'all' | 'sent' | 'received'>('all');
@@ -73,7 +75,7 @@ export function WalletTransactionsList() {
               <History className="w-5 h-5 text-[#04439e]" />
             </div>
             <div>
-              <CardTitle>Historique des transactions</CardTitle>
+              <CardTitle>{t('walletTransactionsList.historiqueDesTransactions')}</CardTitle>
               <p className="text-sm text-muted-foreground">
                 {filteredTransactions.length} transaction(s)
               </p>
@@ -121,7 +123,7 @@ export function WalletTransactionsList() {
         {filteredTransactions.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             <History className="w-16 h-16 mx-auto mb-3 opacity-30" />
-            <p className="text-lg font-medium mb-1">Aucune transaction</p>
+            <p className="text-lg font-medium mb-1">{t('walletTransactionsList.aucuneTransaction')}</p>
             <p className="text-sm">
               {filter === 'all' ? 'Votre historique apparaîtra ici' : 'Aucune transaction dans cette catégorie'}
             </p>

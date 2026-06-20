@@ -20,6 +20,9 @@ interface DiscoveryProduct {
   rating: number | null;
   reason?: string;
   category_name?: string;
+  vendor_id?: string | null;
+  vendor_name?: string | null;
+  vendor_user_id?: string | null;
 }
 
 const DISCOVERY_TIMEOUT_MS = 4500;
@@ -74,7 +77,7 @@ export function useDiscoveryProducts(limit = 12, enabled = true) {
       // 2. Priorité aux produits récents et aux nouvelles catégories
       let query = supabase
         .from('products')
-        .select('id, name, price, images, promotional_videos, rating, category_id, vendor_id, seller_currency, categories(name), vendors(business_type, country, shop_currency)')
+        .select('id, name, price, images, promotional_videos, rating, category_id, vendor_id, seller_currency, categories(name), vendors(id, user_id, business_name, business_type, country, shop_currency)')
         .eq('is_active', true)
         .order('created_at', { ascending: false }) // Nouveautés en premier
         .limit(limit * 3);
@@ -97,7 +100,7 @@ export function useDiscoveryProducts(limit = 12, enabled = true) {
         const { data: fallback } = await withDiscoveryTimeout(
           supabase
             .from('products')
-            .select('id, name, price, images, promotional_videos, rating, category_id, vendor_id, seller_currency, categories(name), vendors(business_type, country, shop_currency)')
+            .select('id, name, price, images, promotional_videos, rating, category_id, vendor_id, seller_currency, categories(name), vendors(id, user_id, business_name, business_type, country, shop_currency)')
             .eq('is_active', true)
             .order('reviews_count', { ascending: false })
             .limit(limit * 2),
@@ -112,8 +115,9 @@ export function useDiscoveryProducts(limit = 12, enabled = true) {
       }
 
       return unseen.map(p => {
+        const v = Array.isArray((p as any).vendors) ? (p as any).vendors[0] : (p as any).vendors;
         // DEVISE = PAYS DU VENDEUR (fiable) : Guinée→GNF, Sénégal→XOF.
-        const currency = getCurrencyForCountry((p as any).vendors?.country || '');
+        const currency = getCurrencyForCountry(v?.country || '');
         return {
           product_id: p.id,
           name: p.name,
@@ -124,6 +128,9 @@ export function useDiscoveryProducts(limit = 12, enabled = true) {
           rating: p.rating,
           reason: `Découvrir: ${(p.categories as any)?.name || 'Nouveauté'}`,
           category_name: (p.categories as any)?.name,
+          vendor_id: (p as any).vendor_id || v?.id || null,
+          vendor_name: v?.business_name || '',
+          vendor_user_id: v?.user_id || null,
         };
       });
     } catch (error) {

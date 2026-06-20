@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
@@ -43,6 +44,7 @@ export default function TaxiMotoPaymentModal({
   driverId,
   onPaymentSuccess
 }: TaxiMotoPaymentModalProps) {
+  const { t } = useTranslation();
   const fc = useFormatCurrency();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('wallet');
   const [processing, setProcessing] = useState(false);
@@ -126,7 +128,7 @@ export default function TaxiMotoPaymentModal({
       // Vérifier le solde pour wallet
       if (paymentMethod === 'wallet') {
         if (walletBalance !== null && walletBalance < amount) {
-          toast.error('Solde insuffisant', {
+          toast.error(t('taxiMotoPaymentModal.soldeInsuffisant'), {
             description: 'Veuillez recharger votre wallet'
           });
           setProcessing(false);
@@ -136,7 +138,7 @@ export default function TaxiMotoPaymentModal({
 
       // Validation des champs requis
       if (paymentMethod === 'orange_money' && (!phoneNumber || phoneNumber.length < 8)) {
-        toast.error('Numéro de téléphone requis', {
+        toast.error(t('taxiMotoPaymentModal.numeroDeTelephoneRequis'), {
           description: 'Veuillez entrer votre numéro Mobile Money'
         });
         setProcessing(false);
@@ -173,15 +175,15 @@ export default function TaxiMotoPaymentModal({
 
       // Messages selon la méthode
       if (paymentMethod === 'wallet') {
-        toast.success('Paiement sécurisé effectué !', {
+        toast.success(t('taxiMotoPaymentModal.paiementSecuriseEffectue'), {
           description: `${fc(amount)} bloqués en escrow - Seront transférés au chauffeur à la fin de la course`
         });
       } else if (paymentMethod === 'cash') {
-        toast.success('Course confirmée !', {
+        toast.success(t('taxiMotoPaymentModal.courseConfirmee'), {
           description: 'Vous paierez en espèces au chauffeur'
         });
       } else if (paymentMethod === 'orange_money') {
-        toast.success('Paiement Mobile Money initié !', {
+        toast.success(t('taxiMotoPaymentModal.paiementMobileMoneyInitie'), {
           description: `Confirmez sur votre téléphone ${phoneNumber}`
         });
       }
@@ -191,7 +193,7 @@ export default function TaxiMotoPaymentModal({
 
     } catch (error) {
       console.error('[TaxiPayment] Error:', error);
-      toast.error('Erreur de paiement', {
+      toast.error(t('taxiMotoPaymentModal.erreurDePaiement'), {
         description: error instanceof Error ? error.message : 'Veuillez réessayer'
       });
     } finally {
@@ -224,7 +226,7 @@ export default function TaxiMotoPaymentModal({
       });
 
       if (escrowResult.success) {
-        toast.success('Paiement par carte réussi !', {
+        toast.success(t('taxiMotoPaymentModal.paiementParCarteReussi'), {
           description: `${fc(amount)} payés par carte`
         });
       }
@@ -240,7 +242,7 @@ export default function TaxiMotoPaymentModal({
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Shield className="w-5 h-5 text-primary" />
@@ -253,7 +255,7 @@ export default function TaxiMotoPaymentModal({
                 </div>
                 {paymentMethod === 'wallet' && walletBalance !== null && (
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="text-muted-foreground">Solde disponible:</span>
+                    <span className="text-muted-foreground">{t('taxiMotoPaymentModal.soldeDisponible')}</span>
                     <span className="font-semibold">{fc(walletBalance)}</span>
                   </div>
                 )}
@@ -292,7 +294,7 @@ export default function TaxiMotoPaymentModal({
             {/* Champs spécifiques selon la méthode */}
             {paymentMethod === 'orange_money' && (
               <div className="space-y-2 mt-3">
-                <Label htmlFor="phone">Numéro de téléphone</Label>
+                <Label htmlFor="phone">{t('taxiMotoPaymentModal.numeroDeTelephone')}</Label>
                 <Input
                   id="phone"
                   type="tel"
@@ -361,7 +363,7 @@ export default function TaxiMotoPaymentModal({
         description={`Course taxi-moto #${rideId.slice(0, 8)}`}
         onSuccess={handleStripeSuccess}
         onError={(error) => {
-          toast.error('Erreur paiement carte', { description: error });
+          toast.error(t('taxiMotoPaymentModal.erreurPaiementCarte'), { description: error });
           setShowStripeModal(false);
         }}
       />

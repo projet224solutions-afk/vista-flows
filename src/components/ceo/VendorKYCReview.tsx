@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Shield,
   CheckCircle2,
@@ -52,6 +53,7 @@ interface VendorKYC {
 }
 
 export function VendorKYCReview() {
+  const { t } = useTranslation();
   const [kycRecords, setKycRecords] = useState<VendorKYC[]>([]);
   const [filteredRecords, setFilteredRecords] = useState<VendorKYC[]>([]);
   const [loading, setLoading] = useState(true);
@@ -128,7 +130,7 @@ export function VendorKYCReview() {
 
     } catch (error) {
       console.error('Error loading KYC records:', error);
-      toast.error('Erreur lors du chargement');
+      toast.error(t('vendorKYCReview.erreurLorsDuChargement'));
     } finally {
       setLoading(false);
     }
@@ -146,7 +148,7 @@ export function VendorKYCReview() {
     if (!selectedKYC || !dialogAction) return;
 
     if (dialogAction === 'REJECT' && !rejectionReason.trim()) {
-      toast.error('Veuillez fournir une raison de rejet');
+      toast.error(t('vendorKYCReview.veuillezFournirUneRaisonDe'));
       return;
     }
 
@@ -268,11 +270,11 @@ export function VendorKYCReview() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'verified':
-        return <Badge className="bg-[#ff4000] text-white">✓ Vérifié</Badge>;
+        return <Badge className="bg-[#ff4000] text-white">{t('vendorKYCReview.verifie')}</Badge>;
       case 'rejected':
-        return <Badge variant="destructive">✗ Rejeté</Badge>;
+        return <Badge variant="destructive">{t('vendorKYCReview.rejete')}</Badge>;
       case 'under_review':
-        return <Badge className="bg-blue-500 text-white">En révision</Badge>;
+        return <Badge className="bg-blue-500 text-white">{t('vendorKYCReview.enRevision')}</Badge>;
       case 'pending':
       default:
         return <Badge variant="secondary">En attente</Badge>;
@@ -328,19 +330,19 @@ export function VendorKYCReview() {
         </Card>
         <Card className="border-blue-200 bg-blue-50">
           <CardHeader className="pb-2">
-            <CardDescription>En révision</CardDescription>
+            <CardDescription>{t('vendorKYCReview.enRevision')}</CardDescription>
             <CardTitle className="text-2xl text-blue-600">{stats.under_review}</CardTitle>
           </CardHeader>
         </Card>
         <Card className="border-orange-200 bg-orange-50">
           <CardHeader className="pb-2">
-            <CardDescription>Vérifiés</CardDescription>
+            <CardDescription>{t('vendorKYCReview.verifies')}</CardDescription>
             <CardTitle className="text-2xl text-[#ff4000]">{stats.verified}</CardTitle>
           </CardHeader>
         </Card>
         <Card className="border-orange-200 bg-orange-50">
           <CardHeader className="pb-2">
-            <CardDescription>Rejetés</CardDescription>
+            <CardDescription>{t('vendorKYCReview.rejetes')}</CardDescription>
             <CardTitle className="text-2xl text-[#ff4000]">{stats.rejected}</CardTitle>
           </CardHeader>
         </Card>
@@ -391,7 +393,7 @@ export function VendorKYCReview() {
                         <Phone className="w-4 h-4 text-muted-foreground" />
                         <span>{kyc.phone_number || 'Non fourni'}</span>
                         {kyc.phone_verified && (
-                          <Badge variant="outline" className="text-xs">Vérifié</Badge>
+                          <Badge variant="outline" className="text-xs">{t('vendorKYCReview.verifie2')}</Badge>
                         )}
                       </div>
 
@@ -412,7 +414,7 @@ export function VendorKYCReview() {
                     {kyc.rejection_reason && (
                       <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-md">
                         <p className="text-sm text-[#ff4000]">
-                          <span className="font-semibold">Raison du rejet: </span>
+                          <span className="font-semibold">{t('vendorKYCReview.raisonDuRejet')} </span>
                           {kyc.rejection_reason}
                         </p>
                       </div>
@@ -488,12 +490,12 @@ export function VendorKYCReview() {
           <div className="space-y-4">
             {dialogAction === 'REJECT' && (
               <div>
-                <Label htmlFor="rejection_reason">Raison du rejet *</Label>
+                <Label htmlFor="rejection_reason">{t('vendorKYCReview.raisonDuRejet2')}</Label>
                 <Textarea
                   id="rejection_reason"
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
-                  placeholder="Expliquez pourquoi le document est rejeté (photo floue, document expiré, etc.)..."
+                  placeholder={t('vendorKYCReview.expliquezPourquoiLeDocumentEst')}
                   rows={4}
                   required
                 />
@@ -505,7 +507,7 @@ export function VendorKYCReview() {
                 <div className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-[#ff4000] mt-0.5" />
                   <div>
-                    <p className="font-medium text-[#ff4000]">Vérification KYC</p>
+                    <p className="font-medium text-[#ff4000]">{t('vendorKYCReview.verificationKyc')}</p>
                     <p className="text-sm text-[#ff4000] mt-1">
                       En approuvant ce KYC, le vendeur pourra être certifié par le CEO.
                       Assurez-vous que le document est valide et lisible.
@@ -545,9 +547,9 @@ export function VendorKYCReview() {
 
       {/* View Image Dialog */}
       <Dialog open={viewImageDialog} onOpenChange={setViewImageDialog}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Document d'identité</DialogTitle>
+            <DialogTitle>{t('vendorKYCReview.documentDIdentite')}</DialogTitle>
             <DialogDescription>
               {selectedKYC?.vendor_name} - {getDocumentTypeName(selectedKYC?.id_document_type)}
             </DialogDescription>
@@ -557,12 +559,12 @@ export function VendorKYCReview() {
             {selectedKYC?.id_document_url ? (
               <img
                 src={selectedKYC.id_document_url}
-                alt="Document d'identité"
+                alt={t('vendorKYCReview.documentDIdentite')}
                 className="w-full h-auto rounded-lg border"
               />
             ) : (
               <div className="flex items-center justify-center h-64 bg-muted rounded-lg">
-                <p className="text-muted-foreground">Aucun document disponible</p>
+                <p className="text-muted-foreground">{t('vendorKYCReview.aucunDocumentDisponible')}</p>
               </div>
             )}
           </div>

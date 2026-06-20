@@ -27,6 +27,7 @@ interface AIProduct {
   score?: number;
   vendor_id?: string;
   vendor_name?: string;
+  vendor_user_id?: string;
   currency?: string;
 }
 
@@ -69,8 +70,8 @@ export function AIRecommendationSection({
 
   if (displayProducts.length === 0) return null;
 
-  // Responsive card width
-  const cardWidth = isMobile ? '44vw' : isTablet ? '200px' : '220px';
+  // Responsive card width (cartes agrandies)
+  const cardWidth = isMobile ? '47vw' : isTablet ? '230px' : '250px';
 
   const handleAddToCart = (p: AIProduct) => {
     addToCart({
@@ -89,9 +90,7 @@ export function AIRecommendationSection({
       {/* Header */}
       <div className="flex items-center justify-between mb-3 px-1">
         <div className="flex items-center gap-2">
-          <div className="p-1.5">
-            <Icon className="w-4 h-4 text-primary" />
-          </div>
+          <Icon className="w-8 h-8 text-[#ff4000] fill-[#ff4000] shrink-0" strokeWidth={1.5} />
           <div>
             <h3 className="font-semibold text-sm text-foreground">{title}</h3>
             {subtitle && (
@@ -131,7 +130,9 @@ export function AIRecommendationSection({
                   promotionalVideos={p.promotional_videos || []}
                   rating={p.rating || 0}
                   reviewCount={p.reviews_count || 0}
-                  vendor=""
+                  vendor={p.vendor_name || ''}
+                  vendorId={p.vendor_id}
+                  vendorUserId={p.vendor_user_id}
                   onBuy={() => navigate(`/product/${p.product_id}`)}
                   onAddToCart={() => handleAddToCart(p)}
                   onContact={() => contactVendor({

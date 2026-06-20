@@ -42,3 +42,6 @@ rc
 upabase
 .vercel
 .env*.local
+
+# Cache intermédiaire des traductions auto (régénérable)
+scripts/.i18n-cache/

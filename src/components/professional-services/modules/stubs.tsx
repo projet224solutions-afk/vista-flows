@@ -4,6 +4,7 @@
  */
 
 import { Card, CardContent } from '@/components/ui/card';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Utensils } from 'lucide-react';
 
 interface ModuleProps {
@@ -13,6 +14,7 @@ interface ModuleProps {
 
 // Traiteur - Inspiré de ezCater
 export function CateringModule({ serviceId, businessName }: ModuleProps) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -21,7 +23,7 @@ export function CateringModule({ serviceId, businessName }: ModuleProps) {
         </div>
         <div>
           <h2 className="text-2xl font-bold">{businessName}</h2>
-          <p className="text-muted-foreground">Service Traiteur</p>
+          <p className="text-muted-foreground">{t('stubs.serviceTraiteur')}</p>
         </div>
       </div>
       <Card>

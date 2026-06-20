@@ -45,7 +45,7 @@ export default function BureauDashboard() {
   const [motos, setMotos] = useState<any[]>([]);
   const [alerts, setAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
   const [walletBalance, setWalletBalance] = useState(0);
   const [isWorkerDialogOpen, setIsWorkerDialogOpen] = useState(false);
   const [isMemberDialogOpen, setIsMemberDialogOpen] = useState(false);
@@ -90,15 +90,18 @@ export default function BureauDashboard() {
 
       if (bureauError) throw bureauError;
       if (!bureauData) {
-        toast.error('Bureau non trouvé');
+        toast.error(t('bureauDashboard.bureauNonTrouve'));
         navigate('/');
         return;
       }
 
       setBureau(bureauData);
 
-      const workersRes = await (supabase as any).from('syndicate_workers').select('*').eq('bureau_id', bureauData.id).eq('is_staff', true);
-      const membersRes = await (supabase as any).from('syndicate_workers').select('*').eq('bureau_id', bureauData.id).eq('is_staff', false);
+      // Membres du bureau (staff) = syndicate_workers. Le filtre `.eq('is_staff', ...)`
+      // référençait une colonne INEXISTANTE → erreur 42703 → liste toujours vide.
+      const workersRes = await (supabase as any).from('syndicate_workers').select('*').eq('bureau_id', bureauData.id);
+      // Adhérents = chauffeurs taxi-moto rattachés au bureau (source réelle des adhérents).
+      const membersRes = await (supabase as any).from('taxi_drivers').select('*').eq('bureau_id', bureauData.id);
       const motosRes = await (supabase as any).from('vehicles').select('*').eq('bureau_id', bureauData.id);
       const alertsRes = await (supabase as any).from('syndicate_alerts').select('*').eq('bureau_id', bureauData.id).order('created_at', { ascending: false });
       const walletRes = await (supabase as any).from('bureau_wallets').select('balance').eq('bureau_id', bureauData.id).single();
@@ -157,7 +160,7 @@ export default function BureauDashboard() {
     if (workerForm.telephone) {
       const phoneRegex = /^(\+224)?[0-9]{9}$/;
       if (!phoneRegex.test(workerForm.telephone.replace(/\s/g, ''))) {
-        toast.error('Format téléphone invalide (9 chiffres)');
+        toast.error(t('bureauDashboard.formatTelephoneInvalide9Chiffres'));
         return;
       }
     }
@@ -216,18 +219,18 @@ export default function BureauDashboard() {
     if (memberForm.phone) {
       const phoneRegex = /^(\+224)?[0-9]{9}$/;
       if (!phoneRegex.test(memberForm.phone.replace(/\s/g, ''))) {
-        toast.error('Format téléphone invalide (9 chiffres)');
+        toast.error(t('bureauDashboard.formatTelephoneInvalide9Chiffres'));
         return;
       }
     }
 
     if (memberForm.password !== memberForm.confirm_password) {
-      toast.error('Les mots de passe ne correspondent pas');
+      toast.error(t('bureauDashboard.lesMotsDePasseNe'));
       return;
     }
 
     if (memberForm.password.length < 8) {
-      toast.error('Le mot de passe doit contenir au moins 8 caractères');
+      toast.error(t('bureauDashboard.leMotDePasseDoit'));
       return;
     }
 
@@ -237,7 +240,7 @@ export default function BureauDashboard() {
     const hasNumber = /[0-9]/.test(memberForm.password);
 
     if (!hasUpperCase || !hasLowerCase || !hasNumber) {
-      toast.error('Le mot de passe doit contenir: majuscule, minuscule et chiffre');
+      toast.error(t('bureauDashboard.leMotDePasseDoit2'));
       return;
     }
 
@@ -262,7 +265,7 @@ export default function BureauDashboard() {
         return;
       }
 
-      toast.success('Adhérent créé avec succès');
+      toast.success(t('bureauDashboard.adherentCreeAvecSucces'));
       setMemberForm({
         full_name: '',
         email: '',
@@ -390,9 +393,9 @@ export default function BureauDashboard() {
                       Ajouter un Adhérent
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-md">
+                  <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                      <DialogTitle>Ajouter un adhérent</DialogTitle>
+                      <DialogTitle>{t('bureauDashboard.ajouterUnAdherent')}</DialogTitle>
                     </DialogHeader>
                     <form onSubmit={handleAddMember} className="space-y-4">
                       <div className="space-y-2">
@@ -404,11 +407,11 @@ export default function BureauDashboard() {
                         <Input id="member_email" type="email" required value={memberForm.email} onChange={(e) => setMemberForm({ ...memberForm, email: e.target.value })} />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="member_phone">Téléphone</Label>
+                        <Label htmlFor="member_phone">{t('bureauDashboard.telephone')}</Label>
                         <Input id="member_phone" type="tel" value={memberForm.phone} onChange={(e) => setMemberForm({ ...memberForm, phone: e.target.value })} />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="member_password">Mot de passe * (min. 8 caractères)</Label>
+                        <Label htmlFor="member_password">{t('bureauDashboard.motDePasseMin8')}</Label>
                         <div className="relative">
                           <Input id="member_password" type={showMemberPassword ? 'text' : 'password'} required minLength={8} value={memberForm.password} onChange={(e) => setMemberForm({ ...memberForm, password: e.target.value })} />
                           <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" onClick={() => setShowMemberPassword(!showMemberPassword)}>
@@ -417,11 +420,11 @@ export default function BureauDashboard() {
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="member_confirm">Confirmer mot de passe *</Label>
+                        <Label htmlFor="member_confirm">{t('bureauDashboard.confirmerMotDePasse')}</Label>
                         <Input id="member_confirm" type="password" required minLength={8} value={memberForm.confirm_password} onChange={(e) => setMemberForm({ ...memberForm, confirm_password: e.target.value })} />
                       </div>
                       <div className="flex justify-end gap-2 pt-4">
-                        <Button type="button" variant="outline" onClick={() => setIsMemberDialogOpen(false)} disabled={isSubmittingMember}>Annuler</Button>
+                        <Button type="button" variant="outline" onClick={() => setIsMemberDialogOpen(false)} disabled={isSubmittingMember}>{t('bureauDashboard.annuler')}</Button>
                         <Button type="submit" disabled={isSubmittingMember} className="bg-[#ff4000] hover:bg-[#ff4000] shadow-lg shadow-[#ff4000]/40">
                           {isSubmittingMember ? 'Création...' : 'Créer l\'adhérent'}
                         </Button>
@@ -436,9 +439,9 @@ export default function BureauDashboard() {
                       Ajouter un Membre Bureau
                     </Button>
                   </DialogTrigger>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>Ajouter un membre du bureau</DialogTitle>
+                    <DialogTitle>{t('bureauDashboard.ajouterUnMembreDuBureau')}</DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleAddWorker} className="space-y-4">
                     <div className="space-y-2">
@@ -462,7 +465,7 @@ export default function BureauDashboard() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="telephone">Téléphone</Label>
+                        <Label htmlFor="telephone">{t('bureauDashboard.telephone')}</Label>
                         <Input
                           id="telephone"
                           type="tel"
@@ -472,15 +475,15 @@ export default function BureauDashboard() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="access_level">Niveau d'accès</Label>
+                      <Label htmlFor="access_level">{t('bureauDashboard.niveauDAcces')}</Label>
                       <Select value={workerForm.access_level} onValueChange={(val) => setWorkerForm({ ...workerForm, access_level: val })}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="limited">Limité</SelectItem>
+                          <SelectItem value="limited">{t('bureauDashboard.limite')}</SelectItem>
                           <SelectItem value="standard">Standard</SelectItem>
-                          <SelectItem value="advanced">Avancé</SelectItem>
+                          <SelectItem value="advanced">{t('bureauDashboard.avance')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -641,7 +644,7 @@ export default function BureauDashboard() {
                     <Badge className="bg-orange-100 text-[#ff4000]">{bureau?.status}</Badge>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-slate-500 uppercase">Préfecture</p>
+                    <p className="text-xs text-slate-500 uppercase">{t('bureauDashboard.prefecture')}</p>
                     <p className="font-semibold text-slate-800">{bureau?.prefecture}</p>
                   </div>
                   <div className="space-y-1">
@@ -649,7 +652,7 @@ export default function BureauDashboard() {
                     <p className="font-semibold text-slate-800">{bureau?.commune}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-slate-500 uppercase">Président</p>
+                    <p className="text-xs text-slate-500 uppercase">{t('bureauDashboard.president')}</p>
                     <p className="font-semibold text-slate-800">{bureau?.president_name}</p>
                   </div>
                   <div className="space-y-1">
@@ -670,7 +673,7 @@ export default function BureauDashboard() {
               </CardHeader>
               <CardContent className="p-6 space-y-4">
                 <div>
-                  <Label className="text-sm text-slate-500">Token d'accès permanent</Label>
+                  <Label className="text-sm text-slate-500">{t('bureauDashboard.tokenDAccesPermanent')}</Label>
                   <div className="flex gap-2 mt-2">
                     <Input
                       value={showToken ? (bureau?.access_token || '') : '••••••••••••••••••••••••'}
@@ -689,7 +692,7 @@ export default function BureauDashboard() {
                       variant="outline"
                       onClick={() => {
                         navigator.clipboard.writeText(bureau?.access_token || '');
-                        toast.success('Token copié !');
+                        toast.success(t('bureauDashboard.tokenCopie'));
                       }}
                     >
                       <Copy className="w-4 h-4" />
@@ -767,7 +770,7 @@ export default function BureauDashboard() {
         {error && (
           <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg text-[#ff4000] mb-6">
             <p className="font-medium">{typeof error === 'string' ? error : error.message}</p>
-            <button onClick={clearError} className="text-sm underline mt-2">Fermer</button>
+            <button onClick={clearError} className="text-sm underline mt-2">{t('bureauDashboard.fermer')}</button>
           </div>
         )}
         {renderContent()}

@@ -358,6 +358,15 @@ class TranslationService {
 
       if (error) throw error;
 
+      // 🔎 DIAGNOSTIC (temporaire) — montre ce que le backend renvoie réellement par langue.
+      console.log('[CHAT-TRADUCTION]', {
+        cible: targetLanguage,
+        source_detectee: data?.sourceLanguage,
+        wasTranslated: data?.wasTranslated,
+        envoye: content?.slice(0, 40),
+        recu: (data?.translatedContent || '')?.slice(0, 40),
+      });
+
       return {
         translatedContent: data.translatedContent || content,
         originalContent: content,
@@ -366,7 +375,7 @@ class TranslationService {
         wasTranslated: data.wasTranslated || false
       };
     } catch (error) {
-      console.error('Erreur traduction:', error);
+      console.error('[CHAT-TRADUCTION] ERREUR (cible=' + targetLanguage + '):', error);
       // En cas d'erreur, retourner le contenu original
       return {
         translatedContent: content,

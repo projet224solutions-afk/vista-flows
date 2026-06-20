@@ -1,5 +1,6 @@
 ﻿import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useTranslation } from "@/hooks/useTranslation";
 import ContractForm from '@/components/vendor/contracts/ContractForm';
 import ContractsList from '@/components/vendor/contracts/ContractsList';
 import AIContractForm from '@/components/vendor/contracts/AIContractForm';
@@ -9,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import {} from 'react';
 
 export default function VendorContracts() {
+  const { t } = useTranslation();
   const [refreshKey, setRefreshKey] = useState(0);
   const [viewingContract, setViewingContract] = useState<any>(null);
   const [_loadingContract, setLoadingContract] = useState(false);
@@ -59,7 +61,7 @@ export default function VendorContracts() {
   return (
     <div className="container mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
       <div className="mb-4 sm:mb-6">
-        <h1 className="text-xl sm:text-3xl font-bold mb-1 sm:mb-2">Gestion des Contrats</h1>
+        <h1 className="text-xl sm:text-3xl font-bold mb-1 sm:mb-2">{t('vendorContracts.gestionDesContrats')}</h1>
         <p className="text-sm sm:text-base text-muted-foreground">
           Créez et gérez vos contrats professionnels
         </p>

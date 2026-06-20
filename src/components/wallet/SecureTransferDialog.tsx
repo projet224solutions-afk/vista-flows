@@ -16,6 +16,7 @@ import { UserSearchInput } from '@/components/wallet/UserSearchInput';
 import { ArrowRight, Loader2, Shield, AlertCircle, CheckCircle2, Info } from 'lucide-react';
 import { formatCurrency } from '@/lib/formatters';
 import { getCurrencyByCode } from '@/data/currencies';
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface SecureTransferDialogProps {
   open: boolean;
@@ -32,6 +33,7 @@ export function SecureTransferDialog({
   currentBalance,
   currentCurrency = 'GNF',
 }: SecureTransferDialogProps) {
+  const { t } = useTranslation();
   const [recipientCode, setRecipientCode] = useState('');
   const [recipientUserId, setRecipientUserId] = useState('');
   const [amount, setAmount] = useState('');
@@ -88,7 +90,7 @@ export function SecureTransferDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5 text-primary" />
@@ -103,7 +105,7 @@ export function SecureTransferDialog({
           <div className="space-y-4 py-4">
             {/* Solde disponible */}
             <div className="p-3 bg-muted rounded-lg">
-              <p className="text-sm text-muted-foreground">Solde disponible</p>
+              <p className="text-sm text-muted-foreground">{t('secureTransferDialog.soldeDisponible')}</p>
               <p className="text-xl font-bold">
                 {formatCurrency(currentBalance, currentCurrency)}
               </p>
@@ -141,7 +143,7 @@ export function SecureTransferDialog({
             <div className="space-y-2">
               <Label>Description (optionnel)</Label>
               <Textarea
-                placeholder="Motif du transfert..."
+                placeholder={t('secureTransferDialog.motifDuTransfert')}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={2}
@@ -178,11 +180,11 @@ export function SecureTransferDialog({
         {step === 'confirm' && preview && (
           <div className="space-y-4 py-4">
             <div className="p-4 bg-muted rounded-lg space-y-3">
-              <h4 className="font-medium">Récapitulatif du transfert</h4>
+              <h4 className="font-medium">{t('secureTransferDialog.recapitulatifDuTransfert')}</h4>
 
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Montant envoyé</span>
+                  <span className="text-muted-foreground">{t('secureTransferDialog.montantEnvoye')}</span>
                   <span className="font-medium">
                     {senderCurrencyInfo?.flag} {formatCurrency(preview.amount_sent, preview.currency_sent)}
                   </span>
@@ -196,7 +198,7 @@ export function SecureTransferDialog({
                 <Separator />
 
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Après frais</span>
+                  <span className="text-muted-foreground">{t('secureTransferDialog.apresFrais')}</span>
                   <span>{formatCurrency(preview.amount_after_fee, preview.currency_sent)}</span>
                 </div>
 
@@ -217,7 +219,7 @@ export function SecureTransferDialog({
                 <Separator />
 
                 <div className="flex justify-between text-lg font-bold text-primary">
-                  <span>Le destinataire recevra</span>
+                  <span>{t('secureTransferDialog.leDestinataireRecevra')}</span>
                   <span>
                     {receiverCurrencyInfo?.flag} {formatCurrency(preview.amount_received, preview.currency_received)}
                   </span>
@@ -280,7 +282,7 @@ export function SecureTransferDialog({
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold text-[#ff4000]">Transfert réussi!</h3>
+              <h3 className="text-lg font-semibold text-[#ff4000]">{t('secureTransferDialog.transfertReussi')}</h3>
               <p className="text-sm text-muted-foreground mt-1">
                 Votre transfert a été effectué avec succès
               </p>
@@ -288,7 +290,7 @@ export function SecureTransferDialog({
 
             {lastTransferCode && (
               <div className="p-3 bg-muted rounded-lg">
-                <p className="text-xs text-muted-foreground">Code de transfert</p>
+                <p className="text-xs text-muted-foreground">{t('secureTransferDialog.codeDeTransfert')}</p>
                 <p className="font-mono font-medium">{lastTransferCode}</p>
               </div>
             )}

@@ -28,6 +28,7 @@ import type { AuthenticatedRequest } from '../middlewares/auth.middleware.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { env } from '../config/env.js';
 import { logger } from '../config/logger.js';
+import { deleteUserCompletely } from '../services/userDeletion.service.js';
 
 /** Vérifie un mot de passe via Supabase Auth (login éphémère, client jetable). */
 async function verifyAuthPassword(email: string, password: string): Promise<boolean> {
@@ -442,7 +443,7 @@ router.post('/users', async (req, res: Response): Promise<void> => {
       const { error } = await supabaseAdmin.from('vendors').insert({
         user_id: userId, business_name: vd.business_name || fullName, description: vd.business_description,
         address: vd.business_address, service_type: vd.service_type || null, phone: body.phone, email: body.email,
-        city: body.city || null, vendor_code: vendorCode, is_active: true, is_verified: true,
+        city: body.city || null, vendor_code: vendorCode, is_active: true, is_verified: false,
         kyc_status: 'verified', kyc_verified_at: new Date().toISOString(),
       });
       if (error) { await failRole('Erreur création profil vendeur: ' + error.message); return; }
@@ -455,7 +456,7 @@ router.post('/users', async (req, res: Response): Promise<void> => {
       if (dd.vehicle_plate) vehicleInfo.plate = dd.vehicle_plate;
       const { error } = await supabaseAdmin.from('drivers').insert({
         user_id: userId, license_number: dd.license_number || `LIC-${Date.now()}`, vehicle_type: dd.vehicle_type || 'moto',
-        is_verified: true, is_online: false, vehicle_info: vehicleInfo, full_name: fullName, phone_number: body.phone, email: body.email,
+        is_verified: false, is_online: false, vehicle_info: vehicleInfo, full_name: fullName, phone_number: body.phone, email: body.email,
       });
       if (error) { await failRole('Erreur création profil chauffeur: ' + error.message); return; }
     } else if (body.role === 'prestataire') {
@@ -463,7 +464,7 @@ router.post('/users', async (req, res: Response): Promise<void> => {
       const { error } = await supabaseAdmin.from('professional_services').insert({
         user_id: userId, business_name: vd.business_name || fullName, description: vd.business_description || null,
         address: vd.business_address || null, service_type: vd.service_type || 'general', phone: body.phone, email: body.email,
-        city: body.city || null, is_active: true, is_verified: true,
+        city: body.city || null, is_active: true, is_verified: false,
       });
       if (error) { await failRole('Erreur création profil prestataire: ' + error.message); return; }
     } else if (body.role === 'syndicat') {
@@ -1153,8 +1154,7 @@ router.post('/users/delete', verifyJWT, async (req: AuthenticatedRequest, res: R
     const agent = await requireManagementAgent(req.user!.id, 'manage_users', res); if (!agent) return;
     if (!(await userBelongsToAgent(agent.id, userId))) { res.status(403).json({ success: false, error: 'Utilisateur non créé par cet agent' }); return; }
 
-    const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
-    const { data: profile } = await supabaseAdmin.from('profiles').select('*').eq('id', userId).maybeSingle();
+    const { data: profile } = await supabaseAdmin.from('profiles').select('role').eq('id', userId).maybeSingle();
 
     // 🛡️ un agent ne peut jamais supprimer un compte privilégié
     if (AGENT_PROTECTED_ROLES.includes((profile?.role || '').toLowerCase())) {
@@ -1162,25 +1162,15 @@ router.post('/users/delete', verifyJWT, async (req: AuthenticatedRequest, res: R
       return;
     }
 
-    // archivage best-effort (deleted_users_archive)
-    try {
-      const { data: wallet } = await supabaseAdmin.from('wallets').select('*').eq('user_id', userId).maybeSingle();
-      const { data: userIdsData } = await supabaseAdmin.from('user_ids').select('*').eq('user_id', userId).maybeSingle();
-      const expiresAt = new Date(); expiresAt.setDate(expiresAt.getDate() + 365);
-      const fullName = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ').trim() || null;
-      await supabaseAdmin.from('deleted_users_archive').insert({
-        original_user_id: userId, email: authUser?.user?.email ?? null, phone: authUser?.user?.phone ?? null,
-        full_name: fullName, role: profile?.role ?? null, public_id: profile?.public_id ?? null,
-        profile_data: profile ?? null, wallet_data: wallet ?? null, user_ids_data: userIdsData ?? null,
-        role_specific_data: { agent_id: agent.id }, deletion_reason: 'Suppression via agent', deletion_method: 'agent-delete-user',
-        deleted_by: req.user!.id, expires_at: expiresAt.toISOString(), original_created_at: profile?.created_at ?? null, is_restored: false,
-      });
-    } catch (e) { logger.warn(`[agents/users/delete] archivage: ${(e as Error)?.message}`); }
-
-    // suppression du compte auth (cascade les enregistrements liés)
-    const { error: delErr } = await supabaseAdmin.auth.admin.deleteUser(userId);
-    if (delErr) { res.status(500).json({ success: false, error: delErr.message }); return; }
-    try { await supabaseAdmin.from('audit_logs').insert({ actor_id: agent.id, action: 'USER_DELETED', target_type: 'user', target_id: userId }); } catch { /* ignore */ }
+    // Suppression COMPLÈTE (archive + cascade ~80 tables + profiles + RPC + Cognito + auth.users),
+    // via la logique partagée — identique au bouton PDG. Plus de dépendance au ON DELETE CASCADE.
+    const result = await deleteUserCompletely(userId, {
+      actorId: req.user!.id,
+      deletionReason: 'Suppression via agent',
+      deletionMethod: 'agent-delete-user',
+      roleSpecificExtra: { agent_id: agent.id },
+    });
+    if (!result.success) { res.status(500).json({ success: false, error: result.error || 'Suppression incomplète' }); return; }
     res.json({ success: true });
   } catch (err: any) {
     if (err?.issues) { res.status(400).json({ success: false, error: err.issues[0]?.message || 'Données invalides' }); return; }

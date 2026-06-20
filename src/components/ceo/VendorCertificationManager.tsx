@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Shield,
   CheckCircle2,
@@ -47,6 +48,7 @@ interface VendorWithCertification {
 }
 
 export function VendorCertificationManager() {
+  const { t } = useTranslation();
   const [vendors, setVendors] = useState<VendorWithCertification[]>([]);
   const [filteredVendors, setFilteredVendors] = useState<VendorWithCertification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -140,7 +142,7 @@ export function VendorCertificationManager() {
 
     } catch (error: any) {
       console.error('Error loading vendors:', error);
-      toast.error('Erreur lors du chargement des vendeurs: ' + (error.message || 'Erreur inconnue'));
+      toast.error(t('vendorCertificationManager.erreurLorsDuChargementDes') + (error.message || 'Erreur inconnue'));
     } finally {
       setLoading(false);
     }
@@ -313,7 +315,7 @@ export function VendorCertificationManager() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Rechercher un vendeur..."
+                  placeholder={t('vendorCertificationManager.rechercherUnVendeur')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -450,7 +452,7 @@ export function VendorCertificationManager() {
             {filteredVendors.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
                 <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Aucun vendeur trouvé</p>
+                <p>{t('vendorCertificationManager.aucunVendeurTrouve')}</p>
               </div>
             )}
           </div>
@@ -459,7 +461,7 @@ export function VendorCertificationManager() {
 
       {/* Certification Dialog */}
       <Dialog open={!!selectedVendor} onOpenChange={() => setSelectedVendor(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {dialogAction === 'CERTIFY' && 'Certifier le vendeur'}
@@ -474,12 +476,12 @@ export function VendorCertificationManager() {
           <div className="space-y-4">
             {dialogAction === 'REJECT' && (
               <div>
-                <Label htmlFor="rejection_reason">Raison du rejet *</Label>
+                <Label htmlFor="rejection_reason">{t('vendorCertificationManager.raisonDuRejet')}</Label>
                 <Textarea
                   id="rejection_reason"
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
-                  placeholder="Expliquez pourquoi la certification est rejetée..."
+                  placeholder={t('vendorCertificationManager.expliquezPourquoiLaCertificationEst')}
                   rows={3}
                 />
               </div>
@@ -491,7 +493,7 @@ export function VendorCertificationManager() {
                 id="internal_notes"
                 value={internalNotes}
                 onChange={(e) => setInternalNotes(e.target.value)}
-                placeholder="Notes internes pour l'équipe admin..."
+                placeholder={t('vendorCertificationManager.notesInternesPourLEquipe')}
                 rows={3}
               />
             </div>

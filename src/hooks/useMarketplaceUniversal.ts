@@ -92,6 +92,8 @@ export interface MarketplaceItem {
   product_mode?: 'direct' | 'affiliate';
   affiliate_url?: string;
   visibility_score?: number;
+  /** Lien interne vers la page du service (produits issus des modules : agriculture, restaurant, beauté…). */
+  external_link?: string;
 }
 
 interface UseMarketplaceUniversalOptions {
@@ -609,28 +611,69 @@ export const useMarketplaceUniversal = (options: UseMarketplaceUniversalOptions 
       const isEcommerceCategorySelected = category && category !== 'all' &&
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(category);
 
+      // Produits issus des MODULES de service (agriculture, restaurant, beauté) — surfacés
+      // dans la grille avec leurs photos. Un clic ouvre la page du service (external_link).
+      const loadServiceProducts = async (): Promise<MarketplaceItem[]> => {
+        if (itemType === 'professional_service' || itemType === 'digital_product') return [];
+        try {
+          // NB : Éducation (courses) N'est PAS surfacée ici — les formations passent par la boutique digitale.
+          const [farm, resto, beauty, props, showcase] = await Promise.all([
+            supabase.from('farm_products').select('id, professional_service_id, name, price, photos, description').eq('is_active', true).gt('stock_quantity', 0).limit(50),
+            supabase.from('restaurant_menu_items').select('id, professional_service_id, name, price, image_url, description').eq('is_available', true).limit(50),
+            supabase.from('beauty_services').select('id, professional_service_id, name, price, image_url, video_url, description').eq('is_active', true).limit(50),
+            supabase.from('properties').select('id, professional_service_id, title, price, description, offer_type, status, images:property_images(image_url, is_cover)').eq('offer_type', 'location').eq('status', 'disponible').limit(50),
+            supabase.from('service_showcase').select('id, professional_service_id, title, price, image_url, video_url, description').eq('is_active', true).limit(50),
+          ]);
+          const propCover = (r: any) => { const im = (r.images || []); const c = im.find((x: any) => x.is_cover) || im[0]; return c?.image_url ? [c.image_url] : []; };
+          const rows: any[] = [
+            ...(((farm.data as any[]) || []).map((r) => ({ r, link: `/agriculture/${r.professional_service_id}`, images: Array.isArray(r.photos) ? r.photos : [], cat: 'Agriculture' }))),
+            ...(((resto.data as any[]) || []).map((r) => ({ r, link: `/restaurant/${r.professional_service_id}/menu`, images: r.image_url ? [r.image_url] : [], cat: 'Restaurant' }))),
+            ...(((beauty.data as any[]) || []).map((r) => ({ r, link: `/beaute/${r.professional_service_id}`, images: r.image_url ? [r.image_url] : [], video: r.video_url, cat: 'Beauté' }))),
+            ...(((props.data as any[]) || []).map((r) => ({ r: { ...r, name: r.title }, link: `/bien/${r.id}`, images: propCover(r), cat: 'Immobilier' }))),
+            ...(((showcase.data as any[]) || []).map((r) => ({ r: { ...r, name: r.title }, link: `/services-proximite/${r.professional_service_id}`, images: r.image_url ? [r.image_url] : [], video: r.video_url, cat: 'Service' }))),
+          ];
+          const psids = [...new Set(rows.map((x) => x.r.professional_service_id).filter(Boolean))];
+          let nameMap = new Map<string, string>();
+          if (psids.length) {
+            const { data: svcs } = await supabase.from('professional_services').select('id, business_name').in('id', psids);
+            nameMap = new Map(((svcs as any[]) || []).map((s) => [s.id, s.business_name as string]));
+          }
+          return rows.filter((x) => x.images.length > 0).map((x) => ({
+            id: x.r.id, name: x.r.name, price: Number(x.r.price) || 0, images: x.images.filter(Boolean),
+            description: x.r.description || '', vendor_id: x.r.professional_service_id,
+            vendor_name: nameMap.get(x.r.professional_service_id) || x.cat,
+            business_name: nameMap.get(x.r.professional_service_id), category_name: x.cat,
+            rating: 0, reviews_count: 0, item_type: 'product' as const, created_at: new Date().toISOString(),
+            promotional_videos: x.video ? [x.video] : [],
+            external_link: x.link,
+          }));
+        } catch { return []; }
+      };
+
       // Charger selon le type sélectionné
       let allItems: MarketplaceItem[] = [];
       if (itemType === 'product') {
-        allItems = await withTimeout(loadProducts(), [], 'products');
+        const [products, serviceProducts] = await Promise.all([
+          withTimeout(loadProducts(), [], 'products'),
+          withTimeout(loadServiceProducts(), [], 'service_products'),
+        ]);
+        allItems = [...products, ...serviceProducts];
       } else if (itemType === 'digital_product') {
-        // Si une catégorie e-commerce est sélectionnée, ne pas charger les produits numériques
         allItems = isEcommerceCategorySelected ? [] : await withTimeout(loadDigitalProducts(), [], 'digital_products');
       } else if (itemType === 'professional_service') {
-        // Si une catégorie e-commerce est sélectionnée, ne pas charger les services pro
         allItems = isEcommerceCategorySelected ? [] : await withTimeout(loadProfessionalServices(), [], 'professional_services');
       } else {
-        // 'all' = produits + numériques + services professionnels
-        // Si une catégorie e-commerce est sélectionnée, ne charger que les produits
+        // 'all' = produits + numériques + services pro + produits des modules de service
         if (isEcommerceCategorySelected) {
           allItems = await withTimeout(loadProducts(), [], 'products');
         } else {
-          const [products, digitalProducts, professionalServices] = await Promise.all([
+          const [products, digitalProducts, professionalServices, serviceProducts] = await Promise.all([
             withTimeout(loadProducts(), [], 'products'),
             withTimeout(loadDigitalProducts(), [], 'digital_products'),
-            withTimeout(loadProfessionalServices(), [], 'professional_services')
+            withTimeout(loadProfessionalServices(), [], 'professional_services'),
+            withTimeout(loadServiceProducts(), [], 'service_products'),
           ]);
-          allItems = [...products, ...digitalProducts, ...professionalServices];
+          allItems = [...products, ...digitalProducts, ...professionalServices, ...serviceProducts];
         }
       }
 

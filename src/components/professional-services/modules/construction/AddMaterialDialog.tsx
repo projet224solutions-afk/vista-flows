@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +29,7 @@ interface Props {
 }
 
 export function AddMaterialDialog({ open, onClose, onSubmit, saving }: Props) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     name: '', category: '', unit: '', unit_price: '',
     quantity_available: '', supplier_name: '', supplier_phone: '', description: '',
@@ -50,8 +52,8 @@ export function AddMaterialDialog({ open, onClose, onSubmit, saving }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader><DialogTitle>📦 Ajouter un matériau</DialogTitle></DialogHeader>
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>{t('addMaterialDialog.ajouterUnMateriau')}</DialogTitle></DialogHeader>
         <div className="grid gap-4 py-2">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
@@ -59,16 +61,16 @@ export function AddMaterialDialog({ open, onClose, onSubmit, saving }: Props) {
               <Input placeholder="Ciment CEM II" value={form.name} onChange={e => update('name', e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Catégorie *</Label>
+              <Label>{t('addMaterialDialog.categorie')}</Label>
               <Select value={form.category} onValueChange={v => update('category', v)}>
                 <SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger>
                 <SelectContent>{CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div className="space-y-2">
-              <Label>Unité</Label>
+              <Label>{t('addMaterialDialog.unite')}</Label>
               <Input placeholder="sac, kg, m³..." value={form.unit} onChange={e => update('unit', e.target.value)} />
             </div>
             <div className="space-y-2">
@@ -76,23 +78,23 @@ export function AddMaterialDialog({ open, onClose, onSubmit, saving }: Props) {
               <Input type="number" placeholder="0" value={form.unit_price} onChange={e => update('unit_price', e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Quantité dispo</Label>
+              <Label>{t('addMaterialDialog.quantiteDispo')}</Label>
               <Input type="number" placeholder="0" value={form.quantity_available} onChange={e => update('quantity_available', e.target.value)} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Fournisseur</Label>
-              <Input placeholder="Nom du fournisseur" value={form.supplier_name} onChange={e => update('supplier_name', e.target.value)} />
+              <Input placeholder={t('addMaterialDialog.nomDuFournisseur')} value={form.supplier_name} onChange={e => update('supplier_name', e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Tél. fournisseur</Label>
+              <Label>{t('addMaterialDialog.telFournisseur')}</Label>
               <Input placeholder="+224..." value={form.supplier_phone} onChange={e => update('supplier_phone', e.target.value)} />
             </div>
           </div>
         </div>
         <div className="flex justify-end gap-3 pt-2">
-          <Button variant="outline" onClick={onClose}>Annuler</Button>
+          <Button variant="outline" onClick={onClose}>{t('addMaterialDialog.annuler')}</Button>
           <Button onClick={handleSubmit} disabled={saving || !form.name || !form.category}>
             {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
             Ajouter

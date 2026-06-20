@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -45,6 +46,7 @@ interface SOSMediaPlayerProps {
 }
 
 export function SOSMediaPlayer({ sosAlertId, className }: SOSMediaPlayerProps) {
+  const { t } = useTranslation();
   const [mediaList, setMediaList] = useState<SOSMedia[]>([]);
   const [loading, setLoading] = useState(true);
   const [playingId, setPlayingId] = useState<string | null>(null);
@@ -73,7 +75,7 @@ export function SOSMediaPlayer({ sosAlertId, className }: SOSMediaPlayerProps) {
       setMediaList(data || []);
     } catch (error) {
       console.error('Erreur:', error);
-      toast.error('Erreur de chargement des médias');
+      toast.error(t('sOSMediaPlayer.erreurDeChargementDesMedias'));
     } finally {
       setLoading(false);
     }
@@ -265,7 +267,7 @@ export function SOSMediaPlayer({ sosAlertId, className }: SOSMediaPlayerProps) {
           ) : mediaList.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Video className="w-10 h-10 mx-auto mb-2 opacity-50" />
-              <p>Aucun média reçu</p>
+              <p>{t('sOSMediaPlayer.aucunMediaRecu')}</p>
             </div>
           ) : (
             <div className="space-y-2">

@@ -2,6 +2,7 @@
  * Upload d'images pour les biens immobiliers
  */
 import { useState, useRef } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import { ImagePlus, X, Loader2, Star } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +15,7 @@ interface PropertyImageUploadProps {
 }
 
 export function PropertyImageUpload({ propertyId, existingImages = [], onImagesChange }: PropertyImageUploadProps) {
+  const { t } = useTranslation();
   const [uploading, setUploading] = useState(false);
   const [images, setImages] = useState(existingImages);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -64,11 +66,11 @@ export function PropertyImageUpload({ propertyId, existingImages = [], onImagesC
         if (error) throw error;
         setImages(prev => [...prev, data as any]);
       }
-      toast.success('Photos ajoutées !');
+      toast.success(t('propertyImageUpload.photosAjoutees'));
       onImagesChange?.();
     } catch (err: any) {
       console.error('Upload error:', err);
-      toast.error('Erreur lors de l\'upload');
+      toast.error(t('propertyImageUpload.erreurLorsDeLUpload'));
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = '';
@@ -141,7 +143,7 @@ export function PropertyImageUpload({ propertyId, existingImages = [], onImagesC
           ) : (
             <>
               <ImagePlus className="h-5 w-5" />
-              <span className="text-[10px]">Ajouter</span>
+              <span className="text-[10px]">{t('propertyImageUpload.ajouter')}</span>
             </>
           )}
         </button>

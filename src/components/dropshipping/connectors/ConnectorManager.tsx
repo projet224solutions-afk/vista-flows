@@ -316,7 +316,7 @@ export function ConnectorManager({ vendorId }: ConnectorManagerProps) {
         open={configDialog.open}
         onOpenChange={(open) => setConfigDialog({ open, connector: open ? configDialog.connector : null })}
       >
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Configurer {configDialog.connector}</DialogTitle>
             <DialogDescription>

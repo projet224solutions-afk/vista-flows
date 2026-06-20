@@ -45,6 +45,10 @@ export async function uploadToGCSDirect(
   const folderPath = subfolder ? `${folder}/${subfolder}` : folder;
 
   try {
+    // En DEV (localhost), le PUT vers GCS est bloqué par CORS → on saute GCS et on
+    // uploade directement sur Supabase Storage (fallback ci-dessous). GCS reste en prod.
+    if (import.meta.env.DEV) throw new Error('dev:prefer-supabase');
+
     // Étape 1 : URL signée GCS
     const { data: signedUrlData, error: signedUrlError } = await supabase.functions.invoke(
       'gcs-signed-url',

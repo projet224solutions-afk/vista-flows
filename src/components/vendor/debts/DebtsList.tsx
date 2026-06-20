@@ -1,5 +1,5 @@
-// @ts-nocheck
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
@@ -38,6 +38,7 @@ interface DebtsListProps {
 }
 
 export function DebtsList({ vendorId }: DebtsListProps) {
+  const { t } = useTranslation();
   const [debts, setDebts] = useState<Debt[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDebt, setSelectedDebt] = useState<Debt | null>(null);
@@ -69,7 +70,7 @@ export function DebtsList({ vendorId }: DebtsListProps) {
 
       if (!isRlsOrNetworkError) {
         console.error('Erreur chargement dettes:', error);
-        toast.error('Erreur lors du chargement des dettes');
+        toast.error(t('debtsList.erreurLorsDuChargementDes'));
       }
     } finally {
       setLoading(false);
@@ -123,7 +124,7 @@ export function DebtsList({ vendorId }: DebtsListProps) {
   };
 
   if (loading) {
-    return <div className="text-center py-8 text-sm">Chargement des dettes...</div>;
+    return <div className="text-center py-8 text-sm">{t('debtsList.chargementDesDettes')}</div>;
   }
 
   if (debts.length === 0) {
@@ -167,13 +168,13 @@ export function DebtsList({ vendorId }: DebtsListProps) {
                 </div>
 
                 {/* Montants */}
-                <div className="grid grid-cols-3 gap-2 mb-3 p-2 bg-muted/50 rounded-lg">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3 p-2 bg-muted/50 rounded-lg">
                   <div className="text-center">
                     <p className="text-[10px] text-muted-foreground uppercase">Total</p>
                     <p className="text-xs font-semibold">{formatAmount(debt.total_amount)}</p>
                   </div>
                   <div className="text-center border-x border-border">
-                    <p className="text-[10px] text-muted-foreground uppercase">Payé</p>
+                    <p className="text-[10px] text-muted-foreground uppercase">{t('debtsList.paye')}</p>
                     <p className="text-xs font-semibold text-[#ff4000]">{formatAmount(debt.paid_amount)}</p>
                   </div>
                   <div className="text-center">
@@ -255,10 +256,10 @@ export function DebtsList({ vendorId }: DebtsListProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Client</TableHead>
-              <TableHead>Téléphone</TableHead>
-              <TableHead>Montant Total</TableHead>
-              <TableHead>Payé</TableHead>
+              <TableHead>{t('debtsList.client')}</TableHead>
+              <TableHead>{t('debtsList.telephone')}</TableHead>
+              <TableHead>{t('debtsList.montantTotal')}</TableHead>
+              <TableHead>{t('debtsList.paye')}</TableHead>
               <TableHead>Restant</TableHead>
               <TableHead>Statut</TableHead>
               <TableHead>Date limite</TableHead>

@@ -65,9 +65,18 @@ export interface PaymentStats {
   avg_payment_amount: number;
 }
 
+export interface PaymentLinkItem {
+  product_id?: string;
+  name: string;
+  price: number;
+  qty: number;
+  image?: string | null;
+}
+
 export interface CreatePaymentLinkData {
   linkType?: LinkType;
   ownerType?: OwnerType;
+  items?: PaymentLinkItem[];
   produit: string;
   title?: string;
   description?: string;
@@ -296,6 +305,8 @@ export function usePaymentLinks() {
           is_single_use: data.is_single_use !== false,
           status: 'pending',
           expires_at: expiresAtDate.toISOString(),
+          // Lignes produit (facture multi-produits). Stockées en metadata → décrément stock au paiement.
+          metadata: (data.items && data.items.length > 0) ? { items: data.items } : {},
         })
         .select('token, payment_id')
         .single();
@@ -316,6 +327,65 @@ export function usePaymentLinks() {
       console.error('Create payment link error:', error);
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
       return null;
+    }
+  };
+
+  // Modifier un lien — UNIQUEMENT tant qu'il est « pending » (jamais un lien déjà payé/expiré).
+  const updatePaymentLink = async (paymentId: string, data: CreatePaymentLinkData): Promise<boolean> => {
+    try {
+      let montantFinal = data.montant;
+      const remise = data.remise || 0;
+      if (remise > 0) {
+        montantFinal = data.type_remise === 'percentage' ? data.montant * (1 - remise / 100) : data.montant - remise;
+      }
+      const frais = montantFinal * 0.01;
+      const total = montantFinal + frais;
+
+      let expireDays = Math.max(1, Math.min(365, parseInt(String(data.expires_days || 30)) || 30));
+      const expiresAtDate = new Date(Date.now() + expireDays * 24 * 60 * 60 * 1000);
+
+      const { data: updated, error } = await supabase
+        .from('payment_links')
+        .update({
+          link_type: data.linkType || 'payment',
+          product_id: data.product_id || null,
+          service_id: data.service_id || null,
+          title: data.title || data.produit,
+          produit: data.produit,
+          description: data.description || null,
+          reference: data.reference || null,
+          montant: data.montant,
+          gross_amount: montantFinal,
+          net_amount: montantFinal,
+          remise,
+          type_remise: data.type_remise || 'percentage',
+          frais,
+          total,
+          devise: data.devise,
+          payment_type: data.payment_type || 'full',
+          is_single_use: data.is_single_use !== false,
+          expires_at: expiresAtDate.toISOString(),
+          metadata: (data.items && data.items.length > 0) ? { items: data.items } : {},
+          updated_at: new Date().toISOString(),
+        })
+        .eq('payment_id', paymentId)
+        .eq('owner_user_id', effectiveOwnerUserId)
+        .eq('status', 'pending')   // garde-fou : on ne modifie JAMAIS un lien déjà payé
+        .select('id')
+        .maybeSingle();
+
+      if (error) throw new Error(error.message);
+      if (!updated) {
+        toast({ title: "Modification impossible", description: "Ce lien a déjà été payé ou n'est plus modifiable.", variant: "destructive" });
+        return false;
+      }
+      toast({ title: "Lien mis à jour", description: "Les modifications ont été enregistrées." });
+      await loadPaymentLinks();
+      return true;
+    } catch (error: any) {
+      console.error('Update payment link error:', error);
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      return false;
     }
   };
 
@@ -375,6 +445,7 @@ export function usePaymentLinks() {
     ownerType,
     loadPaymentLinks,
     createPaymentLink,
+    updatePaymentLink,
     updatePaymentLinkStatus,
     deletePaymentLink,
     getPaymentUrl,

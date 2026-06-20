@@ -3,6 +3,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { MessageSquare, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -21,13 +22,14 @@ export default function VendorResponseToReview({
   existingResponse,
   onResponseSubmitted
 }: VendorResponseToReviewProps) {
+  const { t } = useTranslation();
   const [response, setResponse] = useState(existingResponse || '');
   const [submitting, setSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(!existingResponse);
 
   const handleSubmit = async () => {
     if (!response.trim()) {
-      toast.error('Veuillez entrer une réponse');
+      toast.error(t('vendorResponseToReview.veuillezEntrerUneReponse'));
       return;
     }
 
@@ -44,12 +46,12 @@ export default function VendorResponseToReview({
 
       if (error) throw error;
 
-      toast.success('Réponse publiée avec succès');
+      toast.success(t('vendorResponseToReview.reponsePublieeAvecSucces'));
       setIsEditing(false);
       onResponseSubmitted();
     } catch (error) {
       console.error('Error submitting response:', error);
-      toast.error('Erreur lors de la publication de la réponse');
+      toast.error(t('vendorResponseToReview.erreurLorsDeLaPublication'));
     } finally {
       setSubmitting(false);
     }
@@ -61,7 +63,7 @@ export default function VendorResponseToReview({
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <MessageSquare className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-primary">Votre réponse</span>
+            <span className="text-sm font-medium text-primary">{t('vendorResponseToReview.votreReponse')}</span>
           </div>
           <Button
             variant="ghost"
@@ -86,7 +88,7 @@ export default function VendorResponseToReview({
           </span>
         </div>
         <Textarea
-          placeholder="Écrivez votre réponse..."
+          placeholder={t('vendorResponseToReview.ecrivezVotreReponse')}
           value={response}
           onChange={(e) => setResponse(e.target.value)}
           className="mb-2 min-h-[80px]"

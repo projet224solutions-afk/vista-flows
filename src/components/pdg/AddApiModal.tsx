@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +36,7 @@ interface AddApiModalProps {
 }
 
 export default function AddApiModal({ open, onClose, onSuccess }: AddApiModalProps) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     api_name: '',
@@ -49,7 +51,7 @@ export default function AddApiModal({ open, onClose, onSuccess }: AddApiModalPro
     e.preventDefault();
 
     if (!formData.api_name || !formData.api_provider || !formData.api_key) {
-      toast.error('Veuillez remplir tous les champs requis');
+      toast.error(t('addApiModal.veuillezRemplirTousLesChamps'));
       return;
     }
 
@@ -58,7 +60,7 @@ export default function AddApiModal({ open, onClose, onSuccess }: AddApiModalPro
       // Récupérer l'utilisateur actuel
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast.error('Vous devez être connecté');
+        toast.error(t('addApiModal.vousDevezEtreConnecte'));
         return;
       }
 
@@ -103,10 +105,10 @@ export default function AddApiModal({ open, onClose, onSuccess }: AddApiModalPro
             toast.warning(`API ajoutee mais test de sante en echec${payload?.error ? `: ${payload.error}` : ''}`);
           }
         } else {
-          toast.warning('API ajoutee, mais test de sante backend indisponible');
+          toast.warning(t('addApiModal.apiAjouteeMaisTestDe'));
         }
 
-        toast.success('✅ API ajoutée avec succès');
+        toast.success(t('addApiModal.apiAjouteeAvecSucces'));
         onSuccess();
         onClose();
 
@@ -122,7 +124,7 @@ export default function AddApiModal({ open, onClose, onSuccess }: AddApiModalPro
       }
     } catch (error) {
       console.error('Erreur ajout API:', error);
-      toast.error('Erreur lors de l\'ajout de l\'API');
+      toast.error(t('addApiModal.erreurLorsDeLAjout'));
     } finally {
       setLoading(false);
     }
@@ -130,9 +132,9 @@ export default function AddApiModal({ open, onClose, onSuccess }: AddApiModalPro
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Ajouter une nouvelle API</DialogTitle>
+          <DialogTitle>{t('addApiModal.ajouterUneNouvelleApi')}</DialogTitle>
           <DialogDescription>
             Connectez une nouvelle API à 224SOLUTIONS avec chiffrement AES-256
           </DialogDescription>
@@ -140,7 +142,7 @@ export default function AddApiModal({ open, onClose, onSuccess }: AddApiModalPro
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="space-y-2">
-            <Label htmlFor="api_name">Nom de l'API *</Label>
+            <Label htmlFor="api_name">{t('addApiModal.nomDeLApi')}</Label>
             <Input
               id="api_name"
               placeholder="Ex: OpenAI GPT-4"
@@ -171,7 +173,7 @@ export default function AddApiModal({ open, onClose, onSuccess }: AddApiModalPro
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="payment">Paiement</SelectItem>
+                <SelectItem value="payment">{t('addApiModal.paiement')}</SelectItem>
                 <SelectItem value="sms">SMS</SelectItem>
                 <SelectItem value="email">Email</SelectItem>
                 <SelectItem value="storage">Stockage</SelectItem>
@@ -181,11 +183,11 @@ export default function AddApiModal({ open, onClose, onSuccess }: AddApiModalPro
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="api_key">Clé API *</Label>
+            <Label htmlFor="api_key">{t('addApiModal.cleApi')}</Label>
             <Input
               id="api_key"
               type="password"
-              placeholder="Votre clé API (sera chiffrée)"
+              placeholder={t('addApiModal.votreCleApiSeraChiffree')}
               value={formData.api_key}
               onChange={(e) => setFormData({ ...formData, api_key: e.target.value })}
               required
@@ -196,7 +198,7 @@ export default function AddApiModal({ open, onClose, onSuccess }: AddApiModalPro
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="base_url">URL de base (optionnel)</Label>
+            <Label htmlFor="base_url">{t('addApiModal.urlDeBaseOptionnel')}</Label>
             <Input
               id="base_url"
               placeholder="https://api.exemple.com"
@@ -206,7 +208,7 @@ export default function AddApiModal({ open, onClose, onSuccess }: AddApiModalPro
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="tokens_limit">Limite de tokens (optionnel)</Label>
+            <Label htmlFor="tokens_limit">{t('addApiModal.limiteDeTokensOptionnel')}</Label>
             <Input
               id="tokens_limit"
               type="number"

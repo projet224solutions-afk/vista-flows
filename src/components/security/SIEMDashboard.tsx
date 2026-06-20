@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -71,6 +72,7 @@ const _siemStats = {
 };
 
 export function SIEMDashboard() {
+  const { t } = useTranslation();
   const { auditLogs, stats, loading, refetch } = useSecurityData(true);
   const [threatData, setThreatData] = useState<any[]>([]);
   const [siemStats, setSiemStats] = useState({
@@ -111,7 +113,7 @@ export function SIEMDashboard() {
 
   const handleRefresh = () => {
     refetch();
-    toast.success('Dashboard SIEM actualisé');
+    toast.success(t('sIEMDashboard.dashboardSiemActualise'));
   };
 
   const getSeverityColor = (severity: string) => {
@@ -162,28 +164,28 @@ export function SIEMDashboard() {
           <div className="p-4 bg-muted rounded-lg">
             <Activity className="w-8 h-8 text-blue-500 mb-2" />
             <div className="text-2xl font-bold">{siemStats.eventsProcessed.toLocaleString()}</div>
-            <div className="text-xs text-muted-foreground">Événements traités</div>
+            <div className="text-xs text-muted-foreground">{t('sIEMDashboard.evenementsTraites')}</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
             <AlertTriangle className="w-8 h-8 text-[#ff4000] mb-2" />
             <div className="text-2xl font-bold">{siemStats.threatsDetected.toLocaleString()}</div>
-            <div className="text-xs text-muted-foreground">Menaces détectées</div>
+            <div className="text-xs text-muted-foreground">{t('sIEMDashboard.menacesDetectees')}</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
             <TrendingUp className="w-8 h-8 text-[#04439e] mb-2" />
             <div className="text-2xl font-bold">{siemStats.correlatedIncidents}</div>
-            <div className="text-xs text-muted-foreground">Incidents corrélés</div>
+            <div className="text-xs text-muted-foreground">{t('sIEMDashboard.incidentsCorreles')}</div>
           </div>
           <div className="p-4 bg-muted rounded-lg">
             <Eye className="w-8 h-8 text-[#ff4000] mb-2" />
             <div className="text-2xl font-bold">{siemStats.responseTime}</div>
-            <div className="text-xs text-muted-foreground">Temps de réponse</div>
+            <div className="text-xs text-muted-foreground">{t('sIEMDashboard.tempsDeReponse')}</div>
           </div>
         </ResponsiveGrid>
 
         {/* Graphique des menaces */}
         <div>
-          <h4 className="font-semibold text-sm mb-3">Activité de sécurité — événements par tranche de 4h (24h)</h4>
+          <h4 className="font-semibold text-sm mb-3">{t('sIEMDashboard.activiteDeSecuriteEvenementsPar')}</h4>
           <div className="h-48">
             <RechartsContainer width="100%" height="100%">
               <LineChart data={threatData}>
@@ -200,7 +202,7 @@ export function SIEMDashboard() {
         {/* Événements récents */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <h4 className="font-semibold text-sm">Événements de sécurité récents</h4>
+            <h4 className="font-semibold text-sm">{t('sIEMDashboard.evenementsDeSecuriteRecents')}</h4>
             <Button variant="outline" size="sm">
               Voir tout
             </Button>
@@ -232,7 +234,7 @@ export function SIEMDashboard() {
         <div className="p-4 bg-orange-50 dark:bg-[#ff4000] rounded-lg border border-orange-200 dark:border-[#ff4000]">
           <div className="flex items-center gap-2 mb-2">
             <Activity className="w-4 h-4 text-[#ff4000]" />
-            <span className="font-semibold text-sm">Système SIEM opérationnel</span>
+            <span className="font-semibold text-sm">{t('sIEMDashboard.systemeSiemOperationnel')}</span>
           </div>
           <p className="text-sm text-muted-foreground">
             Tous les services de surveillance sont actifs. Corrélation automatique des événements activée.

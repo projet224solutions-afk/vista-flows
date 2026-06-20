@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -23,13 +23,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Loader2, MapPin, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslation } from '@/hooks/useTranslation';
 import type { ServiceType } from '@/hooks/useProfessionalServices';
 
 const serviceSetupSchema = z.object({
-  business_name: z.string().min(3, 'Le nom doit contenir au moins 3 caractères'),
+  business_name: z.string().min(3),
   description: z.string().optional(),
   phone: z.string().optional(),
-  email: z.string().email('Email invalide').optional().or(z.literal('')),
+  email: z.string().email().optional().or(z.literal('')),
+  city: z.string().min(2),
   address: z.string().optional(),
 });
 
@@ -53,24 +55,35 @@ export const ServiceSetupDialog = ({
   selectedService,
   onSubmit,
 }: ServiceSetupDialogProps) => {
+  const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [geoLoading, setGeoLoading] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
 
+  const schema = useMemo(() => z.object({
+    business_name: z.string().min(3, t('serviceSetup.nameMin')),
+    description: z.string().optional(),
+    phone: z.string().optional(),
+    email: z.string().email(t('serviceSetup.emailInvalid')).optional().or(z.literal('')),
+    city: z.string().min(2, t('serviceSetup.cityRequired')),
+    address: z.string().optional(),
+  }), [t]);
+
   const form = useForm<ServiceSetupFormData>({
-    resolver: zodResolver(serviceSetupSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       business_name: '',
       description: '',
       phone: '',
       email: '',
+      city: '',
       address: '',
     },
   });
 
   const handleGetLocation = () => {
     if (!navigator.geolocation) {
-      toast.error('La géolocalisation n\'est pas supportée par votre navigateur');
+      toast.error(t('serviceSetup.geoUnsupported'));
       return;
     }
 
@@ -82,22 +95,22 @@ export const ServiceSetupDialog = ({
           lng: position.coords.longitude,
         });
         setGeoLoading(false);
-        toast.success('Position récupérée avec succès !');
+        toast.success(t('serviceSetup.positionSuccess'));
       },
       (error) => {
         setGeoLoading(false);
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            toast.error('Accès à la localisation refusé. Veuillez autoriser l\'accès dans les paramètres.');
+            toast.error(t('serviceSetup.permDenied'));
             break;
           case error.POSITION_UNAVAILABLE:
-            toast.error('Position non disponible.');
+            toast.error(t('serviceSetup.posUnavailable'));
             break;
           case error.TIMEOUT:
-            toast.error('Délai d\'attente dépassé.');
+            toast.error(t('serviceSetup.timeout'));
             break;
           default:
-            toast.error('Erreur de géolocalisation.');
+            toast.error(t('serviceSetup.geoError'));
         }
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
@@ -128,11 +141,10 @@ export const ServiceSetupDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-3">
             <span className="text-3xl">{selectedService?.icon}</span>
-            <span>Créer votre {selectedService?.name}</span>
+            <span>{t('serviceSetup.createYour')} {selectedService?.name}</span>
           </DialogTitle>
           <DialogDescription>
-            Remplissez les informations de base pour créer votre service professionnel.
-            Vous pourrez le compléter plus tard.
+            {t('serviceSetup.dialogDesc')}
           </DialogDescription>
         </DialogHeader>
 
@@ -143,16 +155,16 @@ export const ServiceSetupDialog = ({
               name="business_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nom du service *</FormLabel>
+                  <FormLabel>{t('serviceSetup.nameLabel')}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Ex: Restaurant Chez Marie"
+                      placeholder={t('serviceSetup.namePlaceholder')}
                       {...field}
                       disabled={isSubmitting}
                     />
                   </FormControl>
                   <FormDescription>
-                    Le nom qui sera visible par vos clients
+                    {t('serviceSetup.nameDesc')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -164,17 +176,17 @@ export const ServiceSetupDialog = ({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>{t('serviceSetup.description')}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Décrivez votre service..."
+                      placeholder={t('serviceSetup.descPlaceholder')}
                       rows={3}
                       {...field}
                       disabled={isSubmitting}
                     />
                   </FormControl>
                   <FormDescription>
-                    Une brève présentation de votre activité
+                    {t('serviceSetup.descHelp')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -187,7 +199,7 @@ export const ServiceSetupDialog = ({
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Téléphone</FormLabel>
+                    <FormLabel>{t('serviceSetup.phone')}</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="+224 xxx xxx xxx"
@@ -205,7 +217,7 @@ export const ServiceSetupDialog = ({
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{t('serviceSetup.email')}</FormLabel>
                     <FormControl>
                       <Input
                         type="email"
@@ -222,19 +234,40 @@ export const ServiceSetupDialog = ({
 
             <FormField
               control={form.control}
-              name="address"
+              name="city"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Adresse</FormLabel>
+                  <FormLabel>{t('serviceSetup.cityLabel')}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Quartier, Commune, Conakry"
+                      placeholder={t('serviceSetup.cityPlaceholder')}
                       {...field}
                       disabled={isSubmitting}
                     />
                   </FormControl>
                   <FormDescription>
-                    Votre adresse physique ou zone de service
+                    {t('serviceSetup.cityDesc')}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('serviceSetup.address')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder={t('serviceSetup.addressPlaceholder')}
+                      {...field}
+                      disabled={isSubmitting}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    {t('serviceSetup.addressDesc')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -245,9 +278,9 @@ export const ServiceSetupDialog = ({
             <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <p className="text-sm font-medium">📍 Position du service</p>
+                  <p className="text-sm font-medium">📍 {t('serviceSetup.positionTitle')}</p>
                   <p className="text-xs text-muted-foreground">
-                    Permet à vos clients de vous trouver sur la carte de proximité
+                    {t('serviceSetup.positionDesc')}
                   </p>
                 </div>
                 <Button
@@ -261,17 +294,17 @@ export const ServiceSetupDialog = ({
                   {geoLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Localisation...
+                      {t('serviceSetup.locating')}
                     </>
                   ) : coords ? (
                     <>
                       <CheckCircle2 className="mr-2 h-4 w-4 text-[#ff4000]" />
-                      Repositionner
+                      {t('serviceSetup.reposition')}
                     </>
                   ) : (
                     <>
                       <MapPin className="mr-2 h-4 w-4" />
-                      Ma position
+                      {t('serviceSetup.myPosition')}
                     </>
                   )}
                 </Button>
@@ -279,7 +312,7 @@ export const ServiceSetupDialog = ({
               {coords && (
                 <div className="flex items-center gap-2 text-xs text-[#ff4000] dark:text-[#ff4000] bg-orange-50 dark:bg-[#ff4000]/30 rounded-md px-3 py-2">
                   <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-                  <span>Position enregistrée ({coords.lat.toFixed(5)}, {coords.lng.toFixed(5)})</span>
+                  <span>{t('serviceSetup.positionSaved')} ({coords.lat.toFixed(5)}, {coords.lng.toFixed(5)})</span>
                 </div>
               )}
             </div>
@@ -291,11 +324,11 @@ export const ServiceSetupDialog = ({
                 onClick={onClose}
                 disabled={isSubmitting}
               >
-                Annuler
+                {t('serviceSetup.cancel')}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Créer le service
+                {t('serviceSetup.createService')}
               </Button>
             </div>
           </form>

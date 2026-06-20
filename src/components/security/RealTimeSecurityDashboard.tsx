@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -59,6 +60,7 @@ interface SecurityEvent {
 const COLORS = ['#ff4000', '#ff4000', '#ff4000', '#04439e'];
 
 export const RealTimeSecurityDashboard: React.FC = () => {
+  const { t } = useTranslation();
   const [metrics, setMetrics] = useState<SecurityMetrics>({
     score: 85,
     activeThreats: 0,
@@ -202,8 +204,8 @@ export const RealTimeSecurityDashboard: React.FC = () => {
             <Shield className="h-8 w-8 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Centre de Sécurité</h1>
-            <p className="text-muted-foreground">Monitoring et protection en temps réel</p>
+            <h1 className="text-2xl font-bold">{t('realTimeSecurityDashboard.centreDeSecurite')}</h1>
+            <p className="text-muted-foreground">{t('realTimeSecurityDashboard.monitoringEtProtectionEnTemps')}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -266,7 +268,7 @@ export const RealTimeSecurityDashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-8">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
               <div className="text-center">
                 <div className="text-2xl font-bold text-[#ff4000]">{metrics.rlsPolicies}</div>
                 <div className="text-xs text-muted-foreground">Politiques RLS</div>
@@ -294,7 +296,7 @@ export const RealTimeSecurityDashboard: React.FC = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Connexions réussies (24h)</p>
+                <p className="text-sm text-muted-foreground">{t('realTimeSecurityDashboard.connexionsReussies24h')}</p>
                 <p className="text-2xl font-bold text-[#ff4000]">{metrics.successfulLogins24h}</p>
               </div>
               <CheckCircle2 className="h-8 w-8 text-[#ff4000]" />
@@ -310,7 +312,7 @@ export const RealTimeSecurityDashboard: React.FC = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Échecs de connexion (24h)</p>
+                <p className="text-sm text-muted-foreground">{t('realTimeSecurityDashboard.echecsDeConnexion24h')}</p>
                 <p className="text-2xl font-bold text-[#ff4000]">{metrics.failedLogins24h}</p>
               </div>
               <XCircle className="h-8 w-8 text-[#ff4000]" />
@@ -326,7 +328,7 @@ export const RealTimeSecurityDashboard: React.FC = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">IPs bloquées</p>
+                <p className="text-sm text-muted-foreground">{t('realTimeSecurityDashboard.ipsBloquees')}</p>
                 <p className="text-2xl font-bold text-orange-600">{metrics.blockedIPs}</p>
               </div>
               <Ban className="h-8 w-8 text-orange-600" />
@@ -360,7 +362,7 @@ export const RealTimeSecurityDashboard: React.FC = () => {
         {/* Graphique des menaces */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Tendance des menaces (7 jours)</CardTitle>
+            <CardTitle className="text-lg">{t('realTimeSecurityDashboard.tendanceDesMenaces7Jours')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
@@ -379,7 +381,7 @@ export const RealTimeSecurityDashboard: React.FC = () => {
         {/* Répartition des authentifications */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Répartition des authentifications</CardTitle>
+            <CardTitle className="text-lg">{t('realTimeSecurityDashboard.repartitionDesAuthentifications')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
@@ -410,7 +412,7 @@ export const RealTimeSecurityDashboard: React.FC = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Événements de sécurité récents</CardTitle>
+            <CardTitle className="text-lg">{t('realTimeSecurityDashboard.evenementsDeSecuriteRecents')}</CardTitle>
             <Badge variant="outline">{events.length} événements</Badge>
           </div>
         </CardHeader>
@@ -454,8 +456,8 @@ export const RealTimeSecurityDashboard: React.FC = () => {
       {/* Infrastructure */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Infrastructure de sécurité</CardTitle>
-          <CardDescription>Composants de protection actifs</CardDescription>
+          <CardTitle className="text-lg">{t('realTimeSecurityDashboard.infrastructureDeSecurite')}</CardTitle>
+          <CardDescription>{t('realTimeSecurityDashboard.composantsDeProtectionActifs')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

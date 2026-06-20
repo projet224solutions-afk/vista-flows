@@ -4,6 +4,7 @@
  */
 
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "@/hooks/useTranslation";
 import { ShieldCheck, Shield, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -13,6 +14,7 @@ interface AgentKYCStatusProps {
 }
 
 export const AgentKYCStatus = ({ kyc_status = 'unverified' }: AgentKYCStatusProps) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const handleVerifyClick = () => {
@@ -24,7 +26,7 @@ export const AgentKYCStatus = ({ kyc_status = 'unverified' }: AgentKYCStatusProp
     return (
       <Badge variant="default" className="bg-[#ff4000] hover:bg-[#ff4000] gap-1.5">
         <ShieldCheck className="h-3.5 w-3.5" />
-        <span>Compte vérifié</span>
+        <span>{t('agentKYCStatus.compteVerifie')}</span>
       </Badge>
     );
   }
@@ -34,7 +36,7 @@ export const AgentKYCStatus = ({ kyc_status = 'unverified' }: AgentKYCStatusProp
     return (
       <Badge variant="default" className="bg-[#ff4000] hover:bg-[#ff4000] gap-1.5">
         <Shield className="h-3.5 w-3.5" />
-        <span>Vérification en cours...</span>
+        <span>{t('agentKYCStatus.verificationEnCours')}</span>
       </Badge>
     );
   }
@@ -45,7 +47,7 @@ export const AgentKYCStatus = ({ kyc_status = 'unverified' }: AgentKYCStatusProp
       <div className="flex items-center gap-2">
         <Badge variant="destructive" className="gap-1.5">
           <ShieldAlert className="h-3.5 w-3.5" />
-          <span>Vérifié rejeté</span>
+          <span>{t('agentKYCStatus.verifieRejete')}</span>
         </Badge>
         <Button
           size="sm"
@@ -64,7 +66,7 @@ export const AgentKYCStatus = ({ kyc_status = 'unverified' }: AgentKYCStatusProp
     <div className="flex items-center gap-2">
       <Badge variant="destructive" className="gap-1.5">
         <ShieldAlert className="h-3.5 w-3.5" />
-        <span>Non vérifié</span>
+        <span>{t('agentKYCStatus.nonVerifie')}</span>
       </Badge>
       <Button
         size="sm"

@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -44,6 +45,7 @@ export default function DeliveryChat({
   onBack,
   className
 }: DeliveryChatProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -100,7 +102,7 @@ export default function DeliveryChat({
       inputRef.current?.focus();
     } catch (error) {
       console.error('Erreur envoi message:', error);
-      toast.error('Erreur lors de l\'envoi');
+      toast.error(t('deliveryChat.erreurLorsDeLEnvoi'));
     } finally {
       setLoading(false);
     }
@@ -198,8 +200,8 @@ export default function DeliveryChat({
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-12">
             <Package className="w-16 h-16 mb-4 opacity-30" />
-            <p className="font-medium text-foreground">Aucun message</p>
-            <p className="text-sm">Commencez la conversation pour cette livraison</p>
+            <p className="font-medium text-foreground">{t('deliveryChat.aucunMessage')}</p>
+            <p className="text-sm">{t('deliveryChat.commencezLaConversationPourCette')}</p>
           </div>
         ) : (
           <>
@@ -247,7 +249,7 @@ export default function DeliveryChat({
             ref={inputRef}
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Écrivez votre message..."
+            placeholder={t('deliveryChat.ecrivezVotreMessage')}
             className="flex-1 bg-muted/50 border-0"
             disabled={loading}
           />

@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,7 @@ const CATEGORIES = [
 ];
 
 export function ElectronicsModule({ serviceId, businessName }: ElectronicsModuleProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('catalog');
   const [stats] = useState({ products: 243, orders: 67, revenue: 18500000, rating: 4.5 });
 
@@ -42,14 +44,14 @@ export function ElectronicsModule({ serviceId, businessName }: ElectronicsModule
             <Smartphone className="w-8 h-8 text-primary" />
             {businessName || 'Boutique Électronique'}
           </h2>
-          <p className="text-muted-foreground">High-tech & Électronique</p>
+          <p className="text-muted-foreground">{t('electronicsModule.highTechElectronique')}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Produits</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('electronicsModule.produits')}</CardTitle>
             <Package className="h-4 w-4" />
           </CardHeader>
           <CardContent>
@@ -59,7 +61,7 @@ export function ElectronicsModule({ serviceId, businessName }: ElectronicsModule
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Commandes</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('electronicsModule.commandes')}</CardTitle>
             <TrendingUp className="h-4 w-4 text-[#ff4000]" />
           </CardHeader>
           <CardContent>
@@ -69,7 +71,7 @@ export function ElectronicsModule({ serviceId, businessName }: ElectronicsModule
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">CA du Mois</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('electronicsModule.caDuMois')}</CardTitle>
             <DollarSign className="h-4 w-4" />
           </CardHeader>
           <CardContent>
@@ -90,13 +92,13 @@ export function ElectronicsModule({ serviceId, businessName }: ElectronicsModule
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="catalog">Catalogue</TabsTrigger>
-          <TabsTrigger value="add">Ajouter</TabsTrigger>
+          <TabsTrigger value="add">{t('electronicsModule.ajouter')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="catalog">
           <Card>
             <CardHeader>
-              <CardTitle>Catégories de Produits</CardTitle>
+              <CardTitle>{t('electronicsModule.categoriesDeProduits')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -119,16 +121,16 @@ export function ElectronicsModule({ serviceId, businessName }: ElectronicsModule
         <TabsContent value="add">
           <Card>
             <CardHeader>
-              <CardTitle>Ajouter un Produit Électronique</CardTitle>
+              <CardTitle>{t('electronicsModule.ajouterUnProduitElectronique')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Nom du produit</Label>
+                  <Label>{t('electronicsModule.nomDuProduit')}</Label>
                   <Input placeholder="Ex: iPhone 15 Pro Max" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Catégorie</Label>
+                  <Label>{t('electronicsModule.categorie')}</Label>
                   <Select>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -145,7 +147,7 @@ export function ElectronicsModule({ serviceId, businessName }: ElectronicsModule
                   <Input type="number" placeholder="5000000" />
                 </div>
               </div>
-              <Button className="w-full">Ajouter au catalogue</Button>
+              <Button className="w-full">{t('electronicsModule.ajouterAuCatalogue')}</Button>
             </CardContent>
           </Card>
         </TabsContent>

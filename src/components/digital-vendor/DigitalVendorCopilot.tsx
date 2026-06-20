@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Bot, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import CopiloteChat from '@/components/copilot/CopiloteChat';
+import Copilot224 from '@/components/service-common/Copilot224';
 
 const DigitalVendorCopilot = memo(function DigitalVendorCopilot() {
   return (
@@ -29,7 +29,7 @@ const DigitalVendorCopilot = memo(function DigitalVendorCopilot() {
         </div>
       </header>
 
-      <CopiloteChat userRole="vendeur" height="calc(100vh - 120px)" />
+      <Copilot224 variant="embedded" service="ecommerce" title="Copilot 224" height="calc(100vh - 120px)" />
     </section>
   );
 });

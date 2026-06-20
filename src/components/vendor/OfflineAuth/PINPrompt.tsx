@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Lock, Eye, EyeOff, AlertCircle, CheckCircle, Fingerprint } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -39,6 +40,7 @@ export function PINPrompt({
   pinLength = 4,
   allowBiometric = true
 }: PINPromptProps) {
+  const { t } = useTranslation();
   const [pin, setPin] = useState('');
   const [showPin, setShowPin] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -121,7 +123,7 @@ export function PINPrompt({
       const result = await authenticateWithPIN(userId, pinValue);
 
       if (result.success && result.sessionId) {
-        toast.success('Authentification réussie');
+        toast.success(t('pINPrompt.authentificationReussie'));
         onSuccess(result.sessionId);
         onClose();
       } else {
@@ -151,7 +153,7 @@ export function PINPrompt({
       const result = await authenticateWithBiometric(userId);
 
       if (result.success && result.sessionId) {
-        toast.success('Authentification biométrique réussie');
+        toast.success(t('pINPrompt.authentificationBiometriqueReussie'));
         onSuccess(result.sessionId);
         onClose();
       } else {
@@ -167,7 +169,7 @@ export function PINPrompt({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Lock className="w-5 h-5 text-primary" />
@@ -214,12 +216,12 @@ export function PINPrompt({
                 {showPin ? (
                   <>
                     <EyeOff className="w-3 h-3" />
-                    <span>Masquer le PIN</span>
+                    <span>{t('pINPrompt.masquerLePin')}</span>
                   </>
                 ) : (
                   <>
                     <Eye className="w-3 h-3" />
-                    <span>Afficher le PIN</span>
+                    <span>{t('pINPrompt.afficherLePin')}</span>
                   </>
                 )}
               </button>
@@ -245,7 +247,7 @@ export function PINPrompt({
           {pin.length === pinLength && !error && !isAuthenticating && (
             <div className="flex items-center gap-2 p-3 bg-orange-50 dark:bg-[#ff4000]/20 border border-orange-200 dark:border-[#ff4000] rounded-lg">
               <CheckCircle className="w-4 h-4 text-[#ff4000]" />
-              <p className="text-sm text-[#ff4000] dark:text-[#ff4000]">Vérification en cours...</p>
+              <p className="text-sm text-[#ff4000] dark:text-[#ff4000]">{t('pINPrompt.verificationEnCours')}</p>
             </div>
           )}
 
@@ -257,7 +259,7 @@ export function PINPrompt({
                   <span className="w-full border-t border-gray-300 dark:border-gray-600" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white dark:bg-gray-800 px-2 text-gray-500">Ou</span>
+                  <span className="bg-white dark:bg-gray-800 px-2 text-gray-500">{t('pINPrompt.ou')}</span>
                 </div>
               </div>
 

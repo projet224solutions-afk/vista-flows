@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,7 @@ interface VirtualCard {
 }
 
 export function FinancialTransferPanel({ userId }: { userId: string }) {
+  const { t } = useTranslation();
   const {
     loading,
     transferCardToOrangeMoney,
@@ -119,7 +121,7 @@ export function FinancialTransferPanel({ userId }: { userId: string }) {
         <CardContent>
           <Select value={selectedCard} onValueChange={setSelectedCard}>
             <SelectTrigger>
-              <SelectValue placeholder="Choisir une carte" />
+              <SelectValue placeholder={t('financialTransferPanel.choisirUneCarte')} />
             </SelectTrigger>
             <SelectContent>
               {virtualCards.map((card) => (
@@ -160,7 +162,7 @@ export function FinancialTransferPanel({ userId }: { userId: string }) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label>Numéro Orange Money</Label>
+                <Label>{t('financialTransferPanel.numeroOrangeMoney')}</Label>
                 <Input
                   type="tel"
                   placeholder="628123456"
@@ -203,7 +205,7 @@ export function FinancialTransferPanel({ userId }: { userId: string }) {
         <TabsContent value="wallet-to-card">
           <Card>
             <CardHeader>
-              <CardTitle>Recharger la carte depuis le wallet</CardTitle>
+              <CardTitle>{t('financialTransferPanel.rechargerLaCarteDepuisLe')}</CardTitle>
               <CardDescription>
                 Frais: 1% du montant
               </CardDescription>
@@ -226,7 +228,7 @@ export function FinancialTransferPanel({ userId }: { userId: string }) {
                 )}
               </div>
               <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                <span className="text-sm font-medium">Solde wallet:</span>
+                <span className="text-sm font-medium">{t('financialTransferPanel.soldeWallet')}</span>
                 <span className="text-lg font-bold">{walletBalance.toLocaleString()} {currency}</span>
               </div>
               <Button
@@ -248,7 +250,7 @@ export function FinancialTransferPanel({ userId }: { userId: string }) {
         <TabsContent value="card-to-wallet">
           <Card>
             <CardHeader>
-              <CardTitle>Recharger le wallet depuis la carte</CardTitle>
+              <CardTitle>{t('financialTransferPanel.rechargerLeWalletDepuisLa')}</CardTitle>
               <CardDescription>
                 Frais: 1% du montant
               </CardDescription>

@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Money } from '@/components/Money';
 import { usePriceConverter } from '@/hooks/usePriceConverter';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface ServiceSubscriptionCardProps {
   serviceId: string;
@@ -30,6 +31,7 @@ interface ServiceSubscriptionCardProps {
 }
 
 export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = false, onSubscribed }: ServiceSubscriptionCardProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const {
     subscription,
@@ -77,12 +79,12 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
   // Plans triés par prix pour affichage cohérent (Gratuit → Basic → Pro → Premium)
   const sortedPlans = [...plans].sort((a, b) => a.monthly_price_gnf - b.monthly_price_gnf);
 
-  const currentPlanDisplayName = isFree ? 'Gratuit' : (subscription?.plan_display_name || 'Gratuit');
+  const currentPlanDisplayName = isFree ? t('serviceSub.free') : (subscription?.plan_display_name || t('serviceSub.free'));
 
   // Étape 1 : vérifications pré-achat + afficher confirmation
   const handleRequestSubscribe = (planId: string) => {
     if (!user) {
-      toast.error('Vous devez être connecté');
+      toast.error(t('serviceSub.mustBeConnected'));
       return;
     }
 
@@ -93,13 +95,17 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
       ? (plan.yearly_price_gnf || plan.monthly_price_gnf * 12)
       : plan.monthly_price_gnf;
 
-    // Prix plan (GNF) converti dans la devise réelle du wallet pour une comparaison correcte
-    const priceInWalletCurrency = convert(price, 'GNF').convertedAmount;
-    if (price > 0 && walletBalance < priceInWalletCurrency) {
-      const dispo = convert(walletBalance, walletCurrency).formatted;
-      const requis = convert(price, 'GNF').formatted;
-      toast.error(`Solde insuffisant — disponible : ${dispo}, requis : ${requis}`);
-      return;
+    // Pré-check de solde NON bloquant : on ne bloque que si la conversion est FIABLE
+    // (même devise renvoyée par le convertisseur) ET clairement insuffisante. Sinon on
+    // laisse l'utilisateur confirmer — le RPC atomique du backend est l'AUTORITÉ sur le
+    // solde et renvoie « INSUFFICIENT_FUNDS » le cas échéant. Évite les faux blocages.
+    if (price > 0) {
+      const conv = convert(price, 'GNF');
+      const reliable = (conv.userCurrency || '').toUpperCase() === (walletCurrency || '').toUpperCase();
+      if (reliable && walletBalance < conv.convertedAmount) {
+        toast.error(`${t('serviceSub.insufficientBalancePrefix')} ${convert(walletBalance, walletCurrency).formatted}, ${t('serviceSub.requiredLabel')} ${conv.formatted}. ${t('serviceSub.rechargeWallet')}`);
+        return;
+      }
     }
 
     // Afficher la confirmation
@@ -115,14 +121,14 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
     try {
       setSubscribing(true);
       await subscribe(planId, selectedBilling);
-      toast.success('Abonnement activé avec succès !');
+      toast.success(t('serviceSub.activated'));
       setShowPlans(false);
       // Rafraîchir l'abonnement ET le solde wallet après paiement
       await Promise.all([refresh(), loadWalletBalance()]);
       // Notifier le parent pour synchroniser les composants dépendants (ex: ServiceMediaManager)
       onSubscribed?.();
     } catch (error: any) {
-      toast.error(error.message || 'Erreur lors de la souscription');
+      toast.error(error.message || t('serviceSub.subscribeError'));
     } finally {
       setSubscribing(false);
     }
@@ -159,12 +165,12 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
             {isExpiringSoon && (
               <Badge variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/20">
                 <AlertTriangle className="w-3 h-3 mr-1" />
-                Expire bientôt
+                {t('serviceSub.expiresSoon')}
               </Badge>
             )}
             {isActive && daysRemaining > 0 && (
               <span className="text-xs text-muted-foreground hidden sm:inline">
-                {daysRemaining}j restants
+                {daysRemaining}{t('serviceSub.daysLeftShort')}
               </span>
             )}
           </div>
@@ -177,10 +183,10 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
             {isFree ? (
               <>
                 <Crown className="w-3 h-3 mr-1" />
-                Upgrade
+                {t('serviceSub.upgrade')}
               </>
             ) : (
-              'Gérer'
+              t('serviceSub.manage')
             )}
           </Button>
         </div>
@@ -219,7 +225,7 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <Crown className="w-5 h-5 text-primary" />
-              Abonnement Service
+              {t('serviceSub.serviceSubscription')}
             </CardTitle>
             <div className="flex items-center gap-2">
               <Badge variant={isFree ? "secondary" : "default"} className={cn(!isFree && "bg-primary")}>
@@ -234,10 +240,10 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
                 {isFree ? (
                   <>
                     <Crown className="w-3 h-3 mr-1" />
-                    Mettre à niveau
+                    {t('serviceSub.upgradeFull')}
                   </>
                 ) : (
-                  'Gérer'
+                  t('serviceSub.manage')
                 )}
               </Button>
             </div>
@@ -247,18 +253,18 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
         <CardContent className="space-y-4">
           {/* Statut */}
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Statut</span>
+            <span className="text-muted-foreground">{t('serviceSub.status')}</span>
             <span className={cn(
               "font-medium",
               isFree || isActive ? "text-[#ff4000]" : "text-destructive"
             )}>
               {isFree
-                ? '✅ Actif (Gratuit)'
+                ? t('serviceSub.statusFreeActive')
                 : isActive
-                  ? '✅ Actif'
+                  ? t('serviceSub.statusActive')
                   : isExpired
-                    ? '❌ Expiré'
-                    : '⏳ En attente'}
+                    ? t('serviceSub.statusExpired')
+                    : t('serviceSub.statusPending')}
             </span>
           </div>
 
@@ -267,13 +273,13 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5" />
-                Jours restants
+                {t('serviceSub.daysRemaining')}
               </span>
               <span className={cn(
                 "font-medium",
                 daysRemaining <= 7 ? "text-destructive" : "text-foreground"
               )}>
-                {daysRemaining} jours
+                {daysRemaining} {t('serviceSub.daysWord')}
               </span>
             </div>
           )}
@@ -281,7 +287,7 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
           {/* Date de fin d'abonnement */}
           {isActive && subscription?.current_period_end && (
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Renouvellement</span>
+              <span className="text-muted-foreground">{t('serviceSub.renewal')}</span>
               <span className="font-medium">
                 {new Date(subscription.current_period_end).toLocaleDateString('fr-FR')}
               </span>
@@ -292,19 +298,19 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground flex items-center gap-1">
               <Wallet className="w-3.5 h-3.5" />
-              Solde wallet
+              {t('serviceSub.walletBalance')}
             </span>
             <span className="font-medium"><Money amount={walletBalance} from={walletCurrency} /></span>
           </div>
 
           {/* Limites du plan */}
           <div className="space-y-1.5">
-            <p className="text-xs font-medium text-muted-foreground">Limites du plan :</p>
+            <p className="text-xs font-medium text-muted-foreground">{t('serviceSub.planLimits')}</p>
             <div className="flex flex-col gap-1.5 text-xs">
               <div className="flex items-center gap-1">
                 <Check className="w-3 h-3 text-[#ff4000]" />
                 <span>
-                  Produits:{' '}
+                  {t('serviceSub.productsLabel')}{' '}
                   {subscription?.max_products != null
                     ? subscription.max_products
                     : isFree ? '5' : '∞'}
@@ -316,7 +322,7 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
                 ) : (
                   <span className="w-3 h-3 text-muted-foreground text-center">✗</span>
                 )}
-                <span>Listing prioritaire</span>
+                <span>{t('serviceSub.priorityListing')}</span>
               </div>
             </div>
           </div>
@@ -326,8 +332,7 @@ export function ServiceSubscriptionCard({ serviceId, serviceTypeId, compact = fa
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-destructive/10 text-destructive text-xs">
               <AlertTriangle className="w-4 h-4 flex-shrink-0" />
               <span>
-                Votre abonnement expire dans {daysRemaining} jour{daysRemaining > 1 ? 's' : ''}.
-                Renouvelez pour ne pas perdre vos avantages.
+                {t('serviceSub.expiresIn')} {daysRemaining} {t('serviceSub.dayWord')}. {t('serviceSub.renewWarning')}
               </span>
             </div>
           )}
@@ -370,44 +375,45 @@ function ConfirmDialog({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <AlertDialog open={plan !== null} onOpenChange={(open) => { if (!open) onCancel(); }}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
             <Crown className="w-5 h-5 text-primary" />
-            Confirmer l'abonnement
+            {t('serviceSub.confirmTitle')}
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-3 pt-1">
-              <p>Vous êtes sur le point de souscrire au plan :</p>
+              <p>{t('serviceSub.aboutToSubscribe')}</p>
               <div className="rounded-lg border bg-muted/50 px-4 py-3 space-y-1.5 text-sm text-foreground">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Plan</span>
+                  <span className="text-muted-foreground">{t('serviceSub.planLabel')}</span>
                   <span className="font-semibold">{plan?.name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Facturation</span>
-                  <span className="font-medium">{billing === 'yearly' ? 'Annuelle' : 'Mensuelle'}</span>
+                  <span className="text-muted-foreground">{t('serviceSub.billingLabel')}</span>
+                  <span className="font-medium">{billing === 'yearly' ? t('serviceSub.yearly') : t('serviceSub.monthly')}</span>
                 </div>
                 <div className="flex justify-between border-t pt-1.5 mt-1.5">
-                  <span className="text-muted-foreground">Montant débité</span>
+                  <span className="text-muted-foreground">{t('serviceSub.amountDebited')}</span>
                   <span className="font-bold text-primary">
                     {plan ? <Money amount={plan.price} from="GNF" /> : '—'}
                   </span>
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                Ce montant sera immédiatement débité de votre portefeuille GNF.
+                {t('serviceSub.debitInfo')}
               </p>
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onCancel}>Annuler</AlertDialogCancel>
+          <AlertDialogCancel onClick={onCancel}>{t('serviceSub.cancel')}</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm} className="bg-primary">
             <Wallet className="w-4 h-4 mr-2" />
-            Confirmer et payer
+            {t('serviceSub.confirmPay')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -439,6 +445,7 @@ function PlansDialog({
   walletBalance: number;
   walletCurrency: string;
 }) {
+  const { t } = useTranslation();
   const { convert } = usePriceConverter();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -446,7 +453,7 @@ function PlansDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Crown className="w-5 h-5 text-primary" />
-            Choisir un plan
+            {t('serviceSub.choosePlan')}
           </DialogTitle>
         </DialogHeader>
 
@@ -454,7 +461,7 @@ function PlansDialog({
         <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-muted/50 text-sm">
           <span className="flex items-center gap-1.5 text-muted-foreground">
             <Wallet className="w-4 h-4" />
-            Solde disponible
+            {t('serviceSub.availableBalance')}
           </span>
           <span className="font-semibold"><Money amount={walletBalance} from={walletCurrency} /></span>
         </div>
@@ -466,14 +473,14 @@ function PlansDialog({
             variant={selectedBilling === 'monthly' ? 'default' : 'outline'}
             onClick={() => onBillingChange('monthly')}
           >
-            Mensuel
+            {t('serviceSub.monthlyBtn')}
           </Button>
           <Button
             size="sm"
             variant={selectedBilling === 'yearly' ? 'default' : 'outline'}
             onClick={() => onBillingChange('yearly')}
           >
-            Annuel
+            {t('serviceSub.yearlyBtn')}
             <Badge variant="secondary" className="ml-1 text-[10px]">-15%</Badge>
           </Button>
         </div>
@@ -481,7 +488,7 @@ function PlansDialog({
         {/* Plans */}
         {plans.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground text-sm">
-            Aucun plan disponible pour ce type de service.
+            {t('serviceSub.noPlans')}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -503,12 +510,12 @@ function PlansDialog({
                   {plan.name === 'pro' && (
                     <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] px-2 py-0.5 rounded-bl-lg font-medium flex items-center gap-1">
                       <Star className="w-3 h-3" />
-                      Populaire
+                      {t('serviceSub.popular')}
                     </div>
                   )}
                   {isCurrent && (
                     <div className="absolute top-0 left-0 bg-[#ff4000] text-white text-[10px] px-2 py-0.5 rounded-br-lg font-medium">
-                      Actuel
+                      {t('serviceSub.current')}
                     </div>
                   )}
 
@@ -520,11 +527,11 @@ function PlansDialog({
 
                     <div className="flex items-baseline gap-1">
                       <span className="text-2xl font-black">
-                        {plan.monthly_price_gnf === 0 ? 'Gratuit' : <Money amount={price} from="GNF" />}
+                        {plan.monthly_price_gnf === 0 ? t('serviceSub.free') : <Money amount={price} from="GNF" />}
                       </span>
                       {plan.monthly_price_gnf > 0 && (
                         <span className="text-xs text-muted-foreground">
-                          /{selectedBilling === 'yearly' ? 'an' : 'mois'}
+                          /{selectedBilling === 'yearly' ? t('serviceSub.perYear') : t('serviceSub.perMonth')}
                         </span>
                       )}
                     </div>
@@ -533,7 +540,7 @@ function PlansDialog({
                     {!canAfford && plan.monthly_price_gnf > 0 && (
                       <div className="flex items-center gap-1 text-[10px] text-destructive">
                         <AlertTriangle className="w-3 h-3" />
-                        Solde insuffisant ({convert(Math.max(0, priceInWalletCurrency - walletBalance), walletCurrency).formatted} manquants)
+                        {t('serviceSub.insufficientPrefix')}{convert(Math.max(0, priceInWalletCurrency - walletBalance), walletCurrency).formatted} {t('serviceSub.missingSuffix')}
                       </div>
                     )}
 
@@ -550,8 +557,8 @@ function PlansDialog({
                     </ul>
 
                     <div className="text-[10px] text-muted-foreground space-y-0.5">
-                      <div>📦 Produits : {plan.max_products ?? '∞'}</div>
-                      <div>👥 Staff : {plan.max_staff ?? '∞'}</div>
+                      <div>📦 {t('serviceSub.productsLabel2')} {plan.max_products ?? '∞'}</div>
+                      <div>👥 {t('serviceSub.staffLabel')} {plan.max_staff ?? '∞'}</div>
                     </div>
 
                     <Button
@@ -561,17 +568,17 @@ function PlansDialog({
                       onClick={() => onSubscribe(plan.id)}
                     >
                       {subscribing ? (
-                        <span className="animate-pulse">Traitement...</span>
+                        <span className="animate-pulse">{t('serviceSub.processing')}</span>
                       ) : isCurrent ? (
-                        'Plan actuel'
+                        t('serviceSub.currentPlan')
                       ) : plan.monthly_price_gnf === 0 ? (
-                        'Plan gratuit'
+                        t('serviceSub.freePlan')
                       ) : !canAfford ? (
-                        'Solde insuffisant'
+                        t('serviceSub.insufficientBalance2')
                       ) : (
                         <>
                           <Zap className="w-3 h-3 mr-1" />
-                          Choisir
+                          {t('serviceSub.choose')}
                         </>
                       )}
                     </Button>

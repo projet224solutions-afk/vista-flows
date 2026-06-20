@@ -20,6 +20,8 @@ import { logger } from '../config/logger.js';
 import { supabaseAdmin } from '../config/supabase.js';
 import { env } from '../config/env.js';
 import { collectAfricanRates, refreshBcrgOnly, checkBcrgHeadChanged } from '../services/fxRates.service.js';
+import { createNotification } from '../services/notification.service.js';
+import { dispatchDueScheduledCampaigns } from '../routes/campaigns.routes.js';
 
 const REDIS_JOBS_ENABLED = (process.env.REDIS_ENABLED ?? (env.isProduction ? 'true' : 'false')) === 'true';
 
@@ -256,6 +258,72 @@ registerHandler('escrow.auto-release', async () => {
   }
 });
 
+// 🤝 AFFILIATION NUMÉRIQUE : confirme + paie les commissions des commandes NUMÉRIQUES payées,
+// passé la fenêtre de protection acheteur (48h) et tant que la commande n'est pas annulée/remboursée.
+// (Les produits numériques n'ont pas d'escrow → confirmation pilotée par ce job, idempotent.)
+registerHandler('affiliate.confirm-digital', async () => {
+  const protectionCutoff = new Date(Date.now() - 48 * 3600000).toISOString();
+  const { data: pending } = await supabaseAdmin
+    .from('affiliate_commissions')
+    .select('order_id')
+    .eq('status', 'pending')
+    .lt('created_at', protectionCutoff)
+    .limit(500);
+  if (!pending?.length) return;
+
+  const orderIds = [...new Set(pending.map((c: any) => c.order_id).filter(Boolean))];
+  if (!orderIds.length) return;
+
+  // Ne confirmer que les commandes encore PAYÉES et NON annulées/remboursées.
+  const { data: orders } = await supabaseAdmin
+    .from('orders')
+    .select('id, status, payment_status')
+    .in('id', orderIds);
+  const eligible = (orders || []).filter(
+    (o: any) => o.payment_status === 'paid' && !['cancelled', 'refunded'].includes(o.status)
+  );
+
+  for (const order of eligible) {
+    const { error } = await supabaseAdmin.rpc('confirm_affiliate_commissions', { p_order_id: order.id });
+    if (error) {
+      // INSUFFICIENT_FUNDS (vendeur) → on réessaiera au prochain passage. Non bloquant.
+      logger.warn(`[affiliate] confirm-digital ${order.id}: ${error.message}`);
+    } else {
+      logger.info(`[affiliate] commissions confirmées (commande numérique ${order.id})`);
+    }
+  }
+});
+
+// Restaurant : annule + rembourse (atomique) les commandes payées mais NON acceptées après 3 min.
+registerHandler('restaurant.auto-cancel', async () => {
+  const cutoff = new Date(Date.now() - 3 * 60 * 1000).toISOString();
+  const { data: stale } = await supabaseAdmin
+    .from('restaurant_orders')
+    .select('id')
+    .eq('status', 'pending')
+    .eq('payment_status', 'paid')
+    .lt('created_at', cutoff)
+    .limit(100);
+  if (!stale?.length) return;
+  let cancelled = 0;
+  for (const o of stale) {
+    try {
+      await supabaseAdmin.rpc('cancel_restaurant_order', { p_order_id: (o as any).id, p_reason: 'auto_timeout_3min' });
+      cancelled++;
+    } catch (err: any) {
+      logger.warn(`[restaurant.auto-cancel] ${(o as any).id} — ${err?.message}`);
+    }
+  }
+  logger.info(`[restaurant.auto-cancel] ${cancelled}/${stale.length} commande(s) expirée(s) remboursée(s)`);
+});
+
+// Campagnes PROGRAMMÉES : envoie celles arrivées à échéance (status='scheduled', scheduled_at <= now()).
+// Idempotent + safe multi-instance : chaque campagne est « claimée » par un UPDATE conditionnel de statut.
+registerHandler('campaigns.dispatch-scheduled', async () => {
+  const { due, dispatched } = await dispatchDueScheduledCampaigns(50);
+  if (due > 0) logger.info(`[campaigns.dispatch-scheduled] ${dispatched}/${due} campagne(s) programmée(s) lancée(s)`);
+});
+
 registerHandler('subscriptions.expire-check', async () => {
   const now = new Date().toISOString();
 
@@ -284,6 +352,91 @@ registerHandler('subscriptions.expire-check', async () => {
     .select('id');
 
   logger.info(`Subscriptions expired — vendeur:${vend?.length || 0} chauffeur:${drv?.length || 0} service:${svc?.length || 0}`);
+});
+
+// Rappels d'expiration J-3 / J-1 (abonnements service). Notif in-app idempotente par paliers
+// NON chevauchants (J-3 = expire dans 2-3 j ; J-1 = expire dans 0-1 j) + cadence 24h ⇒ ~1 envoi/palier.
+registerHandler('subscriptions.expiry-reminders', async () => {
+  const now = Date.now();
+  const at = (days: number) => new Date(now + days * 86_400_000).toISOString();
+  const buckets = [
+    { label: 'J-3', when: 'dans 3 jours', from: at(2), to: at(3) },
+    { label: 'J-1', when: 'demain', from: at(0), to: at(1) },
+  ];
+  let sent = 0;
+  for (const b of buckets) {
+    const { data: subs } = await supabaseAdmin
+      .from('service_subscriptions')
+      .select('user_id, current_period_end, service_plans(display_name)')
+      .eq('status', 'active')
+      .gt('current_period_end', b.from)
+      .lte('current_period_end', b.to);
+    for (const s of (subs as any[]) || []) {
+      const plan = s.service_plans?.display_name || 'Votre abonnement';
+      const ok = await createNotification({
+        userId: s.user_id,
+        title: 'Abonnement bientôt expiré',
+        message: `${plan} expire ${b.when}. Renouvelez pour conserver vos avantages.`,
+        type: 'subscription_expiry',
+        metadata: { reminder: b.label, period_end: s.current_period_end },
+      });
+      if (ok) sent++;
+    }
+  }
+  logger.info(`Subscription expiry reminders sent: ${sent}`);
+});
+
+// Rappels BEAUTÉ : J-1 (la veille) et H-2 (dans ~2h) pour les RDV confirmés.
+registerHandler('beauty.reminders', async () => {
+  let sent = 0;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const tomorrowStr = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+
+  // J-1 : RDV de demain non encore rappelés.
+  const { data: dayBefore } = await supabaseAdmin
+    .from('beauty_appointments')
+    .select('id, customer_user_id, appointment_time, professional_service_id, professional_services(business_name)')
+    .eq('appointment_date', tomorrowStr).eq('status', 'confirmed').eq('reminder_day_before_sent', false);
+  for (const a of (dayBefore as any[]) || []) {
+    if (a.customer_user_id) {
+      await createNotification({
+        userId: a.customer_user_id, title: 'Rappel rendez-vous',
+        message: `Vous avez un RDV demain à ${String(a.appointment_time).slice(0, 5)} chez ${a.professional_services?.business_name || 'votre salon'}.`,
+        type: 'beauty_reminder', metadata: { appointment_id: a.id, kind: 'J-1' },
+      });
+      sent++;
+    }
+    await supabaseAdmin.from('beauty_appointments').update({ reminder_day_before_sent: true }).eq('id', a.id);
+  }
+
+  // H-2 : RDV d'aujourd'hui dans la fenêtre [now+1h45, now+2h30].
+  const now = new Date();
+  const lo = new Date(now.getTime() + 105 * 60000).toTimeString().slice(0, 8);
+  const hi = new Date(now.getTime() + 150 * 60000).toTimeString().slice(0, 8);
+  const { data: soon } = await supabaseAdmin
+    .from('beauty_appointments')
+    .select('id, customer_user_id, appointment_time, professional_services(business_name)')
+    .eq('appointment_date', todayStr).eq('status', 'confirmed').eq('reminder_2h_sent', false)
+    .gte('appointment_time', lo).lte('appointment_time', hi);
+  for (const a of (soon as any[]) || []) {
+    if (a.customer_user_id) {
+      await createNotification({
+        userId: a.customer_user_id, title: 'RDV dans 2h',
+        message: `Votre RDV chez ${a.professional_services?.business_name || 'votre salon'} est à ${String(a.appointment_time).slice(0, 5)}.`,
+        type: 'beauty_reminder', metadata: { appointment_id: a.id, kind: 'H-2' },
+      });
+      sent++;
+    }
+    await supabaseAdmin.from('beauty_appointments').update({ reminder_2h_sent: true }).eq('id', a.id);
+  }
+  logger.info(`Beauty reminders sent: ${sent}`);
+});
+
+// Achats groupés expirés sans minimum → remboursement automatique de tous les participants.
+registerHandler('group-buys.finalize-expired', async () => {
+  const { data, error } = await supabaseAdmin.rpc('finalize_expired_group_buys');
+  if (error) { logger.warn(`[group-buys] finalize: ${error.message}`); return; }
+  if (data) logger.info(`Group-buys expirés finalisés (remboursés): ${data}`);
 });
 
 registerHandler('orders.stuck-alert', async () => {
@@ -625,6 +778,25 @@ export const jobQueue = {
   },
 
   /**
+   * Exécute un job MAINTENANT et ATTEND son résultat (déclenchement manuel/remédiation PDG).
+   * Contrairement à enqueue (fire-and-forget), renvoie { ok, error } pour tracer l'application.
+   */
+  async runNow(jobName: string, data: any = {}): Promise<{ ok: boolean; error?: string }> {
+    const handler = jobHandlers.get(jobName);
+    if (!handler) return { ok: false, error: `Aucun handler pour le job ${jobName}` };
+    const startedAt = new Date();
+    try {
+      await handler(data);
+      logJobExecution(jobName, 'manual', 'completed', startedAt);
+      return { ok: true };
+    } catch (err: any) {
+      logger.error(`Manual job failed: ${jobName} — ${err?.message}`);
+      logJobExecution(jobName, 'manual', 'failed', startedAt, 1, err?.message);
+      return { ok: false, error: err?.message || 'Échec du job' };
+    }
+  },
+
+  /**
    * Schedule recurring jobs. Call once at startup.
    */
   async scheduleRecurring(): Promise<void> {
@@ -647,15 +819,24 @@ export const jobQueue = {
       recurringTimers.push(setInterval(() => this.enqueue('idempotency.cleanup', {}).catch(() => {}), everyHour));
       recurringTimers.push(setInterval(() => this.enqueue('orders.stuck-alert', {}).catch(() => {}), everyHour));
       recurringTimers.push(setInterval(() => this.enqueue('payment-links.cleanup-expired', {}).catch(() => {}), everyHour));
+      recurringTimers.push(setInterval(() => this.enqueue('group-buys.finalize-expired', {}).catch(() => {}), everyHour));
       recurringTimers.push(setInterval(() => this.enqueue('fx.african-rates-refresh', {}).catch(() => {}), everyHour));
       // Surveillance BCRG toutes les 1 minute — HEAD check léger, GET uniquement si changement
       recurringTimers.push(setInterval(() => this.enqueue('fx.bcrg-live-check', {}).catch(() => {}), 60 * 1000));
+      // Restaurant : annulation auto + remboursement des commandes non acceptées en 3 min (check toutes les 60s)
+      recurringTimers.push(setInterval(() => this.enqueue('restaurant.auto-cancel', {}).catch(() => {}), 60 * 1000));
+      // Campagnes programmées : check toutes les 60s pour lancer celles arrivées à échéance
+      recurringTimers.push(setInterval(() => this.enqueue('campaigns.dispatch-scheduled', {}).catch(() => {}), 60 * 1000));
 
       recurringTimers.push(setInterval(() => this.enqueue('escrow.auto-release', {}).catch(() => {}), every6Hours));
+      recurringTimers.push(setInterval(() => this.enqueue('affiliate.confirm-digital', {}).catch(() => {}), every6Hours));
       recurringTimers.push(setInterval(() => this.enqueue('subscriptions.expire-check', {}).catch(() => {}), every6Hours));
       recurringTimers.push(setInterval(() => this.enqueue('pos.reconcile', {}).catch(() => {}), every6Hours));
 
       recurringTimers.push(setInterval(() => this.enqueue('recommendations.recalculate', {}).catch(() => {}), every24Hours));
+      recurringTimers.push(setInterval(() => this.enqueue('subscriptions.expiry-reminders', {}).catch(() => {}), every24Hours));
+      // Rappels beauté J-1/H-2 toutes les 15 minutes
+      recurringTimers.push(setInterval(() => this.enqueue('beauty.reminders', {}).catch(() => {}), 15 * 60 * 1000));
 
       logger.info('✅ In-process recurring jobs scheduled');
       return;
@@ -672,17 +853,25 @@ export const jobQueue = {
       await queue.add('idempotency.cleanup', {}, { repeat: { every: 3600000 } });
       await queue.add('orders.stuck-alert', {}, { repeat: { every: 3600000 } });
       await queue.add('payment-links.cleanup-expired', {}, { repeat: { every: 3600000 } });
+      await queue.add('group-buys.finalize-expired', {}, { repeat: { every: 3600000 } });
       await queue.add('fx.african-rates-refresh', {}, { repeat: { every: 3600000 } });
       // Surveillance BCRG toutes les 1 minute — HEAD check léger, GET uniquement si changement
       await queue.add('fx.bcrg-live-check', {}, { repeat: { every: 60 * 1000 } });
+      // Restaurant : annulation auto 3 min des commandes non acceptées (check toutes les 60s)
+      await queue.add('restaurant.auto-cancel', {}, { repeat: { every: 60 * 1000 } });
+      // Campagnes programmées : lancement automatique à l'échéance (check toutes les 60s)
+      await queue.add('campaigns.dispatch-scheduled', {}, { repeat: { every: 60 * 1000 } });
 
       // Every 6 hours: escrow + subscriptions + POS
       await queue.add('escrow.auto-release', {}, { repeat: { every: 6 * 3600000 } });
+      await queue.add('affiliate.confirm-digital', {}, { repeat: { every: 6 * 3600000 } });
       await queue.add('subscriptions.expire-check', {}, { repeat: { every: 6 * 3600000 } });
       await queue.add('pos.reconcile', {}, { repeat: { every: 6 * 3600000 } });
 
-      // Daily: recommendations
+      // Daily: recommendations + rappels d'expiration d'abonnement
       await queue.add('recommendations.recalculate', {}, { repeat: { every: 24 * 3600000 } });
+      await queue.add('subscriptions.expiry-reminders', {}, { repeat: { every: 24 * 3600000 } });
+      await queue.add('beauty.reminders', {}, { repeat: { every: 15 * 60 * 1000 } });
 
       logger.info('✅ Recurring jobs scheduled');
     } catch (err: any) {

@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Money } from '@/components/Money';
 import {
   Navigation,
@@ -59,6 +60,7 @@ export function ActiveRideNavigationPanel({
   onCancelRide,
   isLoading = false
 }: ActiveRideNavigationPanelProps) {
+  const { t } = useTranslation();
   const [distance, setDistance] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
   const [_isCalculating, setIsCalculating] = useState(false);
@@ -108,7 +110,7 @@ export function ActiveRideNavigationPanel({
   // Ouvrir Google Maps
   const openGoogleMaps = () => {
     if (!activeRide || !currentLocation) {
-      toast.error("Impossible d'ouvrir la navigation");
+      toast.error(t('activeRideNavigationPanel.impossibleDOuvrirLaNavigation'));
       return;
     }
 
@@ -125,7 +127,7 @@ export function ActiveRideNavigationPanel({
   // Ouvrir Waze
   const openWaze = () => {
     if (!activeRide) {
-      toast.error("Impossible d'ouvrir la navigation");
+      toast.error(t('activeRideNavigationPanel.impossibleDOuvrirLaNavigation'));
       return;
     }
 
@@ -254,7 +256,7 @@ export function ActiveRideNavigationPanel({
         <div className="bg-gray-800 rounded-xl p-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-1">
             <Clock className="w-4 h-4 text-blue-400" />
-            <span className="text-gray-400 text-xs">Temps estimé</span>
+            <span className="text-gray-400 text-xs">{t('activeRideNavigationPanel.tempsEstime')}</span>
           </div>
           <p className="text-3xl font-bold text-white">
             {duration}
@@ -354,7 +356,7 @@ export function ActiveRideNavigationPanel({
         <div className="bg-gradient-to-r from-[#ff4000]/50 to-[#ff4000]/30 rounded-xl p-4 border border-[#ff4000]/50">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[#ff4000] text-xs font-medium mb-1">VOS GAINS</p>
+              <p className="text-[#ff4000] text-xs font-medium mb-1">{t('activeRideNavigationPanel.vosGains')}</p>
               <p className="text-2xl font-bold text-white">
                 {activeRide.estimatedEarnings.toLocaleString()} <span className="text-sm text-gray-400">GNF</span>
               </p>

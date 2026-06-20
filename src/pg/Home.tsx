@@ -114,7 +114,7 @@ export default function Home() {
           <div style={{background: '#ffeaea', color: '#b71c1c', padding: 16, borderRadius: 8, margin: 16, textAlign: 'center', fontWeight: 'bold', fontSize: 18}}>
             ✕ Erreur critique de connexion Supabase<br />
             <span style={{fontSize: 15, fontWeight: 400}}>
-              Vérifiez les variables d'environnement <b>VITE_SUPABASE_URL</b> et <b>VITE_SUPABASE_ANON_KEY</b> dans le fichier <b>.env</b> du frontend.<br />
+              Vérifiez les variables d'environnement <b>VITE_SUPABASE_URL</b> et <b>VITE_SUPABASE_ANON_KEY</b> {t('home.dansLeFichier')} <b>.env</b> {t('home.duFrontend')}<br />
               Redémarrez le serveur Vite après modification.<br />
               (Aucune donnée ne peut être chargée tant que la connexion n'est pas valide)
             </span>

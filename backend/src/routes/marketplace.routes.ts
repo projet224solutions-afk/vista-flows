@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { supabaseAdmin } from '../config/supabase.js';
 import { logger } from '../config/logger.js';
+import { cache } from '../config/redis.js';
 
 /**
  * 🌍 MARKETPLACE — décision autoritaire « pays maison »
@@ -102,15 +103,13 @@ async function computeHomeCountryFallback(detected: string): Promise<HomeCountry
   };
 }
 
-/**
- * GET /api/v2/marketplace/home-country?detected=<ISO-2 ou nom>
- * Décision pays ATOMIQUE via RPC `get_marketplace_home_country` (1 appel = snapshot
- * cohérent). Repli sur la logique JS si la RPC n'est pas encore appliquée. Dégradé
- * sûr (Mondial) en dernier recours.
- */
-router.get('/home-country', async (req: Request, res: Response) => {
-  const detected = String(req.query.detected || '').trim();
+// TTL du cache de la décision pays : la liste des pays et le comptage produits évoluent
+// lentement (ajout de vendeurs/produits) → 60 s décharge massivement la DB sur ce chemin
+// public à fort trafic, sans figer l'expérience plus d'une minute.
+const HOME_COUNTRY_CACHE_TTL = 60;
 
+/** Résolution complète de la décision pays (RPC atomique, repli JS, dégradé sûr). */
+async function resolveHomeCountry(detected: string): Promise<HomeCountryDecision> {
   // 1. RPC atomique (source unique de vérité, 1 aller-retour DB).
   try {
     const { data, error } = await supabaseAdmin.rpc('get_marketplace_home_country', {
@@ -119,7 +118,7 @@ router.get('/home-country', async (req: Request, res: Response) => {
     });
     if (!error && data && typeof data === 'object') {
       const d = data as any;
-      const decision: HomeCountryDecision = {
+      return {
         success: true,
         homeCountry: d.homeCountry ?? null,
         qualifies: !!d.qualifies,
@@ -127,7 +126,6 @@ router.get('/home-country', async (req: Request, res: Response) => {
         threshold: Number(d.threshold || HOME_COUNTRY_MIN_PRODUCTS),
         countries: Array.isArray(d.countries) ? d.countries : [],
       };
-      return res.json(decision);
     }
     // RPC absente/erreur → repli JS ci-dessous.
   } catch (e: any) {
@@ -135,8 +133,29 @@ router.get('/home-country', async (req: Request, res: Response) => {
   }
 
   // 2. Repli JS (RPC pas encore appliquée en base).
+  return computeHomeCountryFallback(detected);
+}
+
+/**
+ * GET /api/v2/marketplace/home-country?detected=<ISO-2 ou nom>
+ * Décision pays ATOMIQUE via RPC `get_marketplace_home_country` (1 appel = snapshot
+ * cohérent). Repli sur la logique JS si la RPC n'est pas encore appliquée. Dégradé
+ * sûr (Mondial) en dernier recours. Résultat mis en cache Redis 60 s par pays détecté
+ * (chemin public à fort trafic, données à évolution lente).
+ */
+router.get('/home-country', async (req: Request, res: Response) => {
+  const detected = String(req.query.detected || '').trim();
+  const cacheKey = `mkt:home-country:${detected.toLowerCase()}`;
+
   try {
-    return res.json(await computeHomeCountryFallback(detected));
+    // getOrSet ne cache JAMAIS null/undefined → un échec (SAFE_FALLBACK) est renvoyé mais
+    // pas mémorisé, donc on retentera la DB au prochain appel (pas de figement d'erreur).
+    const decision = await cache.getOrSet(cacheKey, HOME_COUNTRY_CACHE_TTL, async () => {
+      const d = await resolveHomeCountry(detected);
+      // Ne mettre en cache que les décisions réussies (success=true).
+      return d.success ? d : null;
+    });
+    return res.json(decision ?? SAFE_FALLBACK);
   } catch (e: any) {
     logger.error('[marketplace/home-country] erreur', { error: e?.message });
     // Dégradé sûr : pas de pays maison → le front reste sur « Mondial ».

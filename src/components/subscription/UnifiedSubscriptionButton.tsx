@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Badge } from '@/components/ui/badge';
 import {
   Popover,
@@ -17,6 +18,7 @@ interface UnifiedSubscriptionButtonProps {
 }
 
 export function UnifiedSubscriptionButton({ variant = 'outline', size = 'default' }: UnifiedSubscriptionButtonProps) {
+  const { t } = useTranslation();
   const { subscription, loading, hasAccess, isExpired, daysRemaining } = useUnifiedSubscription();
   const navigate = useNavigate();
 
@@ -65,7 +67,7 @@ export function UnifiedSubscriptionButton({ variant = 'outline', size = 'default
               </div>
 
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Expire le:</span>
+                <span className="text-muted-foreground">{t('unifiedSubscriptionButton.expireLe')}</span>
                 <span className="font-medium">
                   {format(new Date(subscription.current_period_end), 'dd MMM yyyy', { locale: fr })}
                 </span>
@@ -81,7 +83,7 @@ export function UnifiedSubscriptionButton({ variant = 'outline', size = 'default
               {subscription.auto_renew && (
                 <div className="flex items-center gap-2 text-xs text-success">
                   <CheckCircle2 className="h-3 w-3" />
-                  <span>Renouvellement automatique activé</span>
+                  <span>{t('unifiedSubscriptionButton.renouvellementAutomatiqueActive')}</span>
                 </div>
               )}
             </div>
@@ -94,7 +96,7 @@ export function UnifiedSubscriptionButton({ variant = 'outline', size = 'default
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-warning" />
-              <h4 className="font-semibold">Aucun Abonnement</h4>
+              <h4 className="font-semibold">{t('unifiedSubscriptionButton.aucunAbonnement')}</h4>
             </div>
 
             <p className="text-sm text-muted-foreground">

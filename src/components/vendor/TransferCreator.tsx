@@ -1,10 +1,10 @@
-// @ts-nocheck
 /**
  * Composant de création de transfert de stock
  * 224SOLUTIONS - Sélection avancée des produits
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -64,6 +64,7 @@ interface TransferCreatorProps {
 }
 
 export default function TransferCreator({ onSuccess, onCancel }: TransferCreatorProps) {
+  const { t } = useTranslation();
   const {
     locations,
     posLocations,
@@ -348,7 +349,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
       {step === 1 && (
         <Card>
           <CardHeader>
-            <CardTitle>Sélectionnez les sites logistiques</CardTitle>
+            <CardTitle>{t('transferCreator.selectionnezLesSitesLogistiques')}</CardTitle>
             <CardDescription>
               Choisissez l’entrepôt source puis la destination : client final ou autre entrepôt.
             </CardDescription>
@@ -357,10 +358,10 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
             <div className="grid md:grid-cols-2 gap-6">
               {/* Lieu source */}
               <div className="space-y-3">
-                  <Label className="text-base font-semibold">Entrepôt source</Label>
+                  <Label className="text-base font-semibold">{t('transferCreator.entrepotSource')}</Label>
                 <Select value={fromLocationId} onValueChange={setFromLocationId}>
                   <SelectTrigger className="h-14">
-                    <SelectValue placeholder="D'où transférer ?" />
+                    <SelectValue placeholder={t('transferCreator.dOuTransferer')} />
                   </SelectTrigger>
                   <SelectContent>
                     {sourceLocations.map(loc => (
@@ -413,11 +414,11 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                       <div className="mt-3 grid grid-cols-2 gap-2 text-center">
                         <div className="p-2 bg-background rounded">
                           <p className="text-lg font-bold">{fromLocation.stats?.total_products || 0}</p>
-                          <p className="text-xs text-muted-foreground">Produits</p>
+                          <p className="text-xs text-muted-foreground">{t('transferCreator.produits')}</p>
                         </div>
                         <div className="p-2 bg-background rounded">
                           <p className="text-lg font-bold">{fromLocation.stats?.total_quantity || 0}</p>
-                          <p className="text-xs text-muted-foreground">Unités</p>
+                          <p className="text-xs text-muted-foreground">{t('transferCreator.unites')}</p>
                         </div>
                       </div>
                     </CardContent>
@@ -434,20 +435,20 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
 
               {/* Lieu destination */}
               <div className="space-y-3 md:-mt-16">
-                <Label className="text-base font-semibold">Destination opérationnelle</Label>
+                <Label className="text-base font-semibold">{t('transferCreator.destinationOperationnelle')}</Label>
 
                 <div className="space-y-2">
-                  <Label>Type de destination</Label>
+                  <Label>{t('transferCreator.typeDeDestination')}</Label>
                   <Select value={destinationType} onValueChange={(value: 'warehouse' | 'shop' | 'client') => {
                     setDestinationType(value);
                     setToLocationId('');
                   }}>
                     <SelectTrigger className="h-12">
-                      <SelectValue placeholder="Choisir un type" />
+                      <SelectValue placeholder={t('transferCreator.choisirUnType')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="warehouse">🏭 Autre entrepôt</SelectItem>
-                      <SelectItem value="client">👤 Client final</SelectItem>
+                      <SelectItem value="warehouse">{t('transferCreator.autreEntrepot')}</SelectItem>
+                      <SelectItem value="client">{t('transferCreator.clientFinal')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -456,7 +457,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                   <>
                     <Select value={toLocationId} onValueChange={setToLocationId}>
                       <SelectTrigger className="h-14">
-                        <SelectValue placeholder="Vers quel entrepôt ?" />
+                        <SelectValue placeholder={t('transferCreator.versQuelEntrepot')} />
                       </SelectTrigger>
                       <SelectContent>
                         {destinationLocations.map(loc => (
@@ -513,7 +514,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                   <Card className="bg-muted/50">
                     <CardContent className="pt-4 space-y-3">
                       <div>
-                        <Label>Nom du client</Label>
+                        <Label>{t('transferCreator.nomDuClient')}</Label>
                         <Input
                           placeholder="Ex: Mamadou Diallo"
                           value={clientInfo.name}
@@ -521,7 +522,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                         />
                       </div>
                       <div>
-                        <Label>Téléphone</Label>
+                        <Label>{t('transferCreator.telephone')}</Label>
                         <Input
                           placeholder="+224 ..."
                           value={clientInfo.phone}
@@ -531,7 +532,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                       <div>
                         <Label>Adresse</Label>
                         <Textarea
-                          placeholder="Adresse de livraison ou retrait"
+                          placeholder={t('transferCreator.adresseDeLivraisonOuRetrait')}
                           value={clientInfo.address}
                           onChange={(e) => setClientInfo((prev) => ({ ...prev, address: e.target.value }))}
                           rows={2}
@@ -559,7 +560,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Rechercher un produit..."
+                  placeholder={t('transferCreator.rechercherUnProduit')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -574,7 +575,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
               ) : filteredStock.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Package className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                  <p>Aucun stock disponible</p>
+                  <p>{t('transferCreator.aucunStockDisponible')}</p>
                 </div>
               ) : (
                 <ScrollArea className="h-[400px]">
@@ -667,7 +668,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-lg">À transférer</CardTitle>
+                  <CardTitle className="text-lg">{t('transferCreator.aTransferer')}</CardTitle>
                   <CardDescription>
                     {transferItems.length} produit(s) • {totalItems} unité(s)
                   </CardDescription>
@@ -687,7 +688,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
               {transferItems.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <ArrowRightLeft className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                  <p>Cliquez sur les produits à transférer</p>
+                  <p>{t('transferCreator.cliquezSurLesProduitsA')}</p>
                 </div>
               ) : (
                 <ScrollArea className="h-[400px]">
@@ -736,7 +737,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                             </div>
                           )}
                           <div>
-                            <Label className="text-[11px] text-muted-foreground">Unités</Label>
+                            <Label className="text-[11px] text-muted-foreground">{t('transferCreator.unites')}</Label>
                             <div className="flex items-center gap-1">
                               <Button
                                 size="icon"
@@ -795,7 +796,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
       {step === 3 && (
         <Card>
           <CardHeader>
-            <CardTitle>Confirmer le transfert</CardTitle>
+            <CardTitle>{t('transferCreator.confirmerLeTransfert')}</CardTitle>
             <CardDescription>
               Vérifiez les détails avant de créer le transfert
             </CardDescription>
@@ -815,7 +816,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
                   )}
                 </div>
                 <p className="font-semibold">{fromLocation?.name}</p>
-                <p className="text-sm text-muted-foreground">Stock entrepôt source</p>
+                <p className="text-sm text-muted-foreground">{t('transferCreator.stockEntrepotSource')}</p>
               </div>
 
               <div className="p-3 rounded-full bg-primary/10">
@@ -874,7 +875,7 @@ export default function TransferCreator({ onSuccess, onCancel }: TransferCreator
             <div className="space-y-2">
               <Label>Notes (optionnel)</Label>
               <Textarea
-                placeholder="Ajoutez des notes pour ce transfert..."
+                placeholder={t('transferCreator.ajoutezDesNotesPourCe')}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}

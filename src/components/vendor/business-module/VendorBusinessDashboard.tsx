@@ -5,10 +5,11 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { formatCurrency } from '@/lib/formatters';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import {
@@ -41,6 +42,8 @@ export function VendorBusinessDashboard({
   onRefresh,
   professionalService
 }: VendorBusinessDashboardProps) {
+  const { t } = useTranslation();
+  const fc = useFormatCurrency(); // convertit GNF → devise du vendeur (taux BCRG)
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [showAddService, setShowAddService] = useState(false);
@@ -116,7 +119,7 @@ export function VendorBusinessDashboard({
       {professionalService?.status === 'pending' && (
         <Alert variant="default" className="bg-orange-50 border-orange-200 dark:bg-[#ff4000]/20">
           <Clock className="w-4 h-4 text-[#ff4000]" />
-          <AlertTitle className="text-[#ff4000] dark:text-orange-100">Service en cours de validation</AlertTitle>
+          <AlertTitle className="text-[#ff4000] dark:text-orange-100">{t('vendorBusinessDashboard.serviceEnCoursDeValidation')}</AlertTitle>
           <AlertDescription className="text-[#ff4000] dark:text-orange-200">
             Votre service est en attente de validation par notre équipe.
           </AlertDescription>
@@ -126,8 +129,8 @@ export function VendorBusinessDashboard({
       {professionalService?.verification_status === 'rejected' && (
         <Alert variant="destructive">
           <XCircle className="w-4 h-4" />
-          <AlertTitle>Service rejeté</AlertTitle>
-          <AlertDescription>Contactez le support pour plus d'informations.</AlertDescription>
+          <AlertTitle>{t('vendorBusinessDashboard.serviceRejete')}</AlertTitle>
+          <AlertDescription>{t('vendorBusinessDashboard.contactezLeSupportPourPlus')}</AlertDescription>
         </Alert>
       )}
 
@@ -173,7 +176,7 @@ export function VendorBusinessDashboard({
         <Card className="hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-transparent hover:border-l-primary">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-muted-foreground font-medium">Commandes</span>
+              <span className="text-sm text-muted-foreground font-medium">{t('vendorBusinessDashboard.commandes')}</span>
               <ShoppingCart className="w-5 h-5 text-muted-foreground" />
             </div>
             <div className="text-2xl md:text-3xl font-bold text-foreground">{stats?.ordersCount || 0}</div>
@@ -219,8 +222,8 @@ export function VendorBusinessDashboard({
               <span className="text-sm text-muted-foreground font-medium">Chiffre d'affaires</span>
               <TrendingUp className="w-5 h-5 text-primary" />
             </div>
-            <div className="text-xl md:text-2xl font-bold text-primary">{formatCurrency(stats?.revenue || 0)}</div>
-            <div className="text-xs text-muted-foreground mt-1">{formatCurrency(stats?.monthRevenue || 0)} ce mois</div>
+            <div className="text-xl md:text-2xl font-bold text-primary">{fc(stats?.revenue || 0)}</div>
+            <div className="text-xs text-muted-foreground mt-1">{fc(stats?.monthRevenue || 0)} ce mois</div>
           </CardContent>
         </Card>
       </div>
@@ -253,34 +256,34 @@ export function VendorBusinessDashboard({
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between items-center p-3 bg-primary/10 rounded-lg">
-                  <span className="text-sm font-medium">Total général</span>
-                  <span className="font-bold text-primary">{formatCurrency(stats?.revenue || 0)}</span>
+                  <span className="text-sm font-medium">{t('vendorBusinessDashboard.totalGeneral')}</span>
+                  <span className="font-bold text-primary">{fc(stats?.revenue || 0)}</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="p-3 bg-orange-50 dark:bg-[#ff4000]/20 border border-orange-200 dark:border-[#ff4000] rounded-lg">
                     <div className="flex items-center gap-1 mb-1">
                       <Store className="w-3 h-3 text-[#ff4000]" />
-                      <span className="text-xs font-medium text-[#ff4000] dark:text-[#ff4000]">Sur place</span>
+                      <span className="text-xs font-medium text-[#ff4000] dark:text-[#ff4000]">{t('vendorBusinessDashboard.surPlace')}</span>
                     </div>
-                    <div className="text-lg font-bold text-[#ff4000] dark:text-[#ff4000]">{formatCurrency(stats?.revenuePos || 0)}</div>
+                    <div className="text-lg font-bold text-[#ff4000] dark:text-[#ff4000]">{fc(stats?.revenuePos || 0)}</div>
                   </div>
                   <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                     <div className="flex items-center gap-1 mb-1">
                       <div className="w-2 h-2 rounded-full bg-[#ff4000]" />
-                      <span className="text-xs font-medium text-blue-700 dark:text-blue-400">Livraison</span>
+                      <span className="text-xs font-medium text-blue-700 dark:text-blue-400">{t('vendorBusinessDashboard.livraison')}</span>
                     </div>
-                    <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{formatCurrency(stats?.revenueOnline || 0)}</div>
+                    <div className="text-lg font-bold text-blue-600 dark:text-blue-400">{fc(stats?.revenueOnline || 0)}</div>
                   </div>
                 </div>
 
                 <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
                   <span className="text-sm">Aujourd'hui</span>
-                  <span className="font-semibold">{formatCurrency(stats?.todayRevenue || 0)}</span>
+                  <span className="font-semibold">{fc(stats?.todayRevenue || 0)}</span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
                   <span className="text-sm">Ce mois</span>
-                  <span className="font-semibold">{formatCurrency(stats?.monthRevenue || 0)}</span>
+                  <span className="font-semibold">{fc(stats?.monthRevenue || 0)}</span>
                 </div>
               </CardContent>
             </Card>
@@ -297,14 +300,14 @@ export function VendorBusinessDashboard({
                   <div className="p-3 bg-orange-50 dark:bg-[#ff4000]/20 border border-orange-200 dark:border-[#ff4000] rounded-lg text-center">
                     <div className="flex items-center justify-center gap-1 mb-1">
                       <Store className="w-3 h-3 text-[#ff4000]" />
-                      <span className="text-xs font-medium text-[#ff4000] dark:text-[#ff4000]">Sur place</span>
+                      <span className="text-xs font-medium text-[#ff4000] dark:text-[#ff4000]">{t('vendorBusinessDashboard.surPlace')}</span>
                     </div>
                     <div className="text-2xl font-bold text-[#ff4000] dark:text-[#ff4000]">{stats?.ordersPos || 0}</div>
                   </div>
                   <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg text-center">
                     <div className="flex items-center justify-center gap-1 mb-1">
                       <div className="w-2 h-2 rounded-full bg-[#ff4000]" />
-                      <span className="text-xs font-medium text-blue-700 dark:text-blue-400">Livraison</span>
+                      <span className="text-xs font-medium text-blue-700 dark:text-blue-400">{t('vendorBusinessDashboard.livraison')}</span>
                     </div>
                     <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats?.ordersOnline || 0}</div>
                   </div>
@@ -312,7 +315,7 @@ export function VendorBusinessDashboard({
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between p-2 rounded bg-muted/30">
-                    <span className="text-sm">Total commandes</span>
+                    <span className="text-sm">{t('vendorBusinessDashboard.totalCommandes')}</span>
                     <span className="font-semibold">{stats?.ordersCount || 0}</span>
                   </div>
                   <div className="flex items-center justify-between p-2 rounded bg-orange-50 dark:bg-[#ff4000]/10">
@@ -332,7 +335,7 @@ export function VendorBusinessDashboard({
             <CardContent className="p-6">
               <div className="text-center py-8 text-muted-foreground">
                 <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>Les commandes récentes apparaîtront ici</p>
+                <p>{t('vendorBusinessDashboard.lesCommandesRecentesApparaitrontIci')}</p>
               </div>
             </CardContent>
           </Card>

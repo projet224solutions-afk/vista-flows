@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { UnifiedTransferDialog } from "./UnifiedTransferDialog";
 import { useUserCode } from "@/hooks/useUserCode";
 import { toast } from "sonner";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface QuickTransferButtonProps {
   variant?: "default" | "outline" | "ghost";
@@ -22,6 +23,7 @@ export function QuickTransferButton({
   className = "",
   showText = true
 }: QuickTransferButtonProps) {
+  const { t } = useTranslation();
   const { userCode, loading } = useUserCode();
 
   // Si pas de code, afficher un bouton désactivé
@@ -43,7 +45,7 @@ export function QuickTransferButton({
       className={className}
       showText={showText}
       onSuccess={() => {
-        toast.success('Transfert réussi !');
+        toast.success(t('quickTransferButton.transfertReussi'));
       }}
     />
   );

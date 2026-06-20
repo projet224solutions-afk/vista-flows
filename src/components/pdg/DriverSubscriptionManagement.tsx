@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -76,6 +77,7 @@ interface Stats {
 }
 
 export default function DriverSubscriptionManagement() {
+  const { t } = useTranslation();
   const [subscriptions, setSubscriptions] = useState<DriverSubscription[]>([]);
   const [config, setConfig] = useState<DriverSubscriptionConfig | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -119,7 +121,7 @@ export default function DriverSubscriptionManagement() {
       ]);
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast.error('Erreur lors du chargement des données');
+      toast.error(t('driverSubscriptionManagement.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -205,13 +207,13 @@ export default function DriverSubscriptionManagement() {
 
   const handleOfferSubscription = async () => {
     if (!offerData.userId) {
-      toast.error('Veuillez entrer un identifiant utilisateur');
+      toast.error(t('driverSubscriptionManagement.veuillezEntrerUnIdentifiantUtilisateur'));
       return;
     }
 
     const days = parseInt(offerData.days);
     if (isNaN(days) || days <= 0 || days > 365) {
-      toast.error('Le nombre de jours doit être entre 1 et 365');
+      toast.error(t('driverSubscriptionManagement.leNombreDeJoursDoit'));
       return;
     }
 
@@ -367,7 +369,7 @@ export default function DriverSubscriptionManagement() {
     const durationDays = parseInt(configForm.durationDays);
 
     if (isNaN(price) || price <= 0) {
-      toast.error('Le prix mensuel doit être positif');
+      toast.error(t('driverSubscriptionManagement.lePrixMensuelDoitEtre'));
       return;
     }
 
@@ -399,7 +401,7 @@ export default function DriverSubscriptionManagement() {
         if (error) throw error;
       }
 
-      toast.success('Configuration mise à jour avec succès');
+      toast.success(t('driverSubscriptionManagement.configurationMiseAJourAvec'));
       setIsConfigDialogOpen(false);
       fetchConfig();
     } catch (error: any) {
@@ -423,7 +425,7 @@ export default function DriverSubscriptionManagement() {
       toast.success(`Abonnement ${newStatus === 'active' ? 'réactivé' : 'suspendu'}`);
       fetchSubscriptions();
     } catch (_error) {
-      toast.error('Erreur lors de la modification');
+      toast.error(t('driverSubscriptionManagement.erreurLorsDeLaModification'));
     }
   };
 
@@ -448,7 +450,7 @@ export default function DriverSubscriptionManagement() {
       case 'active':
         return <Badge className="bg-[#ff4000]/10 text-[#ff4000] border-[#ff4000]/20"><CheckCircle className="w-3 h-3 mr-1" /> Actif</Badge>;
       case 'expired':
-        return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" /> Expiré</Badge>;
+        return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" /> {t('driverSubscriptionManagement.expire')}</Badge>;
       case 'suspended':
         return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Suspendu</Badge>;
       default:
@@ -527,7 +529,7 @@ export default function DriverSubscriptionManagement() {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-medium text-muted-foreground">Expirés</CardTitle>
+              <CardTitle className="text-xs font-medium text-muted-foreground">{t('driverSubscriptionManagement.expires')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-muted-foreground">{stats.total_expired}</div>
@@ -585,7 +587,7 @@ export default function DriverSubscriptionManagement() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher par nom, email, téléphone..."
+                placeholder={t('driverSubscriptionManagement.rechercherParNomEmailTelephone')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -596,7 +598,7 @@ export default function DriverSubscriptionManagement() {
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous types</SelectItem>
+                <SelectItem value="all">{t('driverSubscriptionManagement.tousTypes')}</SelectItem>
                 <SelectItem value="taxi">Taxi-Moto</SelectItem>
                 <SelectItem value="livreur">Livreur</SelectItem>
               </SelectContent>
@@ -606,9 +608,9 @@ export default function DriverSubscriptionManagement() {
                 <SelectValue placeholder="Statut" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous statuts</SelectItem>
+                <SelectItem value="all">{t('driverSubscriptionManagement.tousStatuts')}</SelectItem>
                 <SelectItem value="active">Actif</SelectItem>
-                <SelectItem value="expired">Expiré</SelectItem>
+                <SelectItem value="expired">{t('driverSubscriptionManagement.expire')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -632,8 +634,8 @@ export default function DriverSubscriptionManagement() {
                   <TableHead>Type</TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead>Prix</TableHead>
-                  <TableHead>Période</TableHead>
-                  <TableHead>Paiement</TableHead>
+                  <TableHead>{t('driverSubscriptionManagement.periode')}</TableHead>
+                  <TableHead>{t('driverSubscriptionManagement.paiement')}</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -719,7 +721,7 @@ export default function DriverSubscriptionManagement() {
             <div className="space-y-2">
               <Label>Identifiant Utilisateur</Label>
               <Input
-                placeholder="UUID, DRV0001, email ou téléphone..."
+                placeholder={t('driverSubscriptionManagement.uuidDrv0001EmailOuTelephone')}
                 value={offerData.userId}
                 onChange={(e) => setOfferData({ ...offerData, userId: e.target.value })}
               />
@@ -751,7 +753,7 @@ export default function DriverSubscriptionManagement() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Nombre de jours</Label>
+              <Label>{t('driverSubscriptionManagement.nombreDeJours')}</Label>
               <Input
                 type="number"
                 min="1"
@@ -800,11 +802,11 @@ export default function DriverSubscriptionManagement() {
                 min="0"
                 value={configForm.yearlyPrice}
                 onChange={(e) => setConfigForm({ ...configForm, yearlyPrice: e.target.value })}
-                placeholder="Laisser vide pour prix mensuel x 12"
+                placeholder={t('driverSubscriptionManagement.laisserVidePourPrixMensuel')}
               />
             </div>
             <div className="space-y-2">
-              <Label>Durée (jours)</Label>
+              <Label>{t('driverSubscriptionManagement.dureeJours')}</Label>
               <Input
                 type="number"
                 min="1"

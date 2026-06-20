@@ -30,14 +30,22 @@ function initFCM() {
 
     messaging.onBackgroundMessage((payload) => {
       const title = payload.notification?.title || 'Nouvelle notification';
+      const isCall = payload.data?.type === 'incoming_call';
 
       self.registration.showNotification(title, {
         body: payload.notification?.body || '',
         icon: '/icon-192.png',
         badge: '/favicon.png',
-        tag: payload.data?.notification_id || 'default',
+        // Un appel garde un tag fixe (remplace la notif précédente) ; sinon par id
+        tag: isCall ? 'incoming_call' : (payload.data?.notification_id || 'default'),
         data: payload.data || {},
-        vibrate: [200, 100, 200],
+        // Appel : reste affiché jusqu'à action, vibration de sonnerie, priorité haute
+        requireInteraction: isCall,
+        renotify: isCall,
+        vibrate: isCall ? [400, 200, 400, 200, 400] : [200, 100, 200],
+        actions: isCall
+          ? [{ action: 'answer', title: 'Répondre' }, { action: 'decline', title: 'Refuser' }]
+          : undefined,
       });
     });
 
@@ -218,6 +226,19 @@ async function precacheShell() {
 }
 
 async function handleNavigationRequest(event) {
+  // CHEMIN RAPIDE HORS LIGNE : si l'appareil est hors ligne, on sert DIRECTEMENT l'app shell en cache
+  // (aucune tentative réseau) → ouverture/navigation instantanée du vendeur sans connexion.
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    const offlineShell =
+      (await caches.match('/')) ||
+      (await caches.match(APP_SHELL_URL)) ||
+      (await caches.open(APP_SHELL_CACHE).then((cache) => cache.match('/'))) ||
+      (await caches.open(APP_SHELL_CACHE).then((cache) => cache.match(APP_SHELL_URL)));
+    if (offlineShell) return offlineShell;
+    // Pas de shell en cache (jamais ouvert en ligne) → page d'info hors ligne.
+    return getOfflineFallback();
+  }
+
   try {
     const networkResponse = await fetchWithTimeout(event.request, 12000, {
       cache: 'no-cache',
@@ -449,7 +470,11 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  const urlToOpen = event.notification.data?.url || '/';
+  const data = event.notification.data || {};
+  // "Refuser" un appel : ne pas ouvrir l'app
+  if (event.action === 'decline') return;
+
+  const urlToOpen = data.url || data.action_url || '/';
 
   event.waitUntil(
     (async () => {

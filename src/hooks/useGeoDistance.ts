@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getSafeBrowserGeo } from '@/lib/safeGeo';
 
-const DEFAULT_POSITION = { latitude: 9.5370, longitude: -13.6785 }; // Conakry centre
+const DEFAULT_POSITION = { latitude: 9.7085, longitude: -13.3856 }; // Coyah centre (zone des commerces)
 const LOCATION_CACHE_KEY = '224solutions:geo-distance:last-good-position';
 const LOCATION_CACHE_TTL_MS = 30 * 60_000;
 const REAL_GPS_MAX_ACCURACY_METERS = 1500;
@@ -150,8 +150,11 @@ export function useGeoDistance() {
       return cached;
     }
 
+    // N'utiliser le fallback "IP" que s'il s'agit d'une vraie position détectée (source 'ip').
+    // Sinon (source 'default' = simple constante codée en dur côté safeGeo, hors zone des
+    // commerces) on retombe sur DEFAULT_POSITION (Coyah) pour que la proximité reste pertinente.
     const ipFallback = await getIpFallbackPosition();
-    if (ipFallback) {
+    if (ipFallback && ipFallback.source === 'ip') {
       return ipFallback;
     }
 

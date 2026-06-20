@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -91,6 +92,7 @@ const SECTION_TITLES: Record<string, string> = {
 };
 
 export default function AgentDashboardPublic() {
+  const { t } = useTranslation();
   const { token } = useParams();
   const navigate = useNavigate();
   const [agent, setAgent] = useState<Agent | null>(null);
@@ -133,7 +135,7 @@ export default function AgentDashboardPublic() {
     if (token) {
       loadAgentData();
     } else {
-      toast.error('Token d\'accès manquant');
+      toast.error(t('agentDashboardPublic.tokenDAccesManquant'));
       navigate('/');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -168,7 +170,7 @@ export default function AgentDashboardPublic() {
               ? payload.new.permissions as string[]
               : (prev?.permissions ?? []),
           }) as Agent);
-          toast.success('Données mises à jour');
+          toast.success(t('agentDashboardPublic.donneesMisesAJour'));
         }
       )
       .subscribe();
@@ -188,7 +190,7 @@ export default function AgentDashboardPublic() {
 
       if (agentError) throw agentError;
       if (!agentData) {
-        toast.error('Agent non trouvé');
+        toast.error(t('agentDashboardPublic.agentNonTrouve'));
         navigate('/');
         return;
       }
@@ -207,7 +209,7 @@ export default function AgentDashboardPublic() {
       toast.success(`Bienvenue ${agentData.name}!`);
     } catch (error) {
       console.error('Erreur chargement agent:', error);
-      toast.error('Erreur lors du chargement');
+      toast.error(t('agentDashboardPublic.erreurLorsDuChargement'));
       navigate('/');
     } finally {
       setLoading(false);
@@ -288,7 +290,7 @@ export default function AgentDashboardPublic() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast.success('Sous-agent créé avec succès');
+      toast.success(t('agentDashboardPublic.sousAgentCreeAvecSucces'));
       setIsSubAgentDialogOpen(false);
       setSubAgentFormData({
         name: '', email: '', phone: '', agent_type: '', password: '',
@@ -310,12 +312,12 @@ export default function AgentDashboardPublic() {
     if (!agent) return;
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error('Les mots de passe ne correspondent pas');
+      toast.error(t('agentDashboardPublic.lesMotsDePasseNe'));
       return;
     }
 
     if (passwordData.newPassword.length < 8) {
-      toast.error('Minimum 8 caractères');
+      toast.error(t('agentDashboardPublic.minimum8Caracteres'));
       return;
     }
 
@@ -331,14 +333,14 @@ export default function AgentDashboardPublic() {
 
       if (error) throw error;
       if (data?.success) {
-        toast.success('Mot de passe modifié');
+        toast.success(t('agentDashboardPublic.motDePasseModifie'));
         setIsPasswordDialogOpen(false);
         setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       } else {
         toast.error(data?.error || 'Erreur');
       }
     } catch (_error) {
-      toast.error('Erreur lors du changement');
+      toast.error(t('agentDashboardPublic.erreurLorsDuChangement'));
     } finally {
       setIsChangingPassword(false);
     }
@@ -347,7 +349,7 @@ export default function AgentDashboardPublic() {
   const handleLogout = () => {
     sessionStorage.clear();
     localStorage.removeItem('agent_token');
-    toast.success('Déconnexion réussie');
+    toast.success(t('agentDashboardPublic.deconnexionReussie'));
     navigate('/login');
   };
 
@@ -360,10 +362,10 @@ export default function AgentDashboardPublic() {
     try {
       await navigator.clipboard.writeText(`${window.location.origin}/agent/${subAgent.access_token}`);
       setCopiedId(subAgent.id);
-      toast.success('Lien copié!');
+      toast.success(t('agentDashboardPublic.lienCopie'));
       setTimeout(() => setCopiedId(null), 3000);
     } catch (_error) {
-      toast.error('Erreur de copie');
+      toast.error(t('agentDashboardPublic.erreurDeCopie'));
     }
   };
 
@@ -384,8 +386,8 @@ export default function AgentDashboardPublic() {
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center">
             <AlertCircle className="w-12 h-12 text-[#ff4000] mx-auto mb-4" />
-            <h2 className="text-xl font-bold mb-2">Accès non autorisé</h2>
-            <p className="text-muted-foreground">Token invalide ou expiré</p>
+            <h2 className="text-xl font-bold mb-2">{t('agentDashboardPublic.accesNonAutorise')}</h2>
+            <p className="text-muted-foreground">{t('agentDashboardPublic.tokenInvalideOuExpire')}</p>
           </CardContent>
         </Card>
       </div>
@@ -462,7 +464,7 @@ export default function AgentDashboardPublic() {
           <Card>
             <CardContent className="py-12 text-center">
               <Wallet className="w-12 h-12 mx-auto mb-2 text-slate-300" />
-              <p className="text-muted-foreground">Impossible de charger le wallet</p>
+              <p className="text-muted-foreground">{t('agentDashboardPublic.impossibleDeChargerLeWallet')}</p>
             </CardContent>
           </Card>
         );
@@ -471,7 +473,7 @@ export default function AgentDashboardPublic() {
         return (
           <Card className="border-0 shadow-lg">
             <CardHeader className="bg-gradient-to-r from-[#ff4000] to-[#ff4000] text-white rounded-t-lg">
-              <CardTitle>Créer un Nouvel Utilisateur</CardTitle>
+              <CardTitle>{t('agentDashboardPublic.creerUnNouvelUtilisateur')}</CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               <CreateUserForm
@@ -498,7 +500,7 @@ export default function AgentDashboardPublic() {
                 </DialogTrigger>
                 <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>Créer un Sous-Agent</DialogTitle>
+                    <DialogTitle>{t('agentDashboardPublic.creerUnSousAgent')}</DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleCreateSubAgent} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
@@ -524,7 +526,7 @@ export default function AgentDashboardPublic() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Téléphone *</Label>
+                        <Label>{t('agentDashboardPublic.telephone')}</Label>
                         <Input
                           required
                           value={subAgentFormData.phone}
@@ -543,14 +545,14 @@ export default function AgentDashboardPublic() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Mot de Passe *</Label>
+                        <Label>{t('agentDashboardPublic.motDePasse')}</Label>
                         <Input
                           type="password"
                           required
                           minLength={6}
                           value={subAgentFormData.password}
                           onChange={(e) => setSubAgentFormData({ ...subAgentFormData, password: e.target.value })}
-                          placeholder="Min. 6 caractères"
+                          placeholder={t('agentDashboardPublic.min6Caracteres')}
                         />
                       </div>
                       <div className="space-y-2">
@@ -636,7 +638,7 @@ export default function AgentDashboardPublic() {
               <Card className="border-0 shadow-lg">
                 <CardContent className="py-16 text-center">
                   <UserCog className="w-16 h-16 text-slate-200 mx-auto mb-4" />
-                  <p className="text-muted-foreground mb-4">Aucun sous-agent créé</p>
+                  <p className="text-muted-foreground mb-4">{t('agentDashboardPublic.aucunSousAgentCree')}</p>
                   <Button onClick={() => setIsSubAgentDialogOpen(true)}>
                     <Plus className="w-4 h-4 mr-2" />
                     Créer votre premier sous-agent
@@ -672,7 +674,7 @@ export default function AgentDashboardPublic() {
                             onClick={() => copySubAgentLink(subAgent)}
                           >
                             {copiedId === subAgent.id ? (
-                              <><Check className="w-4 h-4 mr-1" /> Copié!</>
+                              <><Check className="w-4 h-4 mr-1" /> {t('agentDashboardPublic.copie')}</>
                             ) : (
                               <><Copy className="w-4 h-4 mr-1" /> Lien</>
                             )}
@@ -703,7 +705,7 @@ export default function AgentDashboardPublic() {
         return hasPermission('manage_products') || agent.permissions.includes('manage_products') ? (
           <ManageProductsSection agentId={agent.id} />
         ) : (
-          <Card><CardContent className="py-12 text-center text-muted-foreground">Permission non accordée</CardContent></Card>
+          <Card><CardContent className="py-12 text-center text-muted-foreground">{t('agentDashboardPublic.permissionNonAccordee')}</CardContent></Card>
         );
 
       case 'reports':
@@ -717,7 +719,7 @@ export default function AgentDashboardPublic() {
             }}
           />
         ) : (
-          <Card><CardContent className="py-12 text-center text-muted-foreground">Permission non accordée</CardContent></Card>
+          <Card><CardContent className="py-12 text-center text-muted-foreground">{t('agentDashboardPublic.permissionNonAccordee')}</CardContent></Card>
         );
 
       case 'commissions':
@@ -728,7 +730,7 @@ export default function AgentDashboardPublic() {
             commissionRate={agent.commission_rate}
           />
         ) : (
-          <Card><CardContent className="py-12 text-center text-muted-foreground">Permission non accordée</CardContent></Card>
+          <Card><CardContent className="py-12 text-center text-muted-foreground">{t('agentDashboardPublic.permissionNonAccordee')}</CardContent></Card>
         );
 
       case 'finance':
@@ -831,7 +833,7 @@ export default function AgentDashboardPublic() {
           </DialogHeader>
           <form onSubmit={handleChangePassword} className="space-y-4">
             <div className="space-y-2">
-              <Label>Mot de passe actuel</Label>
+              <Label>{t('agentDashboardPublic.motDePasseActuel')}</Label>
               <Input
                 type="password"
                 required
@@ -840,7 +842,7 @@ export default function AgentDashboardPublic() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Nouveau mot de passe</Label>
+              <Label>{t('agentDashboardPublic.nouveauMotDePasse')}</Label>
               <Input
                 type="password"
                 required

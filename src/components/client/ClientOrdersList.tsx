@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +14,9 @@ import { formatCurrency } from '@/lib/utils';
 import { Money } from '@/components/Money';
 import { cancelOrder as cancelOrderRequest, confirmCashOnDeliveryOrder, confirmEscrowDelivery, listMyOrders, requestOrderRefund } from '@/services/orderBackendService';
 import { toast } from 'sonner';
+import { useTranslation } from '@/hooks/useTranslation';
+import { OrderDisputeThread } from '@/components/disputes/OrderDisputeThread';
+import { ReturnRequestDialog } from '@/components/returns/ReturnRequestDialog';
 import {
   Package, CheckCircle, Clock, Truck, XCircle,
   Shield, AlertCircle, Loader2, ListFilter, Ban, DollarSign, Banknote
@@ -123,7 +127,11 @@ const extractFunctionErrorMessage = async (error: unknown): Promise<string> => {
 };
 
 export default function ClientOrdersList() {
+  const { t } = useTranslation();
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const focusOrderId = searchParams.get('order');
+  const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [escrows, setEscrows] = useState<Record<string, EscrowStatus>>({});
   const [loading, setLoading] = useState(true);
@@ -149,6 +157,19 @@ export default function ClientOrdersList() {
   const sellerReceivableCurrency = selectedOrder
     ? getVendorReceivableCurrency(selectedOrder, selectedOrderEscrow)
     : 'GNF';
+
+  // Redirection depuis une notification (/orders?order=<id>) : on défile jusqu'à la
+  // commande visée et on la met en surbrillance, pour que le client tombe directement
+  // sur la bonne carte (ex. bouton « Confirmer la réception »).
+  useEffect(() => {
+    if (loading || !focusOrderId) return;
+    const el = document.getElementById(`order-${focusOrderId}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setHighlightedOrderId(focusOrderId);
+    const timer = setTimeout(() => setHighlightedOrderId(null), 2600);
+    return () => clearTimeout(timer);
+  }, [loading, focusOrderId, orders.length]);
 
   useEffect(() => {
     if (user) {
@@ -231,7 +252,7 @@ export default function ClientOrdersList() {
       setEscrows(escrowMap);
     } catch (error) {
       console.error('Error loading orders:', error);
-      toast.error('Erreur lors du chargement des commandes');
+      toast.error(t('profile.errorLoadingOrders'));
     } finally {
       setLoading(false);
     }
@@ -272,8 +293,8 @@ export default function ClientOrdersList() {
         }
       }
 
-      toast.success('Réception confirmée !', {
-        description: escrow ? 'Le vendeur a reçu le paiement' : 'La commande est maintenant terminée'
+      toast.success(t('orders.receptionConfirmed'), {
+        description: escrow ? t('orders.sellerReceivedPayment') : t('orders.orderNowComplete')
       });
 
       // Afficher la fenêtre de notation
@@ -288,7 +309,7 @@ export default function ClientOrdersList() {
     } catch (error) {
       console.error('Error confirming delivery:', error);
       const errorMessage = await extractFunctionErrorMessage(error);
-      toast.error('Erreur lors de la confirmation', {
+      toast.error(t('orders.confirmError'), {
         description: errorMessage
       });
     } finally {
@@ -323,19 +344,19 @@ export default function ClientOrdersList() {
 
       const refund = (response as any).refund;
       if (refund?.refunded && refund.amount > 0) {
-        toast.success('Commande annulée — remboursement effectué', {
-          description: `${refund.amount.toLocaleString()} ${refund.currency} remboursés dans votre portefeuille`,
+        toast.success(t('orders.cancelledWithRefund'), {
+          description: `${refund.amount.toLocaleString()} ${refund.currency} ${t('orders.refundedToWalletSuffix')}`,
         });
       } else {
-        toast.success('Commande annulée avec succès');
+        toast.success(t('orders.cancelledSuccess'));
       }
 
       // Recharger les commandes
       await loadOrders();
     } catch (error) {
       console.error('Error cancelling order:', error);
-      toast.error('Erreur lors de l\'annulation', {
-        description: error instanceof Error ? error.message : 'Veuillez réessayer'
+      toast.error(t('orders.cancelError'), {
+        description: error instanceof Error ? error.message : t('orders.pleaseTryAgain')
       });
     } finally {
       setCancellingOrderId(null);
@@ -368,16 +389,16 @@ export default function ClientOrdersList() {
         throw new Error(response.error || 'Erreur lors de la demande de remboursement');
       }
 
-      toast.success('Demande de remboursement envoyée', {
-        description: 'Le vendeur et l\'équipe ont été notifiés'
+      toast.success(t('orders.refundRequestSent'), {
+        description: t('orders.sellerAndTeamNotified')
       });
 
       // Recharger les commandes
       await loadOrders();
     } catch (error) {
       console.error('Error requesting refund:', error);
-      toast.error('Erreur lors de la demande', {
-        description: error instanceof Error ? error.message : 'Veuillez réessayer'
+      toast.error(t('orders.requestError'), {
+        description: error instanceof Error ? error.message : t('orders.pleaseTryAgain')
       });
     } finally {
       setRefundingOrderId(null);
@@ -469,7 +490,7 @@ export default function ClientOrdersList() {
       <Card>
         <CardContent className="p-6 text-center">
           <Package className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">Aucune commande pour le moment</p>
+          <p className="text-muted-foreground">{t('orders.noOrdersYet')}</p>
         </CardContent>
       </Card>
     );
@@ -482,7 +503,7 @@ export default function ClientOrdersList() {
         <CardContent className="p-4">
           <div className="flex items-center gap-2 mb-4">
             <ListFilter className="w-5 h-5 text-muted-foreground" />
-            <h3 className="font-semibold">Filtrer mes commandes</h3>
+            <h3 className="font-semibold">{t('orders.filterMyOrders')}</h3>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button
@@ -546,7 +567,11 @@ export default function ClientOrdersList() {
                   const canConfirmDelivery = order.status !== 'cancelled' && order.status !== 'completed' && (isDeliveryPending || isDeliveredAwaitingConfirmation);
 
                   return (
-            <Card key={order.id} className="overflow-hidden">
+            <Card
+              key={order.id}
+              id={`order-${order.id}`}
+              className={`overflow-hidden transition-shadow ${highlightedOrderId === order.id ? 'ring-2 ring-primary ring-offset-2 shadow-lg' : ''}`}
+            >
               <CardHeader className="bg-muted/50 p-3 sm:p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div className="min-w-0 flex-1">
@@ -567,6 +592,15 @@ export default function ClientOrdersList() {
                   </div>
                 </div>
               </CardHeader>
+              {/* Fil du litige (visible uniquement si un remboursement a été demandé) */}
+              <OrderDisputeThread orderId={order.id} currentParty="client" className="px-3 sm:px-6 pt-3" />
+              {/* Demande de retour : commande livrée, fonds encore en escrow (fenêtre 14j ouverte) */}
+              {(order.status === 'delivered' || order.status === 'completed')
+                && escrow && escrow.status !== 'released' && escrow.status !== 'refunded' && (
+                <div className="px-3 sm:px-6 pt-3">
+                  <ReturnRequestDialog orderId={order.id} orderNumber={order.order_number} onCreated={loadOrders} />
+                </div>
+              )}
               <CardContent className="p-4 space-y-4">
                 {/* Articles */}
                 <div className="space-y-1">
@@ -711,12 +745,12 @@ export default function ClientOrdersList() {
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmer la réception ?</AlertDialogTitle>
+            <AlertDialogTitle>{t('orders.confirmReception')}</AlertDialogTitle>
             <AlertDialogDescription>
-              En confirmant, vous attestez avoir reçu votre commande en bon état.
+              {t('orders.confirmReceptionDesc')}
               {!selectedOrderIsCashOnDelivery && (
                 <div className="mt-3 rounded-lg border border-primary/15 bg-primary/5 p-3">
-                  <div className="text-sm text-muted-foreground">Montant qui sera libéré au vendeur</div>
+                  <div className="text-sm text-muted-foreground">{t('orders.amountReleasedToSeller')}</div>
                   <div className="mt-1 text-lg font-semibold text-foreground">
                     {formatCurrency(sellerReceivableAmount, sellerReceivableCurrency)}
                   </div>
@@ -727,17 +761,17 @@ export default function ClientOrdersList() {
                   <AlertCircle className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
                   <span className="text-sm text-orange-800 dark:text-orange-200">
                     {selectedOrderIsCashOnDelivery
-                      ? 'Cette action est irréversible. Après confirmation, la fenêtre d\'avis s\'ouvrira automatiquement.'
-                      : 'Cette action est irréversible. Assurez-vous que votre colis est bien conforme.'}
+                      ? t('orders.irreversibleCodReview')
+                      : t('orders.irreversibleCheck')}
                   </span>
                 </div>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={() => void confirmDelivery()}>
-              Confirmer la réception
+              {t('orders.confirmReceptionBtn')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -747,18 +781,18 @@ export default function ClientOrdersList() {
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Annuler la commande ?</AlertDialogTitle>
+            <AlertDialogTitle>{t('orders.cancelOrderQ')}</AlertDialogTitle>
             <AlertDialogDescription>
               <div className="space-y-4">
-                <p>Vous êtes sur le point d'annuler cette commande.</p>
+                <p>{t('orders.aboutToCancel')}</p>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Raison de l'annulation (optionnel)</label>
+                  <label className="text-sm font-medium">{t('orders.cancelReasonOptional')}</label>
                   <textarea
                     value={cancelReason}
                     onChange={(e) => setCancelReason(e.target.value)}
                     className="w-full p-2 border rounded-md resize-none"
                     rows={3}
-                    placeholder="Ex: J'ai changé d'avis, produit indisponible ailleurs..."
+                    placeholder={t('orders.cancelReasonPlaceholder')}
                   />
                 </div>
                 <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
@@ -766,8 +800,8 @@ export default function ClientOrdersList() {
                     <Shield className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
                     <span className="text-sm text-blue-800 dark:text-blue-200">
                       {selectedOrderIsCashOnDelivery
-                        ? 'Cette commande est en paiement à la livraison. Aucun montant escrow ne sera affiché ni remboursé.'
-                        : 'Si vous avez payé, votre argent sera automatiquement remboursé via le système Escrow.'}
+                        ? t('orders.codNoEscrow')
+                        : t('orders.paidWillRefund')}
                     </span>
                   </div>
                 </div>
@@ -775,9 +809,9 @@ export default function ClientOrdersList() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Garder la commande</AlertDialogCancel>
+            <AlertDialogCancel>{t('orders.keepOrder')}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmCancelOrder} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Confirmer l'annulation
+              {t('orders.confirmCancellation')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -787,36 +821,36 @@ export default function ClientOrdersList() {
       <AlertDialog open={showRefundDialog} onOpenChange={setShowRefundDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Demander un remboursement</AlertDialogTitle>
+            <AlertDialogTitle>{t('orders.requestRefund')}</AlertDialogTitle>
             <AlertDialogDescription>
               <div className="space-y-4">
-                <p>Décrivez la raison de votre demande de remboursement. Votre demande sera examinée par notre équipe.</p>
+                <p>{t('orders.refundDescribeReason')}</p>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Raison du remboursement *</label>
+                  <label className="text-sm font-medium">{t('orders.refundReasonRequired')}</label>
                   <textarea
                     value={refundReason}
                     onChange={(e) => setRefundReason(e.target.value)}
                     className="w-full p-2 border rounded-md resize-none"
                     rows={4}
-                    placeholder="Ex: Produit défectueux, non conforme, endommagé..."
+                    placeholder={t('orders.refundReasonPlaceholder')}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Montant demandé (optionnel)</label>
+                  <label className="text-sm font-medium">{t('orders.amountRequestedOptional')}</label>
                   <input
                     type="number"
                     value={refundAmount}
                     onChange={(e) => setRefundAmount(e.target.value)}
                     className="w-full p-2 border rounded-md"
-                    placeholder="Laisser vide pour remboursement total"
+                    placeholder={t('orders.amountRequestedPlaceholder')}
                   />
                 </div>
                 <div className="p-3 bg-orange-50 dark:bg-orange-950 rounded-lg border border-orange-200 dark:border-orange-800">
                   <div className="flex items-start gap-2">
                     <AlertCircle className="w-4 h-4 text-orange-600 flex-shrink-0 mt-0.5" />
                     <span className="text-sm text-orange-800 dark:text-orange-200">
-                      Un litige sera ouvert. Le vendeur pourra répondre avant qu'une décision finale ne soit prise.
+                      {t('orders.disputeWillOpen')}
                     </span>
                   </div>
                 </div>
@@ -824,9 +858,9 @@ export default function ClientOrdersList() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmRequestRefund} disabled={!refundReason.trim()}>
-              Envoyer la demande
+              {t('orders.sendRequest')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

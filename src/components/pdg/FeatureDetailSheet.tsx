@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from 'react-router-dom';
 import {
   Sheet,
@@ -52,6 +53,7 @@ export default function FeatureDetailSheet({
   onApplyCorrection,
   isApplying = false,
 }: FeatureDetailSheetProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [localApplying, setLocalApplying] = useState(false);
 
@@ -115,7 +117,7 @@ export default function FeatureDetailSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[450px] sm:w-[540px] bg-slate-900 border-slate-700 overflow-y-auto">
+      <SheetContent className="w-full max-w-[450px] sm:w-full max-w-[540px] bg-slate-900 border-slate-700 overflow-y-auto max-h-[90vh] overflow-y-auto">
         <SheetHeader className="pb-4 border-b border-slate-700">
           <div className="flex items-center gap-3">
             <motion.div
@@ -140,7 +142,7 @@ export default function FeatureDetailSheet({
           {/* Score de santé */}
           <div className="p-4 bg-slate-800 rounded-lg border border-slate-700">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-slate-300 font-medium">Score de Santé</span>
+              <span className="text-slate-300 font-medium">{t('featureDetailSheet.scoreDeSante')}</span>
               <span
                 className="text-2xl font-bold"
                 style={{ color: score >= 80 ? '#ff4000' : score >= 50 ? '#f97316' : '#ff4000' }}
@@ -245,11 +247,11 @@ export default function FeatureDetailSheet({
                 Recommandations
               </h4>
               <ul className="text-sm text-slate-300 space-y-1">
-                <li>• Vérifier les logs récents du module</li>
-                <li>• Appliquer les corrections automatiques</li>
-                <li>• Consulter le tableau de surveillance détaillé</li>
+                <li>{t('featureDetailSheet.verifierLesLogsRecentsDu')}</li>
+                <li>{t('featureDetailSheet.appliquerLesCorrectionsAutomatiques')}</li>
+                <li>{t('featureDetailSheet.consulterLeTableauDeSurveillance')}</li>
                 {healthData.status === 'CRITICAL' && (
-                  <li className="text-[#ff4000]">• ⚠️ Action immédiate requise</li>
+                  <li className="text-[#ff4000]">{t('featureDetailSheet.actionImmediateRequise')}</li>
                 )}
               </ul>
             </div>

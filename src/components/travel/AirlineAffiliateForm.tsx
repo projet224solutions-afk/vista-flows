@@ -9,6 +9,7 @@
  */
 
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   ArrowLeft, Plane, Link2, Percent, Tag,
   Upload, X, DollarSign, MapPin, Loader2,
@@ -35,6 +36,7 @@ interface AirlineAffiliateFormProps {
 }
 
 export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateFormProps) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -88,7 +90,7 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
       toast.success(`${uploadedUrls.length} image(s) uploadée(s) vers GCS`);
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error('Erreur lors de l\'upload');
+      toast.error(t('airlineAffiliateForm.erreurLorsDeLUpload'));
     } finally {
       setUploadingImage(false);
     }
@@ -112,14 +114,14 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
       }
       setFormData(prev => ({ ...prev, title }));
     } else {
-      toast.info('Veuillez d\'abord saisir le nom de la compagnie');
+      toast.info(t('airlineAffiliateForm.veuillezDAbordSaisirLe'));
     }
   };
 
   // Générer la description par IA
   const handleGenerateDescription = async () => {
     if (!formData.title.trim() && !formData.airlineName.trim()) {
-      toast.error('Veuillez d\'abord saisir un titre ou le nom de la compagnie');
+      toast.error(t('airlineAffiliateForm.veuillezDAbordSaisirUn'));
       return;
     }
 
@@ -144,11 +146,11 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
           description: nextDescription,
           shortDescription: nextShort || prev.shortDescription,
         }));
-        toast.success('Description générée avec succès!');
+        toast.success(t('airlineAffiliateForm.descriptionGenereeAvecSucces'));
       }
     } catch (error) {
       console.error('Erreur génération description:', error);
-      toast.error('Erreur lors de la génération de la description');
+      toast.error(t('airlineAffiliateForm.erreurLorsDeLaGeneration'));
     } finally {
       setGeneratingDescription(false);
     }
@@ -156,17 +158,17 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
 
   const handleSubmit = async () => {
     if (!user) {
-      toast.error('Vous devez être connecté');
+      toast.error(t('airlineAffiliateForm.vousDevezEtreConnecte'));
       return;
     }
 
     if (!formData.airlineName.trim()) {
-      toast.error('Le nom de la compagnie est obligatoire');
+      toast.error(t('airlineAffiliateForm.leNomDeLaCompagnie'));
       return;
     }
 
     if (!formData.affiliateUrl.trim()) {
-      toast.error('Le lien d\'affiliation est obligatoire');
+      toast.error(t('airlineAffiliateForm.leLienDAffiliationEst'));
       return;
     }
 
@@ -220,7 +222,7 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
       onSuccess();
     } catch (error: any) {
       console.error('Error creating affiliate:', error);
-      toast.error('Erreur lors de la création: ' + (error.message || 'Erreur inconnue'));
+      toast.error(t('airlineAffiliateForm.erreurLorsDeLaCreation') + (error.message || 'Erreur inconnue'));
     } finally {
       setLoading(false);
     }
@@ -240,7 +242,7 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex-1">
-              <h1 className="text-lg font-bold text-foreground">Nouvelle Affiliation Aérienne</h1>
+              <h1 className="text-lg font-bold text-foreground">{t('airlineAffiliateForm.nouvelleAffiliationAerienne')}</h1>
               <p className="text-xs text-muted-foreground">
                 Créez votre lien d'affiliation compagnie aérienne
               </p>
@@ -288,7 +290,7 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {formData.images.map((url, idx) => (
                 <div key={idx} className="relative group aspect-square">
                   <img
@@ -316,7 +318,7 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
                 ) : (
                   <>
                     <Upload className="w-5 h-5 text-muted-foreground mb-1" />
-                    <span className="text-[10px] text-muted-foreground">Ajouter</span>
+                    <span className="text-[10px] text-muted-foreground">{t('airlineAffiliateForm.ajouter')}</span>
                   </>
                 )}
                 <input
@@ -372,7 +374,7 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
           <CardContent className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">Ville de départ</Label>
+                <Label className="text-xs">{t('airlineAffiliateForm.villeDeDepart')}</Label>
                 <Input
                   value={formData.originCity}
                   onChange={(e) => setFormData(prev => ({ ...prev, originCity: e.target.value }))}
@@ -392,7 +394,7 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
             </div>
 
             <div>
-              <Label className="text-xs">Type de vol</Label>
+              <Label className="text-xs">{t('airlineAffiliateForm.typeDeVol')}</Label>
               <Select
                 value={formData.flightType}
                 onValueChange={(v: 'all' | 'one-way' | 'round-trip') =>
@@ -402,9 +404,9 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tous les vols</SelectItem>
+                  <SelectItem value="all">{t('airlineAffiliateForm.tousLesVols')}</SelectItem>
                   <SelectItem value="one-way">Aller simple</SelectItem>
-                  <SelectItem value="round-trip">Aller-retour</SelectItem>
+                  <SelectItem value="round-trip">{t('airlineAffiliateForm.allerRetour')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -435,7 +437,7 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
               <Input
                 value={formData.title}
                 onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="Ex: Vols Paris-Conakry avec Air France"
+                placeholder={t('airlineAffiliateForm.exVolsParisConakryAvec')}
                 className="mt-1"
               />
               <p className="text-[10px] text-muted-foreground mt-1">
@@ -448,14 +450,14 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
               <Input
                 value={formData.shortDescription}
                 onChange={(e) => setFormData(prev => ({ ...prev, shortDescription: e.target.value }))}
-                placeholder="Résumé en une ligne"
+                placeholder={t('airlineAffiliateForm.resumeEnUneLigne')}
                 className="mt-1"
               />
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <Label className="text-xs">Description détaillée</Label>
+                <Label className="text-xs">{t('airlineAffiliateForm.descriptionDetaillee')}</Label>
                 <Button
                   type="button"
                   variant="ghost"
@@ -475,7 +477,7 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
               <Textarea
                 value={formData.description}
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Décrivez l'offre en détail..."
+                placeholder={t('airlineAffiliateForm.decrivezLOffreEnDetail')}
                 className="min-h-[80px]"
               />
             </div>
@@ -496,7 +498,7 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
           <CardContent>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">Montant</Label>
+                <Label className="text-xs">{t('airlineAffiliateForm.montant')}</Label>
                 <Input
                   type="number"
                   value={formData.price}
@@ -528,7 +530,7 @@ export function AirlineAffiliateForm({ onBack, onSuccess }: AirlineAffiliateForm
           </CardHeader>
           <CardContent>
             <div>
-              <Label className="text-xs">Taux de commission (%)</Label>
+              <Label className="text-xs">{t('airlineAffiliateForm.tauxDeCommission')}</Label>
               <div className="relative mt-1">
                 <Input
                   type="number"

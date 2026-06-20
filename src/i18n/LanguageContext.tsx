@@ -23,7 +23,7 @@ const STORAGE_KEY = 'app_language';
 const MANUAL_LANG_KEY = 'app_language_manual'; // Indique si l'utilisateur a VRAIMENT choisi manuellement
 const COUNTRY_KEY = 'user_country';
 const GEO_CACHE_KEY = 'geo_detection_cache';
-const _GEO_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes - synchronisé avec useGeoDetection
+const GEO_CACHE_DURATION = 30 * 60 * 1000; // 30 minutes - synchronisé avec useGeoDetection
 
 function safeGetLocalStorageItem(key: string): string | null {
   try {
@@ -78,7 +78,7 @@ const detectCountryFromCache = (): { country: string | null; language: string | 
       const isSupported = supportedLanguages.some(l => l.code === language);
       return { country: cachedCountry, language: isSupported ? language : null };
     }
-  } catch {}
+  } catch { }
 
   return { country: null, language: null };
 };
@@ -131,7 +131,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
               return;
             }
           }
-        } catch {}
+        } catch { }
       }
 
       // Fallback: lire depuis le cache local (pas d'appel réseau)
@@ -172,7 +172,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
             }
           }
         }
-      } catch {}
+      } catch { }
     };
 
     // Synchroniser immédiatement au montage
@@ -217,7 +217,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
   // Fonction de traduction
   const t = useCallback((key: string): string => {
     const langTranslations = translations[language] || translations[defaultLanguage];
-    return langTranslations[key] || translations.en?.[key] || translations[defaultLanguage]?.[key] || key;
+    return langTranslations[key] || translations[defaultLanguage]?.[key] || key;
   }, [language]);
 
   // Vérifier si RTL - utiliser notre helper centralisé
@@ -244,7 +244,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
 const defaultContextValue: LanguageContextType = {
   language: defaultLanguage,
   setLanguage: () => console.warn('LanguageProvider not mounted'),
-  t: (key: string) => translations.en?.[key] || translations[defaultLanguage]?.[key] || key,
+  t: (key: string) => translations[defaultLanguage]?.[key] || key,
   userCountry: null,
   isRTL: false,
   supportedLanguages

@@ -1,9 +1,10 @@
 import { env } from '../config/env.js';
 import { logger } from '../config/logger.js';
 import { checkSupabaseConnection, supabaseAdmin } from '../config/supabase.js';
-import { redisHealthCheck } from '../config/redis.js';
+import { redisHealthCheck, locks, isRedisConnected } from '../config/redis.js';
 import { emitCoreFeatureEvent, type FeatureHealthStatus } from './coreFeatureEvents.service.js';
 import { runPlatformMonitors } from './escrowMonitor.service.js';
+import { ingestAndSummarize, scanAndDiagnose } from './autoHealing.service.js';
 
 type ServiceStatus = 'healthy' | 'degraded' | 'critical' | 'unknown';
 
@@ -36,9 +37,15 @@ class Surveillance24x7Service {
   private interval: ReturnType<typeof setInterval> | null = null;
   private isRunning = false;
   private readonly intervalMs: number;
+  private cycleCount = 0;
+  // Le scan RÉSEAU sécurité-frontend (lourd, ~100s) ne tourne PAS à chaque cycle : au démarrage
+  // puis toutes les ~30 min. Entre-temps, les cycles 60s restent rapides (domaines DB seulement).
+  private readonly frontendScanEveryN: number;
 
   constructor() {
     this.intervalMs = Number(process.env.MONITORING_INTERVAL_MS || 60_000);
+    const scanIntervalMs = Number(process.env.FRONTEND_SCAN_INTERVAL_MS || 1_800_000); // 30 min
+    this.frontendScanEveryN = Math.max(1, Math.round(scanIntervalMs / this.intervalMs));
   }
 
   start(): void {
@@ -50,11 +57,29 @@ class Surveillance24x7Service {
     if (this.interval) return;
 
     logger.info(`[Surveillance24x7] Starting autonomous checks every ${this.intervalMs}ms`);
-    void this.runOnce('startup');
+    void this.tick('startup');
 
     this.interval = setInterval(() => {
-      void this.runOnce('interval');
+      void this.tick('interval');
     }, this.intervalMs);
+  }
+
+  /**
+   * Tick protégé par un VERROU DISTRIBUÉ (Redis) : en multi-instance (ECS Fargate),
+   * un seul conteneur exécute le cycle par fenêtre → pas de surveillance dupliquée
+   * (pas de doubles alertes). Le verrou expire après ~1 fenêtre (anti-deadlock si crash).
+   * Si Redis est absent (dev/instance unique), on exécute normalement.
+   */
+  private async tick(trigger: string): Promise<void> {
+    const ttl = Math.max(10, Math.floor(this.intervalMs / 1000) - 5);
+    if (isRedisConnected()) {
+      const got = await locks.acquire('surveillance:tick', ttl);
+      if (!got) {
+        // Une autre instance détient la fenêtre → on saute (pas de doublon).
+        return;
+      }
+    }
+    await this.runOnce(trigger);
   }
 
   stop(): void {
@@ -81,11 +106,24 @@ class Surveillance24x7Service {
       const features = await this.collectFeatureStatuses();
       await this.persistFeatureStatuses(features, trigger);
 
-      // Surveillance plateforme (escrow/conversion + abonnements) → alertes system_alerts (best-effort)
+      // Surveillance plateforme (escrow/conversion + abonnements) → alertes system_alerts (best-effort).
+      // Le scan RÉSEAU sécurité-frontend (lourd) ne tourne qu'au 1er cycle puis tous les frontendScanEveryN.
+      this.cycleCount++;
+      const includeFrontendScan = this.cycleCount === 1 || this.cycleCount % this.frontendScanEveryN === 0;
       try {
-        await runPlatformMonitors();
+        await runPlatformMonitors({ skipFnDomains: !includeFrontendScan });
       } catch (e: any) {
         logger.warn(`[Surveillance24x7] platform monitor failed: ${e?.message || e}`);
+      }
+
+      // Auto-réparation : ingestion RAPIDE des alertes actives en incidents (toujours, sans LLM).
+      // Le diagnostic dual-IA (OpenAI→Claude) ne tourne en auto que si AUTO_HEALING_ENABLED=true
+      // (sinon il reste à la demande via le bouton PDG « Scanner maintenant ») — maîtrise du coût LLM.
+      try {
+        if (process.env.AUTO_HEALING_ENABLED === 'true') await scanAndDiagnose();
+        else await ingestAndSummarize();
+      } catch (e: any) {
+        logger.warn(`[Surveillance24x7] auto-healing failed: ${e?.message || e}`);
       }
 
       const summary: SurveillanceRunSummary = {

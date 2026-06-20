@@ -1,9 +1,11 @@
 import { Calendar } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 import { useVendorSubscription } from "@/hooks/useVendorSubscription";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
 export function VendorSubscriptionButton() {
+  const { t } = useTranslation();
   const { subscription, loading } = useVendorSubscription();
 
   if (loading) {
@@ -50,7 +52,7 @@ export function VendorSubscriptionButton() {
         </div>
 
         <div className="flex flex-col col-span-2">
-          <span className="text-muted-foreground">Date de fin</span>
+          <span className="text-muted-foreground">{t('vendorSubscriptionButton.dateDeFin')}</span>
           <span className="font-medium">{endDate}</span>
         </div>
       </div>

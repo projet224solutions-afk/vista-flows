@@ -1,5 +1,6 @@
 ﻿import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function AgentActivation() {
+  const { t } = useTranslation();
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -48,7 +50,7 @@ export default function AgentActivation() {
       }
     } catch (error) {
       console.error('Erreur validation:', error);
-      toast.error('Erreur lors de la validation de l\'invitation');
+      toast.error(t('agentActivation.erreurLorsDeLaValidation'));
     } finally {
       setLoading(false);
     }
@@ -60,12 +62,12 @@ export default function AgentActivation() {
     if (!token) return;
 
     if (formData.password !== formData.confirmPassword) {
-      toast.error('Les mots de passe ne correspondent pas');
+      toast.error(t('agentActivation.lesMotsDePasseNe'));
       return;
     }
 
     if (formData.password.length < 6) {
-      toast.error('Le mot de passe doit contenir au moins 6 caractères');
+      toast.error(t('agentActivation.leMotDePasseDoit'));
       return;
     }
 
@@ -99,7 +101,7 @@ export default function AgentActivation() {
         throw new Error(result.error);
       }
 
-      toast.success('Compte agent activé avec succès !');
+      toast.success(t('agentActivation.compteAgentActiveAvecSucces'));
 
       // Redirection vers le dashboard agent
       setTimeout(() => {
@@ -121,7 +123,7 @@ export default function AgentActivation() {
           <CardContent className="pt-6">
             <div className="flex flex-col items-center gap-4">
               <Loader2 className="w-12 h-12 animate-spin text-primary" />
-              <p className="text-lg">Vérification de l'invitation...</p>
+              <p className="text-lg">{t('agentActivation.verificationDeLInvitation')}</p>
             </div>
           </CardContent>
         </Card>
@@ -159,7 +161,7 @@ export default function AgentActivation() {
           <CardHeader>
             <div className="flex items-center gap-3">
               <CheckCircle className="w-10 h-10 text-[#ff4000]" />
-              <CardTitle>Déjà connecté</CardTitle>
+              <CardTitle>{t('agentActivation.dejaConnecte')}</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
@@ -217,7 +219,7 @@ export default function AgentActivation() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe</Label>
+              <Label htmlFor="password">{t('agentActivation.motDePasse')}</Label>
               <Input
                 id="password"
                 type="password"
@@ -225,12 +227,12 @@ export default function AgentActivation() {
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 required
                 minLength={6}
-                placeholder="Minimum 6 caractères"
+                placeholder={t('agentActivation.minimum6Caracteres')}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+              <Label htmlFor="confirmPassword">{t('agentActivation.confirmerLeMotDePasse')}</Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -238,7 +240,7 @@ export default function AgentActivation() {
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                 required
                 minLength={6}
-                placeholder="Confirmer le mot de passe"
+                placeholder={t('agentActivation.confirmerLeMotDePasse')}
               />
             </div>
 

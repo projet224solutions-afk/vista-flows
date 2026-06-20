@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ interface VendorBusinessSettingsProps {
 }
 
 export default function VendorBusinessSettings({ vendorId }: VendorBusinessSettingsProps) {
+  const { t } = useTranslation();
   const [businessName, setBusinessName] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -46,7 +48,7 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
       }
     } catch (error) {
       console.error('Erreur chargement données:', error);
-      toast.error('Erreur lors du chargement des données');
+      toast.error(t('vendorBusinessSettings.erreurLorsDuChargementDes'));
     }
   };
 
@@ -54,11 +56,11 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
     const file = e.target.files?.[0];
     if (file) {
       if (!file.type.startsWith('image/')) {
-        toast.error('Veuillez sélectionner une image');
+        toast.error(t('vendorBusinessSettings.veuillezSelectionnerUneImage'));
         return;
       }
       if (file.size > 2 * 1024 * 1024) {
-        toast.error('L\'image ne doit pas dépasser 2 MB');
+        toast.error(t('vendorBusinessSettings.lImageNeDoitPas'));
         return;
       }
 
@@ -96,7 +98,7 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
       return publicUrlData.publicUrl;
     } catch (error) {
       console.error('Erreur upload logo:', error);
-      toast.error('Erreur lors du téléchargement du logo');
+      toast.error(t('vendorBusinessSettings.erreurLorsDuTelechargementDu'));
       return logoUrl;
     } finally {
       setUploading(false);
@@ -117,7 +119,7 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
       toast.success(checked ? 'Boutique activée avec succès !' : 'Boutique désactivée');
     } catch (error) {
       console.error('Erreur activation:', error);
-      toast.error('Erreur lors de la modification du statut');
+      toast.error(t('vendorBusinessSettings.erreurLorsDeLaModification'));
     } finally {
       setActivating(false);
     }
@@ -145,10 +147,10 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
 
       setLogoUrl(newLogoUrl);
       setLogoFile(null);
-      toast.success('Informations mises à jour avec succès');
+      toast.success(t('vendorBusinessSettings.informationsMisesAJourAvec'));
     } catch (error) {
       console.error('Erreur mise à jour:', error);
-      toast.error('Erreur lors de la mise à jour');
+      toast.error(t('vendorBusinessSettings.erreurLorsDeLaMise'));
     } finally {
       setLoading(false);
     }
@@ -160,7 +162,7 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
       {!isActive && (
         <Alert variant="destructive" className="border-destructive/50 bg-destructive/10">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Boutique inactive</AlertTitle>
+          <AlertTitle>{t('vendorBusinessSettings.boutiqueInactive')}</AlertTitle>
           <AlertDescription>
             Votre boutique n'est pas visible par les clients. Activez-la pour commencer à vendre.
           </AlertDescription>
@@ -215,7 +217,7 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="businessName">Nom de l'entreprise</Label>
+              <Label htmlFor="businessName">{t('vendorBusinessSettings.nomDeLEntreprise')}</Label>
               <Input
                 id="businessName"
                 value={businessName}
@@ -226,7 +228,7 @@ export default function VendorBusinessSettings({ vendorId }: VendorBusinessSetti
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="logo">Logo de l'entreprise</Label>
+              <Label htmlFor="logo">{t('vendorBusinessSettings.logoDeLEntreprise')}</Label>
               <div className="flex items-start gap-4">
                 {logoPreview && (
                   <div className="w-24 h-24 border-2 border-border rounded-lg overflow-hidden bg-muted flex items-center justify-center">

@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
@@ -25,7 +26,7 @@ import {
   BookOpen, Camera, Truck, Building2, Dumbbell,
   Laptop, Leaf, Hammer, Sparkles, ArrowRight,
   Loader2, CheckCircle, AlertCircle, MapPin, Navigation,
-  Home, Plane, Briefcase
+  Home, Plane, Briefcase, Wrench, Square, Flame
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -62,6 +63,10 @@ const SERVICE_ICONS: Record<string, React.ElementType> = {
   location: Building2,
   media: Camera,
   construction: Hammer,
+  plomberie: Wrench,
+  vitrerie: Square,
+  menuiserie: Hammer,
+  soudure: Flame,
   agriculture: Leaf,
   freelance: Briefcase,
   sante: Heart,
@@ -101,6 +106,7 @@ const serviceFormSchema = z.object({
 type ServiceFormData = z.infer<typeof serviceFormSchema>;
 
 export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -152,7 +158,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
         setLatitude(position.coords.latitude);
         setLongitude(position.coords.longitude);
         setGpsLoading(false);
-        toast.success('Position GPS capturée avec succès');
+        toast.success(t('addServiceModal.positionGpsCaptureeAvecSucces'));
       },
       (error) => {
         setGpsLoading(false);
@@ -191,7 +197,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
       setServiceTypes(data || []);
     } catch (error) {
       console.error('Error fetching service types:', error);
-      toast.error('Erreur lors du chargement des types de services');
+      toast.error(t('addServiceModal.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -210,7 +216,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
 
   const handleCreate = async () => {
     if (!user?.id || !selectedType) {
-      toast.error('Session expirée, veuillez vous reconnecter');
+      toast.error(t('addServiceModal.sessionExpireeVeuillezVousReconnecter'));
       return;
     }
 
@@ -247,7 +253,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
 
       if (error) throw error;
 
-      toast.success('Service créé avec succès !');
+      toast.success(t('addServiceModal.serviceCreeAvecSucces'));
       onOpenChange(false);
 
       // Rediriger vers la page vendeur pour voir le nouveau service
@@ -264,10 +270,10 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
         const firstError = error.issues[0];
         toast.error(firstError.message);
       } else if (error.code === '23505') {
-        toast.error('Vous avez déjà un service de ce type actif');
+        toast.error(t('addServiceModal.vousAvezDejaUnService'));
       } else {
         console.error('Error creating service:', error);
-        toast.error('Erreur lors de la création du service');
+        toast.error(t('addServiceModal.erreurLorsDeLaCreation'));
       }
     } finally {
       setCreating(false);
@@ -295,6 +301,10 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
       { code: 'location', name: 'Immobilier', logoImage: '/service-icons/logo-immobilier.jpeg', icon: '🏢', desc: 'Location & vente' },
       { code: 'media', name: 'Photo & Vidéo', logoImage: '/service-icons/icon-photo-video.png', icon: '📸', desc: 'Événements' },
       { code: 'construction', name: 'Construction & BTP', logoImage: '/service-icons/logo-construction-btp.jpeg', icon: '🏗️', desc: 'Bâtiment' },
+      { code: 'plomberie', name: 'Plomberie', logoImage: '/service-icons/logo-plomberie.svg', icon: '🔧', desc: 'Sanitaires & urgence' },
+      { code: 'vitrerie', name: 'Vitrerie', logoImage: '/service-icons/logo-vitrerie.svg', icon: '🪟', desc: 'Vitres & miroirs' },
+      { code: 'menuiserie', name: 'Menuiserie', logoImage: '/service-icons/logo-menuiserie.svg', icon: '🪚', desc: 'Bois sur mesure' },
+      { code: 'soudure', name: 'Soudure & Métallerie', logoImage: '/service-icons/logo-soudure.svg', icon: '🔥', desc: 'Métal & ferronnerie' },
       { code: 'agriculture', name: 'Agriculture', logoImage: '/service-icons/icon-agriculture.png', icon: '🌾', desc: 'Produits locaux' },
       { code: 'freelance', name: 'Administratif', logoImage: '/service-icons/icon-administratif.png', icon: '💼', desc: 'Secrétariat' },
       { code: 'sante', name: 'Santé & Bien-être', logoImage: '/service-icons/icon-sante.png', icon: '💊', desc: 'Pharmacie & soins' },
@@ -411,7 +421,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
         {/* Form fields */}
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="business-name">Nom de l'entreprise *</Label>
+            <Label htmlFor="business-name">{t('addServiceModal.nomDeLEntreprise')}</Label>
             <Input
               id="business-name"
               placeholder="Ex: Mon Restaurant Gourmand"
@@ -425,7 +435,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
             <Label htmlFor="description">Description (optionnel)</Label>
             <Textarea
               id="description"
-              placeholder="Décrivez votre activité..."
+              placeholder={t('addServiceModal.decrivezVotreActivite')}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
@@ -436,7 +446,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
             <Label htmlFor="address">Adresse (optionnel)</Label>
             <Input
               id="address"
-              placeholder="Ex: Kaloum, Conakry, Guinée"
+              placeholder={t('addServiceModal.exKaloumConakryGuinee')}
               value={address}
               onChange={(e) => setAddress(e.target.value)}
             />
@@ -444,7 +454,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
 
           {/* GPS Location */}
           <div className="space-y-2">
-            <Label>Position GPS (recommandé)</Label>
+            <Label>{t('addServiceModal.positionGpsRecommande')}</Label>
             <div className="flex items-center gap-3">
               <Button
                 type="button"
@@ -463,7 +473,7 @@ export function AddServiceModal({ open, onOpenChange }: AddServiceModalProps) {
               {latitude && longitude && (
                 <div className="flex items-center gap-2 text-sm text-[#ff4000]">
                   <MapPin className="w-4 h-4" />
-                  <span>Position enregistrée</span>
+                  <span>{t('addServiceModal.positionEnregistree')}</span>
                 </div>
               )}
             </div>

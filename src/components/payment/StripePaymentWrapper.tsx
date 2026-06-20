@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Elements } from '@stripe/react-stripe-js';
 import { Stripe, StripeElementsOptions } from '@stripe/stripe-js';
 import { StripePaymentForm } from './StripePaymentForm';
@@ -64,6 +65,7 @@ export function StripePaymentWrapper({
   onSuccess,
   onError
 }: StripePaymentWrapperProps) {
+  const { t } = useTranslation();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -131,7 +133,7 @@ export function StripePaymentWrapper({
         <CardContent className="pt-6">
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
             <Loader2 className="w-12 h-12 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Chargement du paiement sécurisé...</p>
+            <p className="text-sm text-muted-foreground">{t('stripePaymentWrapper.chargementDuPaiementSecurise')}</p>
           </div>
         </CardContent>
       </Card>

@@ -585,7 +585,7 @@ export default function SystemTestDemo({ open, onOpenChange }: SystemTestDemoPro
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.7 }}
-                  className="grid grid-cols-4 gap-4 mt-6"
+                  className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6"
                 >
                   {[
                     { label: 'Règles vérifiées', value: rulesValue.toString(), icon: <Server className="w-4 h-4" /> },

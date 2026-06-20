@@ -11,7 +11,8 @@ import { EcommerceModule } from './EcommerceModule';
 import { BeautyModule } from './BeautyModule';
 import { TransportModule } from './TransportModule';
 import { HealthModule } from './HealthModule';
-import { EducationModule } from './EducationModule';
+import { ClinicModule } from './ClinicModule';
+import { PharmacyModule } from './PharmacyModule';
 import { PhotoStudioModule } from './PhotoStudioModule';
 import { DeveloperModule } from './DeveloperModule';
 import { DeliveryModule } from './DeliveryModule';
@@ -29,6 +30,10 @@ import { HomeDecorModule } from './HomeDecorModule';
 import { FreelanceModule } from './FreelanceModule';
 import { AgricultureModule } from './AgricultureModule';
 import { ConstructionModule } from './ConstructionModule';
+import { PlumberModule } from './PlumberModule';
+import { VitrerieModule } from './VitrerieModule';
+import { MenuiserieModule } from './MenuiserieModule';
+import { SoudureModule } from './SoudureModule';
 import { DropshippingModule } from './DropshippingModule';
 import { CateringModule } from './stubs';
 import { normalizeServiceCode } from '@/config/serviceTypesConfig';
@@ -57,13 +62,18 @@ const MODULE_MAP: Record<string, React.FC<{ serviceId: string; businessName?: st
   'location': RealEstateModule,         // Immobilier - Location & vente
   'media': PhotoStudioModule,           // Photo & Vidéo - Événements
   'construction': ConstructionModule,   // Construction & BTP - Bâtiment
+  'plomberie': PlumberModule,           // Plomberie - dispatch + interventions + devis terrain
+  'vitrerie': VitrerieModule,           // Vitrerie - calculateur de verre
+  'menuiserie': MenuiserieModule,       // Menuiserie - devis sur mesure
+  'soudure': SoudureModule,             // Soudure / Métallerie - calculateur métal
   'agriculture': AgricultureModule,     // Agriculture - Produits locaux
   'freelance': FreelanceModule,         // Administratif - Secrétariat
-  'sante': HealthModule,                // Santé & Bien-être - Pharmacie & soins
+  'sante': HealthModule,                // Santé & Bien-être - soins (service générique existant)
+  'clinique': ClinicModule,             // Clinique - RDV, patients, consultations, caisse (interface dédiée)
+  'pharmacie': PharmacyModule,          // Pharmacie - ordonnances, médicaments, validation pharmacien
   'maison': HomeDecorModule,            // Maison & Déco - Intérieur
 
   // ===== Autres Services (4) =====
-  'education': EducationModule,         // Formation - Cours & coaching
   'livraison': DeliveryModule,          // Livraison - Coursier & colis
   'voyage': TransportModule,            // Voyage - Tourisme & voyages
   'ecommerce': EcommerceModule,         // Boutique - E-commerce
@@ -119,11 +129,11 @@ export function ServiceModuleManager({
   if (nameLower.includes('transport') || nameLower.includes('voyage') || nameLower.includes('taxi')) {
     return <TransportModule {...props} />;
   }
+  if (nameLower.includes('clinique') || nameLower.includes('clinic')) {
+    return <ClinicModule {...props} />;
+  }
   if (nameLower.includes('santé') || nameLower.includes('health') || nameLower.includes('médical')) {
     return <HealthModule {...props} />;
-  }
-  if (nameLower.includes('éducation') || nameLower.includes('formation') || nameLower.includes('education')) {
-    return <EducationModule {...props} />;
   }
   if (nameLower.includes('photo') || nameLower.includes('média') || nameLower.includes('création')) {
     return <PhotoStudioModule {...props} />;

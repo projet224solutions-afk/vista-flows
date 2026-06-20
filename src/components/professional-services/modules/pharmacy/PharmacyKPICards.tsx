@@ -9,6 +9,7 @@ import {
   ShoppingCart, Pill, Clock, Activity
 } from 'lucide-react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useTranslation } from '@/hooks/useTranslation';
 import type { ServiceHealthStats } from '@/hooks/useServiceHealthStats';
 
 interface PharmacyKPICardsProps {
@@ -16,43 +17,44 @@ interface PharmacyKPICardsProps {
 }
 
 export function PharmacyKPICards({ stats }: PharmacyKPICardsProps) {
+  const { t } = useTranslation();
   const formatCurrency = useFormatCurrency();
 
   const kpis = [
     {
-      title: 'Chiffre d\'affaires',
+      title: t('pharmacyKpi.revenue'),
       value: formatCurrency(stats.sales.totalRevenue),
-      subtitle: `${formatCurrency(stats.sales.todayRevenue)} aujourd'hui`,
+      subtitle: `${formatCurrency(stats.sales.todayRevenue)} ${t('pharmacyKpi.today')}`,
       icon: TrendingUp,
       accent: '',
       iconBg: 'bg-[#ff4000]/10',
       iconColor: 'text-[#ff4000]',
     },
     {
-      title: 'Commandes',
+      title: t('pharmacyKpi.orders'),
       value: stats.sales.totalOrders.toString(),
-      subtitle: `${stats.sales.totalOrders > 0 ? formatCurrency(stats.sales.totalRevenue / stats.sales.totalOrders) : '0'} /moy`,
+      subtitle: `${stats.sales.totalOrders > 0 ? formatCurrency(stats.sales.totalRevenue / stats.sales.totalOrders) : '0'} ${t('pharmacyKpi.avg')}`,
       icon: ShoppingCart,
       accent: '',
       iconBg: 'bg-blue-500/10',
       iconColor: 'text-blue-600',
     },
     {
-      title: 'Produits',
+      title: t('pharmacyKpi.products'),
       value: stats.stock.totalProducts.toString(),
-      subtitle: `${stats.stock.activeProducts} actifs`,
+      subtitle: `${stats.stock.activeProducts} ${t('pharmacyKpi.active')}`,
       icon: Pill,
       accent: '',
       iconBg: 'bg-[#04439e]/10',
       iconColor: 'text-[#04439e]',
       badge: stats.stock.outOfStockCount > 0
-        ? { text: `${stats.stock.outOfStockCount} rupture`, variant: 'destructive' as const }
+        ? { text: `${stats.stock.outOfStockCount} ${t('pharmacyKpi.outOfStock')}`, variant: 'destructive' as const }
         : undefined,
     },
     {
-      title: 'Alertes stock',
+      title: t('pharmacyKpi.stockAlerts'),
       value: stats.stock.lowStockCount.toString(),
-      subtitle: `${stats.stock.outOfStockCount} en rupture`,
+      subtitle: `${stats.stock.outOfStockCount} ${t('pharmacyKpi.inRupture')}`,
       icon: AlertTriangle,
       accent: '',
       iconBg: 'bg-orange-500/10',
@@ -60,24 +62,24 @@ export function PharmacyKPICards({ stats }: PharmacyKPICardsProps) {
       urgent: stats.stock.lowStockCount > 0,
     },
     {
-      title: 'Patients / Clients',
+      title: t('pharmacyKpi.patients'),
       value: stats.clients.total.toString(),
-      subtitle: 'Fichier patient',
+      subtitle: t('pharmacyKpi.patientFile'),
       icon: Users,
       accent: '',
       iconBg: 'bg-[#04439e]/10',
       iconColor: 'text-[#04439e]',
     },
     {
-      title: 'Ordonnances',
+      title: t('pharmacyKpi.prescriptions'),
       value: stats.prescriptions.total.toString(),
-      subtitle: `${stats.prescriptions.pending} en attente`,
+      subtitle: `${stats.prescriptions.pending} ${t('pharmacyKpi.pending')}`,
       icon: Clock,
       accent: '',
       iconBg: 'bg-[#ff4000]/10',
       iconColor: 'text-[#ff4000]',
       badge: stats.prescriptions.pending > 0
-        ? { text: `${stats.prescriptions.pending} pending`, variant: 'secondary' as const }
+        ? { text: `${stats.prescriptions.pending} ${t('pharmacyKpi.pending')}`, variant: 'secondary' as const }
         : undefined,
     },
   ];

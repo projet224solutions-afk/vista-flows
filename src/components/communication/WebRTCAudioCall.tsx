@@ -1,10 +1,10 @@
 /**
- * 🎤 OVERLAY D'APPEL AUDIO WEBRTC - 224SOLUTIONS
+ * 🎤📹 OVERLAY D'APPEL WEBRTC (AUDIO + VIDÉO) - 224SOLUTIONS
  * Utilise le CONTEXTE global (pas son propre hook).
  * Affiché automatiquement par WebRTCCallProvider quand un appel est actif.
  */
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,12 +12,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useWebRTCCallContext } from './WebRTCCallProvider';
 import {
   Phone,
+  Video,
+  VideoOff,
   Mic,
   MicOff,
   PhoneOff,
   Wifi,
   Clock,
-  Loader2
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -28,8 +30,27 @@ export default function WebRTCAudioCall() {
     acceptCall,
     rejectCall,
     endCall,
-    toggleMute
+    toggleMute,
+    toggleVideo,
   } = useWebRTCCallContext();
+
+  const localVideoRef = useRef<HTMLVideoElement | null>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
+
+  const isVideo = callState.callMode === 'video';
+
+  // Attacher les flux aux éléments <video>
+  useEffect(() => {
+    if (localVideoRef.current && callState.localStream) {
+      localVideoRef.current.srcObject = callState.localStream;
+    }
+  }, [callState.localStream]);
+
+  useEffect(() => {
+    if (remoteVideoRef.current && callState.remoteStream) {
+      remoteVideoRef.current.srcObject = callState.remoteStream;
+    }
+  }, [callState.remoteStream]);
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -76,6 +97,23 @@ export default function WebRTCAudioCall() {
     return null;
   }
 
+  const modeLabel = isVideo ? 'Appel vidéo' : 'Appel vocal';
+
+  // Miniature vidéo locale (caméra de l'utilisateur) — réutilisée dans tous les écrans
+  const LocalPreview = ({ small = true }: { small?: boolean }) =>
+    isVideo && callState.localStream ? (
+      <video
+        ref={localVideoRef}
+        autoPlay
+        playsInline
+        muted
+        className={cn(
+          'rounded-xl object-cover bg-black shadow-lg',
+          small ? 'absolute bottom-24 right-4 w-28 h-40 z-10 border-2 border-white/30' : 'w-full h-48'
+        )}
+      />
+    ) : null;
+
   // ─── Écran d'appel entrant ───
   if (callState.isReceivingCall && !callState.isConnected) {
     return (
@@ -84,9 +122,13 @@ export default function WebRTCAudioCall() {
           <CardHeader className="text-center pb-2">
             <div className="mx-auto mb-4 relative">
               <div className="absolute inset-0 bg-[#ff4000]/20 rounded-full animate-ping" />
-              <Phone className="w-12 h-12 text-[#ff4000] mx-auto relative animate-bounce" />
+              {isVideo ? (
+                <Video className="w-12 h-12 text-[#ff4000] mx-auto relative animate-bounce" />
+              ) : (
+                <Phone className="w-12 h-12 text-[#ff4000] mx-auto relative animate-bounce" />
+              )}
             </div>
-            <CardTitle className="text-xl">Appel entrant</CardTitle>
+            <CardTitle className="text-xl">{isVideo ? 'Appel vidéo entrant' : 'Appel entrant'}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="text-center">
@@ -97,7 +139,7 @@ export default function WebRTCAudioCall() {
                 </AvatarFallback>
               </Avatar>
               <h3 className="text-2xl font-semibold">{callState.remoteUserInfo?.name}</h3>
-              <p className="text-muted-foreground">Appel vocal</p>
+              <p className="text-muted-foreground">{modeLabel}</p>
             </div>
 
             <div className="flex gap-4 justify-center">
@@ -106,7 +148,7 @@ export default function WebRTCAudioCall() {
                 size="lg"
                 className="bg-[#ff4000] hover:bg-[#ff4000] rounded-full w-16 h-16"
               >
-                <Phone className="w-6 h-6" />
+                {isVideo ? <Video className="w-6 h-6" /> : <Phone className="w-6 h-6" />}
               </Button>
               <Button
                 onClick={rejectCall}
@@ -131,17 +173,23 @@ export default function WebRTCAudioCall() {
           <CardHeader className="text-center pb-2">
             <CardTitle className="flex items-center justify-center gap-2">
               <Loader2 className="w-5 h-5 animate-spin text-primary" />
-              Appel en cours...
+              {isVideo ? 'Appel vidéo...' : 'Appel en cours...'}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
+            {isVideo && callState.localStream ? (
+              <LocalPreview small={false} />
+            ) : (
+              <div className="text-center">
+                <Avatar className="w-24 h-24 mx-auto mb-4">
+                  <AvatarImage src={callState.remoteUserInfo?.avatar} />
+                  <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
+                    {callState.remoteUserInfo?.name?.charAt(0) || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+            )}
             <div className="text-center">
-              <Avatar className="w-24 h-24 mx-auto mb-4">
-                <AvatarImage src={callState.remoteUserInfo?.avatar} />
-                <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
-                  {callState.remoteUserInfo?.name?.charAt(0) || 'U'}
-                </AvatarFallback>
-              </Avatar>
               <h3 className="text-2xl font-semibold">{callState.remoteUserInfo?.name}</h3>
               <p className="text-muted-foreground animate-pulse">Sonnerie...</p>
             </div>
@@ -162,7 +210,67 @@ export default function WebRTCAudioCall() {
     );
   }
 
-  // ─── Écran d'appel connecté ───
+  // ─── Écran d'appel connecté : VIDÉO ───
+  if (isVideo) {
+    return (
+      <div className="fixed inset-0 z-[9999] bg-black flex flex-col">
+        {/* Vidéo distante plein écran (son géré par l'élément audio dédié → muted ici) */}
+        <video
+          ref={remoteVideoRef}
+          autoPlay
+          playsInline
+          muted
+          className="absolute inset-0 w-full h-full object-cover bg-black"
+        />
+
+        {/* Miniature locale */}
+        <LocalPreview small />
+
+        {/* Bandeau infos en haut */}
+        <div className="relative z-10 flex items-center justify-between p-4 bg-gradient-to-b from-black/60 to-transparent text-white">
+          <div>
+            <h3 className="text-lg font-semibold">{callState.remoteUserInfo?.name}</h3>
+            <div className="flex items-center gap-2 text-sm text-white/80">
+              <Clock className="w-3.5 h-3.5" />
+              <span className="font-mono">{formatDuration(callState.callDuration)}</span>
+              <Wifi className={cn('w-3.5 h-3.5 ml-2', getConnectionColor())} />
+              <span>{getConnectionText()}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Contrôles en bas */}
+        <div className="absolute bottom-0 left-0 right-0 z-10 flex justify-center gap-5 p-6 bg-gradient-to-t from-black/70 to-transparent">
+          <Button
+            onClick={toggleMute}
+            variant={callState.isMuted ? 'destructive' : 'secondary'}
+            size="lg"
+            className="rounded-full w-14 h-14"
+          >
+            {callState.isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
+          </Button>
+          <Button
+            onClick={toggleVideo}
+            variant={callState.isVideoEnabled ? 'secondary' : 'destructive'}
+            size="lg"
+            className="rounded-full w-14 h-14"
+          >
+            {callState.isVideoEnabled ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
+          </Button>
+          <Button
+            onClick={endCall}
+            variant="destructive"
+            size="lg"
+            className="rounded-full w-14 h-14"
+          >
+            <PhoneOff className="w-6 h-6" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Écran d'appel connecté : AUDIO ───
   return (
     <div className="fixed inset-0 z-[9999] bg-gradient-to-b from-slate-900 to-slate-800 flex items-center justify-center p-4">
       <Card className="w-full max-w-md mx-auto bg-slate-800/50 border-slate-700">
@@ -187,7 +295,7 @@ export default function WebRTCAudioCall() {
               )} />
             </div>
             <h3 className="text-2xl font-semibold text-white">{callState.remoteUserInfo?.name}</h3>
-            <p className="text-slate-400">Appel vocal</p>
+            <p className="text-slate-400">{modeLabel}</p>
           </div>
 
           <div className="flex justify-center items-center gap-6 text-sm">
@@ -211,6 +319,13 @@ export default function WebRTCAudioCall() {
             >
               {callState.isConnected ? 'Connecté' : 'Connexion...'}
             </Badge>
+            {/* Diagnostic technique (utile tant que l'appel ne se connecte pas) */}
+            {!callState.isConnected && (
+              <p className="mt-2 text-[10px] font-mono text-slate-400">
+                ice: {callState.iceConnectionState || 'null'} · conn: {callState.connectionState || 'null'}
+                {' · '}local: {callState.localStream ? 'oui' : 'non'} · distant: {callState.remoteStream ? 'oui' : 'non'}
+              </p>
+            )}
           </div>
 
           <div className="flex justify-center gap-6 pt-4">
@@ -239,17 +354,6 @@ export default function WebRTCAudioCall() {
               </Button>
               <p className="text-xs text-slate-400">Fin</p>
             </div>
-          </div>
-
-          <div className="flex justify-center gap-2 pt-2">
-            <div className={cn(
-              "w-2 h-2 rounded-full",
-              callState.isMuted ? 'bg-[#ff4000]' : 'bg-[#ff4000]'
-            )} />
-            <div className={cn(
-              "w-2 h-2 rounded-full",
-              callState.isConnected ? 'bg-[#ff4000]' : 'bg-[#ff4000] animate-pulse'
-            )} />
           </div>
         </CardContent>
       </Card>

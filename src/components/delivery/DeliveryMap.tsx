@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * 🗺️ COMPOSANT CARTE DE LIVRAISON - 224SOLUTIONS
  * Carte interactive avec Mapbox pour la livraison

@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,7 @@ interface ApiDetailsModalProps {
 }
 
 export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalProps) {
+  const { t } = useTranslation();
   const [logs, setLogs] = useState<ApiUsageLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
@@ -68,7 +70,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
 
       await loadLogs();
     } catch (_error) {
-      toast.error('Erreur lors de l\'analyse');
+      toast.error(t('apiDetailsModal.erreurLorsDeLAnalyse'));
     }
     setAnalyzing(false);
   };
@@ -111,7 +113,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
 
       await loadLogs();
     } catch (_error) {
-      toast.error('Erreur lors du test de connexion API');
+      toast.error(t('apiDetailsModal.erreurLorsDuTestDe'));
     } finally {
       setHealthChecking(false);
     }
@@ -157,7 +159,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
           <TabsList className="bg-slate-800 border-slate-700">
             <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
             <TabsTrigger value="logs">Logs</TabsTrigger>
-            <TabsTrigger value="security">Sécurité</TabsTrigger>
+            <TabsTrigger value="security">{t('apiDetailsModal.securite')}</TabsTrigger>
           </TabsList>
 
           {/* Vue d'ensemble */}
@@ -165,7 +167,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
             <div className="grid grid-cols-2 gap-4">
               <Card className="bg-slate-800 border-slate-700">
                 <CardHeader>
-                  <CardTitle className="text-white text-sm">Clé API</CardTitle>
+                  <CardTitle className="text-white text-sm">{t('apiDetailsModal.cleApi')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <code className="text-slate-300 text-sm font-mono">
@@ -176,7 +178,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
 
               <Card className="bg-slate-800 border-slate-700">
                 <CardHeader>
-                  <CardTitle className="text-white text-sm">URL de base</CardTitle>
+                  <CardTitle className="text-white text-sm">{t('apiDetailsModal.urlDeBase')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-slate-300 text-sm">{api.base_url || 'Non spécifiée'}</p>
@@ -188,12 +190,12 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
             {api.tokens_limit && (
               <Card className="bg-slate-800 border-slate-700">
                 <CardHeader>
-                  <CardTitle className="text-white">Utilisation des tokens</CardTitle>
+                  <CardTitle className="text-white">{t('apiDetailsModal.utilisationDesTokens')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div className="flex justify-between text-sm">
-                      <span className="text-slate-400">Utilisés</span>
+                      <span className="text-slate-400">{t('apiDetailsModal.utilises')}</span>
                       <span className="text-white font-bold">{api.tokens_used.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between text-sm">
@@ -220,7 +222,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
             {/* Graphique d'utilisation */}
             <Card className="bg-slate-800 border-slate-700">
               <CardHeader>
-                <CardTitle className="text-white">Activité récente</CardTitle>
+                <CardTitle className="text-white">{t('apiDetailsModal.activiteRecente')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={200}>
@@ -272,9 +274,9 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
           <TabsContent value="logs" className="space-y-2">
             <div className="max-h-96 overflow-y-auto space-y-2">
               {loading ? (
-                <p className="text-slate-400 text-center py-8">Chargement des logs...</p>
+                <p className="text-slate-400 text-center py-8">{t('apiDetailsModal.chargementDesLogs')}</p>
               ) : logs.length === 0 ? (
-                <p className="text-slate-400 text-center py-8">Aucun log disponible</p>
+                <p className="text-slate-400 text-center py-8">{t('apiDetailsModal.aucunLogDisponible')}</p>
               ) : (
                 logs.map((log) => (
                   <Card key={log.id} className="bg-slate-800 border-slate-700">
@@ -326,7 +328,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
                   <CheckCircle2 className="h-5 w-5 text-[#ff4000]" />
                 </div>
                 <div className="flex items-center justify-between p-3 bg-slate-700 rounded-lg">
-                  <span className="text-slate-300">Logs activés</span>
+                  <span className="text-slate-300">{t('apiDetailsModal.logsActives')}</span>
                   <CheckCircle2 className="h-5 w-5 text-[#ff4000]" />
                 </div>
                 {api.expires_at && (
@@ -342,7 +344,7 @@ export default function ApiDetailsModal({ api, open, onClose }: ApiDetailsModalP
 
             <Card className="bg-slate-800 border-slate-700">
               <CardHeader>
-                <CardTitle className="text-white">Métadonnées</CardTitle>
+                <CardTitle className="text-white">{t('apiDetailsModal.metadonnees')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <pre className="text-slate-300 text-xs bg-slate-700 p-3 rounded overflow-x-auto">

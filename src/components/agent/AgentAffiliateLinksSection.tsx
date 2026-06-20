@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Money } from '@/components/Money';
 import { Button } from '@/components/ui/button';
@@ -59,6 +60,7 @@ interface AgentAffiliateLinksSectionProps {
 }
 
 export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffiliateLinksSectionProps) {
+  const { t } = useTranslation();
   const [links, setLinks] = useState<AffiliateLink[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -167,7 +169,7 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
 
       if (response.error) throw response.error;
 
-      toast.success('Lien créé avec succès !', {
+      toast.success(t('agentAffiliateLinksSection.lienCreeAvecSucces'), {
         description: 'Copiez le lien et partagez-le avec vos prospects'
       });
 
@@ -175,7 +177,7 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
       setNewLink({ name: '', target_role: 'all', commission_override: '', expires_days: '' });
       loadData();
     } catch (error: any) {
-      toast.error('Erreur lors de la création', { description: error.message });
+      toast.error(t('agentAffiliateLinksSection.erreurLorsDeLaCreation'), { description: error.message });
     } finally {
       setCreating(false);
     }
@@ -199,7 +201,7 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
       document.body.removeChild(textArea);
 
       if (successful) {
-        toast.success('Lien copié !', { description: url });
+        toast.success(t('agentAffiliateLinksSection.lienCopie'), { description: url });
         return;
       }
     } catch (_err) {
@@ -209,7 +211,7 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
     // Si execCommand échoue, essayer l'API moderne
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(url)
-        .then(() => toast.success('Lien copié !', { description: url }))
+        .then(() => toast.success(t('agentAffiliateLinksSection.lienCopie'), { description: url }))
         .catch(() => {
           toast.info('Copiez ce lien:', {
             description: url,
@@ -295,7 +297,7 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
               <Users className="h-5 w-5 text-[#ff4000]" />
               <div>
                 <p className="text-2xl font-bold">{stats?.affiliated_users || 0}</p>
-                <p className="text-xs text-muted-foreground">Affiliés</p>
+                <p className="text-xs text-muted-foreground">{t('agentAffiliateLinksSection.affilies')}</p>
               </div>
             </div>
           </CardContent>
@@ -331,13 +333,13 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
               </p>
             </div>
             <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
-              <p className="text-sm text-blue-600 font-medium">Validées</p>
+              <p className="text-sm text-blue-600 font-medium">{t('agentAffiliateLinksSection.validees')}</p>
               <p className="text-2xl font-bold text-blue-700">
                 <Money amount={stats?.commissions?.validated || 0} from="GNF" />
               </p>
             </div>
             <div className="p-4 rounded-lg bg-[#ff4000]/10 border border-[#ff4000]/20">
-              <p className="text-sm text-[#ff4000] font-medium">Payées</p>
+              <p className="text-sm text-[#ff4000] font-medium">{t('agentAffiliateLinksSection.payees')}</p>
               <p className="text-2xl font-bold text-[#ff4000]">
                 <Money amount={stats?.commissions?.paid || 0} from="GNF" />
               </p>
@@ -372,7 +374,7 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Créer un lien d'affiliation</DialogTitle>
+                    <DialogTitle>{t('agentAffiliateLinksSection.creerUnLienDAffiliation')}</DialogTitle>
                     <DialogDescription>
                       Personnalisez votre lien pour suivre vos campagnes
                     </DialogDescription>
@@ -380,7 +382,7 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
 
                   <div className="space-y-4 py-4">
                     <div>
-                      <Label>Nom du lien (optionnel)</Label>
+                      <Label>{t('agentAffiliateLinksSection.nomDuLienOptionnel')}</Label>
                       <Input
                         placeholder="Ex: Campagne Facebook Janvier"
                         value={newLink.name}
@@ -398,7 +400,7 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">Tous les utilisateurs</SelectItem>
+                          <SelectItem value="all">{t('agentAffiliateLinksSection.tousLesUtilisateurs')}</SelectItem>
                           <SelectItem value="client">Clients uniquement</SelectItem>
                           <SelectItem value="vendeur">Vendeurs uniquement</SelectItem>
                           <SelectItem value="service">Prestataires uniquement</SelectItem>
@@ -407,10 +409,10 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
                     </div>
 
                     <div>
-                      <Label>Commission spécifique (% - optionnel)</Label>
+                      <Label>{t('agentAffiliateLinksSection.commissionSpecifiqueOptionnel')}</Label>
                       <Input
                         type="number"
-                        placeholder="Laisser vide pour utiliser le taux par défaut"
+                        placeholder={t('agentAffiliateLinksSection.laisserVidePourUtiliserLe')}
                         value={newLink.commission_override}
                         onChange={(e) => setNewLink({ ...newLink, commission_override: e.target.value })}
                         min="0"
@@ -422,7 +424,7 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
                       <Label>Expiration (jours - optionnel)</Label>
                       <Input
                         type="number"
-                        placeholder="Laisser vide pour pas d'expiration"
+                        placeholder={t('agentAffiliateLinksSection.laisserVidePourPasD')}
                         value={newLink.expires_days}
                         onChange={(e) => setNewLink({ ...newLink, expires_days: e.target.value })}
                         min="1"
@@ -448,8 +450,8 @@ export function AgentAffiliateLinksSection({ agentId, agentToken }: AgentAffilia
           {links.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Link2 className="h-12 w-12 mx-auto mb-4 opacity-20" />
-              <p>Aucun lien d'affiliation</p>
-              <p className="text-sm">Créez votre premier lien pour commencer à recruter</p>
+              <p>{t('agentAffiliateLinksSection.aucunLienDAffiliation')}</p>
+              <p className="text-sm">{t('agentAffiliateLinksSection.creezVotrePremierLienPour')}</p>
             </div>
           ) : (
             <div className="space-y-4">

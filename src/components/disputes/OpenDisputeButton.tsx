@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -17,6 +18,7 @@ interface OpenDisputeButtonProps {
 }
 
 export function OpenDisputeButton({ order_id, escrow_id, vendor_id, onDisputeCreated }: OpenDisputeButtonProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<Partial<CreateDisputeRequest>>({
@@ -33,7 +35,7 @@ export function OpenDisputeButton({ order_id, escrow_id, vendor_id, onDisputeCre
     e.preventDefault();
 
     if (!formData.description || formData.description.length < 20) {
-      toast.error('Veuillez fournir une description détaillée (minimum 20 caractères)');
+      toast.error(t('openDisputeButton.veuillezFournirUneDescriptionDetaillee'));
       return;
     }
 
@@ -69,9 +71,9 @@ export function OpenDisputeButton({ order_id, escrow_id, vendor_id, onDisputeCre
           Ouvrir un litige
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Ouvrir un litige</DialogTitle>
+          <DialogTitle>{t('openDisputeButton.ouvrirUnLitige')}</DialogTitle>
           <DialogDescription>
             Si vous rencontrez un problème avec votre commande, ouvrez un litige pour le résoudre avec le vendeur.
           </DialogDescription>
@@ -79,7 +81,7 @@ export function OpenDisputeButton({ order_id, escrow_id, vendor_id, onDisputeCre
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="dispute_type">Type de problème</Label>
+            <Label htmlFor="dispute_type">{t('openDisputeButton.typeDeProbleme')}</Label>
             <Select
               value={formData.dispute_type}
               onValueChange={(value) => setFormData({ ...formData, dispute_type: value as any })}
@@ -88,9 +90,9 @@ export function OpenDisputeButton({ order_id, escrow_id, vendor_id, onDisputeCre
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="not_received">Produit non reçu</SelectItem>
-                <SelectItem value="defective">Produit défectueux</SelectItem>
-                <SelectItem value="incomplete">Commande incomplète</SelectItem>
+                <SelectItem value="not_received">{t('openDisputeButton.produitNonRecu')}</SelectItem>
+                <SelectItem value="defective">{t('openDisputeButton.produitDefectueux')}</SelectItem>
+                <SelectItem value="incomplete">{t('openDisputeButton.commandeIncomplete')}</SelectItem>
                 <SelectItem value="wrong_item">Mauvais article</SelectItem>
                 <SelectItem value="other">Autre</SelectItem>
               </SelectContent>
@@ -98,10 +100,10 @@ export function OpenDisputeButton({ order_id, escrow_id, vendor_id, onDisputeCre
           </div>
 
           <div>
-            <Label htmlFor="description">Description détaillée</Label>
+            <Label htmlFor="description">{t('openDisputeButton.descriptionDetaillee')}</Label>
             <Textarea
               id="description"
-              placeholder="Expliquez le problème en détail..."
+              placeholder={t('openDisputeButton.expliquezLeProblemeEnDetail')}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={4}
@@ -113,7 +115,7 @@ export function OpenDisputeButton({ order_id, escrow_id, vendor_id, onDisputeCre
           </div>
 
           <div>
-            <Label htmlFor="request_type">Que souhaitez-vous ?</Label>
+            <Label htmlFor="request_type">{t('openDisputeButton.queSouhaitezVous')}</Label>
             <Select
               value={formData.request_type}
               onValueChange={(value) => setFormData({ ...formData, request_type: value as any })}
@@ -132,7 +134,7 @@ export function OpenDisputeButton({ order_id, escrow_id, vendor_id, onDisputeCre
 
           {formData.request_type === 'partial_refund' && (
             <div>
-              <Label htmlFor="requested_amount">Montant demandé (GNF)</Label>
+              <Label htmlFor="requested_amount">{t('openDisputeButton.montantDemandeGnf')}</Label>
               <Input
                 id="requested_amount"
                 type="number"
@@ -144,7 +146,7 @@ export function OpenDisputeButton({ order_id, escrow_id, vendor_id, onDisputeCre
           )}
 
           <div>
-            <Label>Preuves (photos, vidéos)</Label>
+            <Label>{t('openDisputeButton.preuvesPhotosVideos')}</Label>
             <div className="border-2 border-dashed rounded-lg p-4 text-center">
               <Upload className="mx-auto h-8 w-8 text-muted-foreground" />
               <p className="text-sm text-muted-foreground mt-2">

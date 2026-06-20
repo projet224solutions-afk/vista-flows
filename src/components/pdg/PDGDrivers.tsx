@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from "@/hooks/useTranslation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ interface Driver {
 }
 
 export default function PDGDrivers() {
+  const { t } = useTranslation();
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -57,7 +59,7 @@ export default function PDGDrivers() {
       });
     } catch (error: any) {
       console.error('Erreur chargement livreurs:', error);
-      toast.error('Erreur lors du chargement des livreurs');
+      toast.error(t('pDGDrivers.erreurLorsDuChargementDes'));
     } finally {
       setLoading(false);
     }
@@ -72,7 +74,7 @@ export default function PDGDrivers() {
       <div className="flex items-center justify-center py-12">
         <div className="flex items-center gap-3">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <span>Chargement des livreurs...</span>
+          <span>{t('pDGDrivers.chargementDesLivreurs')}</span>
         </div>
       </div>
     );
@@ -120,7 +122,7 @@ export default function PDGDrivers() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Vérifiés</CardTitle>
+            <CardTitle className="text-sm">{t('pDGDrivers.verifies')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
@@ -136,7 +138,7 @@ export default function PDGDrivers() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Liste des Livreurs</CardTitle>
+              <CardTitle>{t('pDGDrivers.listeDesLivreurs')}</CardTitle>
               <CardDescription>{drivers.length} livreurs enregistrés</CardDescription>
             </div>
             <Button onClick={loadDrivers} variant="outline" size="sm">
